@@ -192,7 +192,7 @@ func startLexer(l *Lexer) StateFn {
 			return startLexer
 		} else if p == '>' {
 			l.next()
-			l.emit(token.FUNCTION)
+			l.emit(token.PROC)
 			return startLexer
 		}
 		l.emit(token.MINUS)

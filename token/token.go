@@ -57,7 +57,7 @@ const (
 	operator_end
 
 	HASHROCKET // =>
-	FUNCTION   // ->
+	PROC       // ->
 
 	// Delimiters
 
@@ -164,7 +164,7 @@ var tokens = [...]string{
 
 	SCOPE:      "::",
 	HASHROCKET: "=>",
-	FUNCTION:   "->",
+	PROC:       "->",
 	AT:         "@",
 
 	QMARK:  "?",
