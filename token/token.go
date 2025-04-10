@@ -20,6 +20,8 @@ const (
 	GLOBAL
 	INT
 	STRING
+	REGEX
+	REGEX_MODIFIER
 	literal_end
 
 	// Operators

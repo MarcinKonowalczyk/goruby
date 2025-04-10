@@ -90,6 +90,8 @@ $@
 $a
 ..
 ...
+/\//
+/a/i
 `
 
 	tests := []struct {
@@ -348,6 +350,11 @@ $a
 		{token.DDOT, ".."},
 		{token.NEWLINE, "\n"},
 		{token.DDDOT, "..."},
+		{token.NEWLINE, "\n"},
+		{token.REGEX, "\\/"},
+		{token.NEWLINE, "\n"},
+		{token.REGEX, "a"},
+		{token.REGEX_MODIFIER, "i"},
 		{token.NEWLINE, "\n"},
 		{token.EOF, ""},
 	}

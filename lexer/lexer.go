@@ -213,13 +213,17 @@ func startLexer(l *Lexer) StateFn {
 		}
 		return lexCharacterLiteral
 	case '/':
-		if l.peek() == '=' {
+		p := l.peek()
+		if p == '=' {
 			l.next()
 			l.emit(token.DIVASSIGN)
 			return startLexer
+		} else if isWhitespace(p) || isExpressionDelimiter(p) {
+			l.emit(token.SLASH)
+			return startLexer
+		} else {
+			return lexRegex
 		}
-		l.emit(token.SLASH)
-		return startLexer
 	case '*':
 		if l.peek() == '=' {
 			l.next()
@@ -423,6 +427,30 @@ func lexGlobal(l *Lexer) StateFn {
 	}
 	l.backup()
 	l.emit(token.GLOBAL)
+	return startLexer
+}
+
+func lexRegex(l *Lexer) StateFn {
+	l.ignore()
+	r := l.next()
+
+	for r != '/' {
+		if r == '\\' {
+			r = l.next()
+		}
+		r = l.next()
+	}
+	l.backup()
+	l.emit(token.REGEX)
+	l.next()
+	l.ignore()
+
+	// parse modifiers
+	p := l.peek()
+	if p == 'i' || p == 'm' || p == 'x' || p == 'o' || p == 'e' || p == 's' || p == 'u' || p == 'n' {
+		l.next()
+		l.emit(token.REGEX_MODIFIER)
+	}
 	return startLexer
 }
 
