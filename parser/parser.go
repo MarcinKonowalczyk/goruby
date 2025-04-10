@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/goruby/goruby/ast"
-	"github.com/goruby/goruby/lexer"
-	"github.com/goruby/goruby/token"
+	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/lexer"
+	"github.com/MarcinKonowalczyk/goruby/token"
 	"github.com/pkg/errors"
 )
 

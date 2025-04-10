@@ -3,7 +3,7 @@ package interpreter
 import (
 	"testing"
 
-	"github.com/goruby/goruby/object"
+	"github.com/MarcinKonowalczyk/goruby/object"
 	"github.com/pkg/errors"
 )
 

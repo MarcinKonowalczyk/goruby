@@ -3,7 +3,7 @@ package parser
 import (
 	"testing"
 
-	"github.com/goruby/goruby/token"
+	"github.com/MarcinKonowalczyk/goruby/token"
 	"github.com/pkg/errors"
 )
 

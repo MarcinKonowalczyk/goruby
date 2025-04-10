@@ -5,9 +5,9 @@ import (
 	"io"
 	"strings"
 
-	"github.com/goruby/goruby/interpreter"
-	"github.com/goruby/goruby/object"
-	"github.com/goruby/goruby/parser"
+	"github.com/MarcinKonowalczyk/goruby/interpreter"
+	"github.com/MarcinKonowalczyk/goruby/object"
+	"github.com/MarcinKonowalczyk/goruby/parser"
 	"github.com/pkg/errors"
 )
 

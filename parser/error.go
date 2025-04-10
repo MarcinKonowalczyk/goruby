@@ -5,7 +5,7 @@ import (
 	"fmt"
 	gotoken "go/token"
 
-	"github.com/goruby/goruby/token"
+	"github.com/MarcinKonowalczyk/goruby/token"
 	"github.com/pkg/errors"
 )
 

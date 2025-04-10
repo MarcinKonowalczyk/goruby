@@ -7,7 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/goruby/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/pkg/errors"
 )
 

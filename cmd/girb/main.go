@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/goruby/goruby/repl"
+	"github.com/MarcinKonowalczyk/goruby/repl"
 	"github.com/goruby/readline"
 )
 

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goruby/goruby/object"
-	"github.com/goruby/goruby/parser"
+	"github.com/MarcinKonowalczyk/goruby/object"
+	"github.com/MarcinKonowalczyk/goruby/parser"
 	"github.com/pkg/errors"
 )
 

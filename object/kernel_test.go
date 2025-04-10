@@ -7,8 +7,8 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/goruby/goruby/ast"
-	"github.com/goruby/goruby/parser"
+	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/parser"
 	"github.com/pkg/errors"
 )
 

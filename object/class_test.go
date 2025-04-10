@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/goruby/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/ast"
 )
 
 func TestNewClass(t *testing.T) {

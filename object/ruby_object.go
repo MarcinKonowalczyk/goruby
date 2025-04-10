@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/goruby/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/ast"
 )
 
 // Type represents a type of an object

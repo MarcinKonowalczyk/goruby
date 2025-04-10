@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/goruby/goruby/interpreter"
-	"github.com/goruby/goruby/object"
+	"github.com/MarcinKonowalczyk/goruby/interpreter"
+	"github.com/MarcinKonowalczyk/goruby/object"
 	"github.com/pkg/errors"
 )
 

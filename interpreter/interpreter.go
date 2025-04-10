@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/goruby/goruby/evaluator"
-	"github.com/goruby/goruby/object"
-	"github.com/goruby/goruby/parser"
+	"github.com/MarcinKonowalczyk/goruby/evaluator"
+	"github.com/MarcinKonowalczyk/goruby/object"
+	"github.com/MarcinKonowalczyk/goruby/parser"
 )
 
 // Interpreter defines the methods of an interpreter
