@@ -317,7 +317,8 @@ func (p *parser) noPrefixParseFnError(t token.Type) {
 	if epos.Filename != "" || epos.IsValid() {
 		msg = epos.String() + ": " + msg
 	}
-	p.errors = append(p.errors, errors.Errorf(msg))
+	p.errors = append(p.errors, errors.Errorf("%s", msg))
+
 }
 
 // ParseProgram returns the parsed program AST and all errors which occured
@@ -356,7 +357,7 @@ func (p *parser) parseStatement() ast.Statement {
 		if epos.Filename != "" || epos.IsValid() {
 			msg = epos.String() + ": " + msg
 		}
-		p.errors = append(p.errors, fmt.Errorf(msg))
+		p.errors = append(p.errors, fmt.Errorf("%s", msg))
 		return nil
 	case token.EOF:
 		p.expectError(token.NEWLINE)
