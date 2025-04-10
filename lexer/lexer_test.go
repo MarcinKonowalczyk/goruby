@@ -373,12 +373,12 @@ $a
 
 		if token.Type != testCase.expectedType {
 			t.Logf("Expected token with type %q at position %d, got type %q\n", testCase.expectedType, pos, token.Type)
-			t.Fail()
+			t.FailNow()
 		}
 
 		if token.Literal != testCase.expectedLiteral {
 			t.Logf("Expected token with literal %q at position %d, got literal %q\n", testCase.expectedLiteral, pos, token.Literal)
-			t.Fail()
+			t.FailNow()
 		}
 	}
 }
