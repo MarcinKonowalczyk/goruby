@@ -1,0 +1,21 @@
+# github.com/chzyer/test v1.0.0
+## explicit; go 1.15
+# github.com/goruby/goruby v0.0.0-20210827060341-983436007185
+## explicit
+github.com/goruby/goruby/ast
+github.com/goruby/goruby/evaluator
+github.com/goruby/goruby/interpreter
+github.com/goruby/goruby/lexer
+github.com/goruby/goruby/object
+github.com/goruby/goruby/parser
+github.com/goruby/goruby/repl
+github.com/goruby/goruby/token
+# github.com/goruby/readline v0.0.0-20171103131923-a4d5111b6178
+## explicit
+github.com/goruby/readline
+# github.com/pkg/errors v0.9.1
+## explicit
+github.com/pkg/errors
+# golang.org/x/sys v0.32.0
+## explicit; go 1.23.0
+golang.org/x/sys/unix
