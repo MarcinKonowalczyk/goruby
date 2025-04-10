@@ -80,6 +80,7 @@ yield
 while
 A::B
 =>
+->
 __FILE__
 @
 $foo,
@@ -327,6 +328,8 @@ $a
 		{token.CONST, "B"},
 		{token.NEWLINE, "\n"},
 		{token.HASHROCKET, "=>"},
+		{token.NEWLINE, "\n"},
+		{token.FUNCTION, "->"},
 		{token.NEWLINE, "\n"},
 		{token.KEYWORD__FILE__, "__FILE__"},
 		{token.NEWLINE, "\n"},

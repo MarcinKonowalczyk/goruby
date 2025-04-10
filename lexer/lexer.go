@@ -185,9 +185,14 @@ func startLexer(l *Lexer) StateFn {
 		l.emit(token.PLUS)
 		return startLexer
 	case '-':
-		if l.peek() == '=' {
+		p := l.peek()
+		if p == '=' {
 			l.next()
 			l.emit(token.SUBASSIGN)
+			return startLexer
+		} else if p == '>' {
+			l.next()
+			l.emit(token.FUNCTION)
 			return startLexer
 		}
 		l.emit(token.MINUS)
