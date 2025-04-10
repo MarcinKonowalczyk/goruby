@@ -65,6 +65,8 @@ const (
 
 	CAPTURE  // &
 	DOT      // .
+	DDOT     // ..
+	DDDOT    // ...
 	COLON    // :
 	LPAREN   // (
 	RPAREN   // )
@@ -146,6 +148,8 @@ var tokens = [...]string{
 	HASH:      "#",
 
 	DOT:      ".",
+	DDOT:     "..",
+	DDDOT:    "...",
 	COLON:    ":",
 	LPAREN:   "(",
 	RPAREN:   ")",

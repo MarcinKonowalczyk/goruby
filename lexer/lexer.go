@@ -151,6 +151,18 @@ func startLexer(l *Lexer) StateFn {
 		l.emit(token.SYMBEG)
 		return startLexer
 	case '.':
+		p := l.next()
+		if p == '.' {
+			p = l.next()
+			if p == '.' {
+				l.emit(token.DDDOT)
+				return startLexer
+			}
+			l.backup()
+			l.emit(token.DDOT)
+			return startLexer
+		}
+		l.backup()
 		l.emit(token.DOT)
 		return startLexer
 	case '=':
