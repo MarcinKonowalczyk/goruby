@@ -403,6 +403,9 @@ func lexString(l *Lexer) StateFn {
 	r := l.next()
 
 	for r != '"' {
+		if r == '\\' {
+			r = l.next()
+		}
 		r = l.next()
 	}
 	l.backup()

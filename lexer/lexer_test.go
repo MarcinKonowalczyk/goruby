@@ -382,3 +382,42 @@ $a
 		}
 	}
 }
+
+func TestLexSpecificCase(t *testing.T) {
+	input := `"\"" => -> (a) { val_to_str a }`
+
+	expected := []struct {
+		expectedType    token.Type
+		expectedLiteral string
+	}{
+		{token.STRING, "\\\""},
+		{token.HASHROCKET, "=>"},
+		{token.FUNCTION, "->"},
+		{token.LPAREN, "("},
+		{token.IDENT, "a"},
+		{token.RPAREN, ")"},
+		{token.LBRACE, "{"},
+		{token.IDENT, "val_to_str"},
+		{token.IDENT, "a"},
+		{token.RBRACE, "}"},
+	}
+
+	lexer := New(input)
+	for pos, testCase := range expected {
+		if !lexer.HasNext() {
+			t.Logf("Unexpected EOF at %d\n", lexer.pos)
+			t.FailNow()
+		}
+		token := lexer.NextToken()
+
+		if token.Type != testCase.expectedType {
+			t.Logf("Expected token with type %q at position %d, got type %q\n", testCase.expectedType, pos, token.Type)
+			t.FailNow()
+		}
+
+		if token.Literal != testCase.expectedLiteral {
+			t.Logf("Expected token with literal %q at position %d, got literal %q\n", testCase.expectedLiteral, pos, token.Literal)
+			t.FailNow()
+		}
+	}
+}
