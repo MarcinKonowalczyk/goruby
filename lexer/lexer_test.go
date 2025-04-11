@@ -331,7 +331,7 @@ $a
 		{token.NEWLINE, "\n"},
 		{token.HASHROCKET, "=>"},
 		{token.NEWLINE, "\n"},
-		{token.PROC, "->"},
+		{token.LAMBDAROCKET, "->"},
 		{token.NEWLINE, "\n"},
 		{token.KEYWORD__FILE__, "__FILE__"},
 		{token.NEWLINE, "\n"},
@@ -402,7 +402,7 @@ func TestLexSpecificCase(t *testing.T) {
 	}{
 		{token.STRING, "\\\""},
 		{token.HASHROCKET, "=>"},
-		{token.PROC, "->"},
+		{token.LAMBDAROCKET, "->"},
 		{token.LPAREN, "("},
 		{token.IDENT, "a"},
 		{token.RPAREN, ")"},

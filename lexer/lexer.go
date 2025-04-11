@@ -192,7 +192,7 @@ func startLexer(l *Lexer) StateFn {
 			return startLexer
 		} else if p == '>' {
 			l.next()
-			l.emit(token.PROC)
+			l.emit(token.LAMBDAROCKET)
 			return startLexer
 		}
 		l.emit(token.MINUS)

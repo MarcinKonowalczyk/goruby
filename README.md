@@ -115,6 +115,7 @@ To run the command as one off run `go run main.go`.
 	- [ ] keyword arguments
 	- [x] block arguments
 	- [ ] hash as last argument without braces
+    - [ ] splat args (`*a`)
 - [x] function calls
 	- [x] with parens
 	- [x] without parens	
@@ -200,7 +201,7 @@ To run the command as one off run `go run main.go`.
 	- [ ] array of symbols `%i{}`
 - [x] nil
 - [ ] hashes
-	- [x] literal with `=>` notation
+	- [x] literal with `=>` notation (hashrocket)
 	- [ ] literal with `key:` notation
 	- [x] indexing `hash[:foo]`
 	- [x] every Ruby Object can be a hash key
@@ -218,6 +219,13 @@ To run the command as one off run `go run main.go`.
 	- [ ] `..` inclusive
 	- [ ] `...` exclusive
 - [ ] procs `->`
+- [ ] procs 
+    <!-- https://ruby-doc.org/core-2.6/Proc.html -->
+    - [ ] `Proc.new`
+    - [ ] `proc`
+    - [ ] receiving a bloc of code into an argument
+    - [ ] `lambda`
+    - [ ] `->` # WIP
 - [ ] variables
 	- [x] variable assignments
 	- [x] globals

@@ -4108,7 +4108,7 @@ func TestRangeLiteral(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		// program, err := parseSource(tt.input, Trace)
+		// program, err := parseSource(tt.input, p.Trace)
 		program, err := parseSource(tt.input)
 		checkParserErrors(t, err)
 
@@ -4119,6 +4119,71 @@ func TestRangeLiteral(t *testing.T) {
 		}
 
 		testRangeLiteral(t, stmt.Expression, tt.ranges[0], tt.ranges[1], tt.inclusive)
+	}
+}
+
+func TestProcLiteral(t *testing.T) {
+	type funcParam struct {
+		name         string
+		defaultValue interface{}
+		splat        bool
+	}
+	tests := []struct {
+		input      string
+		parameters []funcParam
+	}{
+		{
+			input: "-> (a, b) { a }",
+			parameters: []funcParam{
+				{
+					name: "a",
+				},
+				{
+					name: "b",
+				},
+			},
+		},
+		{
+			input: "-> (*a) {}",
+			parameters: []funcParam{
+				{
+					name:  "a",
+					splat: true,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		// program, err := parseSource(tt.input, p.Trace)
+		program, err := parseSource(tt.input)
+		checkParserErrors(t, err)
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", stmt)
+			t.FailNow()
+		}
+
+		procLit, ok := stmt.Expression.(*ast.ProcedureLiteral)
+		if !ok {
+			t.Fatalf("stmt.Expression is not ast.ProcedureLiteral. got=%T", stmt.Expression)
+			t.FailNow()
+		}
+
+		if len(procLit.Parameters) != len(tt.parameters) {
+			t.Fatalf("wrong number of parameters. got=%d", len(procLit.Parameters))
+		}
+
+		for i, param := range procLit.Parameters {
+			testLiteralExpression(t, param.Name, tt.parameters[i].name)
+			testLiteralExpression(t, param.Default, tt.parameters[i].defaultValue)
+			if tt.parameters[i].splat != param.Splat {
+				t.Errorf("param.Splat not %t. got=%t", tt.parameters[i].splat, param.Splat)
+			}
+
+		}
+
 	}
 }
 

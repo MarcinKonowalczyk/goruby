@@ -56,8 +56,8 @@ const (
 	LSHIFT    // <<
 	operator_end
 
-	HASHROCKET // =>
-	PROC       // ->
+	HASHROCKET   // =>
+	LAMBDAROCKET // ->
 
 	// Delimiters
 
@@ -162,10 +162,10 @@ var tokens = [...]string{
 	RBRACKET: "]",
 	PIPE:     "|",
 
-	SCOPE:      "::",
-	HASHROCKET: "=>",
-	PROC:       "->",
-	AT:         "@",
+	SCOPE:        "::",
+	HASHROCKET:   "=>",
+	LAMBDAROCKET: "->",
+	AT:           "@",
 
 	QMARK:  "?",
 	SYMBEG: ":",

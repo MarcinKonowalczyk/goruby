@@ -180,6 +180,10 @@ FUNCTION        : OPERATION
                 | "super" "(" ")"
                 | "super" "(" CALL_ARGS ")" ;
 
+/* For now only the -> lambda syntax is supported */
+LAMBDA          : "->" "(" CALL_ARGS ")" "{" COMPSTMT "}"
+                | "->" "{" COMPSTMT "}";
+
 ARG             : LHS "=" ARG
                 | LHS OP_ASGN ARG
                 | ARG ".." ARG

@@ -108,6 +108,7 @@ type UnexpectedTokenError struct {
 	Pos            gotoken.Position
 	ExpectedTokens []token.Type
 	ActualToken    token.Type
+	Description    string
 }
 
 func (e *UnexpectedTokenError) Error() string {
@@ -116,6 +117,9 @@ func (e *UnexpectedTokenError) Error() string {
 		e.ActualToken,
 		tokens(e.ExpectedTokens),
 	)
+	if e.Description != "" {
+		msg += ": " + e.Description
+	}
 	if e.Pos.Filename != "" || e.Pos.IsValid() {
 		return e.Pos.String() + ": " + msg
 	}

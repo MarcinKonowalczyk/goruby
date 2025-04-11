@@ -858,10 +858,14 @@ func (fl *FunctionLiteral) String() string {
 	return out.String()
 }
 
+var _ Expression = &FunctionLiteral{}
+var _ literal = &FunctionLiteral{}
+
 // A FunctionParameter represents a parameter in a function literal
 type FunctionParameter struct {
 	Name    *Identifier
 	Default Expression
+	Splat   bool
 }
 
 func (f *FunctionParameter) expressionNode() {}
@@ -888,6 +892,45 @@ func (f *FunctionParameter) String() string {
 	}
 	return out.String()
 }
+
+var _ Expression = &FunctionParameter{}
+
+// A ProcedureLiteral represents a procedure definition in the AST
+type ProcedureLiteral struct {
+	Token      token.Token // The '->' token
+	Parameters []*FunctionParameter
+	Body       *BlockStatement
+}
+
+// Pos returns the position of the `->` token
+func (pl *ProcedureLiteral) Pos() int { return pl.Token.Pos }
+
+// End returns the position of the last body token
+func (pl *ProcedureLiteral) End() int { return pl.Body.End() }
+
+// TokenLiteral returns the literal from token.PROC
+func (pl *ProcedureLiteral) TokenLiteral() string { return pl.Token.Literal }
+
+// String returns the string representation of the procedure
+func (pl *ProcedureLiteral) String() string {
+	var out bytes.Buffer
+	params := []string{}
+	for _, p := range pl.Parameters {
+		params = append(params, p.String())
+	}
+	out.WriteString("-> (")
+	out.WriteString(strings.Join(params, ", "))
+	out.WriteString(")")
+	if pl.Body != nil {
+		out.WriteString(pl.Body.String())
+	}
+	return out.String()
+}
+func (pl *ProcedureLiteral) expressionNode() {}
+func (pl *ProcedureLiteral) literalNode()    {}
+
+var _ Expression = &ProcedureLiteral{}
+var _ literal = &ProcedureLiteral{}
 
 // An IndexExpression represents an array or hash access in the AST
 type IndexExpression struct {
