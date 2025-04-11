@@ -5,7 +5,7 @@ import (
 	"fmt"
 	gotoken "go/token"
 	"io"
-	"io/ioutil"
+	"os"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/pkg/errors"
@@ -35,7 +35,7 @@ func readSource(filename string, src interface{}) ([]byte, error) {
 		}
 		return nil, errors.New("invalid source")
 	}
-	return ioutil.ReadFile(filename)
+	return os.ReadFile(filename)
 }
 
 // A Mode value is a set of flags (or 0).
