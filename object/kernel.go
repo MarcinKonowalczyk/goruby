@@ -3,7 +3,6 @@ package object
 import (
 	"fmt"
 	"go/token"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -165,13 +164,13 @@ func kernelRequire(context CallContext, args ...RubyObject) (RubyObject, error) 
 		return FALSE, nil
 	}
 
-	file, err := ioutil.ReadFile(filename)
+	file, err := os.ReadFile(filename)
 	if os.IsNotExist(err) {
 		found := false
 		loadPath, _ := context.Env().Get("$:")
 		for _, p := range loadPath.(*Array).Elements {
 			newPath := path.Join(p.(*String).Value, filename)
-			file, err = ioutil.ReadFile(newPath)
+			file, err = os.ReadFile(newPath)
 			if !os.IsNotExist(err) {
 				absolutePath = newPath
 				found = true
@@ -247,7 +246,7 @@ func kernelRaise(context CallContext, args ...RubyObject) (RubyObject, error) {
 	case 1:
 		switch arg := args[0].(type) {
 		case *String:
-			return nil, NewRuntimeError(arg.Value)
+			return nil, NewRuntimeError("%s", arg.Value)
 		default:
 			exc, err := Send(NewCallContext(context.Env(), arg), "exception")
 			if err != nil {

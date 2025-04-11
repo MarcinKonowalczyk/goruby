@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -45,7 +44,7 @@ func startRepl() int {
 
 	var out io.Writer = lNoInterrupt
 	if noecho {
-		out = ioutil.Discard
+		out = io.Discard
 	}
 	var prompt repl.Prompt = lNoInterrupt
 	if noprompt {

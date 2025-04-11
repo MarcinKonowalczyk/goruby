@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -46,7 +45,7 @@ func main() {
 		log.Println("No program files specified")
 		os.Exit(1)
 	}
-	fileBytes, err := ioutil.ReadFile(args[0])
+	fileBytes, err := os.ReadFile(args[0])
 	if err != nil {
 		log.Printf("Error while opening program file: %T:%v\n", err, err)
 		os.Exit(1)
@@ -56,5 +55,4 @@ func main() {
 		fmt.Printf("%v\n", errors.Cause(err))
 		os.Exit(1)
 	}
-	return
 }

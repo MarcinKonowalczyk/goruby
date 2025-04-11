@@ -2,7 +2,6 @@ package interpreter_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
@@ -15,12 +14,13 @@ import (
 
 func TestLoadPath(t *testing.T) {
 	content := []byte("$foo = 12")
-	tmpDir, err := ioutil.TempDir("", "example")
+	tmpDir := os.TempDir()
+	tmpDir, err := os.MkdirTemp(tmpDir, "goruby")
 	if err != nil {
 		panic(err)
 	}
 	tmpAbsPath := path.Join(tmpDir, "example.rb")
-	err = ioutil.WriteFile(tmpAbsPath, content, 0600)
+	err = os.WriteFile(tmpAbsPath, content, 0600)
 	if err != nil {
 		panic(err)
 	}
