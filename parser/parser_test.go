@@ -4088,6 +4088,77 @@ func TestParseHash(t *testing.T) {
 	}
 }
 
+func TestRangeLiteral(t *testing.T) {
+	tests := []struct {
+		input     string
+		ranges    [2]int
+		inclusive bool
+	}{
+		{
+			input:     `1..10`,
+			ranges:    [2]int{1, 10},
+			inclusive: true,
+		},
+		{
+			input:     `1...10`,
+			ranges:    [2]int{1, 10},
+			inclusive: false,
+		},
+	}
+
+	for _, tt := range tests {
+		// program, err := parseSource(tt.input, Trace)
+		program, err := parseSource(tt.input)
+		checkParserErrors(t, err)
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", stmt)
+			t.FailNow()
+		}
+
+		testRangeLiteral(t, stmt.Expression, tt.ranges[0], tt.ranges[1], tt.inclusive)
+	}
+}
+
+func testRangeLiteral(
+	t *testing.T,
+	exp ast.Expression,
+	start, end int,
+	inclusive bool,
+) bool {
+	t.Helper()
+	rangeLit, ok := exp.(*ast.RangeLiteral)
+	if !ok {
+		t.Errorf("exp not *ast.RangeLiteral. got=%T", exp)
+		return false
+	}
+	if !testIntegerLiteral(t, rangeLit.Left, int64(start)) {
+		return false
+	}
+	if !testIntegerLiteral(t, rangeLit.Right, int64(end)) {
+		return false
+	}
+	if rangeLit.Inclusive != inclusive {
+		t.Errorf("rangeLit.Inclusive not %t. got=%t", inclusive, rangeLit.Inclusive)
+		return false
+	}
+
+	if inclusive {
+		if rangeLit.TokenLiteral() != ".." {
+			t.Errorf("rangeLit.TokenLiteral not .. . got=%s", rangeLit.TokenLiteral())
+			return false
+		}
+	} else {
+		if rangeLit.TokenLiteral() != "..." {
+			t.Errorf("rangeLit.TokenLiteral not ... . got=%s", rangeLit.TokenLiteral())
+			return false
+		}
+	}
+
+	return true
+}
+
 func testExpression(t *testing.T, exp ast.Expression, expected interface{}) bool {
 	t.Helper()
 	if inf, ok := expected.(infix); ok {

@@ -427,6 +427,8 @@ func (g *Global) literalNode() {}
 // TokenLiteral returns the literal of the token.GLOBAL token
 func (g *Global) TokenLiteral() string { return g.Token.Literal }
 
+var _ Expression = &Global{}
+
 // ScopedIdentifier represents a scoped Constant declaration
 type ScopedIdentifier struct {
 	Token token.Token // the token.SCOPE
@@ -746,6 +748,43 @@ func (hl *HashLiteral) String() string {
 	out.WriteString("}")
 	return out.String()
 }
+
+var _ Expression = &HashLiteral{}
+var _ literal = &HashLiteral{}
+
+// RangeLiteral represents a range literal within the AST
+type RangeLiteral struct {
+	Token     token.Token // the '..' or '...'
+	Left      Expression
+	Right     Expression
+	Inclusive bool
+}
+
+// Pos returns the position of the first character of the range
+func (rl *RangeLiteral) Pos() int { return rl.Left.Pos() }
+
+// End returns the position of the last character of the range
+func (rl *RangeLiteral) End() int { return rl.Right.End() }
+
+// TokenLiteral returns the literal of the token token.DDOT or token.DDDOT
+func (rl *RangeLiteral) TokenLiteral() string { return rl.Token.Literal }
+
+// String returns the string representation of the range
+func (rl *RangeLiteral) String() string {
+	var out bytes.Buffer
+	out.WriteString(rl.Left.String())
+	out.WriteString(" ")
+	out.WriteString(rl.Token.Literal)
+	out.WriteString(" ")
+	out.WriteString(rl.Right.String())
+	return out.String()
+}
+
+func (rl *RangeLiteral) expressionNode() {}
+func (rl *RangeLiteral) literalNode()    {}
+
+var _ Expression = &RangeLiteral{}
+var _ literal = &RangeLiteral{}
 
 // A BlockCapture represents a function scoped variable capturing a block
 type BlockCapture struct {

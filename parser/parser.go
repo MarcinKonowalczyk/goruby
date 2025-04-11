@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Possible precendece values
+// Possible precedence values
 const (
 	_ int = iota
 	precLowest
@@ -21,6 +21,7 @@ const (
 	precIfUnless    // modifier-if, modifier-unless
 	precAssignment  // x = 5
 	precTenary      // ?, :
+	precRange       // .., ...
 	precLogicalOr   // ||
 	precLogicalAnd  // &&
 	precEquals      // ==, !=, <=>
@@ -66,6 +67,8 @@ var precedences = map[token.Type]int{
 	token.MODASSIGN:  precAssignment,
 	token.LPAREN:     precCall,
 	token.DOT:        precCall,
+	token.DDOT:       precRange,
+	token.DDDOT:      precRange,
 	token.IDENT:      precCallArg,
 	token.CONST:      precCallArg,
 	token.GLOBAL:     precCallArg,
@@ -191,6 +194,8 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerInfix(token.LOGICALAND, p.parseInfixExpression)
 	p.registerInfix(token.SPACESHIP, p.parseInfixExpression)
 	p.registerInfix(token.LSHIFT, p.parseInfixExpression)
+	p.registerInfix(token.DDOT, p.parseRangeLiteral)
+	p.registerInfix(token.DDDOT, p.parseRangeLiteral)
 	p.registerInfix(token.ASSIGN, p.parseAssignment)
 	p.registerInfix(token.ADDASSIGN, p.parseAssignmentOperator)
 	p.registerInfix(token.SUBASSIGN, p.parseAssignmentOperator)
@@ -863,6 +868,21 @@ func (p *parser) parseInfixExpression(left ast.Expression) ast.Expression {
 		Token:    p.curToken,
 		Operator: p.curToken.Literal,
 		Left:     left,
+	}
+	precedence := p.curPrecedence()
+	p.nextToken()
+	expression.Right = p.parseExpression(precedence)
+	return expression
+}
+
+func (p *parser) parseRangeLiteral(left ast.Expression) ast.Expression {
+	if p.trace {
+		defer un(trace(p, "parseRangeLiteral"))
+	}
+	expression := &ast.RangeLiteral{
+		Token:     p.curToken,
+		Left:      left,
+		Inclusive: p.curToken.Type == token.DDOT,
 	}
 	precedence := p.curPrecedence()
 	p.nextToken()
