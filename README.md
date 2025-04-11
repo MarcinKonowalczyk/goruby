@@ -228,6 +228,9 @@ To run the command as one off run `go run main.go`.
     - [ ] receiving a bloc of code into an argument
     - [ ] `lambda`
     - [ ] `->` # WIP
+        - [ ] pure, e.g. `-> (a, b) {a + b}`
+        - [ ] captures
+        - [ ] args splat, e.g. `-> (*a) { a }`
 - [ ] variables
 	- [x] variable assignments
 	- [x] globals
