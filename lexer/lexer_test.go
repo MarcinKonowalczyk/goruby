@@ -91,6 +91,8 @@ $@
 $a
 ..
 ...
+1..2
+1...2
 /\//
 /a/i
 `
@@ -353,6 +355,14 @@ $a
 		{token.DDOT, ".."},
 		{token.NEWLINE, "\n"},
 		{token.DDDOT, "..."},
+		{token.NEWLINE, "\n"},
+		{token.INT, "1"},
+		{token.DDOT, ".."},
+		{token.INT, "2"},
+		{token.NEWLINE, "\n"},
+		{token.INT, "1"},
+		{token.DDDOT, "..."},
+		{token.INT, "2"},
 		{token.NEWLINE, "\n"},
 		{token.REGEX, "\\/"},
 		{token.NEWLINE, "\n"},
