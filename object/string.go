@@ -3,6 +3,7 @@ package object
 import (
 	"fmt"
 	"hash/fnv"
+	"regexp"
 )
 
 var stringClass RubyClassObject = newClass(
@@ -40,6 +41,11 @@ func (s *String) hashKey() hashKey {
 	return hashKey{Type: s.Type(), Value: h.Sum64()}
 }
 
+var (
+	_ RubyObject  = &String{}
+	_ inspectable = &String{}
+)
+
 func stringify(obj RubyObject) (string, error) {
 	stringObj, err := Send(NewCallContext(nil, obj), "to_s")
 	if err != nil {
@@ -70,6 +76,7 @@ var stringMethods = map[string]RubyMethod{
 	"initialize": privateMethod(stringInitialize),
 	"to_s":       withArity(0, publicMethod(stringToS)),
 	"+":          withArity(1, publicMethod(stringAdd)),
+	"gsub":       withArity(2, publicMethod(stringGsub)),
 }
 
 func stringInitialize(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -102,4 +109,27 @@ func stringAdd(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewImplicitConversionTypeError(add, args[0])
 	}
 	return &String{s.Value + add.Value}, nil
+}
+
+func stringGsub(context CallContext, args ...RubyObject) (RubyObject, error) {
+	s := context.Receiver().(*String)
+	pattern, ok := args[0].(*Regex)
+	if !ok {
+		return nil, NewImplicitConversionTypeError(pattern, args[0])
+	}
+	replacement, ok := args[1].(*String)
+	if !ok {
+		return nil, NewImplicitConversionTypeError(replacement, args[1])
+	}
+
+	// Perform the gsub operation
+	re, err := regexp.Compile(pattern.Value)
+	if err != nil {
+		return nil, NewTypeError(fmt.Sprintf("Invalid regex pattern: %s", err))
+	}
+
+	result := re.ReplaceAllString(s.Value, replacement.Value)
+
+	// Return the modified string
+	return &String{Value: result}, nil
 }

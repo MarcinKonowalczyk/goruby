@@ -23,6 +23,7 @@ const (
 	HASH_OBJ           Type = "HASH"
 	INTEGER_OBJ        Type = "INTEGER"
 	STRING_OBJ         Type = "STRING"
+	REGEX_OBJ          Type = "REGEX"
 	SYMBOL_OBJ         Type = "SYMBOL"
 	BOOLEAN_OBJ        Type = "BOOLEAN"
 	NIL_OBJ            Type = "NIL"

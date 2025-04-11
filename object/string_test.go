@@ -89,3 +89,32 @@ func TestStringAdd(t *testing.T) {
 		checkResult(t, result, testCase.result)
 	}
 }
+
+func Test_StringGsub(t *testing.T) {
+	tests := []struct {
+		arguments []RubyObject
+		result    RubyObject
+		err       error
+	}{
+		{
+			[]RubyObject{&Regex{Value: "o"}, &String{Value: "zz"}},
+			&String{Value: "fzzzzbar"},
+			nil,
+		},
+		{
+			[]RubyObject{&String{Value: "o"}, &String{Value: "zz"}},
+			nil,
+			NewImplicitConversionTypeError(&Regex{}, &String{}),
+		},
+	}
+
+	for _, testCase := range tests {
+		context := &callContext{receiver: &String{Value: "foobar"}}
+
+		result, err := stringGsub(context, testCase.arguments...)
+
+		checkError(t, err, testCase.err)
+
+		checkResult(t, result, testCase.result)
+	}
+}

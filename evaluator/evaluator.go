@@ -421,6 +421,10 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 
 	case nil:
 		return nil, nil
+
+	case *ast.RegexLiteral:
+		return &object.Regex{Value: node.Value, Modifiers: node.Modifiers}, nil
+
 	default:
 		err := object.NewException("Unknown AST: %T", node)
 		return nil, errors.WithStack(err)
