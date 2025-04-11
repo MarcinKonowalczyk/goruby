@@ -4187,6 +4187,50 @@ func TestProcLiteral(t *testing.T) {
 	}
 }
 
+func TestRegexLiteral(t *testing.T) {
+	tests := []struct {
+		input     string
+		expected  string
+		modifiers string
+	}{
+		{
+			input:    "/foo/",
+			expected: "foo",
+		},
+		{
+			input:     "/foo/i",
+			expected:  "foo",
+			modifiers: "i",
+		},
+	}
+
+	for _, tt := range tests {
+		// _, err := parseSource(tt.input, p.Trace)
+		// checkParserErrors(t, err)
+
+		program, err := parseSource(tt.input)
+		checkParserErrors(t, err)
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", stmt)
+		}
+
+		regexLit, ok := stmt.Expression.(*ast.RegexLiteral)
+		if !ok {
+			t.Fatalf("stmt.Expression is not ast.RegexLiteral. got=%T", stmt.Expression)
+		}
+
+		if regexLit.Value != tt.expected {
+			t.Errorf("regexLit.Value not %q. got=%q", tt.expected, regexLit.Value)
+		}
+
+		if regexLit.Modifiers != tt.modifiers {
+			t.Errorf("regexLit.Modifiers not %q. got=%q", tt.modifiers, regexLit.Modifiers)
+		}
+	}
+}
+
 //===========================================================
 //
 //  ##   ##  #####  ##      #####   #####  #####     ####

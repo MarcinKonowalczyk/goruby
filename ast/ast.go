@@ -932,6 +932,36 @@ func (pl *ProcedureLiteral) literalNode()    {}
 var _ Expression = &ProcedureLiteral{}
 var _ literal = &ProcedureLiteral{}
 
+// RegexLiteral represents a regex literal in the AST
+type RegexLiteral struct {
+	Token     token.Token // the 'REGEX' token
+	Value     string
+	Modifiers string
+}
+
+func (rl *RegexLiteral) literalNode()    {}
+func (rl *RegexLiteral) expressionNode() {}
+
+func (rl *RegexLiteral) Pos() int { return rl.Token.Pos }
+func (rl *RegexLiteral) End() int { return rl.Token.Pos + len(rl.Value) + len(rl.Modifiers) + 1 }
+
+// TokenLiteral returns the literal from token.REGEX
+func (rl *RegexLiteral) TokenLiteral() string { return rl.Token.Literal }
+
+func (rl *RegexLiteral) String() string {
+	var out bytes.Buffer
+	out.WriteString(rl.Token.Literal)
+	out.WriteString(rl.Value)
+	out.WriteString(rl.Token.Literal)
+	if rl.Modifiers != "" {
+		out.WriteString(rl.Modifiers)
+	}
+	return out.String()
+}
+
+var _ Expression = &RegexLiteral{}
+var _ literal = &RegexLiteral{}
+
 // An IndexExpression represents an array or hash access in the AST
 type IndexExpression struct {
 	Token  token.Token // The [ token

@@ -112,11 +112,13 @@ var tokens = [...]string{
 	ILLEGAL: "ILLEGAL",
 	EOF:     "EOF",
 
-	IDENT:  "IDENT",
-	CONST:  "CONST",
-	GLOBAL: "GLOBAL",
-	INT:    "INT",
-	STRING: "STRING",
+	IDENT:          "IDENT",
+	CONST:          "CONST",
+	GLOBAL:         "GLOBAL",
+	INT:            "INT",
+	STRING:         "STRING",
+	REGEX:          "REGEX",
+	REGEX_MODIFIER: "REGEX_MODIFIER",
 
 	ASSIGN:    "=",
 	ADDASSIGN: "+=",
