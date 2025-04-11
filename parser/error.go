@@ -10,7 +10,7 @@ import (
 )
 
 // Make sure unexpectedTokenError implements error interface
-var _ error = &unexpectedTokenError{}
+var _ error = &UnexpectedTokenError{}
 
 // Make sure Errors implements error interface
 var _ error = &Errors{}
@@ -25,16 +25,16 @@ func NewErrors(context string, errors ...error) *Errors {
 //
 // Errors implements the error interface to be used as an error in the code.
 type Errors struct {
-	context string
-	errors  []error
+	Context string
+	Errors  []error
 }
 
 // Error returns all error messages divided by newlines and prepended with the
 // error context.
 func (e *Errors) Error() string {
 	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "%s:\n", e.context)
-	for _, err := range e.errors {
+	fmt.Fprintf(&buf, "%s:\n", e.Context)
+	for _, err := range e.Errors {
 		fmt.Fprintf(&buf, "\t%s\n", err.Error())
 	}
 	return buf.String()
@@ -46,7 +46,7 @@ func (e *Errors) Error() string {
 // It returns false for any other error.
 func IsEOFError(err error) bool {
 	if errors, ok := err.(*Errors); ok {
-		for _, e := range errors.errors {
+		for _, e := range errors.Errors {
 			if IsEOFError(e) {
 				return true
 			}
@@ -54,11 +54,11 @@ func IsEOFError(err error) bool {
 	}
 
 	cause := errors.Cause(err)
-	tokenErr, ok := cause.(*unexpectedTokenError)
+	tokenErr, ok := cause.(*UnexpectedTokenError)
 	if !ok {
 		return false
 	}
-	if tokenErr.actualToken != token.EOF {
+	if tokenErr.ActualToken != token.EOF {
 		return false
 	}
 
@@ -76,16 +76,16 @@ func IsEOFInsteadOfNewlineError(err error) bool {
 	}
 
 	if errors, ok := err.(*Errors); ok {
-		for _, e := range errors.errors {
+		for _, e := range errors.Errors {
 			if IsEOFInsteadOfNewlineError(e) {
 				return true
 			}
 		}
 	}
 
-	tokenErr := errors.Cause(err).(*unexpectedTokenError)
+	tokenErr := errors.Cause(err).(*UnexpectedTokenError)
 
-	for _, expectedToken := range tokenErr.expectedTokens {
+	for _, expectedToken := range tokenErr.ExpectedTokens {
 		if expectedToken == token.NEWLINE {
 			return true
 		}
@@ -104,17 +104,17 @@ func (t tokens) String() string {
 	return fmt.Sprintf("%s", s)
 }
 
-type unexpectedTokenError struct {
+type UnexpectedTokenError struct {
 	Pos            gotoken.Position
-	expectedTokens []token.Type
-	actualToken    token.Type
+	ExpectedTokens []token.Type
+	ActualToken    token.Type
 }
 
-func (e *unexpectedTokenError) Error() string {
+func (e *UnexpectedTokenError) Error() string {
 	msg := fmt.Sprintf(
 		"unexpected %s, expecting %s",
-		e.actualToken,
-		tokens(e.expectedTokens),
+		e.ActualToken,
+		tokens(e.ExpectedTokens),
 	)
 	if e.Pos.Filename != "" || e.Pos.IsValid() {
 		return e.Pos.String() + ": " + msg

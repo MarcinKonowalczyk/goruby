@@ -298,20 +298,20 @@ func (p *parser) Errors() []error {
 
 func (p *parser) peekError(t ...token.Type) {
 	epos := p.file.Position(p.pos)
-	err := &unexpectedTokenError{
+	err := &UnexpectedTokenError{
 		Pos:            epos,
-		expectedTokens: t,
-		actualToken:    p.peekToken.Type,
+		ExpectedTokens: t,
+		ActualToken:    p.peekToken.Type,
 	}
 	p.errors = append(p.errors, errors.WithStack(err))
 }
 
 func (p *parser) expectError(t ...token.Type) {
 	epos := p.file.Position(p.pos)
-	err := &unexpectedTokenError{
+	err := &UnexpectedTokenError{
 		Pos:            epos,
-		expectedTokens: t,
-		actualToken:    p.curToken.Type,
+		ExpectedTokens: t,
+		ActualToken:    p.curToken.Type,
 	}
 	p.errors = append(p.errors, errors.WithStack(err))
 }
@@ -326,7 +326,7 @@ func (p *parser) noPrefixParseFnError(t token.Type) {
 
 }
 
-// ParseProgram returns the parsed program AST and all errors which occured
+// ParseProgram returns the parsed program AST and all errors which occurred
 // during the parse process. If the error is not nil the AST may be incomplete
 // and callers should always check if they can handle the error with providing
 // more input by checking with e.g. IsEOFError.
@@ -339,15 +339,19 @@ func (p *parser) ParseProgram() (*ast.Program, error) {
 			p.nextToken()
 			continue
 		}
+		// fmt.Println(p.curToken, p.errors)
 		stmt := p.parseStatement()
+		// fmt.Println(stmt, reflect.TypeOf(stmt), p.errors)
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
 		}
 		p.nextToken()
 	}
+	// fmt.Println("Last token:", p.curToken)
 	if len(p.errors) != 0 {
 		return program, NewErrors("Parsing errors", p.errors...)
 	}
+	// fmt.Println("Program:", program)
 	return program, nil
 }
 
@@ -939,9 +943,9 @@ func (p *parser) parseIfExpression() ast.Expression {
 			p.peekToken.Literal,
 		)
 		err := errors.Wrap(
-			&unexpectedTokenError{
-				expectedTokens: []token.Type{token.NEWLINE, token.SEMICOLON},
-				actualToken:    p.peekToken.Type,
+			&UnexpectedTokenError{
+				ExpectedTokens: []token.Type{token.NEWLINE, token.SEMICOLON},
+				ActualToken:    p.peekToken.Type,
 			},
 			msg,
 		)

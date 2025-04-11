@@ -50,7 +50,7 @@ const (
 	AllErrors                      // report all errors (not just the first 10 on different lines)
 )
 
-var parseModes = map[string]Mode{
+var ParseModes = map[string]Mode{
 	"ParseComments": ParseComments,
 	"Trace":         Trace,
 	"AllErrors":     AllErrors,

@@ -1,4 +1,4 @@
-package parser
+package parser_test
 
 import (
 	"flag"
@@ -11,17 +11,18 @@ import (
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	p "github.com/MarcinKonowalczyk/goruby/parser"
 	"github.com/MarcinKonowalczyk/goruby/token"
 	"github.com/pkg/errors"
 )
 
-var parseMode Mode = ParseComments
+var parseMode p.Mode = p.ParseComments
 
 func TestMain(m *testing.M) {
 	mode := flag.String("parser.mode", "ParseComments", "parser.mode=ParseComments")
 	flag.Parse()
 	var ok bool
-	parseMode, ok = parseModes[*mode]
+	parseMode, ok = p.ParseModes[*mode]
 	if !ok {
 		fmt.Printf("Unknown parse mode %s\n", *mode)
 		os.Exit(1)
@@ -64,18 +65,18 @@ func TestBlockCapture(t *testing.T) {
 			desc:   "block capture in func params not last arguments",
 			input:  "def foo x, &block, y; end",
 			result: nil,
-			err: &unexpectedTokenError{
-				expectedTokens: []token.Type{token.NEWLINE, token.SEMICOLON},
-				actualToken:    token.COMMA,
+			err: &p.UnexpectedTokenError{
+				ExpectedTokens: []token.Type{token.NEWLINE, token.SEMICOLON},
+				ActualToken:    token.COMMA,
 			},
 		},
 		{
 			desc:   "block capture in func params on integer",
 			input:  "def foo &2; end",
 			result: nil,
-			err: &unexpectedTokenError{
-				expectedTokens: []token.Type{token.IDENT},
-				actualToken:    token.INT,
+			err: &p.UnexpectedTokenError{
+				ExpectedTokens: []token.Type{token.IDENT},
+				ActualToken:    token.INT,
 			},
 		},
 		{
@@ -391,7 +392,7 @@ func TestVariableExpression(t *testing.T) {
 					t.FailNow()
 				}
 
-				errors := errs.errors
+				errors := errs.Errors
 				if len(errors) != 1 {
 					t.Logf("Exected one error, got %d", len(errors))
 					t.FailNow()
@@ -1032,7 +1033,7 @@ func TestKeyword__FILE__(t *testing.T) {
 	t.Run("keyword found", func(t *testing.T) {
 		input := "__FILE__;"
 
-		program, err := ParseFile(gotoken.NewFileSet(), "a_filename.rb", input, 0)
+		program, err := p.ParseFile(gotoken.NewFileSet(), "a_filename.rb", input, 0)
 		checkParserErrors(t, err)
 
 		if len(program.Statements) != 1 {
@@ -1068,7 +1069,7 @@ func TestKeyword__FILE__(t *testing.T) {
 
 		expected := "1:9: Can't assign to __FILE__"
 
-		parserErrors := err.errors
+		parserErrors := err.Errors
 		if len(parserErrors) != 1 {
 			t.Logf("Expected one error, got %d\n", len(parserErrors))
 			t.Logf("Errors: %v\n", err)
@@ -3283,10 +3284,10 @@ func TestContextCallExpression(t *testing.T) {
 			t.FailNow()
 		}
 
-		errs := err.errors
+		errs := err.Errors
 		cause := errors.Cause(errs[0])
 
-		unexpectErr, ok := cause.(*unexpectedTokenError)
+		unexpectErr, ok := cause.(*p.UnexpectedTokenError)
 		if !ok {
 			t.Logf("Expected err to be %T, got %T\n", unexpectErr, cause)
 			t.FailNow()
@@ -3294,7 +3295,7 @@ func TestContextCallExpression(t *testing.T) {
 
 		{
 			expected := []token.Type{token.NEWLINE, token.SEMICOLON, token.DOT, token.EOF}
-			actual := unexpectErr.expectedTokens
+			actual := unexpectErr.ExpectedTokens
 			if !reflect.DeepEqual(expected, actual) {
 				t.Logf("Expected error to equal\n%+#v\n\tgot\n%+#v\n", expected, actual)
 				t.Fail()
@@ -3303,7 +3304,7 @@ func TestContextCallExpression(t *testing.T) {
 
 		{
 			expected := token.IDENT
-			actual := unexpectErr.actualToken
+			actual := unexpectErr.ActualToken
 			if !reflect.DeepEqual(expected, actual) {
 				t.Logf("Expected error to equal\n%+#v\n\tgot\n%+#v\n", expected, actual)
 				t.Fail()
@@ -4121,6 +4122,16 @@ func TestRangeLiteral(t *testing.T) {
 	}
 }
 
+//===========================================================
+//
+//  ##   ##  #####  ##      #####   #####  #####     ####
+//  ##   ##  ##     ##      ##  ##  ##     ##  ##   ##
+//  #######  #####  ##      #####   #####  #####     ###
+//  ##   ##  ##     ##      ##      ##     ##  ##      ##
+//  ##   ##  #####  ######  ##      #####  ##   ##  ####
+//
+//===========================================================
+
 func testRangeLiteral(
 	t *testing.T,
 	exp ast.Expression,
@@ -4421,28 +4432,28 @@ func testHashLiteral(t *testing.T, expr ast.Expression, value map[string]string)
 	return true
 }
 
-func parseSource(src string, modes ...Mode) (*ast.Program, *Errors) {
+func parseSource(src string, modes ...p.Mode) (*ast.Program, *p.Errors) {
 	mode := parseMode
 	for _, m := range modes {
 		mode = mode | m
 	}
-	prog, err := ParseFile(gotoken.NewFileSet(), "", src, mode)
-	var parserErrors *Errors
+	prog, err := p.ParseFile(gotoken.NewFileSet(), "", src, mode)
+	var parserErrors *p.Errors
 	if err != nil {
-		parserErrors = err.(*Errors)
+		parserErrors = err.(*p.Errors)
 	}
 	return prog, parserErrors
 }
 
-func parseExpression(src string, modes ...Mode) (ast.Expression, *Errors) {
+func parseExpression(src string, modes ...p.Mode) (ast.Expression, *p.Errors) {
 	mode := parseMode
 	for _, m := range modes {
 		mode = mode | m
 	}
-	expr, err := ParseExprFrom(gotoken.NewFileSet(), "", src, mode)
-	var parserErrors *Errors
+	expr, err := p.ParseExprFrom(gotoken.NewFileSet(), "", src, mode)
+	var parserErrors *p.Errors
 	if err != nil {
-		parserErrors = err.(*Errors)
+		parserErrors = err.(*p.Errors)
 	}
 	return expr, parserErrors
 }
@@ -4452,7 +4463,7 @@ func compareFirstParserError(t *testing.T, expected, actual error) {
 	if expected == nil && actual == nil {
 		return
 	}
-	parserErrors, ok := actual.(*Errors)
+	parserErrors, ok := actual.(*p.Errors)
 	if parserErrors == nil && expected == nil {
 		return
 	}
@@ -4464,7 +4475,7 @@ func compareFirstParserError(t *testing.T, expected, actual error) {
 		t.Logf("Expected no error, got %T:%v", actual, actual)
 		t.FailNow()
 	}
-	firstErr := parserErrors.errors[0]
+	firstErr := parserErrors.Errors[0]
 	err := firstErr.Error()
 	firstSpace := strings.Index(err, " ")
 	err = err[firstSpace+1:]
@@ -4483,7 +4494,7 @@ func checkParserErrors(t *testing.T, err error, withStack ...bool) {
 	if len(withStack) != 0 {
 		printStack = withStack[0]
 	}
-	parserErrors, ok := err.(*Errors)
+	parserErrors, ok := err.(*p.Errors)
 	if parserErrors == nil {
 		return
 	}
@@ -4496,8 +4507,8 @@ func checkParserErrors(t *testing.T, err error, withStack ...bool) {
 		StackTrace() errors.StackTrace
 	}
 
-	t.Errorf("parser has %d errors", len(parserErrors.errors))
-	for _, e := range parserErrors.errors {
+	t.Errorf("parser has %d errors", len(parserErrors.Errors))
+	for _, e := range parserErrors.Errors {
 		t.Errorf("%v", e)
 		if stackErr, ok := e.(stackTracer); ok && printStack {
 			st := stackErr.StackTrace()
