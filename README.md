@@ -214,6 +214,8 @@ To run the command as one off run `go run main.go`.
 	- [ ] singleton symbols
 - [ ] regexp
 	- [ ] `/regex/`
+        - [x] string gsub, e.g. `"hello".gsub(/l/,"1")`
+        - [ ] modifiers (implemented but don't do anything atm)
 	- [ ] `%r{regex}`
 - [ ] ranges
 	- [ ] `..` inclusive
