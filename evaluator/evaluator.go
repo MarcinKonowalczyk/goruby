@@ -273,7 +273,7 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			return expandToArrayIfNeeded(right), nil
 		default:
 			return nil, errors.WithStack(
-				object.NewSyntaxError(fmt.Errorf("Assignment not supported to %T", node.Left)),
+				object.NewSyntaxError(fmt.Errorf("assignment not supported to %T", node.Left)),
 			)
 		}
 	case *ast.ModuleExpression:
