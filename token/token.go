@@ -62,9 +62,10 @@ const (
 	// Delimiters
 
 	NEWLINE // \n
-	COMMA
-	SEMICOLON
-	HASH // #
+	// WHITESPACE // \s
+	COMMA     // ,
+	SEMICOLON // ;
+	HASH      // #
 
 	CAPTURE  // &
 	DOT      // .
@@ -147,7 +148,8 @@ var tokens = [...]string{
 	SPACESHIP: "<=>",
 	LSHIFT:    "<<",
 
-	NEWLINE:   "NEWLINE",
+	NEWLINE: "NEWLINE",
+	// WHITESPACE: "WHITESPACE",
 	COMMA:     ",",
 	SEMICOLON: ";",
 	HASH:      "#",
