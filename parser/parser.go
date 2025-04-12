@@ -897,6 +897,9 @@ func (p *parser) parseHash() ast.Expression {
 }
 
 func (p *parser) parseKeyValue() (ast.Expression, ast.Expression, bool) {
+	if p.trace {
+		defer un(trace(p, "parseKeyValue"))
+	}
 	key := p.parseExpression(precAssignment)
 	if !p.consume(token.HASHROCKET) {
 		return nil, nil, false
