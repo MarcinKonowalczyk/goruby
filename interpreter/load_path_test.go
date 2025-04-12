@@ -34,7 +34,7 @@ func TestLoadPath(t *testing.T) {
 		$foo
 		`, tmpAbsPath)
 
-		i := interpreter.New()
+		i := interpreter.NewInterpreter()
 
 		_, err = i.Interpret("", input)
 
@@ -49,7 +49,7 @@ func TestLoadPath(t *testing.T) {
 		$foo
 		`, tmpBase)
 
-		i := interpreter.New()
+		i := interpreter.NewInterpreter()
 
 		_, err = i.Interpret("", input)
 
@@ -68,7 +68,7 @@ func TestLoadPath(t *testing.T) {
 		$foo
 		`, tmpAbsPath, tmpBase)
 
-		i := interpreter.New()
+		i := interpreter.NewInterpreter()
 
 		_, err = i.Interpret("", input)
 

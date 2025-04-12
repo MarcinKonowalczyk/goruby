@@ -22,7 +22,7 @@ func TestInterpreterInterpret(t *testing.T) {
 
 			add foo, x
 			`
-		i := New()
+		i := NewInterpreter()
 
 		out, err := i.Interpret("", input)
 		if err != nil {
@@ -51,7 +51,7 @@ func TestModuleInEnv(t *testing.T) {
 		end
 		Foo
 	`
-	interpreter := New()
+	interpreter := NewInterpreter()
 
 	evaluated, err := interpreter.Interpret("", input)
 	if err != nil {
@@ -77,7 +77,7 @@ func TestInterpretModules(t *testing.T) {
 		Foo
 		`
 
-		i := New()
+		i := NewInterpreter()
 
 		evaluated, err := i.Interpret("", input)
 		if err != nil {
@@ -107,7 +107,7 @@ func TestInterpretModules(t *testing.T) {
 		self
 		`
 
-		i := New()
+		i := NewInterpreter()
 
 		evaluated, err := i.Interpret("", input)
 		if err != nil {
@@ -143,7 +143,7 @@ func TestInterpretModules(t *testing.T) {
 		Foo
 		`
 
-		i := New()
+		i := NewInterpreter()
 
 		evaluated, err := i.Interpret("", input)
 		if err != nil {
@@ -185,7 +185,7 @@ func TestInterpretModules(t *testing.T) {
 		end
 		`
 
-		i := New()
+		i := NewInterpreter()
 
 		evaluated, err := i.Interpret("", input)
 		if err != nil {
@@ -219,7 +219,7 @@ func TestInterpretModules(t *testing.T) {
 		Bar
 		`
 
-		i := New()
+		i := NewInterpreter()
 
 		_, err := i.Interpret("", input)
 		if err == nil {
@@ -246,7 +246,7 @@ func TestInterpretClasses(t *testing.T) {
 		Foo
 		`
 
-		i := New()
+		i := NewInterpreter()
 
 		evaluated, err := i.Interpret("", input)
 		if err != nil {
@@ -276,7 +276,7 @@ func TestInterpretClasses(t *testing.T) {
 		self
 		`
 
-		i := New()
+		i := NewInterpreter()
 
 		evaluated, err := i.Interpret("", input)
 		if err != nil {
@@ -312,7 +312,7 @@ func TestInterpretClasses(t *testing.T) {
 		Foo
 		`
 
-		i := New()
+		i := NewInterpreter()
 
 		evaluated, err := i.Interpret("", input)
 		if err != nil {
@@ -354,7 +354,7 @@ func TestInterpretClasses(t *testing.T) {
 		end
 		`
 
-		i := New()
+		i := NewInterpreter()
 
 		evaluated, err := i.Interpret("", input)
 		if err != nil {
@@ -388,7 +388,7 @@ func TestInterpretClasses(t *testing.T) {
 		Bar
 		`
 
-		i := New()
+		i := NewInterpreter()
 
 		_, err := i.Interpret("", input)
 		if err == nil {

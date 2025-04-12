@@ -53,7 +53,7 @@ func TestMainMethodCalls(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := interpreter.New()
+			i := interpreter.NewInterpreter()
 
 			evaluated, err := i.Interpret("", tt.input)
 			if err != nil {
@@ -92,7 +92,7 @@ func TestMethodBlockLeakage(t *testing.T) {
 
 		sub 10, 4
 		`
-		i := interpreter.New()
+		i := interpreter.NewInterpreter()
 
 		_, err := i.Interpret("", input)
 
@@ -121,7 +121,7 @@ func TestMethodBlockLeakage(t *testing.T) {
 
 		foo.sub 10, 4
 		`
-		i := interpreter.New()
+		i := interpreter.NewInterpreter()
 
 		_, err := i.Interpret("", input)
 
@@ -139,7 +139,7 @@ func TestKernelTap(t *testing.T) {
 		x = []
 		x.tap {|z|z.push(true)}
 	`
-	i := interpreter.New()
+	i := interpreter.NewInterpreter()
 
 	evaluated, err := i.Interpret("", input)
 	if err != nil {
