@@ -59,6 +59,7 @@ var arrayClassMethods = map[string]RubyMethod{}
 var arrayMethods = map[string]RubyMethod{
 	"push":    publicMethod(arrayPush),
 	"unshift": publicMethod(arrayUnshift),
+	"size":    publicMethod(arraySize),
 }
 
 func arrayPush(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -71,4 +72,9 @@ func arrayUnshift(context CallContext, args ...RubyObject) (RubyObject, error) {
 	array, _ := context.Receiver().(*Array)
 	array.Elements = append(args, array.Elements...)
 	return array, nil
+}
+
+func arraySize(context CallContext, args ...RubyObject) (RubyObject, error) {
+	array, _ := context.Receiver().(*Array)
+	return &Integer{Value: int64(len(array.Elements))}, nil
 }
