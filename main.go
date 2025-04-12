@@ -26,11 +26,15 @@ func (m *multiString) Set(s string) error {
 }
 
 var onelineScripts multiString
+var trace bool
 
 func main() {
 	flag.Var(&onelineScripts, "e", "one line of script. Several -e's allowed. Omit [programfile]")
+	flag.BoolVar(&trace, "trace", false, "trace execution")
 	flag.Parse()
-	interpreter := interpreter.New()
+	fmt.Println("goruby version 0.1.0")
+	interpreter := interpreter.NewInterpreter()
+	interpreter.Trace = trace
 	if len(onelineScripts) != 0 {
 		input := strings.Join(onelineScripts, "\n")
 		_, err := interpreter.Interpret("", input)
