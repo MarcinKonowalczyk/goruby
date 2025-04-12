@@ -976,6 +976,46 @@ func TestGlobalExpression(t *testing.T) {
 	}
 }
 
+func TestGlobalExpressionWithIndex(t *testing.T) {
+	input := "$foobar[1];"
+	program, err := parseSource(input)
+	checkParserErrors(t, err)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf(
+			"program has not enough statements. got=%d",
+			len(program.Statements),
+		)
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf(
+			"program.Statements[0] is not ast.ExpressionStatement. got=%T",
+			program.Statements[0],
+		)
+	}
+
+	index, ok := stmt.Expression.(*ast.IndexExpression)
+	if !ok {
+		t.Fatalf("expression not *ast.IndexExpression. got=%T", stmt.Expression)
+	}
+
+	if !testGlobal(t, index.Left, "$foobar") {
+		return
+	}
+	if !testLiteralExpression(t, index.Index, 1) {
+		return
+	}
+	if index.String() != "($foobar[1])" {
+		t.Errorf(
+			"index.TokenLiteral not %s. got=%s", "($foobar[1])",
+			index.TokenLiteral(),
+		)
+	}
+
+}
+
 func TestScopedIdentifierExpression(t *testing.T) {
 	input := "A::B"
 
