@@ -3004,6 +3004,55 @@ func TestCallExpressionParsing(t *testing.T) {
 	})
 }
 
+// puts [1, 2][0]
+
+func TestCallExpressionWithoutParens(t *testing.T) {
+	t.Skip("This is broken and need a significant lexer/parser rewrite")
+	tests := []struct {
+		input string
+	}{
+		{
+			input: "puts([1][0])",
+		},
+		{
+			input: "puts [1][0]",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			program, err := parseSource(tt.input, p.Trace)
+			checkParserErrors(t, err)
+
+			stmt := program.Statements[0].(*ast.ExpressionStatement)
+			// exp, ok := stmt.Expression.(*ast.ContextCallExpression)
+			// if !ok {
+			// 	t.Fatalf(
+			// 		"stmt.Expression is not ast.ContextCallExpression. got=%T",
+			// 		stmt.Expression,
+			// 	)
+			// }
+
+			fmt.Println(stmt.Expression.String())
+
+			// if !testIdentifier(t, exp.Function, tt.expectedIdent) {
+			// 	return
+			// }
+
+			// if len(exp.Arguments) != len(tt.expectedArgs) {
+			// 	t.Fatalf("wrong number of arguments. want=%d, got=%d",
+			// 		len(tt.expectedArgs), len(exp.Arguments))
+			// }
+
+			// for i, arg := range tt.expectedArgs {
+			// 	if exp.Arguments[i].String() != arg {
+			// 		t.Errorf("argument %d wrong. want=%q, got=%q", i,
+			// 			arg, exp.Arguments[i].String())
+			// 	}
+			// }
+		})
+	}
+}
 func TestCallExpressionParameterParsing(t *testing.T) {
 	tests := []struct {
 		input         string
