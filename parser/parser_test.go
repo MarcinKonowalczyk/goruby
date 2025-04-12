@@ -4073,10 +4073,17 @@ func TestParseHash(t *testing.T) {
 			input:   `{"foo" => 42, "bar" => "baz"}`,
 			hashMap: map[string]string{"foo": "42", "bar": "baz"},
 		},
+		{
+			input: `{
+			"foo" => 42,
+		}`,
+			hashMap: map[string]string{"foo": "42"},
+		},
 	}
 
 	for _, tt := range tests {
 		program, err := parseSource(tt.input)
+		// program, err := parseSource(tt.input, p.Trace)
 		checkParserErrors(t, err)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)

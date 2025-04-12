@@ -861,23 +861,36 @@ func (p *parser) parseHash() ast.Expression {
 		return hash
 	}
 
+	for p.currentTokenIs(token.NEWLINE) {
+		p.nextToken()
+	}
 	k, v, ok := p.parseKeyValue()
 	if !ok {
 		return nil
 	}
 	hash.Map[k] = v
 
+	got_rbrace := false
 	for p.peekTokenIs(token.COMMA) {
 		p.consume(token.COMMA)
+		for p.currentTokenIs(token.NEWLINE) {
+			p.nextToken()
+		}
+		if p.currentTokenIs(token.RBRACE) {
+			got_rbrace = true
+			break
+		}
 		k, v, ok := p.parseKeyValue()
 		if !ok {
+			fmt.Println("Error parsing key value")
 			return nil
 		}
 		hash.Map[k] = v
 	}
-
-	if !p.accept(token.RBRACE) {
-		return nil
+	if !got_rbrace {
+		if !p.accept(token.RBRACE) {
+			return nil
+		}
 	}
 	hash.Rbrace = p.curToken
 	return hash
