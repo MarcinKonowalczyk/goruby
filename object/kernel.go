@@ -46,8 +46,22 @@ func kernelToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 func kernelPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
 	out := ""
 	for _, arg := range args {
-		out += arg.Inspect()
+		if arr, ok := arg.(*Array); ok {
+			// splat array
+			// todo: make it a deep splat? check with original ruby implementation
+			for _, elem := range arr.Elements {
+				out += elem.Inspect()
+				out += "\n"
+			}
+		} else {
+			out += arg.Inspect()
+		}
+		out += "\n"
 	}
+	for out[len(out)-1] == '\n' {
+		out = out[:len(out)-1]
+	}
+	// out = strings.ReplaceAll(out, "\n", "\\n") // debug
 	fmt.Println(out)
 	return NIL, nil
 }
