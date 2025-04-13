@@ -124,7 +124,7 @@ To run the command as one off run `go run main.go`.
 	- [x] if
 	- [x] if/else
 	- [ ] if/elif/else
-	- [x] tenary `? : `
+	- [x] ternary `? : `
 	- [x] unless
 	- [x] unless/else
 	- [ ] case
