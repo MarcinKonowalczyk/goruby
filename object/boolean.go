@@ -45,6 +45,10 @@ func (b *Boolean) hashKey() hashKey {
 	return hashKey{Type: b.Type(), Value: value}
 }
 
+var (
+	_ RubyObject = (*Boolean)(nil)
+)
+
 var booleanTrueMethods = map[string]RubyMethod{
 	"==": withArity(1, publicMethod(booleanEq)),
 	"!=": withArity(1, publicMethod(booleanNeq)),
