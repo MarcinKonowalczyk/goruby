@@ -707,7 +707,11 @@ func evalIndexExpression(left, index object.RubyObject) (object.RubyObject, erro
 	case *object.String:
 		return evalStringIndexExpression(target, index), nil
 	default:
-		return nil, errors.WithStack(object.NewException("index operator not supported: %s", left.Type()))
+		var left_type string = string(left.Type())
+		if left_type == "" {
+			left_type = fmt.Sprintf("%T", left)
+		}
+		return nil, errors.WithStack(object.NewException("index operator not supported: %s", left_type))
 	}
 }
 
