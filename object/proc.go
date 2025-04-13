@@ -32,7 +32,7 @@ func extractBlockFromArgs(args []RubyObject) (*Proc, []RubyObject, bool) {
 
 // A Proc represents a user defined block of code.
 type Proc struct {
-	Parameters             []*ast.FunctionParameter
+	Parameters             []*FunctionParameter
 	Body                   *ast.BlockStatement
 	Env                    Environment
 	ArgumentCountMandatory bool
@@ -81,11 +81,25 @@ func (p *Proc) extendProcEnv(args []RubyObject) Environment {
 		}
 	}
 	for paramIdx, param := range p.Parameters {
-		env.Set(param.Name.Value, arguments[paramIdx])
+		env.Set(param.Name, arguments[paramIdx])
 	}
 	return env
 }
 
 var procClassMethods = map[string]RubyMethod{}
 
-var procMethods = map[string]RubyMethod{}
+var procMethods = map[string]RubyMethod{
+	"call": publicMethod(procCall),
+}
+
+func procCall(context CallContext, args ...RubyObject) (RubyObject, error) {
+	proc, _ := context.Receiver().(*Proc)
+	if proc == nil {
+		return nil, NewArgumentError("call requires a block")
+	}
+	block, args, ok := extractBlockFromArgs(args)
+	if ok {
+		args = append(args, block)
+	}
+	return proc.Call(context, args...)
+}
