@@ -1,7 +1,6 @@
 package object
 
 import (
-	"bytes"
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
@@ -43,7 +42,7 @@ func (p *Proc) Type() Type { return "" }
 
 // Inspect returns the proc body
 func (p *Proc) Inspect() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	params := []string{}
 	for _, p := range p.Parameters {
 		params = append(params, p.String())

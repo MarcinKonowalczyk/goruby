@@ -3,6 +3,7 @@ package object
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"unicode"
 )
 
@@ -221,7 +222,7 @@ func (e *environment) clone() *environment {
 }
 
 func (e *environment) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	fmt.Fprintf(&out, "%v", e.store)
 	return out.String()
 }

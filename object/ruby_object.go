@@ -1,7 +1,6 @@
 package object
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 
@@ -145,7 +144,7 @@ type FunctionParameter struct {
 }
 
 func (f *FunctionParameter) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(f.Name)
 	if f.Default != nil {
 		out.WriteString(" = ")
@@ -164,7 +163,7 @@ type Function struct {
 
 // String returns the function literal
 func (f *Function) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	params := []string{}
 	for _, p := range f.Parameters {
 		params = append(params, p.String())

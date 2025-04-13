@@ -1,7 +1,6 @@
 package ast
 
 import (
-	"bytes"
 	"fmt"
 	gotoken "go/token"
 	"strings"
@@ -94,7 +93,7 @@ type ReturnStatement struct {
 }
 
 func (rs *ReturnStatement) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(rs.TokenLiteral() + " ")
 	if rs.ReturnValue != nil {
 		out.WriteString(rs.ReturnValue.String())
@@ -154,7 +153,7 @@ func (bs *BlockStatement) End() int { return bs.EndToken.Pos }
 // TokenLiteral returns '{' or the first token from the first statement
 func (bs *BlockStatement) TokenLiteral() string { return bs.Token.Literal }
 func (bs *BlockStatement) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	for _, s := range bs.Statements {
 		if s != nil {
 			out.WriteString(s.String())
@@ -182,7 +181,7 @@ func (eh *ExceptionHandlingBlock) End() int { return eh.EndToken.Pos }
 // TokenLiteral returns the token literal from 'begin'
 func (eh *ExceptionHandlingBlock) TokenLiteral() string { return eh.BeginToken.Literal }
 func (eh *ExceptionHandlingBlock) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(eh.BeginToken.Literal)
 	out.WriteString("\n")
 	out.WriteString(eh.TryBody.String())
@@ -213,7 +212,7 @@ func (rb *RescueBlock) End() int { return rb.Body.End() }
 // TokenLiteral returns the token literal from 'rescue'
 func (rb *RescueBlock) TokenLiteral() string { return rb.Token.Literal }
 func (rb *RescueBlock) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(rb.Token.Literal)
 	if len(rb.ExceptionClasses) != 0 {
 		classes := make([]string, len(rb.ExceptionClasses))
@@ -240,7 +239,7 @@ type Assignment struct {
 }
 
 func (a *Assignment) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(encloseInParensIfNeeded(a.Left))
 	out.WriteString(" = ")
 	out.WriteString(encloseInParensIfNeeded(a.Right))
@@ -264,7 +263,7 @@ type InstanceVariable struct {
 }
 
 func (i *InstanceVariable) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(i.Token.Literal)
 	out.WriteString(i.Name.String())
 	return out.String()
@@ -288,7 +287,7 @@ type MultiAssignment struct {
 }
 
 func (m *MultiAssignment) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	vars := make([]string, len(m.Variables))
 	for i, v := range m.Variables {
 		vars[i] = v.Value
@@ -339,7 +338,7 @@ type YieldExpression struct {
 }
 
 func (y *YieldExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(y.Token.Literal)
 	if len(y.Arguments) != 0 {
 		args := []string{}
@@ -437,7 +436,7 @@ type ScopedIdentifier struct {
 }
 
 func (i *ScopedIdentifier) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(i.Outer.String())
 	out.WriteString(i.Token.Literal)
 	out.WriteString(i.Inner.String())
@@ -633,7 +632,7 @@ func (ce *ConditionalExpression) End() int {
 // TokenLiteral returns the literal from token token.IF or token.UNLESS
 func (ce *ConditionalExpression) TokenLiteral() string { return ce.Token.Literal }
 func (ce *ConditionalExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(ce.Token.Literal)
 	out.WriteString(ce.Condition.String())
 	out.WriteString(" ")
@@ -669,7 +668,7 @@ func (ce *LoopExpression) End() int {
 // TokenLiteral returns the literal from token token.WHILE
 func (ce *LoopExpression) TokenLiteral() string { return ce.Token.Literal }
 func (ce *LoopExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(ce.Token.Literal)
 	out.WriteString(ce.Condition.String())
 	out.WriteString(" do ")
@@ -708,7 +707,7 @@ func (el ExpressionList) TokenLiteral() string {
 	return el[0].TokenLiteral()
 }
 func (el ExpressionList) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	elements := []string{}
 	for _, e := range el {
 		elements = append(elements, e.String())
@@ -738,7 +737,7 @@ func (al *ArrayLiteral) End() int {
 // TokenLiteral returns the literal of the token token.LBRACKET
 func (al *ArrayLiteral) TokenLiteral() string { return al.Token.Literal }
 func (al *ArrayLiteral) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	elements := []string{}
 	for _, el := range al.Elements {
 		elements = append(elements, el.String())
@@ -768,7 +767,7 @@ func (hl *HashLiteral) End() int { return hl.Rbrace.Pos }
 // TokenLiteral returns the literal of the token token.LBRACE
 func (hl *HashLiteral) TokenLiteral() string { return hl.Token.Literal }
 func (hl *HashLiteral) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	elements := []string{}
 	for key, val := range hl.Map {
 		elements = append(elements, fmt.Sprintf("%q => %q", key.String(), val.String()))
@@ -801,7 +800,7 @@ func (rl *RangeLiteral) TokenLiteral() string { return rl.Token.Literal }
 
 // String returns the string representation of the range
 func (rl *RangeLiteral) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(rl.Left.String())
 	out.WriteString(" ")
 	out.WriteString(rl.Token.Literal)
@@ -861,7 +860,7 @@ func (fl *FunctionLiteral) End() int { return fl.EndToken.Pos }
 // TokenLiteral returns the literal from token.DEF
 func (fl *FunctionLiteral) TokenLiteral() string { return fl.Token.Literal }
 func (fl *FunctionLiteral) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	params := []string{}
 	for _, p := range fl.Parameters {
 		params = append(params, p.String())
@@ -914,7 +913,7 @@ func (f *FunctionParameter) End() int {
 // TokenLiteral returns the token of the parameter name
 func (f *FunctionParameter) TokenLiteral() string { return f.Name.TokenLiteral() }
 func (f *FunctionParameter) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(f.Name.String())
 	if f.Default != nil {
 		out.WriteString(" = ")
@@ -943,7 +942,7 @@ func (pl *ProcedureLiteral) TokenLiteral() string { return pl.Token.Literal }
 
 // String returns the string representation of the procedure
 func (pl *ProcedureLiteral) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	params := []string{}
 	for _, p := range pl.Parameters {
 		params = append(params, p.String())
@@ -979,7 +978,7 @@ func (rl *RegexLiteral) End() int { return rl.Token.Pos + len(rl.Value) + len(rl
 func (rl *RegexLiteral) TokenLiteral() string { return rl.Token.Literal }
 
 func (rl *RegexLiteral) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(rl.Token.Literal)
 	out.WriteString(rl.Value)
 	out.WriteString(rl.Token.Literal)
@@ -1013,7 +1012,7 @@ func (s *Splat) End() int { return s.Value.End() }
 
 func (s *Splat) TokenLiteral() string { return s.Token.Literal }
 func (s *Splat) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(s.Token.Literal)
 	out.WriteString(s.Value.String())
 	return out.String()
@@ -1040,7 +1039,7 @@ func (ie *IndexExpression) End() int { return ie.Index.End() }
 // TokenLiteral returns the literal from token.LBRACKET
 func (ie *IndexExpression) TokenLiteral() string { return ie.Token.Literal }
 func (ie *IndexExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString("(")
 	out.WriteString(ie.Left.String())
 	out.WriteString("[")
@@ -1088,7 +1087,7 @@ func (ce *ContextCallExpression) End() int {
 // TokenLiteral returns the literal from token.DOT
 func (ce *ContextCallExpression) TokenLiteral() string { return ce.Token.Literal }
 func (ce *ContextCallExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	if ce.Context != nil {
 		out.WriteString(ce.Context.String())
 		out.WriteString(".")
@@ -1129,7 +1128,7 @@ func (b *BlockExpression) TokenLiteral() string { return b.Token.Literal }
 
 // String returns a string representation of the block statement
 func (b *BlockExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(b.Token.Literal)
 	if len(b.Parameters) != 0 {
 		args := []string{}
@@ -1170,7 +1169,7 @@ func (m *ModuleExpression) End() int { return m.EndToken.Pos }
 // TokenLiteral returns the literal from token.MODULE
 func (m *ModuleExpression) TokenLiteral() string { return m.Token.Literal }
 func (m *ModuleExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(m.TokenLiteral())
 	out.WriteString(" ")
 	out.WriteString(m.Name.String())
@@ -1201,7 +1200,7 @@ func (m *ClassExpression) End() int { return m.EndToken.Pos }
 // TokenLiteral returns the literal from token.CLASS
 func (m *ClassExpression) TokenLiteral() string { return m.Token.Literal }
 func (m *ClassExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(m.TokenLiteral())
 	out.WriteString(" ")
 	out.WriteString(m.Name.String())
@@ -1236,7 +1235,7 @@ func (pe *PrefixExpression) End() int { return pe.Right.End() }
 // TokenLiteral returns the literal from the prefix operator token
 func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
 func (pe *PrefixExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString("(")
 	out.WriteString(pe.Operator)
 	out.WriteString(pe.Right.String())
@@ -1275,7 +1274,7 @@ func (oe *InfixExpression) End() int { return oe.Right.End() }
 // TokenLiteral returns the literal from the infix operator token
 func (oe *InfixExpression) TokenLiteral() string { return oe.Token.Literal }
 func (oe *InfixExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString("(")
 	out.WriteString(oe.Left.String())
 	out.WriteString(" " + oe.Operator + " ")
