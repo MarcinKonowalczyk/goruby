@@ -826,6 +826,21 @@ func (p *parser) parseIntegerLiteral() ast.Expression {
 	return lit
 }
 
+func (p *parser) parseFloatLiteral() ast.Expression {
+	if p.trace {
+		defer un(trace(p, "parseFloatLiteral"))
+	}
+	lit := &ast.FloatLiteral{Token: p.curToken}
+	value, err := strconv.ParseFloat(p.curToken.Literal, 64)
+	if err != nil {
+		msg := fmt.Errorf("could not parse %q as float", p.curToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	lit.Value = value
+	return lit
+
+}
 func (p *parser) parseStringLiteral() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseStringLiteral"))
