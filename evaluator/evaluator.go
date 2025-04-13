@@ -663,6 +663,8 @@ func evalIndexExpression(left, index object.RubyObject) (object.RubyObject, erro
 		return evalArrayIndexExpression(target, index), nil
 	case *object.Hash:
 		return evalHashIndexExpression(target, index), nil
+	case *object.String:
+		return evalStringIndexExpression(target, index), nil
 	default:
 		return nil, errors.WithStack(object.NewException("index operator not supported: %s", left.Type()))
 	}
@@ -694,6 +696,26 @@ func evalHashIndexExpression(hash *object.Hash, index object.RubyObject) object.
 		return object.NIL
 	}
 	return result
+}
+
+func evalStringIndexExpression(stringObject *object.String, index object.RubyObject) object.RubyObject {
+	idx := index.(*object.Integer).Value
+	maxNegative := -int64(len(stringObject.Value))
+	maxPositive := maxNegative*-1 - 1
+	if maxPositive < 0 {
+		return object.NIL
+	}
+
+	if idx > 0 && idx > maxPositive {
+		return object.NIL
+	}
+	if idx < 0 && idx < maxNegative {
+		return object.NIL
+	}
+	if idx < 0 {
+		return &object.String{Value: string(stringObject.Value[len(stringObject.Value)+int(idx)])}
+	}
+	return &object.String{Value: string(stringObject.Value[idx])}
 }
 
 func evalBlockStatement(block *ast.BlockStatement, env object.Environment) (object.RubyObject, error) {
