@@ -66,23 +66,34 @@ var floatMethods = map[string]RubyMethod{
 
 func floatDiv(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	divisor, ok := args[0].(*Float)
-	if !ok {
+	var divisor float64
+	switch arg := args[0].(type) {
+	case *Integer:
+		divisor = float64(arg.Value)
+	case *Float:
+		divisor = arg.Value
+	default:
 		return nil, NewCoercionTypeError(args[0], i)
 	}
-	if divisor.Value == 0 {
+	if divisor == 0 {
 		return nil, NewZeroDivisionError()
 	}
-	return NewFloat(i.Value / divisor.Value), nil
+	return NewFloat(i.Value / divisor), nil
 }
 
 func floatMul(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	factor, ok := args[0].(*Float)
-	if !ok {
+	var factor float64
+	switch arg := args[0].(type) {
+	case *Integer:
+		factor = float64(arg.Value)
+	case *Float:
+		factor = arg.Value
+	default:
 		return nil, NewCoercionTypeError(args[0], i)
 	}
-	return NewFloat(i.Value * factor.Value), nil
+
+	return NewFloat(i.Value * factor), nil
 }
 
 func floatAdd(context CallContext, args ...RubyObject) (RubyObject, error) {
