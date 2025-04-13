@@ -894,21 +894,19 @@ func (p *parser) parseHash() ast.Expression {
 		return hash
 	}
 
-	for p.currentTokenIs(token.NEWLINE) {
-		p.nextToken()
-	}
+	// parse the first key-value pair
 	k, v, ok := p.parseKeyValue()
 	if !ok {
 		return nil
 	}
 	hash.Map[k] = v
+	p.nextToken() // move past the end of the key-value pair
+	p.consumeNewlineOrComment()
 
-	got_rbrace := false
-	for p.peekTokenIs(token.COMMA) {
-		p.consume(token.COMMA)
+	for p.currentTokenIs(token.COMMA) {
+		p.nextToken()
 		p.consumeNewlineOrComment()
 		if p.currentTokenIs(token.RBRACE) {
-			got_rbrace = true
 			break
 		}
 		k, v, ok := p.parseKeyValue()
@@ -916,8 +914,15 @@ func (p *parser) parseHash() ast.Expression {
 			return nil
 		}
 		hash.Map[k] = v
+		p.nextToken() // move past the end of the key-value pair
+		p.consumeNewlineOrComment()
 	}
-	if !got_rbrace {
+	if p.currentTokenIs(token.RBRACE) {
+		// we've landed on a RBRACE
+		// this is fine, no need to do anything
+	} else if p.peekTokenIs(token.RBRACE) {
+		// we've landed on the end of the last key-value pair (hopefully)
+		// we need to accept the RBRACE
 		if !p.accept(token.RBRACE) {
 			return nil
 		}

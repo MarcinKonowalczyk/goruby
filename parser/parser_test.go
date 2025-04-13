@@ -4168,35 +4168,42 @@ func TestParseHash(t *testing.T) {
 		},
 		{
 			input: `{
-			"foo" => 42,
-		}`,
+				"foo" => 42,
+			}`,
 			hashMap: map[string]string{"foo": "42"},
 		},
 		{
 			input: `{
-		    # "foo" => 42,
-		}`,
+				# "foo" => 42,
+			}`,
 			hashMap: map[string]string{},
 		},
 		{
 			input: `{
 			# comment
-			"foo" => 42,
-		}`,
+				"foo" => 42,
+			}`,
 			hashMap: map[string]string{"foo": "42"},
 		},
 		{
 			input: `{
 			"foo" => 42,
-			# comment
-		}`,
+				# comment
+			}`,
 			hashMap: map[string]string{"foo": "42"},
 		},
 		{
 			input: `{ # comment
-			"foo" => 42,
-		}`,
+				"foo" => 42,
+			}`,
 			hashMap: map[string]string{"foo": "42"},
+		},
+		{
+			input: `{
+				"foo" => 42,
+				"bar" => "baz"
+			}`,
+			hashMap: map[string]string{"foo": "42", "bar": "baz"},
 		},
 	}
 
