@@ -1026,19 +1026,7 @@ func (p *parser) parseIfExpression() ast.Expression {
 	}
 
 	if !p.peekTokenOneOf(token.NEWLINE, token.SEMICOLON) {
-		msg := fmt.Sprintf(
-			"could not parse if expression: unexpected token %s: '%s'",
-			p.peekToken.Type,
-			p.peekToken.Literal,
-		)
-		err := errors.Wrap(
-			&UnexpectedTokenError{
-				ExpectedTokens: []token.Type{token.NEWLINE, token.SEMICOLON},
-				ActualToken:    p.peekToken.Type,
-			},
-			msg,
-		)
-		p.errors = append(p.errors, err)
+		p.Error(p.peekToken.Type, "could not parse if expression", token.NEWLINE, token.SEMICOLON)
 		return nil
 	}
 	p.acceptOneOf(token.NEWLINE, token.SEMICOLON)
