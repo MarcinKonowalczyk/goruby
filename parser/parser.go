@@ -864,12 +864,30 @@ func (p *parser) parseBoolean() ast.Expression {
 	return &ast.Boolean{Token: p.curToken, Value: p.currentTokenIs(token.TRUE)}
 }
 
+func (p *parser) consumeNewlineOrComment() {
+	for {
+		if p.currentTokenIs(token.NEWLINE) {
+			// consume the newline
+			p.nextToken()
+		} else if p.currentTokenIs(token.HASH) {
+			// consume the comment
+			p.nextToken()
+			if p.currentTokenIs(token.STRING) {
+				p.nextToken()
+			}
+		} else {
+			break
+		}
+	}
+}
 func (p *parser) parseHash() ast.Expression {
 	hash := &ast.HashLiteral{Token: p.curToken, Map: make(map[ast.Expression]ast.Expression)}
 	if p.trace {
 		defer un(trace(p, "parseHash"))
 	}
 	p.nextToken()
+
+	p.consumeNewlineOrComment()
 
 	if p.currentTokenIs(token.RBRACE) {
 		hash.Rbrace = p.curToken
@@ -888,16 +906,13 @@ func (p *parser) parseHash() ast.Expression {
 	got_rbrace := false
 	for p.peekTokenIs(token.COMMA) {
 		p.consume(token.COMMA)
-		for p.currentTokenIs(token.NEWLINE) {
-			p.nextToken()
-		}
+		p.consumeNewlineOrComment()
 		if p.currentTokenIs(token.RBRACE) {
 			got_rbrace = true
 			break
 		}
 		k, v, ok := p.parseKeyValue()
 		if !ok {
-			fmt.Println("Error parsing key value")
 			return nil
 		}
 		hash.Map[k] = v

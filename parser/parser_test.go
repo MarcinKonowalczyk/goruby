@@ -4168,6 +4168,32 @@ func TestParseHash(t *testing.T) {
 		}`,
 			hashMap: map[string]string{"foo": "42"},
 		},
+		{
+			input: `{
+		    # "foo" => 42,
+		}`,
+			hashMap: map[string]string{},
+		},
+		{
+			input: `{
+			# comment
+			"foo" => 42,
+		}`,
+			hashMap: map[string]string{"foo": "42"},
+		},
+		{
+			input: `{
+			"foo" => 42,
+			# comment
+		}`,
+			hashMap: map[string]string{"foo": "42"},
+		},
+		{
+			input: `{ # comment
+			"foo" => 42,
+		}`,
+			hashMap: map[string]string{"foo": "42"},
+		},
 	}
 
 	for _, tt := range tests {
