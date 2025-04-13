@@ -124,7 +124,16 @@ func (l *Lexer) errorf(format string, args ...interface{}) StateFn {
 func startLexer(l *Lexer) StateFn {
 	r := l.next()
 	if isWhitespace(r) {
-		l.ignore()
+		// we sometimes need to emit disambiguating whitespace
+		// rules:
+		// before every ?
+		switch l.peek() {
+		case '?':
+			l.next() // consume the ?
+			l.emit(token.SQMARK)
+		default:
+			l.ignore()
+		}
 		return startLexer
 	}
 	switch r {

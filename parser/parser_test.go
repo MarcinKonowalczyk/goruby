@@ -2074,21 +2074,21 @@ func TestConditionalExpressionWithAlternative(t *testing.T) {
 			"y",
 		},
 		{
-			"tenary if",
+			"ternary if",
 			"x < y ? x : y;",
 			[3]string{"x", "<", "y"},
 			"x",
 			"y",
 		},
 		{
-			"tenary if with symbol as consequence",
+			"ternary if with symbol as consequence",
 			"x < y ? :x : y;",
 			[3]string{"x", "<", "y"},
 			":x",
 			"y",
 		},
 		{
-			"tenary if with symbol as alternative",
+			"ternary if with symbol as alternative",
 			"x < y ? x : :y;",
 			[3]string{"x", "<", "y"},
 			"x",
@@ -2096,8 +2096,8 @@ func TestConditionalExpressionWithAlternative(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d/%s", i, tt.name), func(t *testing.T) {
 			program, err := parseSource(tt.input)
 			checkParserErrors(t, err)
 
@@ -2152,7 +2152,7 @@ func TestConditionalExpressionWithAlternative(t *testing.T) {
 			}
 		})
 	}
-	t.Run("tenary if with call as consequence", func(t *testing.T) {
+	t.Run("ternary if with call as consequence", func(t *testing.T) {
 		tt := struct {
 			input       string
 			condition   [3]string

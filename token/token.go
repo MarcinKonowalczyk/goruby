@@ -2,7 +2,6 @@ package token
 
 import (
 	"bytes"
-	"strconv"
 	"unicode"
 )
 
@@ -84,6 +83,7 @@ const (
 	AT    // @
 
 	QMARK  // ?
+	SQMARK // _?
 	SYMBEG // :
 
 	// Keywords
@@ -174,6 +174,7 @@ var tokens = [...]string{
 	AT:           "@",
 
 	QMARK:  "?",
+	SQMARK: "_?",
 	SYMBEG: ":",
 
 	DEF:             "def",

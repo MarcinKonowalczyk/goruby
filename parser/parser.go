@@ -20,7 +20,7 @@ const (
 	precBlockBraces // { |x| }
 	precIfUnless    // modifier-if, modifier-unless
 	precAssignment  // x = 5
-	precTenary      // ?, :
+	precTernary     // ?, :
 	precRange       // .., ...
 	precLogicalOr   // ||
 	precLogicalAnd  // &&
@@ -48,8 +48,9 @@ var precedences = map[token.Type]int{
 	token.NOTEQ:      precEquals,
 	token.SPACESHIP:  precEquals,
 	token.LSHIFT:     precShift,
-	token.QMARK:      precTenary,
-	token.COLON:      precTenary,
+	token.QMARK:      precTernary,
+	token.SQMARK:     precTernary,
+	token.COLON:      precTernary,
 	token.LT:         precLessGreater,
 	token.GT:         precLessGreater,
 	token.LTE:        precLessGreater,
@@ -207,7 +208,8 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerInfix(token.MODASSIGN, p.parseAssignmentOperator)
 	p.registerInfix(token.IF, p.parseModifierConditionalExpression)
 	p.registerInfix(token.UNLESS, p.parseModifierConditionalExpression)
-	p.registerInfix(token.QMARK, p.parseTenaryIfExpression)
+	p.registerInfix(token.QMARK, p.parseTernaryIfExpression)
+	p.registerInfix(token.SQMARK, p.parseTernaryIfExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpressionWithParens)
 	p.registerInfix(token.IDENT, p.parseCallArgument)
 	p.registerInfix(token.CONST, p.parseCallArgument)
@@ -1093,9 +1095,9 @@ func (p *parser) parseIfExpression() ast.Expression {
 	return expression
 }
 
-func (p *parser) parseTenaryIfExpression(condition ast.Expression) ast.Expression {
+func (p *parser) parseTernaryIfExpression(condition ast.Expression) ast.Expression {
 	if p.trace {
-		defer un(trace(p, "parseTenaryIfExpression"))
+		defer un(trace(p, "parseTernaryIfExpression"))
 	}
 	expression := &ast.ConditionalExpression{Token: p.curToken}
 	p.nextToken()
@@ -1103,7 +1105,7 @@ func (p *parser) parseTenaryIfExpression(condition ast.Expression) ast.Expressio
 	expression.Consequence = &ast.BlockStatement{
 		Statements: []ast.Statement{
 			&ast.ExpressionStatement{
-				Expression: p.parseExpression(precTenary),
+				Expression: p.parseExpression(precTernary),
 			},
 		},
 	}
@@ -1466,7 +1468,7 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 	function := &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 	contextCallExpression.Function = function
 
-	if p.peekTokenOneOf(token.SEMICOLON, token.NEWLINE, token.EOF, token.DOT, token.SCOPE, token.RPAREN) {
+	if p.peekTokenOneOf(token.SEMICOLON, token.NEWLINE, token.EOF, token.DOT, token.SCOPE, token.RPAREN, token.SQMARK) {
 		contextCallExpression.Arguments = []ast.Expression{}
 		return contextCallExpression
 	}

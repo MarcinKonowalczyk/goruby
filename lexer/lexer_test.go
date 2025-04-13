@@ -99,6 +99,8 @@ $a
 1.0
 123.456
 123.to_s
+foo.bar?
+foo.bar ? 1 : 2
 `
 
 	tests := []struct {
@@ -380,6 +382,18 @@ $a
 		{token.INT, "123"},
 		{token.DOT, "."},
 		{token.IDENT, "to_s"},
+		{token.NEWLINE, "\n"},
+		{token.IDENT, "foo"},
+		{token.DOT, "."},
+		{token.IDENT, "bar?"},
+		{token.NEWLINE, "\n"},
+		{token.IDENT, "foo"},
+		{token.DOT, "."},
+		{token.IDENT, "bar"},
+		{token.SQMARK, " ?"},
+		{token.INT, "1"},
+		{token.COLON, ":"},
+		{token.INT, "2"},
 		{token.NEWLINE, "\n"},
 		{token.EOF, ""},
 	}
