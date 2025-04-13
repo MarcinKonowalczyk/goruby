@@ -3944,6 +3944,10 @@ func TestSymbolExpression(t *testing.T) {
 			`:'symbol';`,
 			"symbol",
 		},
+		{
+			`:UNDEF`,
+			"UNDEF",
+		},
 	}
 
 	for _, tt := range tests {
