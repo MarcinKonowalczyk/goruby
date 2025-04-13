@@ -562,6 +562,7 @@ func (p *parser) parseRegexLiteral() ast.Expression {
 
 	if p.curToken.Type != token.REGEX {
 		p.Error(p.curToken.Type, "", token.REGEX)
+		return nil
 	}
 
 	regex := &ast.RegexLiteral{Token: p.curToken, Value: p.curToken.Literal}
