@@ -45,12 +45,14 @@ type Mode uint
 
 // parser modes
 const (
+	None          Mode = 0         // no extra modes
 	ParseComments Mode = 1 << iota // parse comments and add them to AST
 	Trace                          // print a trace of parsed productions
 	AllErrors                      // report all errors (not just the first 10 on different lines)
 )
 
 var ParseModes = map[string]Mode{
+	"None":          0,
 	"ParseComments": ParseComments,
 	"Trace":         Trace,
 	"AllErrors":     AllErrors,
