@@ -475,6 +475,65 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 	case *ast.RegexLiteral:
 		return &object.Regex{Value: node.Value, Modifiers: node.Modifiers}, nil
 
+	case *ast.RangeLiteral:
+		left, err := Eval(node.Left, env)
+		if err != nil {
+			return nil, errors.WithMessage(err, "eval range start")
+		}
+		right, err := Eval(node.Right, env)
+		if err != nil {
+			return nil, errors.WithMessage(err, "eval range end")
+		}
+		if left == nil || right == nil {
+			return nil, errors.WithStack(
+				object.NewSyntaxError(fmt.Errorf("range start or end is nil")),
+			)
+		}
+		if left.Type() != right.Type() {
+			return nil, errors.WithStack(
+				object.NewSyntaxError(fmt.Errorf("range start and end are not the same type: %s %s", left.Type(), right.Type())),
+			)
+		}
+		if left.Type() != object.INTEGER_OBJ {
+			return nil, errors.WithStack(
+				object.NewSyntaxError(fmt.Errorf("range start and end are not integers: %s %s", left.Type(), right.Type())),
+			)
+		}
+		leftInt, ok := left.(*object.Integer)
+		if !ok {
+			return nil, errors.WithStack(
+				object.NewSyntaxError(fmt.Errorf("range start is not an integer: %s", left.Type())),
+			)
+		}
+		rightInt, ok := right.(*object.Integer)
+		if !ok {
+			return nil, errors.WithStack(
+				object.NewSyntaxError(fmt.Errorf("range end is not an integer: %s", right.Type())),
+			)
+		}
+
+		left_int := leftInt.Value
+		right_int := rightInt.Value
+
+		if left_int > right_int {
+			return nil, errors.WithStack(
+				object.NewSyntaxError(fmt.Errorf("range start is greater than end: %d > %d", left_int, right_int)),
+			)
+		}
+
+		if node.Inclusive {
+			right_int++
+		}
+
+		elements := make([]object.RubyObject, right_int-left_int)
+		for i := left_int; i < right_int; i++ {
+			elements[i-left_int] = &object.Integer{Value: i}
+		}
+
+		return &object.Array{
+			Elements: elements,
+		}, nil
+
 	default:
 		err := object.NewException("Unknown AST: %T", node)
 		return nil, errors.WithStack(err)
