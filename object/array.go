@@ -57,9 +57,10 @@ func (a *Array) hashKey() hashKey {
 var arrayClassMethods = map[string]RubyMethod{}
 
 var arrayMethods = map[string]RubyMethod{
-	"push":    publicMethod(arrayPush),
-	"unshift": publicMethod(arrayUnshift),
-	"size":    publicMethod(arraySize),
+	"push":     publicMethod(arrayPush),
+	"unshift":  publicMethod(arrayUnshift),
+	"size":     publicMethod(arraySize),
+	"find_all": publicMethod(arrayFindAll),
 }
 
 func arrayPush(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -77,4 +78,37 @@ func arrayUnshift(context CallContext, args ...RubyObject) (RubyObject, error) {
 func arraySize(context CallContext, args ...RubyObject) (RubyObject, error) {
 	array, _ := context.Receiver().(*Array)
 	return &Integer{Value: int64(len(array.Elements))}, nil
+}
+
+func arrayFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {
+	array, _ := context.Receiver().(*Array)
+	if len(args) == 0 {
+		return nil, NewArgumentError("find_all requires a block")
+	}
+	block := args[0]
+	proc, ok := block.(*Proc)
+	if !ok {
+		return nil, NewArgumentError("find_all requires a block")
+	}
+	result := NewArray()
+	for _, elem := range array.Elements {
+		ret, err := proc.Call(context, elem)
+		if err != nil {
+			return nil, err
+		}
+		if ret == nil {
+			return nil, NewArgumentError("find_all requires a block to return a boolean")
+		}
+		if ret.Type() != BOOLEAN_OBJ {
+			return nil, NewArgumentError("find_all requires a block to return a boolean")
+		}
+		boolean, ok := ret.(*Boolean)
+		if !ok {
+			return nil, NewArgumentError("find_all requires a block to return a boolean")
+		}
+		if boolean.Value {
+			result.Elements = append(result.Elements, elem)
+		}
+	}
+	return result, nil
 }
