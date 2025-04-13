@@ -290,6 +290,10 @@ func Walk(v Visitor, node Node) {
 	case nil:
 		// nothing to do
 
+	case *RangeLiteral:
+		Walk(v, n.Left)
+		Walk(v, n.Right)
+
 	default:
 		panic(fmt.Sprintf("ast.Walk: unexpected node type %T", n))
 	}
