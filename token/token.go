@@ -203,16 +203,16 @@ var tokens = [...]string{
 // token character sequence (e.g., for the token ADD, the string is
 // "+"). For all other tokens the string corresponds to the token
 // constant name (e.g. for the token IDENT, the string is "IDENT").
-func (tok Type) String() string {
-	s := ""
-	if 0 <= tok && tok < Type(len(tokens)) {
-		s = tokens[tok]
-	}
-	if s == "" {
-		s = "token(" + strconv.Itoa(int(tok)) + ")"
-	}
-	return s
-}
+// func (tok Type) String() string {
+// 	s := ""
+// 	if 0 <= tok && tok < Type(len(tokens)) {
+// 		s = tokens[tok]
+// 	}
+// 	if s == "" {
+// 		s = "token(" + strconv.Itoa(int(tok)) + ")"
+// 	}
+// 	return s
+// }
 
 var keywords map[string]Type
 
