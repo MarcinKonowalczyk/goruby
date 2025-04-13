@@ -408,11 +408,18 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		if err != nil {
 			return nil, errors.WithMessage(err, "eval IndexExpression left side")
 		}
-		index, err := Eval(node.Index, env)
-		if err != nil {
-			return nil, errors.WithMessage(err, "eval IndexExpression index")
+		switch left := left.(type) {
+		case *object.Proc:
+			// special case for procs
+			// NOTE: we pass unevaluated index to proc
+			return evalProcIndexExpression(env, left, node.Index)
+		default:
+			index, err := Eval(node.Index, env)
+			if err != nil {
+				return nil, errors.WithMessage(err, "eval IndexExpression index")
+			}
+			return evalIndexExpression(left, index)
 		}
-		return evalIndexExpression(left, index)
 	case *ast.PrefixExpression:
 		right, err := Eval(node.Right, env)
 		if err != nil {
@@ -715,6 +722,59 @@ func evalIndexExpression(left, index object.RubyObject) (object.RubyObject, erro
 	}
 }
 
+func evalProcIndexExpression(env object.Environment, target *object.Proc, index ast.Expression) (object.RubyObject, error) {
+	switch index.(type) {
+	case *ast.Splat:
+		// evaluate the splat literal
+		literal := index.(*ast.Splat)
+		evaluated, err := Eval(literal.Value, env)
+		if err != nil {
+			return nil, errors.WithMessage(err, "eval splat value")
+		}
+		if evaluated == nil {
+			return nil, errors.WithStack(
+				object.NewException("splat value is nil"),
+			)
+		}
+		if evaluated.Type() != object.ARRAY_OBJ {
+			return nil, errors.WithStack(
+				object.NewException("splat value is not an array: %s", evaluated.Type()),
+			)
+		}
+		arrObj, ok := evaluated.(*object.Array)
+		if !ok {
+			return nil, errors.WithStack(
+				object.NewException("splat value is not an array: %s", evaluated.Type()),
+			)
+		}
+
+		// call the proc with the splat arguments
+		args := make([]object.RubyObject, len(arrObj.Elements))
+		for i, e := range arrObj.Elements {
+			if e == nil {
+				args[i] = object.NIL
+			} else {
+				args[i] = e
+			}
+		}
+		printable_args := make([]string, len(args))
+		for i, e := range args {
+			if e == nil {
+				printable_args[i] = "nil"
+			} else {
+				printable_args[i] = e.Inspect()
+			}
+		}
+		callContext := &callContext{object.NewCallContext(env, nil)}
+		value, err := target.Call(callContext, args...)
+		return value, err
+	default:
+		// not implemented yet
+		return nil, errors.WithStack(
+			object.NewException("proc index operator not supported: %s", index),
+		)
+	}
+}
 func evalArrayIndexExpression(arrayObject *object.Array, index object.RubyObject) object.RubyObject {
 	idx := index.(*object.Integer).Value
 	maxNegative := -int64(len(arrayObject.Elements))
