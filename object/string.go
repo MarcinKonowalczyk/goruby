@@ -77,6 +77,8 @@ var stringMethods = map[string]RubyMethod{
 	"to_s":       withArity(0, publicMethod(stringToS)),
 	"+":          withArity(1, publicMethod(stringAdd)),
 	"gsub":       withArity(2, publicMethod(stringGsub)),
+	"length":     withArity(0, publicMethod(stringLength)),
+	"==":         withArity(1, publicMethod(stringEqual)),
 }
 
 func stringInitialize(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -132,4 +134,18 @@ func stringGsub(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 	// Return the modified string
 	return &String{Value: result}, nil
+}
+
+func stringLength(context CallContext, args ...RubyObject) (RubyObject, error) {
+	s := context.Receiver().(*String)
+	return &Integer{Value: int64(len(s.Value))}, nil
+}
+
+func stringEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
+	s := context.Receiver().(*String)
+	other, ok := args[0].(*String)
+	if !ok {
+		return nil, NewImplicitConversionTypeError(other, args[0])
+	}
+	return &Boolean{Value: s.Value == other.Value}, nil
 }
