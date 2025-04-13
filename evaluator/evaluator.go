@@ -210,10 +210,11 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		}
 		return block, nil
 	case *ast.ArrayLiteral:
-		elements, err := evalExpressions(node.Elements, env)
+		elements, err := evalArrayElements(node.Elements, env)
 		if err != nil {
 			return nil, errors.WithMessage(err, "eval array literal")
 		}
+		// TODO: If any of the elements is a splat, we need to flatten them
 		return &object.Array{Elements: elements}, nil
 	case *ast.HashLiteral:
 		var hash object.Hash
@@ -572,6 +573,44 @@ func evalExpressions(exps []ast.Expression, env object.Environment) ([]object.Ru
 			return nil, err
 		}
 		result = append(result, evaluated)
+	}
+	return result, nil
+}
+
+func evalArrayElements(elements []ast.Expression, env object.Environment) ([]object.RubyObject, error) {
+	var result []object.RubyObject
+
+	for _, e := range elements {
+		splat, ok := e.(*ast.Splat)
+		if ok {
+			// we're a splat! eval the splat and append the elements
+			evaluated, err := Eval(splat.Value, env)
+			if err != nil {
+				return nil, errors.WithMessage(err, "eval splat value")
+			}
+			if evaluated != nil {
+				if evaluated.Type() != object.ARRAY_OBJ {
+					return nil, errors.WithStack(
+						object.NewException("splat value is not an array: %s", evaluated.Type()),
+					)
+				}
+				arrObj, ok := evaluated.(*object.Array)
+				if !ok {
+					return nil, errors.WithStack(
+						object.NewException("splat value is not an array: %s", evaluated.Type()),
+					)
+				}
+
+				result = append(result, arrObj.Elements...)
+			}
+		} else {
+			// not a splat. just eval the element
+			evaluated, err := Eval(e, env)
+			if err != nil {
+				return nil, errors.WithMessage(err, "eval array elements")
+			}
+			result = append(result, evaluated)
+		}
 	}
 	return result, nil
 }

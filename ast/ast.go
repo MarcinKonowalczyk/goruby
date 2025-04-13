@@ -962,6 +962,35 @@ func (rl *RegexLiteral) String() string {
 var _ Expression = &RegexLiteral{}
 var _ literal = &RegexLiteral{}
 
+// A Splat represents a splat operator in the AST
+type Splat struct {
+	Token token.Token // the '*'
+	Value Expression
+}
+
+func (s *Splat) expressionNode() {}
+
+// func (s *Splat) literalNode() {}
+
+// Pos returns the position of first character belonging to the node
+func (s *Splat) Pos() int { return s.Token.Pos }
+
+// End returns the position of first character immediately after the node
+
+func (s *Splat) End() int { return s.Value.End() }
+
+// TokenLiteral returns the literal from token.SPLAT
+
+func (s *Splat) TokenLiteral() string { return s.Token.Literal }
+func (s *Splat) String() string {
+	var out bytes.Buffer
+	out.WriteString(s.Token.Literal)
+	out.WriteString(s.Value.String())
+	return out.String()
+}
+
+var _ Expression = &Splat{}
+
 // An IndexExpression represents an array or hash access in the AST
 type IndexExpression struct {
 	Token  token.Token // The [ token
