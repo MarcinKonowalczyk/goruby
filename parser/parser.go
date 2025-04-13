@@ -1268,6 +1268,10 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 	}
 	lit.EndToken = p.curToken
 	inspect := func(n ast.Node) bool {
+		if _, ok := n.(*ast.Splat); ok {
+			// skip walking the splat since we don't want to evaluate it
+			return false
+		}
 		x, ok := n.(*ast.Assignment)
 		if !ok {
 			return true
