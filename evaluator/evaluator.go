@@ -150,9 +150,59 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			envInfo.Env().Set(node.Receiver.Value, extended)
 		}
 		return &object.Symbol{Value: node.Name.Value}, nil
-	case *ast.BlockExpression:
-		params := node.Parameters
+
+	case *ast.ProcedureLiteral:
+		// context, _ := env.Get("self")
+		// _, inClassOrModule := context.(*object.Self).RubyObject.(object.Environment)
+		// if node.Receiver != nil {
+		// 	rec, err := Eval(node.Receiver, env)
+		// 	if err != nil {
+		// 		return nil, errors.WithMessage(err, "eval function receiver")
+		// 	}
+		// 	context = rec
+		// 	_, recIsEnv := context.(object.Environment)
+		// 	if recIsEnv || inClassOrModule {
+		// 		inClassOrModule = true
+		// 		context = context.Class().(object.RubyClassObject)
+		// 	}
+		// }
+		params := make([]*object.FunctionParameter, len(node.Parameters))
+		for i, param := range node.Parameters {
+			def, err := Eval(param.Default, env)
+			if err != nil {
+				return nil, errors.WithMessage(err, "eval function literal param")
+			}
+			params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def}
+		}
 		body := node.Body
+		// function := &object.Function{
+		// 	Parameters: params,
+		// 	Env:        env,
+		// 	Body:       body,
+		// }
+		// extended := object.AddMethod(context, node.Name.Value, function)
+		// if node.Receiver != nil && !inClassOrModule {
+		// 	envInfo, _ := object.EnvStat(env, context)
+		// 	envInfo.Env().Set(node.Receiver.Value, extended)
+		// }
+		return &object.Proc{
+			Parameters:             params,
+			Body:                   body,
+			Env:                    env,
+			ArgumentCountMandatory: true,
+		}, nil
+
+	case *ast.BlockExpression:
+		node_params := node.Parameters
+		body := node.Body
+		params := make([]*object.FunctionParameter, len(node_params))
+		for i, param := range node_params {
+			def, err := Eval(param.Default, env)
+			if err != nil {
+				return nil, errors.WithMessage(err, "eval function literal param")
+			}
+			params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def}
+		}
 		block := &object.Proc{
 			Parameters: params,
 			Body:       body,
