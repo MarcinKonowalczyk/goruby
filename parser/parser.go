@@ -1017,6 +1017,14 @@ func (p *parser) parseIfExpression() ast.Expression {
 		p.accept(token.THEN)
 	}
 
+	// there may be a comment here. gobble it up
+	if p.peekTokenIs(token.HASH) {
+		p.accept(token.HASH)
+		if p.peekTokenIs(token.STRING) {
+			p.accept(token.STRING)
+		}
+	}
+
 	if !p.peekTokenOneOf(token.NEWLINE, token.SEMICOLON) {
 		msg := fmt.Sprintf(
 			"could not parse if expression: unexpected token %s: '%s'",
