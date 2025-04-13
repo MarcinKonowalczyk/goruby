@@ -36,19 +36,20 @@ func (i *Integer) hashKey() hashKey {
 var integerClassMethods = map[string]RubyMethod{}
 
 var integerMethods = map[string]RubyMethod{
-	"div": withArity(1, publicMethod(integerDiv)),
-	"/":   withArity(1, publicMethod(integerDiv)),
-	"*":   withArity(1, publicMethod(integerMul)),
-	"+":   withArity(1, publicMethod(integerAdd)),
-	"-":   withArity(1, publicMethod(integerSub)),
-	"%":   withArity(1, publicMethod(integerModulo)),
-	"<":   withArity(1, publicMethod(integerLt)),
-	">":   withArity(1, publicMethod(integerGt)),
-	"==":  withArity(1, publicMethod(integerEq)),
-	"!=":  withArity(1, publicMethod(integerNeq)),
-	">=":  withArity(1, publicMethod(integerGte)),
-	"<=":  withArity(1, publicMethod(integerLte)),
-	"<=>": withArity(1, publicMethod(integerSpaceship)),
+	"div":  withArity(1, publicMethod(integerDiv)),
+	"/":    withArity(1, publicMethod(integerDiv)),
+	"*":    withArity(1, publicMethod(integerMul)),
+	"+":    withArity(1, publicMethod(integerAdd)),
+	"-":    withArity(1, publicMethod(integerSub)),
+	"%":    withArity(1, publicMethod(integerModulo)),
+	"<":    withArity(1, publicMethod(integerLt)),
+	">":    withArity(1, publicMethod(integerGt)),
+	"==":   withArity(1, publicMethod(integerEq)),
+	"!=":   withArity(1, publicMethod(integerNeq)),
+	">=":   withArity(1, publicMethod(integerGte)),
+	"<=":   withArity(1, publicMethod(integerLte)),
+	"<=>":  withArity(1, publicMethod(integerSpaceship)),
+	"to_i": withArity(0, publicMethod(integerToI)),
 }
 
 func integerDiv(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -205,4 +206,9 @@ func integerLte(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return TRUE, nil
 	}
 	return FALSE, nil
+}
+
+func integerToI(context CallContext, args ...RubyObject) (RubyObject, error) {
+	i := context.Receiver().(*Integer)
+	return i, nil
 }

@@ -22,6 +22,7 @@ const (
 	ARRAY_OBJ          Type = "ARRAY"
 	HASH_OBJ           Type = "HASH"
 	INTEGER_OBJ        Type = "INTEGER"
+	FLOAT_OBJ          Type = "FLOAT"
 	STRING_OBJ         Type = "STRING"
 	REGEX_OBJ          Type = "REGEX"
 	SYMBOL_OBJ         Type = "SYMBOL"

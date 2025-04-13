@@ -330,7 +330,7 @@ func startLexer(l *Lexer) StateFn {
 
 	default:
 		if isDigit(r) {
-			return lexDigit
+			return lexNumber
 		} else if isLetter(r) {
 			return lexIdentifier
 		} else {
@@ -358,13 +358,45 @@ func lexIdentifier(l *Lexer) StateFn {
 	return startLexer
 }
 
-func lexDigit(l *Lexer) StateFn {
+// func lexDigit(l *Lexer) StateFn {
+// 	r := l.next()
+// 	for isDigitOrUnderscore(r) {
+// 		r = l.next()
+// 	}
+// 	l.backup()
+// 	l.emit(token.INT)
+// 	return startLexer
+// }
+
+func lexNumber(l *Lexer) StateFn {
+	// walk until we find a non digit
 	r := l.next()
 	for isDigitOrUnderscore(r) {
 		r = l.next()
 	}
-	l.backup()
-	l.emit(token.INT)
+	if r == '.' {
+		// 123. ..
+		r = l.next()
+		if isDigit(r) {
+			// 123.4 ..
+			// walk until we find a non digit
+			for isDigitOrUnderscore(r) {
+				r = l.next()
+			}
+			l.backup()
+			l.emit(token.FLOAT)
+		} else {
+			// 123. ..
+			// maybe a method call. back up twice
+			l.backup()
+			l.backup()
+			l.emit(token.INT)
+		}
+	} else {
+		// we have an int
+		l.backup()
+		l.emit(token.INT)
+	}
 	return startLexer
 }
 

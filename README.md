@@ -147,9 +147,9 @@ To run the command as one off run `go run main.go`.
 		- [ ] octal numbers `0252`, `0o252`, `0O252`
 		- [ ] hexadecimal numbers `0xaa`, `0xAa`, `0xAA`, `0Xaa`, `0XAa`, `0XaA`
 		- [ ] binary numbers `0b10101010`, `0B10101010`
-	- [ ] floats
+	- [x] floats
 		- [ ] float arithmetics
-		- [ ] `12.34`
+		- [x] `12.34`
 		- [ ] `1234e-2`
 		- [ ] `1.234E1`
 		- [ ] floats with underscores `2.2_22`

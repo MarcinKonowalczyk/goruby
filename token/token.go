@@ -117,6 +117,7 @@ var tokens = [...]string{
 	CONST:          "CONST",
 	GLOBAL:         "GLOBAL",
 	INT:            "INT",
+	FLOAT:          "FLOAT",
 	STRING:         "STRING",
 	REGEX:          "REGEX",
 	REGEX_MODIFIER: "REGEX_MODIFIER",

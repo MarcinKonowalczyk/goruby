@@ -474,6 +474,36 @@ func (il *IntegerLiteral) End() int { return il.Token.Pos + len(fmt.Sprintf("%d"
 func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
 func (il *IntegerLiteral) String() string       { return fmt.Sprintf("%d", il.Value) }
 
+var (
+	_ Expression = &IntegerLiteral{}
+	_ literal    = &IntegerLiteral{}
+)
+
+// FloatLiteral represents a float in the AST
+type FloatLiteral struct {
+	Token token.Token
+	Value float64
+}
+
+func (fl *FloatLiteral) expressionNode() {}
+func (fl *FloatLiteral) literalNode()    {}
+
+// Pos returns the position of first character belonging to the node
+func (fl *FloatLiteral) Pos() int { return fl.Token.Pos }
+
+// End returns the position of first character immediately after the node
+func (fl *FloatLiteral) End() int { return fl.Token.Pos + len(fmt.Sprintf("%f", fl.Value)) }
+
+// TokenLiteral returns the literal from the token.FLOAT token
+func (fl *FloatLiteral) TokenLiteral() string { return fl.Token.Literal }
+
+func (fl *FloatLiteral) String() string { return fmt.Sprintf("%f", fl.Value) }
+
+var (
+	_ Expression = &FloatLiteral{}
+	_ literal    = &FloatLiteral{}
+)
+
 // Nil represents the 'nil' keyword
 type Nil struct {
 	Token token.Token

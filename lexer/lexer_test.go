@@ -96,6 +96,9 @@ $a
 1...2
 /\//
 /a/i
+1.0
+123.456
+123.to_s
 `
 
 	tests := []struct {
@@ -370,6 +373,14 @@ $a
 		{token.REGEX, "a"},
 		{token.REGEX_MODIFIER, "i"},
 		{token.NEWLINE, "\n"},
+		{token.FLOAT, "1.0"},
+		{token.NEWLINE, "\n"},
+		{token.FLOAT, "123.456"},
+		{token.NEWLINE, "\n"},
+		{token.INT, "123"},
+		{token.DOT, "."},
+		{token.IDENT, "to_s"},
+		{token.NEWLINE, "\n"},
 		{token.EOF, ""},
 	}
 
@@ -383,7 +394,7 @@ $a
 		token := lexer.NextToken()
 
 		if token.Type != testCase.expectedType {
-			t.Logf("Expected token with type %q at position %d, got type %q\n", testCase.expectedType, pos, token.Type)
+			t.Logf("Expected token with type %q at position %d, got type %q with value %q\n", testCase.expectedType, pos, token.Type, token.Literal)
 			t.FailNow()
 		}
 

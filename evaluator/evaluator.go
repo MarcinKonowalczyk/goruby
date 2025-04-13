@@ -59,6 +59,8 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 	// Literals
 	case (*ast.IntegerLiteral):
 		return object.NewInteger(node.Value), nil
+	case (*ast.FloatLiteral):
+		return object.NewFloat(node.Value), nil
 	case (*ast.Boolean):
 		return nativeBoolToBooleanObject(node.Value), nil
 	case (*ast.Nil):
