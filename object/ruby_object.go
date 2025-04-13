@@ -30,6 +30,7 @@ const (
 	NIL_CLASS_OBJ      Type = "NIL_CLASS"
 	EXCEPTION_OBJ      Type = "EXCEPTION"
 	MODULE_OBJ         Type = "MODULE"
+	PROC_OBJ           Type = "PROC"
 	SELF               Type = "SELF"
 )
 

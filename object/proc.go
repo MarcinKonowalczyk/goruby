@@ -38,7 +38,7 @@ type Proc struct {
 }
 
 // Type returns proc_OBJ
-func (p *Proc) Type() Type { return "" }
+func (p *Proc) Type() Type { return PROC_OBJ }
 
 // Inspect returns the proc body
 func (p *Proc) Inspect() string {
