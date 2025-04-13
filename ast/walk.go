@@ -158,6 +158,7 @@ func Walk(v Visitor, node Node) {
 		*Self,
 		*BlockCapture,
 		*Keyword__FILE__,
+		*RegexLiteral,
 		*Comment:
 		// nothing to do
 
