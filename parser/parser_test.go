@@ -4327,6 +4327,108 @@ func TestRegexLiteral(t *testing.T) {
 	}
 }
 
+func TestArraySplat(t *testing.T) {
+	type Expected struct {
+		name     string
+		is_splat bool
+	}
+	tests := []struct {
+		input    string
+		length   int
+		expected []Expected
+	}{
+		{
+			input:  "[*foo]",
+			length: 1,
+			expected: []Expected{
+				{
+					name:     "foo",
+					is_splat: true,
+				},
+			},
+		},
+		{
+			input:  "[*foo, bar]",
+			length: 2,
+			expected: []Expected{
+				{
+					name:     "foo",
+					is_splat: true,
+				},
+				{
+					name:     "bar",
+					is_splat: false,
+				},
+			},
+		},
+		{
+			input:  "[foo, *bar]",
+			length: 2,
+			expected: []Expected{
+				{
+					name:     "foo",
+					is_splat: false,
+				},
+				{
+					name:     "bar",
+					is_splat: true,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		program, err := parseSource(tt.input, p.Trace)
+		checkParserErrors(t, err)
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", stmt)
+		}
+
+		arrayLit, ok := stmt.Expression.(*ast.ArrayLiteral)
+		if !ok {
+			t.Fatalf("stmt.Expression is not ast.ArrayLiteral. got=%T", stmt.Expression)
+		}
+
+		if len(arrayLit.Elements) != tt.length {
+			t.Fatalf("wrong number of elements. got=%d", len(arrayLit.Elements))
+		}
+
+		for i, expected := range tt.expected {
+			element := arrayLit.Elements[i]
+			if expected.is_splat {
+				expected_expr := &ast.Identifier{
+					Value: expected.name,
+				}
+				if !testSplat(t, element, expected_expr) {
+					return
+				}
+			} else {
+				if !testIdentifier(t, element, expected.name) {
+					return
+				}
+			}
+
+		}
+	}
+}
+
+func TestParsePyraRb(t *testing.T) {
+	// t.Skip("Not implemented yet")
+	filename := "../pyra_test.rb"
+	file, err := os.ReadFile(filename)
+	if err != nil {
+		t.Skip("Skipping test, file not found:", filename)
+	}
+
+	program, err := parseSource(string(file))
+	checkParserErrors(t, err)
+
+	fmt.Printf("Parsed %d statements\n", len(program.Statements))
+
+}
+
 //===========================================================
 //
 //  ##   ##  #####  ##      #####   #####  #####     ####
@@ -4570,6 +4672,23 @@ func testIdentifier(t *testing.T, exp ast.Expression, value string) bool {
 		return false
 	}
 
+	return true
+}
+
+func testSplat(t *testing.T, exp ast.Expression, value ast.Expression) bool {
+	t.Helper()
+	splat, ok := exp.(*ast.Splat)
+	if !ok {
+		t.Errorf("exp not *ast.Splat. got=%T", exp)
+		return false
+	}
+	if !testIdentifier(t, splat.Value, value.String()) {
+		return false
+	}
+	if splat.TokenLiteral() != "*" {
+		t.Errorf("splat.TokenLiteral not *. got=%s", splat.TokenLiteral())
+		return false
+	}
 	return true
 }
 

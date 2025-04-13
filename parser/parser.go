@@ -177,6 +177,7 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerPrefix(token.CAPTURE, p.parseBlockCapture)
 	p.registerPrefix(token.LAMBDAROCKET, p.parseLambdaLiteral)
 	p.registerPrefix(token.REGEX, p.parseRegexLiteral)
+	p.registerPrefix(token.ASTERISK, p.parseSplat)
 
 	p.infixParseFns = make(map[token.Type]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -570,6 +571,20 @@ func (p *parser) parseRegexLiteral() ast.Expression {
 		regex.Modifiers = p.curToken.Literal
 	}
 	return regex
+}
+
+func (p *parser) parseSplat() ast.Expression {
+	if p.trace {
+		defer un(trace(p, "parseSplat"))
+	}
+	splat := &ast.Splat{Token: p.curToken}
+	p.nextToken()
+	if p.curToken.Type != token.IDENT {
+		p.Error(p.curToken.Type, "", token.IDENT)
+		return nil
+	}
+	splat.Value = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	return splat
 }
 
 func (p *parser) parseRescueBlock() *ast.RescueBlock {
