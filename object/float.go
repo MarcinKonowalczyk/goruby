@@ -24,7 +24,7 @@ type Float struct {
 }
 
 // Inspect returns the value as string
-func (i *Float) Inspect() string { return fmt.Sprintf("%f", i.Value) }
+func (i *Float) Inspect() string { return fmt.Sprintf("%.16f", i.Value) }
 
 // Type returns FLOAT_OBJ
 func (i *Float) Type() Type { return FLOAT_OBJ }
