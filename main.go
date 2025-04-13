@@ -32,7 +32,7 @@ func main() {
 	flag.Var(&onelineScripts, "e", "one line of script. Several -e's allowed. Omit [programfile]")
 	flag.BoolVar(&trace, "trace", false, "trace execution")
 	flag.Parse()
-	fmt.Println("goruby version 0.1.0")
+	// fmt.Println("goruby version 0.1.0")
 	interpreter := interpreter.NewInterpreter()
 	interpreter.Trace = trace
 	if len(onelineScripts) != 0 {
