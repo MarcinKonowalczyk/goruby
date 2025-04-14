@@ -119,6 +119,8 @@ func TestTypeSting(t *testing.T) {
 		{tk: BEGIN, str: "BEGIN", repr: "begin"},
 		{tk: RESCUE, str: "RESCUE", repr: "rescue"},
 		{tk: WHILE, str: "WHILE", repr: "while"},
+		{tk: LOOP, str: "LOOP", repr: "loop"},
+		{tk: BREAK, str: "BREAK", repr: "break"},
 		{tk: KEYWORD__FILE__, str: "KEYWORD__FILE__", repr: "__FILE__"},
 	}
 

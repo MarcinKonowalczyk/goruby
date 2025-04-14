@@ -107,6 +107,8 @@ const (
 	BEGIN
 	RESCUE
 	WHILE
+	LOOP
+	BREAK
 	KEYWORD__FILE__
 	keyword_end
 	types_end
@@ -228,6 +230,8 @@ var type_strings = [...]string{
 	BEGIN:           "BEGIN",
 	RESCUE:          "RESCUE",
 	WHILE:           "WHILE",
+	LOOP:            "LOOP",
+	BREAK:           "BREAK",
 	KEYWORD__FILE__: "KEYWORD__FILE__",
 }
 
@@ -316,6 +320,8 @@ var type_reprs = [...]string{
 	BEGIN:           "begin",
 	RESCUE:          "rescue",
 	WHILE:           "while",
+	LOOP:            "loop",
+	BREAK:           "break",
 	KEYWORD__FILE__: "__FILE__",
 }
 
