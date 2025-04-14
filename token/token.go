@@ -111,6 +111,17 @@ const (
 	keyword_end
 )
 
+var marker_types = [...]Type{
+	literal_beg,
+	literal_end,
+	operator_beg,
+	operator_end,
+	operator_assign_beg,
+	operator_assign_end,
+	keyword_beg,
+	keyword_end,
+}
+
 var token_strings = [...]string{
 	ILLEGAL: "ILLEGAL",
 	EOF:     "EOF",
@@ -302,7 +313,23 @@ func (tok Type) String() string {
 	return s
 }
 
-func TypeFromString(s string) Type {
+func ToType(s any) Type {
+	switch s := s.(type) {
+	case string:
+		return typeFromString(s)
+	case Type:
+		return s
+	case int:
+		if s < 0 || s >= len(token_strings) {
+			return ILLEGAL
+		}
+		return Type(s)
+	default:
+		panic("ToType: unknown type")
+	}
+}
+
+func typeFromString(s string) Type {
 	for i := 0; i < len(token_strings); i++ {
 		if token_strings[i] == s {
 			return Type(i)

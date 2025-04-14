@@ -126,8 +126,8 @@ func TestTypeSting(t *testing.T) {
 		if test.tk.String() != test.str {
 			t.Errorf("Expected %s, got %s", test.str, test.tk.String())
 		}
-		if TypeFromString(test.str) != test.tk {
-			t.Errorf("Expected %s, got %s", test.str, TypeFromString(test.str))
+		if ToType(test.str) != test.tk {
+			t.Errorf("Expected %s, got %s", test.str, ToType(test.str))
 		}
 		if test.repr != "" {
 			if token_reprs[test.tk] != test.repr {
