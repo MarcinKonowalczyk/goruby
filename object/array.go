@@ -61,6 +61,8 @@ var arrayMethods = map[string]RubyMethod{
 	"unshift":  publicMethod(arrayUnshift),
 	"size":     publicMethod(arraySize),
 	"find_all": publicMethod(arrayFindAll),
+	"first":    publicMethod(arrayFirst),
+	"map":      publicMethod(arrayMap),
 }
 
 func arrayPush(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -109,6 +111,55 @@ func arrayFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 		if boolean.Value {
 			result.Elements = append(result.Elements, elem)
 		}
+	}
+	return result, nil
+}
+
+func arrayFirst(context CallContext, args ...RubyObject) (RubyObject, error) {
+	array, _ := context.Receiver().(*Array)
+	if len(args) == 0 {
+		if len(array.Elements) == 0 {
+			return nil, NewArgumentError("array is empty")
+		}
+		return array.Elements[0], nil
+	}
+	if len(args) > 1 {
+		return nil, NewArgumentError("wrong number of arguments (given %d, expected 0..1)", len(args))
+	}
+	n, ok := args[0].(*Integer)
+	if !ok {
+		return nil, NewArgumentError("argument must be an Integer")
+	}
+	if n.Value < 0 {
+		return nil, NewArgumentError("negative array size (or size too big)")
+	}
+	if int(n.Value) > len(array.Elements) {
+		return nil, NewArgumentError("array size too big")
+	}
+	result := NewArray()
+	for i := 0; i < int(n.Value); i++ {
+		result.Elements = append(result.Elements, array.Elements[i])
+	}
+	return result, nil
+}
+
+func arrayMap(context CallContext, args ...RubyObject) (RubyObject, error) {
+	array, _ := context.Receiver().(*Array)
+	if len(args) == 0 {
+		return nil, NewArgumentError("map requires a block")
+	}
+	block := args[0]
+	proc, ok := block.(*Proc)
+	if !ok {
+		return nil, NewArgumentError("map requires a block")
+	}
+	result := NewArray()
+	for _, elem := range array.Elements {
+		ret, err := proc.Call(context, elem)
+		if err != nil {
+			return nil, err
+		}
+		result.Elements = append(result.Elements, ret)
 	}
 	return result, nil
 }
