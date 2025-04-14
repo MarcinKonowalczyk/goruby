@@ -79,6 +79,7 @@ var stringMethods = map[string]RubyMethod{
 	"gsub":       withArity(2, publicMethod(stringGsub)),
 	"length":     withArity(0, publicMethod(stringLength)),
 	"==":         withArity(1, publicMethod(stringEqual)),
+	"lines":      withArity(0, publicMethod(stringLines)),
 }
 
 func stringInitialize(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -148,4 +149,14 @@ func stringEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewImplicitConversionTypeError(other, args[0])
 	}
 	return &Boolean{Value: s.Value == other.Value}, nil
+}
+
+func stringLines(context CallContext, args ...RubyObject) (RubyObject, error) {
+	s := context.Receiver().(*String)
+	lines := regexp.MustCompile("\n").Split(s.Value, -1)
+	arr := NewArray()
+	for _, line := range lines {
+		arr.Elements = append(arr.Elements, &String{Value: line})
+	}
+	return arr, nil
 }
