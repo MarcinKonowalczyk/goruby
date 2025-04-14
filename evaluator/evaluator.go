@@ -544,6 +544,29 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			Elements: elements,
 		}, nil
 
+	case *ast.Splat:
+
+		val, err := Eval(node.Value, env)
+		if err != nil {
+			return nil, errors.WithMessage(err, "eval splat value")
+		}
+		if val == nil {
+			return nil, errors.WithStack(
+				object.NewSyntaxError(fmt.Errorf("splat value is nil")),
+			)
+		}
+
+		switch val := val.(type) {
+		case *object.Array:
+			return &object.Array{
+				Elements: val.Elements,
+			}, nil
+		default:
+			return &object.Array{
+				Elements: []object.RubyObject{val},
+			}, nil
+		}
+
 	default:
 		err := object.NewException("Unknown AST: %T", node)
 		return nil, errors.WithStack(err)
