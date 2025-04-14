@@ -2,6 +2,7 @@ package token
 
 import (
 	"bytes"
+	"strconv"
 	"unicode"
 )
 
@@ -110,7 +111,94 @@ const (
 	keyword_end
 )
 
-var tokens = [...]string{
+var token_strings = [...]string{
+	ILLEGAL: "ILLEGAL",
+	EOF:     "EOF",
+
+	IDENT:          "IDENT",
+	CONST:          "CONST",
+	GLOBAL:         "GLOBAL",
+	INT:            "INT",
+	FLOAT:          "FLOAT",
+	STRING:         "STRING",
+	REGEX:          "REGEX",
+	REGEX_MODIFIER: "REGEX_MODIFIER",
+
+	ASSIGN:    "ASSIGN",
+	ADDASSIGN: "ADDASSIGN",
+	SUBASSIGN: "SUBASSIGN",
+	MULASSIGN: "MULASSIGN",
+	DIVASSIGN: "DIVASSIGN",
+	MODASSIGN: "MODASSIGN",
+
+	PLUS:       "PLUS",
+	MINUS:      "MINUS",
+	BANG:       "BANG",
+	ASTERISK:   "ASTERISK",
+	SLASH:      "SLASH",
+	MODULO:     "MODULO",
+	AND:        "AND",
+	CAPTURE:    "CAPTURE",
+	LOGICALAND: "LOGICALAND",
+	LOGICALOR:  "LOGICALOR",
+
+	LT:        "LT",
+	LTE:       "LTE",
+	GT:        "GT",
+	GTE:       "GTE",
+	EQ:        "EQ",
+	NOTEQ:     "NOTEQ",
+	SPACESHIP: "SPACESHIP",
+	LSHIFT:    "LSHIFT",
+
+	NEWLINE: "NEWLINE",
+	// WHITESPACE: "WHITESPACE",
+	COMMA:     "COMMA",
+	SEMICOLON: "SEMICOLON",
+	HASH:      "HASH",
+	DOT:       "DOT",
+	DDOT:      "DDOT",
+	DDDOT:     "DDDOT",
+	COLON:     "COLON",
+	LPAREN:    "LPAREN",
+	RPAREN:    "RPAREN",
+	LBRACE:    "LBRACE",
+	RBRACE:    "RBRACE",
+	LBRACKET:  "LBRACKET",
+	RBRACKET:  "RBRACKET",
+	PIPE:      "PIPE",
+
+	SCOPE:        "SCOPE",
+	HASHROCKET:   "HASHROCKET",
+	LAMBDAROCKET: "LAMBDAROCKET",
+	AT:           "AT",
+
+	QMARK:  "QMARK",
+	SQMARK: "SQMARK",
+	SYMBEG: "SYMBEG",
+
+	DEF:             "DEF",
+	SELF:            "SELF",
+	END:             "END",
+	UNLESS:          "UNLESS",
+	IF:              "IF",
+	THEN:            "THEN",
+	ELSE:            "ELSE",
+	TRUE:            "TRUE",
+	FALSE:           "FALSE",
+	RETURN:          "RETURN",
+	NIL:             "NIL",
+	MODULE:          "MODULE",
+	CLASS:           "CLASS",
+	DO:              "DO",
+	YIELD:           "YIELD",
+	BEGIN:           "BEGIN",
+	RESCUE:          "RESCUE",
+	WHILE:           "WHILE",
+	KEYWORD__FILE__: "KEYWORD__FILE__",
+}
+
+var token_reprs = [...]string{
 	ILLEGAL: "ILLEGAL",
 	EOF:     "EOF",
 
@@ -150,7 +238,7 @@ var tokens = [...]string{
 	SPACESHIP: "<=>",
 	LSHIFT:    "<<",
 
-	NEWLINE: "NEWLINE",
+	NEWLINE: "\\n",
 	// WHITESPACE: "WHITESPACE",
 	COMMA:     ",",
 	SEMICOLON: ";",
@@ -203,23 +291,32 @@ var tokens = [...]string{
 // token character sequence (e.g., for the token ADD, the string is
 // "+"). For all other tokens the string corresponds to the token
 // constant name (e.g. for the token IDENT, the string is "IDENT").
-// func (tok Type) String() string {
-// 	s := ""
-// 	if 0 <= tok && tok < Type(len(tokens)) {
-// 		s = tokens[tok]
-// 	}
-// 	if s == "" {
-// 		s = "token(" + strconv.Itoa(int(tok)) + ")"
-// 	}
-// 	return s
-// }
+func (tok Type) String() string {
+	s := ""
+	if 0 <= tok && tok < Type(len(token_strings)) {
+		s = token_strings[tok]
+	}
+	if s == "" {
+		s = "token(" + strconv.Itoa(int(tok)) + ")"
+	}
+	return s
+}
+
+func TypeFromString(s string) Type {
+	for i := 0; i < len(token_strings); i++ {
+		if token_strings[i] == s {
+			return Type(i)
+		}
+	}
+	return ILLEGAL
+}
 
 var keywords map[string]Type
 
 func init() {
 	keywords = make(map[string]Type)
 	for i := keyword_beg + 1; i < keyword_end; i++ {
-		keywords[tokens[i]] = i
+		keywords[token_reprs[i]] = i
 	}
 }
 
