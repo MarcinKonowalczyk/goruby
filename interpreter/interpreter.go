@@ -27,6 +27,18 @@ func NewInterpreter() Interpreter {
 	loadPathArr := loadPath.(*object.Array)
 	loadPathArr.Elements = append(loadPathArr.Elements, &object.String{Value: cwd})
 	env.SetGlobal("$:", loadPathArr)
+
+	// setup ARGV
+	argv := os.Args[1:]
+	if len(argv) > 0 {
+		// take off one more element
+		argv = argv[1:]
+	}
+	argvArr := object.NewArray()
+	for _, arg := range argv {
+		argvArr.Elements = append(argvArr.Elements, &object.String{Value: arg})
+	}
+	env.SetGlobal("ARGV", argvArr)
 	return Interpreter{environment: env}
 }
 
