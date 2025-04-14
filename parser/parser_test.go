@@ -4453,7 +4453,7 @@ func TestArraySplat(t *testing.T) {
 
 func TestParsePyraRb(t *testing.T) {
 	// t.Skip("Not implemented yet")
-	filename := "../pyra_test.rb"
+	filename := "../pyra.rb"
 	file, err := os.ReadFile(filename)
 	if err != nil {
 		t.Skip("Skipping test, file not found:", filename)
