@@ -1,16 +1,13 @@
 package lexer
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/token"
 )
-
-// loop {
-// 	break unless x < 10
-// }
 
 // raise "foo" unless x < 10
 type expected struct {
@@ -19,8 +16,12 @@ type expected struct {
 }
 
 func expect[T string | token.Token](tk T, literal string) expected {
+	typ := token.ToType(tk)
+	if typ == token.ILLEGAL {
+		panic(fmt.Sprintf("expect: %q is not a valid token type", tk))
+	}
 	return expected{
-		typ: token.ToType(tk),
+		typ: typ,
 		lit: literal,
 	}
 }
@@ -237,6 +238,26 @@ func TestLex(t *testing.T) {
 				expect("IDENT", "x"),
 				NL,
 				expect("END", "end"),
+			},
+		},
+		{
+			desc: "loop",
+			lines: `
+				loop {
+					break unless x < 10
+				}
+			`,
+			exp: []expected{
+				expect("LOOP", "loop"),
+				expect("LBRACE", "{"),
+				NL,
+				expect("BREAK", "break"),
+				expect("UNLESS", "unless"),
+				expect("IDENT", "x"),
+				expect("LT", "<"),
+				expect("INT", "10"),
+				NL,
+				expect("RBRACE", "}"),
 			},
 		},
 		{
