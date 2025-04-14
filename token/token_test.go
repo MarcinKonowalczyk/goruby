@@ -4,6 +4,15 @@ import (
 	"testing"
 )
 
+func filterEmpty(arr []string) []string {
+	var filtered []string
+	for _, repr := range arr {
+		if repr != "" {
+			filtered = append(filtered, repr)
+		}
+	}
+	return filtered
+}
 func findMissingSkipEmpty(present []string, arr []string) []string {
 	present_map := make(map[string]bool)
 	for _, repr := range present {
@@ -14,9 +23,7 @@ func findMissingSkipEmpty(present []string, arr []string) []string {
 	var missing []string
 	for _, repr := range arr {
 		if _, ok := present_map[repr]; !ok {
-			if repr != "" { // skip empty strings
-				missing = append(missing, repr)
-			}
+			missing = append(missing, repr)
 		}
 	}
 
@@ -130,8 +137,8 @@ func TestTypeSting(t *testing.T) {
 			t.Errorf("Expected %s, got %s", test.str, ToType(test.str))
 		}
 		if test.repr != "" {
-			if token_reprs[test.tk] != test.repr {
-				t.Errorf("Expected %s, got %s", test.repr, token_reprs[test.tk])
+			if type_reprs[test.tk] != test.repr {
+				t.Errorf("Expected %s, got %s", test.repr, type_reprs[test.tk])
 			}
 		} else {
 			t.Errorf("Expected non-empty repr for %s", test.tk)
@@ -145,14 +152,33 @@ func TestTypeSting(t *testing.T) {
 		test_reprs = append(test_reprs, test.repr)
 	}
 
-	missing := findMissingSkipEmpty(test_reprs, token_reprs[:])
+	missing := findMissingSkipEmpty(test_reprs, filterEmpty(type_reprs[:]))
 	if len(missing) > 0 {
 		t.Errorf("Missing tokens: %v", missing)
 	}
 
-	missing = findMissingSkipEmpty(test_strings, token_strings[:])
+	missing = findMissingSkipEmpty(test_strings, filterEmpty(type_strings[:]))
 	if len(missing) > 0 {
 		t.Errorf("Missing tokens: %v", missing)
 	}
 
+}
+
+func TestIllegalTypeIsZero(t *testing.T) {
+	if ILLEGAL != 0 {
+		t.Errorf("Illegal token should be 0 but got %d", ILLEGAL)
+	}
+}
+
+func TestTypeCount(t *testing.T) {
+
+	n_type_reprs := len(filterEmpty(type_reprs[:]))
+	n_type_strings := len(filterEmpty(type_strings[:]))
+
+	if type_count != n_type_reprs {
+		t.Errorf("Token count %d does not match type_reprs %d", type_count, n_type_reprs)
+	}
+	if type_count != n_type_strings {
+		t.Errorf("Token count %d does not match type_strings %d", type_count, n_type_strings)
+	}
 }

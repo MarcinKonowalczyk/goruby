@@ -109,6 +109,7 @@ const (
 	WHILE
 	KEYWORD__FILE__
 	keyword_end
+	types_end
 )
 
 var marker_types = [...]Type{
@@ -120,9 +121,30 @@ var marker_types = [...]Type{
 	operator_assign_end,
 	keyword_beg,
 	keyword_end,
+	types_end,
 }
 
-var token_strings = [...]string{
+var type_count = 0
+
+func isMarkerType(t Type) bool {
+	for _, marker := range marker_types {
+		if t == marker {
+			return true
+		}
+	}
+	return false
+}
+
+func init() {
+	for i := 0; i < int(types_end); i++ {
+		if isMarkerType(Type(i)) {
+			continue
+		}
+		type_count++
+	}
+}
+
+var type_strings = [...]string{
 	ILLEGAL: "ILLEGAL",
 	EOF:     "EOF",
 
@@ -209,7 +231,7 @@ var token_strings = [...]string{
 	KEYWORD__FILE__: "KEYWORD__FILE__",
 }
 
-var token_reprs = [...]string{
+var type_reprs = [...]string{
 	ILLEGAL: "ILLEGAL",
 	EOF:     "EOF",
 
@@ -304,8 +326,8 @@ var token_reprs = [...]string{
 // constant name (e.g. for the token IDENT, the string is "IDENT").
 func (tok Type) String() string {
 	s := ""
-	if 0 <= tok && tok < Type(len(token_strings)) {
-		s = token_strings[tok]
+	if 0 <= tok && tok < Type(len(type_strings)) {
+		s = type_strings[tok]
 	}
 	if s == "" {
 		s = "token(" + strconv.Itoa(int(tok)) + ")"
@@ -320,7 +342,7 @@ func ToType(s any) Type {
 	case Type:
 		return s
 	case int:
-		if s < 0 || s >= len(token_strings) {
+		if s < 0 || s >= len(type_strings) {
 			return ILLEGAL
 		}
 		return Type(s)
@@ -330,8 +352,8 @@ func ToType(s any) Type {
 }
 
 func typeFromString(s string) Type {
-	for i := 0; i < len(token_strings); i++ {
-		if token_strings[i] == s {
+	for i := 0; i < len(type_strings); i++ {
+		if type_strings[i] == s {
 			return Type(i)
 		}
 	}
@@ -343,7 +365,7 @@ var keywords map[string]Type
 func init() {
 	keywords = make(map[string]Type)
 	for i := keyword_beg + 1; i < keyword_end; i++ {
-		keywords[token_reprs[i]] = i
+		keywords[type_reprs[i]] = i
 	}
 }
 
