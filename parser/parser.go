@@ -32,6 +32,7 @@ const (
 	precSum         // + or -
 	precProduct     // *, /, %
 	precPrefix      // -X or !X
+	precSplat       // x = [*y, 1]
 	precCallArg     // func x
 	precCall        // foo.myFunction(X)
 	precIndex       // array[index]
@@ -582,12 +583,21 @@ func (p *parser) parseSplat() ast.Expression {
 		defer un(trace(p, "parseSplat"))
 	}
 	splat := &ast.Splat{Token: p.curToken}
+	// p.nextToken()
+	// if p.curToken.Type != token.IDENT {
+	// 	p.Error(p.curToken.Type, "", token.IDENT)
+	// 	return nil
+	// }
 	p.nextToken()
-	if p.curToken.Type != token.IDENT {
-		p.Error(p.curToken.Type, "", token.IDENT)
+	// TODO: what's supposed t be the prec here?
+	// precLowest breaks for `x = [*y, 1]`
+	expr := p.parseExpression(precSplat)
+	// fmt.Println("Splat expression:", expr)
+	// panic("TODO: splat expression")
+	if expr == nil {
 		return nil
 	}
-	splat.Value = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	splat.Value = expr
 	return splat
 }
 
