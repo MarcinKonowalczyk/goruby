@@ -1,6 +1,7 @@
 package object
 
 import (
+	"os"
 	"path/filepath"
 )
 
@@ -38,6 +39,7 @@ func (f *File) Class() RubyClass { return fileClass }
 var fileClassMethods = map[string]RubyMethod{
 	"expand_path": publicMethod(fileExpandPath),
 	"dirname":     publicMethod(fileDirname),
+	"read":        publicMethod(fileRead),
 }
 
 var fileMethods = map[string]RubyMethod{}
@@ -89,4 +91,21 @@ func fileDirname(context CallContext, args ...RubyObject) (RubyObject, error) {
 	dirname := filepath.Dir(filename.Value)
 
 	return &String{Value: dirname}, nil
+}
+
+func fileRead(context CallContext, args ...RubyObject) (RubyObject, error) {
+	if len(args) != 1 {
+		return nil, NewWrongNumberOfArgumentsError(1, len(args))
+	}
+	filename, ok := args[0].(*String)
+	if !ok {
+		return nil, NewImplicitConversionTypeError(filename, args[0])
+	}
+
+	data, err := os.ReadFile(filename.Value)
+	if err != nil {
+		return nil, NewNotImplementedError("Cannot read file %s", filename.Value)
+	}
+
+	return &String{Value: string(data)}, nil
 }
