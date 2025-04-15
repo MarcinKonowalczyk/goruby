@@ -110,7 +110,7 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		}
 		return val, nil
 	case *ast.StringLiteral:
-		return &object.String{Value: node.Value}, nil
+		return &object.String{Value: unescapeStringLiteral(node)}, nil
 	case *ast.SymbolLiteral:
 		switch value := node.Value.(type) {
 		case *ast.Identifier:
@@ -590,6 +590,26 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		return nil, errors.WithStack(err)
 	}
 
+}
+
+func unescapeStringLiteral(node *ast.StringLiteral) string {
+	rep := map[string]string{
+		"\\n":  "\n",
+		"\\t":  "\t",
+		"\\r":  "\r",
+		"\\b":  "\b",
+		"\\\\": "\\",
+	}
+	if node.Token.Literal == "\"" {
+		rep["\""] = "\""
+	} else {
+		rep["'"] = "'"
+	}
+	value := node.Value
+	for k, v := range rep {
+		value = strings.ReplaceAll(value, k, v)
+	}
+	return value
 }
 
 func evalLoopExpression(node *ast.LoopExpression, env object.Environment) (object.RubyObject, error) {
