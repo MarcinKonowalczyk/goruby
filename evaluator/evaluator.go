@@ -902,31 +902,62 @@ func evalHashIndexExpression(hash *object.Hash, index object.RubyObject) (object
 }
 
 func evalStringIndexExpression(stringObject *object.String, index object.RubyObject) (object.RubyObject, error) {
-	index_int, ok := index.(*object.Integer)
-	if !ok {
+	switch index := index.(type) {
+	case *object.Integer:
+		idx := index.Value
+		maxNegative := -int64(len(stringObject.Value))
+		maxPositive := maxNegative*-1 - 1
+		if maxPositive < 0 {
+			return object.NIL, nil
+		}
+
+		if idx > 0 && idx > maxPositive {
+			return object.NIL, nil
+		}
+		if idx < 0 && idx < maxNegative {
+			return object.NIL, nil
+		}
+		if idx < 0 {
+			return &object.String{Value: string(stringObject.Value[len(stringObject.Value)+int(idx)])}, nil
+		}
+		return &object.String{Value: string(stringObject.Value[idx])}, nil
+	case *object.Array:
+		if len(index.Elements) == 0 {
+			return object.NIL, nil
+		}
+		// index with each element of the array
+		var result string
+		for _, e := range index.Elements {
+			eval, err := evalStringIndexExpression(stringObject, e)
+			// fmt.Printf("evalStringIndexExpression %T\n", eval)
+			if err != nil {
+				return nil, errors.WithMessage(err, "eval string index")
+			}
+			if eval == nil || eval.Type() == object.NIL_OBJ {
+				// we've hit a nil value, so we stop. this is likely because we've indexed with a range,
+				// the range got evaluated and eventually we indexed past the end of the string
+				// e.g. "hello"[0..10]
+				break
+			}
+			if str, ok := eval.(*object.String); ok {
+				result += str.Value
+			} else {
+				return nil, errors.Wrap(
+					object.NewImplicitConversionTypeError(index, str),
+					"eval string index",
+				)
+			}
+		}
+		return &object.String{Value: result}, nil
+
+	default:
 		err := errors.Wrap(
-			object.NewImplicitConversionTypeError(index_int, index),
+			object.NewImplicitConversionTypeErrorMany(index, object.NewInteger(0), object.NewFloat(0.0)),
 			"eval string index",
 		)
 		return nil, err
 	}
-	idx := index_int.Value
-	maxNegative := -int64(len(stringObject.Value))
-	maxPositive := maxNegative*-1 - 1
-	if maxPositive < 0 {
-		return object.NIL, nil
-	}
 
-	if idx > 0 && idx > maxPositive {
-		return object.NIL, nil
-	}
-	if idx < 0 && idx < maxNegative {
-		return object.NIL, nil
-	}
-	if idx < 0 {
-		return &object.String{Value: string(stringObject.Value[len(stringObject.Value)+int(idx)])}, nil
-	}
-	return &object.String{Value: string(stringObject.Value[idx])}, nil
 }
 
 func evalBlockStatement(block *ast.BlockStatement, env object.Environment) (object.RubyObject, error) {

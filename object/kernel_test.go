@@ -1073,7 +1073,7 @@ func TestKernelRaise(t *testing.T) {
 
 				checkResult(t, result, nil)
 
-				checkError(t, err, &TypeError{message: "exception class/object expected"})
+				checkError(t, err, &TypeError{Message: "exception class/object expected"})
 			})
 			t.Run("object with #exception returning exception", func(t *testing.T) {
 				exceptionFn := func(CallContext, ...RubyObject) (RubyObject, error) {
