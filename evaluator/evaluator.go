@@ -799,11 +799,11 @@ func evalIndexExpressionAssignment(left, index, right object.RubyObject) (object
 func evalIndexExpression(left, index object.RubyObject) (object.RubyObject, error) {
 	switch target := left.(type) {
 	case *object.Array:
-		return evalArrayIndexExpression(target, index), nil
+		return evalArrayIndexExpression(target, index)
 	case *object.Hash:
-		return evalHashIndexExpression(target, index), nil
+		return evalHashIndexExpression(target, index)
 	case *object.String:
-		return evalStringIndexExpression(target, index), nil
+		return evalStringIndexExpression(target, index)
 	default:
 		var left_type string = string(left.Type())
 		if left_type == "" {
@@ -866,52 +866,67 @@ func evalProcIndexExpression(env object.Environment, target *object.Proc, index 
 		)
 	}
 }
-func evalArrayIndexExpression(arrayObject *object.Array, index object.RubyObject) object.RubyObject {
-	idx := index.(*object.Integer).Value
+func evalArrayIndexExpression(arrayObject *object.Array, index object.RubyObject) (object.RubyObject, error) {
+	index_int, ok := index.(*object.Integer)
+	if !ok {
+		return nil, errors.Wrap(
+			object.NewImplicitConversionTypeError(index_int, index),
+			"eval array index",
+		)
+	}
+	idx := index_int.Value
 	maxNegative := -int64(len(arrayObject.Elements))
 	maxPositive := maxNegative*-1 - 1
 	if maxPositive < 0 {
-		return object.NIL
+		return object.NIL, nil
 	}
 
 	if idx > 0 && idx > maxPositive {
-		return object.NIL
+		return object.NIL, nil
 	}
 	if idx < 0 && idx < maxNegative {
-		return object.NIL
+		return object.NIL, nil
 	}
 	if idx < 0 {
-		return arrayObject.Elements[len(arrayObject.Elements)+int(idx)]
+		return arrayObject.Elements[len(arrayObject.Elements)+int(idx)], nil
 	}
-	return arrayObject.Elements[idx]
+	return arrayObject.Elements[idx], nil
 }
 
-func evalHashIndexExpression(hash *object.Hash, index object.RubyObject) object.RubyObject {
+func evalHashIndexExpression(hash *object.Hash, index object.RubyObject) (object.RubyObject, error) {
 	result, ok := hash.Get(index)
 	if !ok {
-		return object.NIL
+		return object.NIL, nil
 	}
-	return result
+	return result, nil
 }
 
-func evalStringIndexExpression(stringObject *object.String, index object.RubyObject) object.RubyObject {
-	idx := index.(*object.Integer).Value
+func evalStringIndexExpression(stringObject *object.String, index object.RubyObject) (object.RubyObject, error) {
+	index_int, ok := index.(*object.Integer)
+	if !ok {
+		err := errors.Wrap(
+			object.NewImplicitConversionTypeError(index_int, index),
+			"eval string index",
+		)
+		return nil, err
+	}
+	idx := index_int.Value
 	maxNegative := -int64(len(stringObject.Value))
 	maxPositive := maxNegative*-1 - 1
 	if maxPositive < 0 {
-		return object.NIL
+		return object.NIL, nil
 	}
 
 	if idx > 0 && idx > maxPositive {
-		return object.NIL
+		return object.NIL, nil
 	}
 	if idx < 0 && idx < maxNegative {
-		return object.NIL
+		return object.NIL, nil
 	}
 	if idx < 0 {
-		return &object.String{Value: string(stringObject.Value[len(stringObject.Value)+int(idx)])}
+		return &object.String{Value: string(stringObject.Value[len(stringObject.Value)+int(idx)])}, nil
 	}
-	return &object.String{Value: string(stringObject.Value[idx])}
+	return &object.String{Value: string(stringObject.Value[idx])}, nil
 }
 
 func evalBlockStatement(block *ast.BlockStatement, env object.Environment) (object.RubyObject, error) {
