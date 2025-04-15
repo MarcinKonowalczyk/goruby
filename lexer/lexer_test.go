@@ -108,6 +108,7 @@ func TestLex(t *testing.T) {
 				'foobar'
 				"foo bar"
 				'foo bar'
+				"\\"
 			`,
 			exp: []expected{
 				expect("STRING", ""),
@@ -119,6 +120,8 @@ func TestLex(t *testing.T) {
 				expect("STRING", "foo bar"),
 				NL,
 				expect("STRING", "foo bar"),
+				NL,
+				expect("STRING", "\\\\"),
 			},
 		},
 		{
