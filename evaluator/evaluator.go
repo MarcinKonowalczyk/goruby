@@ -54,9 +54,17 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		}
 		return &object.ReturnValue{Value: val}, nil
 	case *ast.BreakStatement:
+		var val object.RubyObject
 		val, err := Eval(node.Condition, env)
 		if err != nil {
 			return nil, errors.WithMessage(err, "eval of break statement")
+		}
+		if node.Unless {
+			if isTruthy(val) {
+				val = object.FALSE
+			} else {
+				val = object.TRUE
+			}
 		}
 		return &object.BreakValue{Value: val}, nil
 	case *ast.BlockStatement:
@@ -590,7 +598,6 @@ func evalLoopExpression(node *ast.LoopExpression, env object.Environment) (objec
 		return nil, errors.WithMessage(err, "eval loop condition")
 	}
 	for isTruthy(condition) {
-		// fmt.Println("loop condition", condition.Inspect(), condition.Type())
 		value, err := evalBlockStatement(node.Block, env)
 		if err != nil {
 			return nil, errors.WithMessage(err, "eval loop body")
@@ -598,7 +605,9 @@ func evalLoopExpression(node *ast.LoopExpression, env object.Environment) (objec
 		if value != nil {
 			switch value := value.(type) {
 			case *object.BreakValue:
-				return value.Value, nil
+				if isTruthy(value.Value) {
+					return value.Value, nil
+				}
 			case *object.ReturnValue:
 				return value.Value, nil
 			default:
@@ -900,6 +909,7 @@ func evalBlockStatement(block *ast.BlockStatement, env object.Environment) (obje
 			} else if rt == object.BREAK_VALUE_OBJ {
 				if isTruthy(result.(*object.BreakValue).Value) {
 					return result, nil
+				} else {
 				}
 			}
 		}
