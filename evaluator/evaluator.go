@@ -1039,7 +1039,22 @@ func isTruthy(obj object.RubyObject) bool {
 	case object.FALSE:
 		return false
 	default:
-		return true
+		switch obj := obj.(type) {
+		case *object.Boolean:
+			return obj.Value
+		case *object.Integer:
+			return obj.Value != 0
+		case *object.Float:
+			return obj.Value != 0.0
+		case *object.String:
+			return obj.Value != ""
+		case *object.Array:
+			return len(obj.Elements) > 0
+		case *object.Hash:
+			return obj.Len() > 0
+		default:
+			return true
+		}
 	}
 }
 
