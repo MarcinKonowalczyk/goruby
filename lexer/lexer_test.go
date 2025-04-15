@@ -455,6 +455,32 @@ func TestLex(t *testing.T) {
 			},
 		},
 		{
+			desc: "logical",
+			lines: `
+				a || b
+				a or b
+				a && b
+				a and b
+				`,
+			exp: []expected{
+				expect("IDENT", "a"),
+				expect("LOGICALOR", "||"),
+				expect("IDENT", "b"),
+				NL,
+				expect("IDENT", "a"),
+				expect("LOGICALOR", "or"),
+				expect("IDENT", "b"),
+				NL,
+				expect("IDENT", "a"),
+				expect("LOGICALAND", "&&"),
+				expect("IDENT", "b"),
+				NL,
+				expect("IDENT", "a"),
+				expect("LOGICALAND", "and"),
+				expect("IDENT", "b"),
+			},
+		},
+		{
 			desc: "pipe",
 			lines: `
 				|
@@ -558,7 +584,7 @@ func TestLex(t *testing.T) {
 			lexer := New(preprocessLines(test.lines))
 			tokens := allTokens(lexer)
 			if len(tokens) != len(test.exp) {
-				t.Fatalf("Expected %d tokens, got %d", len(test.exp), len(tokens))
+				t.Fatalf("Expected %d tokens, got %d: %v", len(test.exp), len(tokens), tokens)
 			}
 			for i, exp := range test.exp {
 				if tokens[i].Type != exp.typ {

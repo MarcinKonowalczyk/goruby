@@ -114,6 +114,19 @@ func (l *Lexer) peek() rune {
 	return r
 }
 
+// checks if the next substring matches the given string
+func (l *Lexer) peek_string_match(s string) bool {
+	if l.pos+len(s) > len(l.input) {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		if l.input[l.pos+i] != s[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // error returns an error token and terminates the scan by passing
 // back a nil pointer that will be the next state, terminating l.run.
 func (l *Lexer) errorf(format string, args ...interface{}) StateFn {
@@ -129,8 +142,32 @@ func startLexer(l *Lexer) StateFn {
 		// before every ?
 		switch l.peek() {
 		case '?':
-			l.next() // consume the ?
+			l.next() // consume the whitespace
 			l.emit(token.SQMARK)
+		case 'o':
+			// hack to handle space-disambiguated 'or'
+			if l.peek_string_match("or ") {
+				l.ignore() // ignore the space
+				l.next()   // consume the o
+				l.next()   // consume the r
+				l.emit(token.LOGICALOR)
+				l.ignore() // ignore the space
+			} else {
+				l.ignore()
+			}
+		case 'a':
+			// hack to handle space-disambiguated 'and'
+			if l.peek_string_match("and ") {
+				l.ignore() // ignore the space
+				l.next()   // consume the a
+				l.next()   // consume the n
+				l.next()   // consume the d
+				l.emit(token.LOGICALAND)
+				l.ignore() // ignore the space
+			} else {
+				l.ignore()
+			}
+
 		default:
 			l.ignore()
 		}
