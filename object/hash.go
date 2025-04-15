@@ -80,6 +80,10 @@ func (h *Hash) Map() map[RubyObject]RubyObject {
 	return hashmap
 }
 
+func (h *Hash) Len() int {
+	return len(h.hashMap)
+}
+
 // Type returns the ObjectType of the array
 func (h *Hash) Type() Type { return HASH_OBJ }
 
