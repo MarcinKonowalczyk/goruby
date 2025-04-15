@@ -4415,7 +4415,7 @@ func TestArraySplat(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		program, err := parseSource(tt.input, p.Trace)
+		program, err := parseSource(tt.input)
 		checkParserErrors(t, err)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
