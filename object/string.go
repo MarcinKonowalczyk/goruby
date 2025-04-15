@@ -78,6 +78,7 @@ var stringMethods = map[string]RubyMethod{
 	"+":          withArity(1, publicMethod(stringAdd)),
 	"gsub":       withArity(2, publicMethod(stringGsub)),
 	"length":     withArity(0, publicMethod(stringLength)),
+	"size":       withArity(0, publicMethod(stringLength)),
 	"==":         withArity(1, publicMethod(stringEqual)),
 	"lines":      withArity(0, publicMethod(stringLines)),
 }
