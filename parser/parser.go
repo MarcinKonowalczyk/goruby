@@ -164,6 +164,7 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerPrefix(token.IF, p.parseIfExpression)
 	p.registerPrefix(token.UNLESS, p.parseIfExpression)
 	p.registerPrefix(token.WHILE, p.parseLoopExpression)
+	p.registerPrefix(token.LOOP, p.parseLoopExpression)
 	p.registerPrefix(token.DEF, p.parseFunctionLiteral)
 	p.registerPrefix(token.SYMBEG, p.parseSymbolLiteral)
 	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
@@ -405,6 +406,8 @@ func (p *parser) parseStatement() ast.Statement {
 		return p.parseReturnStatement()
 	case token.HASH:
 		return p.parseComment()
+	case token.BREAK:
+		return p.parseBreakStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -1159,14 +1162,50 @@ func (p *parser) parseLoopExpression() ast.Expression {
 		defer un(trace(p, "parseLoopExpression"))
 	}
 	loop := &ast.LoopExpression{Token: p.curToken}
-	p.nextToken()
-	loop.Condition = p.parseExpression(precBlockDo)
-	if p.peekTokenIs(token.DO) {
-		p.accept(token.DO)
+	if p.curToken.Type == token.WHILE {
+		p.nextToken()
+		loop.Condition = p.parseExpression(precBlockDo)
+		if p.peekTokenIs(token.DO) {
+			p.accept(token.DO)
+		}
+		loop.Block = p.parseBlockStatement(token.END)
+		p.nextToken()
+	} else if p.curToken.Type == token.LOOP {
+		loop.Condition = &ast.Boolean{Token: p.curToken, Value: true}
+		if p.peekTokenIs(token.DO) {
+			// body is a do block
+			p.accept(token.DO)
+			loop.Block = p.parseBlockStatement(token.END)
+			p.nextToken()
+		} else if p.peekTokenIs(token.LBRACE) {
+			p.accept(token.LBRACE)
+			loop.Block = p.parseBlockStatement(token.RBRACE)
+			p.nextToken()
+		}
+	} else {
+		p.Error(p.curToken.Type, "unexpected loop start", token.WHILE, token.LOOP)
+		return nil
 	}
-	loop.Block = p.parseBlockStatement(token.END)
-	p.nextToken()
+
 	return loop
+}
+
+func (p *parser) parseBreakStatement() *ast.BreakStatement {
+	if p.trace {
+		defer un(trace(p, "parseBreakExpression"))
+	}
+	stmt := &ast.BreakStatement{Token: p.curToken}
+	if p.peekTokenIs(token.IF) {
+		p.accept(token.IF)
+		p.nextToken()
+		stmt.Condition = p.parseExpression(precLowest)
+	} else if p.peekTokenIs(token.UNLESS) {
+		p.accept(token.UNLESS)
+		p.nextToken()
+		stmt.Condition = p.parseExpression(precLowest)
+		stmt.Unless = true
+	}
+	return stmt
 }
 
 func (p *parser) parseModule() ast.Expression {

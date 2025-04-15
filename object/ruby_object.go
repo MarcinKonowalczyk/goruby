@@ -14,6 +14,7 @@ const (
 	EIGENCLASS_OBJ     Type = "EIGENCLASS"
 	FUNCTION_OBJ       Type = "FUNCTION"
 	RETURN_VALUE_OBJ   Type = "RETURN_VALUE"
+	BREAK_VALUE_OBJ    Type = "BREAK_VALUE"
 	BASIC_OBJECT_OBJ   Type = "BASIC_OBJECT"
 	OBJECT_OBJ         Type = "OBJECT"
 	CLASS_OBJ          Type = "CLASS"
@@ -97,6 +98,33 @@ func (rv *ReturnValue) Inspect() string { return rv.Value.Inspect() }
 // Class reurns the class of the wrapped object
 func (rv *ReturnValue) Class() RubyClass { return rv.Value.Class() }
 
+var (
+	_ RubyObject  = &ReturnValue{}
+	_ inspectable = &ReturnValue{}
+)
+
+// BreakValue represents a wrapper object for a break statement. It is no
+// real Ruby object and only used within the interpreter evaluation
+type BreakValue struct {
+	Value RubyObject
+}
+
+// Type returns BREAK_VALUE_OBJ
+func (bv *BreakValue) Type() Type { return BREAK_VALUE_OBJ }
+
+// Inspect returns the string representation of the wrapped object
+
+func (bv *BreakValue) Inspect() string { return bv.Value.Inspect() }
+
+// Class returns the class of the wrapped object
+func (bv *BreakValue) Class() RubyClass { return bv.Value.Class() }
+
+var (
+	_ RubyObject  = &BreakValue{}
+	_ inspectable = &BreakValue{}
+)
+
+// FunctionParameters represents a list of function parameters.
 type functionParameters []*FunctionParameter
 
 func (f functionParameters) defaultParamCount() int {

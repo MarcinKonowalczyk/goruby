@@ -162,6 +162,45 @@ func (bs *BlockStatement) String() string {
 	return out.String()
 }
 
+var (
+	_ Statement = &BlockStatement{}
+)
+
+// A BreakStatement represents a break statement
+type BreakStatement struct {
+	Token     token.Token // the 'break' token
+	Condition Expression
+	Unless    bool
+}
+
+func (bs *BreakStatement) String() string {
+	var out strings.Builder
+	out.WriteString(bs.Token.Literal)
+	out.WriteString(" ")
+	out.WriteString(bs.Condition.String())
+	return out.String()
+}
+
+func (bs *BreakStatement) statementNode() {}
+
+// Pos returns the position of first character belonging to the node
+func (bs *BreakStatement) Pos() int { return bs.Token.Pos }
+
+// End returns the position of first character immediately after the node
+func (bs *BreakStatement) End() int {
+	if bs.Condition != nil {
+		return bs.Condition.End()
+	}
+	return bs.Token.Pos + len(bs.Token.Literal)
+}
+
+// TokenLiteral returns the 'break' token literal
+func (bs *BreakStatement) TokenLiteral() string { return bs.Token.Literal }
+
+var (
+	_ Statement = &BreakStatement{}
+)
+
 // ExceptionHandlingBlock represents a begin/end block where exceptions are rescued
 type ExceptionHandlingBlock struct {
 	BeginToken token.Token

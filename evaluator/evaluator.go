@@ -53,6 +53,12 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			return nil, errors.WithMessage(err, "eval of return statement")
 		}
 		return &object.ReturnValue{Value: val}, nil
+	case *ast.BreakStatement:
+		val, err := Eval(node.Condition, env)
+		if err != nil {
+			return nil, errors.WithMessage(err, "eval of break statement")
+		}
+		return &object.BreakValue{Value: val}, nil
 	case *ast.BlockStatement:
 		return evalBlockStatement(node, env)
 
@@ -567,11 +573,44 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			}, nil
 		}
 
+	case *ast.LoopExpression:
+
+		return evalLoopExpression(node, env)
+
 	default:
 		err := object.NewException("Unknown AST: %T", node)
 		return nil, errors.WithStack(err)
 	}
 
+}
+
+func evalLoopExpression(node *ast.LoopExpression, env object.Environment) (object.RubyObject, error) {
+	condition, err := Eval(node.Condition, env)
+	if err != nil {
+		return nil, errors.WithMessage(err, "eval loop condition")
+	}
+	for isTruthy(condition) {
+		// fmt.Println("loop condition", condition.Inspect(), condition.Type())
+		value, err := evalBlockStatement(node.Block, env)
+		if err != nil {
+			return nil, errors.WithMessage(err, "eval loop body")
+		}
+		if value != nil {
+			switch value := value.(type) {
+			case *object.BreakValue:
+				return value.Value, nil
+			case *object.ReturnValue:
+				return value.Value, nil
+			default:
+				// <shrug> do nothing
+			}
+		}
+		condition, err = Eval(node.Condition, env)
+		if err != nil {
+			return nil, errors.WithMessage(err, "eval loop condition")
+		}
+	}
+	return object.NIL, nil
 }
 
 func evalProgram(stmts []ast.Statement, env object.Environment) (object.RubyObject, error) {
@@ -858,8 +897,11 @@ func evalBlockStatement(block *ast.BlockStatement, env object.Environment) (obje
 			rt := result.Type()
 			if rt == object.RETURN_VALUE_OBJ {
 				return result, nil
+			} else if rt == object.BREAK_VALUE_OBJ {
+				if isTruthy(result.(*object.BreakValue).Value) {
+					return result, nil
+				}
 			}
-
 		}
 	}
 	if result == nil {
