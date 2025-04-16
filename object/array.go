@@ -63,6 +63,8 @@ var arrayMethods = map[string]RubyMethod{
 	"find_all": publicMethod(arrayFindAll),
 	"first":    publicMethod(arrayFirst),
 	"map":      publicMethod(arrayMap),
+	"all?":     publicMethod(arrayAll),
+	"join":     publicMethod(arrayJoin),
 }
 
 func arrayPush(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -162,4 +164,50 @@ func arrayMap(context CallContext, args ...RubyObject) (RubyObject, error) {
 		result.Elements = append(result.Elements, ret)
 	}
 	return result, nil
+}
+
+func arrayAll(context CallContext, args ...RubyObject) (RubyObject, error) {
+	array, _ := context.Receiver().(*Array)
+	if len(args) == 0 {
+		return nil, NewArgumentError("all? requires a block")
+	}
+	block := args[0]
+	proc, ok := block.(*Proc)
+	if !ok {
+		return nil, NewArgumentError("all? requires a block")
+	}
+	for _, elem := range array.Elements {
+		ret, err := proc.Call(context, elem)
+		if err != nil {
+			return nil, err
+		}
+		if ret.Type() != BOOLEAN_OBJ {
+			return nil, NewArgumentError("all? requires a block to return a boolean")
+		}
+		boolean, ok := ret.(*Boolean)
+		if !ok {
+			return nil, NewArgumentError("all? requires a block to return a boolean")
+		}
+		if !boolean.Value {
+			return FALSE, nil
+		}
+	}
+	return TRUE, nil
+}
+
+func arrayJoin(context CallContext, args ...RubyObject) (RubyObject, error) {
+	array, _ := context.Receiver().(*Array)
+	if len(args) == 0 {
+		return nil, NewArgumentError("join requires at least 1 argument")
+	}
+	separator, ok := args[0].(*String)
+	if !ok {
+		return nil, NewArgumentError("argument must be a String")
+	}
+	element_strings := make([]string, len(array.Elements))
+	for i, elem := range array.Elements {
+		element_strings[i] = elem.Inspect()
+	}
+	result := strings.Join(element_strings, separator.Value)
+	return &String{Value: result}, nil
 }
