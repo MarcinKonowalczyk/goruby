@@ -29,6 +29,10 @@ func (i *Integer) Type() Type { return INTEGER_OBJ }
 // Class returns integerClass
 func (i *Integer) Class() RubyClass { return integerClass }
 
+var (
+	_ RubyObject = &Integer{}
+)
+
 func (i *Integer) hashKey() hashKey {
 	return hashKey{Type: i.Type(), Value: uint64(i.Value)}
 }

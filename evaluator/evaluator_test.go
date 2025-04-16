@@ -1423,16 +1423,37 @@ func TestArrayIndexExpressions(t *testing.T) {
 			"[1, 2, 3][-4]",
 			nil,
 		},
+		{
+			"[0, 1, 2, 3, 4, 5][2, 3]",
+			[]int{2, 3, 4},
+		},
+		{
+			"[0, 1, 2, 3, 4, 5][2..3]",
+			[]int{2, 3},
+		},
 	}
 
 	for _, tt := range tests {
 		evaluated, err := testEval(tt.input)
 		checkError(t, err)
-		integer, ok := tt.expected.(int)
-		if ok {
-			testIntegerObject(t, evaluated, int64(integer))
-		} else {
+		switch expected := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(expected))
+		case []int:
+			array, ok := evaluated.(*object.Array)
+			if !ok {
+				t.Fatalf("Expected evaluated object to be *object.Array, got=%T", evaluated)
+			}
+			if len(array.Elements) != len(expected) {
+				t.Fatalf("Expected array length to be %d, got %d", len(expected), len(array.Elements))
+			}
+			for i, v := range expected {
+				testIntegerObject(t, array.Elements[i], int64(v))
+			}
+		case nil:
 			testNilObject(t, evaluated)
+		default:
+			t.Logf("Expected %T, got %T\n", expected, evaluated)
 		}
 	}
 }

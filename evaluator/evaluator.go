@@ -536,26 +536,33 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			)
 		}
 
-		left_int := leftInt.Value
-		right_int := rightInt.Value
+		// left_int := leftInt.Value
+		// right_int := rightInt.Value
 
-		if left_int > right_int {
-			return nil, errors.WithStack(
-				object.NewSyntaxError(fmt.Errorf("range start is greater than end: %d > %d", left_int, right_int)),
-			)
-		}
+		// flip := false
+		// if left_int > right_int {
+		// 	flip = true
+		// 	left_int, right_int = right_int, left_int
+		// }
 
-		if node.Inclusive {
-			right_int++
-		}
+		// if node.Inclusive {
+		// 	right_int++
+		// }
 
-		elements := make([]object.RubyObject, right_int-left_int)
-		for i := left_int; i < right_int; i++ {
-			elements[i-left_int] = &object.Integer{Value: i}
-		}
+		// elements := make(rubyObjects, right_int-left_int)
+		// for i := left_int; i < right_int; i++ {
+		// 	elements[i-left_int] = &object.Integer{Value: i}
+		// }
 
-		return &object.Array{
-			Elements: elements,
+		// if flip {
+		// 	// reverse the elements
+		// 	slices.Reverse(elements)
+		// }
+
+		return &object.Range{
+			Left:      leftInt,
+			Right:     rightInt,
+			Inclusive: node.Inclusive,
 		}, nil
 
 	case *ast.Splat:
@@ -866,16 +873,18 @@ func evalProcIndexExpression(env object.Environment, target *object.Proc, index 
 		)
 	}
 }
+
 func evalArrayIndexExpression(arrayObject *object.Array, index object.RubyObject) (object.RubyObject, error) {
+	len := int64(len(arrayObject.Elements))
 	switch index := index.(type) {
 	case *object.Integer:
-		idx, out_of_bounds := objectIntegerToIndex(index, int64(len(arrayObject.Elements)))
+		idx, out_of_bounds := objectIntegerToIndex(index, len)
 		if out_of_bounds {
 			return object.NIL, nil
 		}
 		return arrayObject.Elements[idx], nil
 	case *object.Array:
-		left, length, out_of_bounds, err := objectArrayToIndex(index, int64(len(arrayObject.Elements)))
+		left, length, out_of_bounds, err := objectArrayToIndex(index, len)
 		if err != nil {
 			return nil, errors.Wrap(err, "array index array")
 		}
@@ -883,12 +892,28 @@ func evalArrayIndexExpression(arrayObject *object.Array, index object.RubyObject
 			return object.NIL, nil
 		}
 		return &object.Array{Elements: arrayObject.Elements[left:(left + length)]}, nil
+	case *object.Range:
+		left, right, out_of_bounds, err := objectRangeToIndex(index, len)
+		if err != nil {
+			return nil, errors.Wrap(err, "array index range")
+		}
+		if out_of_bounds {
+			return object.NIL, nil
+		}
+		return &object.Array{Elements: arrayObject.Elements[left:right]}, nil
+	case rubyObjects:
+		// we got a bunch of objects as the index
+		index_array := object.NewArray(index...)
+		return evalArrayIndexExpression(arrayObject, index_array)
 	default:
-		// fmt.Printf("index: %s(%T)\n", index.Inspect(), index)
-		err := errors.Wrap(
-			object.NewImplicitConversionTypeErrorMany(index, object.NewInteger(0), object.NewFloat(0.0)),
-			"eval array index",
-		)
+		index_type := string(index.Type())
+		if index_type == "" {
+			index_type = fmt.Sprintf("%T", index)
+		}
+		err := &object.TypeError{
+			Message: fmt.Sprintf("array index must be Integer, Array or Range, got %s", index_type),
+		}
+
 		return nil, err
 	}
 }
@@ -924,7 +949,7 @@ func objectIntegerToIndex(index *object.Integer, len int64) (int64, bool) {
 	return idx, false
 }
 
-func objectArrayToIndex(index *object.Array, _ int64) (int64, int64, bool, error) {
+func objectArrayToIndex(index *object.Array, length int64) (int64, int64, bool, error) {
 	if len(index.Elements) == 0 {
 		return 0, 0, true, nil
 	}
@@ -963,12 +988,43 @@ func objectArrayToIndex(index *object.Array, _ int64) (int64, int64, bool, error
 	}
 	length_idx := length_index.Value
 
-	if length_idx < 0 {
-		// out of bounds since length is negative
+	// if length_idx < 0 {
+	// 	fmt.Printf("length idx negative: %d\n", length_idx)
+	// 	// index from the end
+	// 	right_idx := length - (-length_idx + 1)
+	// 	length_idx = right_idx - left_idx
+	// 	fmt.Printf("length_idx: %d\n", length_idx)
+	// 	if length_idx < 0 {
+	// 		// slice out of bounds
+	// 		return 0, 0, true, nil
+	// 	}
+	// }
+
+	return left_idx, length_idx, false, nil
+}
+
+func objectRangeToIndex(index *object.Range, length int64) (int64, int64, bool, error) {
+	left := index.Left.Value
+	right := index.Right.Value
+
+	if index.Inclusive {
+		right++
+	}
+
+	if left > right {
+		return 0, 0, true, nil
+	}
+	if left < 0 {
+		left = length + left
+	}
+	if right < 0 {
+		right = length + right
+	}
+	if left < 0 || right < 0 {
 		return 0, 0, true, nil
 	}
 
-	return left_idx, length_idx, false, nil
+	return left, right, false, nil
 }
 
 func evalStringIndexExpression(stringObject *object.String, index object.RubyObject) (object.RubyObject, error) {
@@ -988,6 +1044,15 @@ func evalStringIndexExpression(stringObject *object.String, index object.RubyObj
 			return object.NIL, nil
 		}
 		return &object.String{Value: string(stringObject.Value[left:(left + length)])}, nil
+	case *object.Range:
+		left, right, out_if_bounds, err := objectRangeToIndex(index, int64(len(stringObject.Value)))
+		if err != nil {
+			return nil, errors.Wrap(err, "string index range")
+		}
+		if out_if_bounds {
+			return object.NIL, nil
+		}
+		return &object.String{Value: string(stringObject.Value[left:right])}, nil
 	case rubyObjects:
 		// we got a bunch of objects as the index
 		index_array := object.NewArray(index...)

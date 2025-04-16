@@ -20,6 +20,7 @@ const (
 	CLASS_OBJ          Type = "CLASS"
 	CLASS_INSTANCE_OBJ Type = "CLASS"
 	ARRAY_OBJ          Type = "ARRAY"
+	RANGE_OBJ          Type = "RANGE"
 	HASH_OBJ           Type = "HASH"
 	INTEGER_OBJ        Type = "INTEGER"
 	FLOAT_OBJ          Type = "FLOAT"
