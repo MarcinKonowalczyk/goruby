@@ -304,9 +304,14 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			env.SetGlobal(left.Value, right)
 			return right, nil
 		case ast.ExpressionList:
-			values := []object.RubyObject{right}
-			if list, ok := right.(rubyObjects); ok {
-				values = list
+			var values rubyObjects
+			switch right := right.(type) {
+			case rubyObjects:
+				values = right
+			case *object.Array:
+				values = right.Elements
+			default:
+				values = []object.RubyObject{right}
 			}
 			if len(left) > len(values) {
 				// enlarge slice
