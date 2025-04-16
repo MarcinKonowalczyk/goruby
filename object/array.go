@@ -214,9 +214,8 @@ func arrayJoin(context CallContext, args ...RubyObject) (RubyObject, error) {
 }
 
 func arrayIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
-	// _, _ := context.Receiver().(*Array)
 	if len(args) == 0 {
-		return nil, NewArgumentError("is_a? requires at least 1 argument")
+		return nil, NewWrongNumberOfArgumentsError(1, len(args))
 	}
 	switch arg := args[0].(type) {
 	case RubyClassObject:
@@ -226,6 +225,6 @@ func arrayIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
 			return FALSE, nil
 		}
 	default:
-		return nil, NewArgumentError("argument must be a Class")
+		return nil, NewTypeError("argument must be a Class")
 	}
 }

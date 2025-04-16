@@ -82,6 +82,7 @@ var stringMethods = map[string]RubyMethod{
 	"==":         withArity(1, publicMethod(stringEqual)),
 	"!=":         withArity(1, publicMethod(stringNotEqual)),
 	"lines":      withArity(0, publicMethod(stringLines)),
+	"is_a?":      withArity(1, publicMethod(stringIsA)),
 }
 
 func stringInitialize(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -170,4 +171,20 @@ func stringLines(context CallContext, args ...RubyObject) (RubyObject, error) {
 		arr.Elements = append(arr.Elements, &String{Value: line})
 	}
 	return arr, nil
+}
+
+func stringIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
+	if len(args) != 1 {
+		return nil, NewWrongNumberOfArgumentsError(1, len(args))
+	}
+	switch arg := args[0].(type) {
+	case RubyClassObject:
+		if arg.Name() == "String" {
+			return TRUE, nil
+		} else {
+			return FALSE, nil
+		}
+	default:
+		return nil, NewTypeError("argument must be a Class")
+	}
 }
