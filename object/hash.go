@@ -110,4 +110,18 @@ func (h *Hash) hashKey() hashKey {
 
 var hashClassMethods = map[string]RubyMethod{}
 
-var hashMethods = map[string]RubyMethod{}
+var hashMethods = map[string]RubyMethod{
+	"has_key?": publicMethod(hashHasKey),
+}
+
+func hashHasKey(context CallContext, args ...RubyObject) (RubyObject, error) {
+	hash, _ := context.Receiver().(*Hash)
+	if len(args) != 1 {
+		return nil, NewArgumentError("wrong number of arguments (given 1, expected 0)")
+	}
+	key := args[0]
+	if _, ok := hash.Get(key); ok {
+		return TRUE, nil
+	}
+	return FALSE, nil
+}
