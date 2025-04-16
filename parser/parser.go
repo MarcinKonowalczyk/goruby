@@ -1109,14 +1109,38 @@ func (p *parser) parseIfExpression() ast.Expression {
 		return nil
 	}
 	p.acceptOneOf(token.NEWLINE, token.SEMICOLON)
-	consequence := p.parseBlockStatement(token.ELSE)
+
+	consequence := p.parseBlockStatement(token.ELSE, token.ELSIF)
 	expression.Consequence = consequence
+	parsed_elsif := false
 	if p.peekTokenIs(token.ELSE) {
 		p.accept(token.ELSE)
 		p.accept(token.NEWLINE)
-		expression.Alternative = p.parseBlockStatement()
+		expression.Alternative = p.parseBlockStatement() // parse until the END
+	} else if p.peekTokenIs(token.ELSIF) {
+		// start parsing a new if expression from here
+		p.accept(token.ELSIF)
+		alternative := p.parseIfExpression().(*ast.ConditionalExpression)
+		alternative_block := &ast.BlockStatement{
+			Statements: []ast.Statement{
+				&ast.ExpressionStatement{
+					Expression: alternative,
+				},
+			},
+		}
+		expression.Alternative = alternative_block
+		// back up one token
+		parsed_elsif = true
 	}
-	p.accept(token.END)
+	if parsed_elsif {
+		// don't expect the END, since it has been gobbled up by the innermost
+		// if expression. check that it's there, though.
+		if !p.currentTokenIs(token.END) {
+			p.Error(p.curToken.Type, "expected END after elsif", token.END)
+		}
+	} else {
+		p.accept(token.END)
+	}
 	expression.EndToken = p.curToken
 	return expression
 }

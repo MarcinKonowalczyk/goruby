@@ -95,6 +95,7 @@ const (
 	IF
 	THEN
 	ELSE
+	ELSIF
 	UNLESS
 	TRUE
 	FALSE
@@ -219,6 +220,7 @@ var type_strings = [...]string{
 	IF:              "IF",
 	THEN:            "THEN",
 	ELSE:            "ELSE",
+	ELSIF:           "ELSIF",
 	TRUE:            "TRUE",
 	FALSE:           "FALSE",
 	RETURN:          "RETURN",
@@ -309,6 +311,7 @@ var type_reprs = [...]string{
 	IF:              "if",
 	THEN:            "then",
 	ELSE:            "else",
+	ELSIF:           "elsif",
 	TRUE:            "true",
 	FALSE:           "false",
 	RETURN:          "return",
