@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"regexp"
+	"strconv"
 )
 
 var stringClass RubyClassObject = newClass(
@@ -82,7 +83,7 @@ var stringMethods = map[string]RubyMethod{
 	"==":         withArity(1, publicMethod(stringEqual)),
 	"!=":         withArity(1, publicMethod(stringNotEqual)),
 	"lines":      withArity(0, publicMethod(stringLines)),
-	"is_a?":      withArity(1, publicMethod(stringIsA)),
+	"to_f":       withArity(0, publicMethod(stringToF)),
 }
 
 func stringInitialize(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -173,18 +174,11 @@ func stringLines(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return arr, nil
 }
 
-func stringIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
-	if len(args) != 1 {
-		return nil, NewWrongNumberOfArgumentsError(1, len(args))
+func stringToF(context CallContext, args ...RubyObject) (RubyObject, error) {
+	s := context.Receiver().(*String)
+	val, err := strconv.ParseFloat(s.Value, 64)
+	if err != nil {
+		return nil, NewTypeError("Invalid float value")
 	}
-	switch arg := args[0].(type) {
-	case RubyClassObject:
-		if arg.Name() == "String" {
-			return TRUE, nil
-		} else {
-			return FALSE, nil
-		}
-	default:
-		return nil, NewTypeError("argument must be a Class")
-	}
+	return &Float{Value: val}, nil
 }

@@ -65,7 +65,6 @@ var arrayMethods = map[string]RubyMethod{
 	"map":      publicMethod(arrayMap),
 	"all?":     publicMethod(arrayAll),
 	"join":     publicMethod(arrayJoin),
-	"is_a?":    publicMethod(arrayIsA),
 }
 
 func arrayPush(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -213,18 +212,18 @@ func arrayJoin(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return &String{Value: result}, nil
 }
 
-func arrayIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
-	if len(args) == 0 {
-		return nil, NewWrongNumberOfArgumentsError(1, len(args))
-	}
-	switch arg := args[0].(type) {
-	case RubyClassObject:
-		if arg.Name() == "Array" {
-			return TRUE, nil
-		} else {
-			return FALSE, nil
-		}
-	default:
-		return nil, NewTypeError("argument must be a Class")
-	}
-}
+// func arrayIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
+// 	if len(args) == 0 {
+// 		return nil, NewWrongNumberOfArgumentsError(1, len(args))
+// 	}
+// 	switch arg := args[0].(type) {
+// 	case RubyClassObject:
+// 		if arg.Name() == "Array" {
+// 			return TRUE, nil
+// 		} else {
+// 			return FALSE, nil
+// 		}
+// 	default:
+// 		return nil, NewTypeError("argument must be a Class")
+// 	}
+// }

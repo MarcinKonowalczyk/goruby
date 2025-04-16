@@ -20,6 +20,7 @@ func init() {
 
 var kernelMethodSet = map[string]RubyMethod{
 	"to_s":              withArity(0, publicMethod(kernelToS)),
+	"is_a?":             withArity(1, publicMethod(kernelIsA)),
 	"nil?":              withArity(0, publicMethod(kernelIsNil)),
 	"methods":           publicMethod(kernelMethods),
 	"public_methods":    publicMethod(kernelPublicMethods),
@@ -41,6 +42,23 @@ func kernelToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 	}
 	val := fmt.Sprintf("#<%s:%p>", receiver.Class().Name(), receiver)
 	return &String{Value: val}, nil
+}
+
+func kernelIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
+	if len(args) != 1 {
+		return nil, NewWrongNumberOfArgumentsError(1, len(args))
+	}
+	receiver_class := context.Receiver().Class()
+	switch arg := args[0].(type) {
+	case RubyClassObject:
+		if arg.Name() == receiver_class.Name() {
+			return TRUE, nil
+		} else {
+			return FALSE, nil
+		}
+	default:
+		return nil, NewTypeError("argument must be a Class")
+	}
 }
 
 func kernelPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
