@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -110,7 +111,12 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		}
 		return val, nil
 	case *ast.StringLiteral:
-		return &object.String{Value: unescapeStringLiteral(node)}, nil
+		value := unescapeStringLiteral(node)
+		value, err := evaluateFormatDirectives(env, value)
+		if err != nil {
+			return nil, errors.WithMessage(err, "eval string literal")
+		}
+		return &object.String{Value: value}, nil
 	case *ast.SymbolLiteral:
 		switch value := node.Value.(type) {
 		case *ast.Identifier:
@@ -617,6 +623,53 @@ func unescapeStringLiteral(node *ast.StringLiteral) string {
 		value = strings.ReplaceAll(value, k, v)
 	}
 	return value
+}
+
+func evaluateFormatDirectives(env object.Environment, value string) (string, error) {
+	if !strings.Contains(value, "`") {
+		return value, nil
+	}
+
+	// example sting "hello `#{place}`"
+	// search for `#{...}` pattern
+
+	re := regexp.MustCompile(`\x60#\{(?P<content>[^}]*)\}\x60`)
+	matches := re.FindAllStringSubmatchIndex(value, -1)
+	if len(matches) == 0 {
+		return value, nil
+	}
+
+	// for each match, evaluate the expression
+	// note: in ruby this can be any expression but to save on parser evals
+	// we only manually parse out the identifier name, and allow only that
+	// hence `puts("hello `#{1+1}`")` *does* work in ruby but not here
+	for _, match := range matches {
+		start, end := match[0], match[1]
+		start += 3 // skip the `#{`
+		end -= 2   // skip the }`
+		// loop up identifier
+		val, err := Eval(&ast.Identifier{
+			Value: value[start:end],
+		}, env)
+		if err != nil {
+			return "", errors.WithMessage(err, "eval format directive")
+		}
+
+		var val_str string
+		switch val := val.(type) {
+		case *object.String:
+			val_str = val.Value
+		case *object.Array:
+			val_str = val.Inspect()
+		default:
+			fmt.Printf("val %T\n", val)
+		}
+
+		// replace the match with the value
+		value = strings.Replace(value, value[match[0]:match[1]], val_str, 1)
+	}
+
+	return value, nil
 }
 
 func evalLoopExpression(node *ast.LoopExpression, env object.Environment) (object.RubyObject, error) {
