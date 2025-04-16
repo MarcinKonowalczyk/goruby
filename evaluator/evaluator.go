@@ -1004,27 +1004,29 @@ func objectArrayToIndex(index *object.Array, length int64) (int64, int64, bool, 
 }
 
 func objectRangeToIndex(index *object.Range, length int64) (int64, int64, bool, error) {
-	left := index.Left.Value
-	right := index.Right.Value
+	left := index.Left
+	right := index.Right
+
+	// if index.Inclusive {
+	// 	right = &object.Integer{Value: right.Value + 1}
+	// }
+
+	left_idx, out_of_bounds := objectIntegerToIndex(left, length)
+	if out_of_bounds {
+		return 0, 0, true, nil
+	}
+	right_idx, out_of_bounds := objectIntegerToIndex(right, length)
+	if out_of_bounds {
+		return 0, 0, true, nil
+	}
 
 	if index.Inclusive {
-		right++
+		right_idx++
 	}
 
-	if left > right {
-		return 0, 0, true, nil
-	}
-	if left < 0 {
-		left = length + left
-	}
-	if right < 0 {
-		right = length + right
-	}
-	if left < 0 || right < 0 {
-		return 0, 0, true, nil
-	}
+	// fmt.Printf("left_idx: %d right_idx: %d\n", left_idx, right_idx)
 
-	return left, right, false, nil
+	return left_idx, right_idx, false, nil
 }
 
 func evalStringIndexExpression(stringObject *object.String, index object.RubyObject) (object.RubyObject, error) {
