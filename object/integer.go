@@ -1,6 +1,9 @@
 package object
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 var integerClass RubyClassObject = newClass(
 	"Integer", objectClass, integerMethods, integerClassMethods, notInstantiatable,
@@ -220,13 +223,17 @@ func integerToI(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func integerPow(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Integer)
-	power, ok := args[0].(*Integer)
-	if !ok {
+	switch arg := args[0].(type) {
+	case *Integer:
+		result := int64(1)
+		for j := int64(0); j < arg.Value; j++ {
+			result *= i.Value
+		}
+		return NewInteger(result), nil
+	case *Float:
+		result := math.Pow(float64(i.Value), arg.Value)
+		return NewFloat(result), nil
+	default:
 		return nil, NewCoercionTypeError(args[0], i)
 	}
-	result := int64(1)
-	for j := int64(0); j < power.Value; j++ {
-		result *= i.Value
-	}
-	return NewInteger(result), nil
 }

@@ -2,6 +2,7 @@ package object
 
 import (
 	"fmt"
+	"math"
 	"unsafe"
 )
 
@@ -62,6 +63,7 @@ var floatMethods = map[string]RubyMethod{
 	"<=":   withArity(1, publicMethod(floatLte)),
 	"<=>":  withArity(1, publicMethod(floatSpaceship)),
 	"to_i": withArity(0, publicMethod(floatToI)),
+	"**":   withArity(1, publicMethod(floatPow)),
 }
 
 func floatDiv(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -230,4 +232,17 @@ func floatLte(context CallContext, args ...RubyObject) (RubyObject, error) {
 func floatToI(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
 	return NewInteger(int64(i.Value)), nil
+}
+
+func floatPow(context CallContext, args ...RubyObject) (RubyObject, error) {
+	i := context.Receiver().(*Float)
+	right, err := rightToFloat(args)
+	if err != nil {
+		return nil, err
+	}
+	if right < 0 {
+		return nil, NewArgumentError("negative exponent")
+	}
+	result := math.Pow(i.Value, right)
+	return NewFloat(result), nil
 }
