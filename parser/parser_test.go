@@ -4027,12 +4027,29 @@ func TestParsingIndexExpressions(t *testing.T) {
 				return
 			}
 
-			if !testIntegerLiteral(t, indexExp.Index, 1) {
-				return
+			index, ok := indexExp.Index.(ast.ExpressionList)
+			if !ok {
+				t.Fatalf("indexExp.Index not ast.ExpressionList. got=%T", indexExp.Index)
 			}
 
-			if !testIntegerLiteral(t, indexExp.Length, 1) {
-				return
+			if len(index) != 2 {
+				t.Fatalf("indexExp.Index len not 2. got=%d", len(index))
+			}
+
+			if i0, ok := index[0].(*ast.IntegerLiteral); !ok {
+				t.Fatalf("indexExp.Index[0] not ast.IntegerLiteral. got=%T", index[0])
+			} else {
+				if i0.Value != 1 {
+					t.Fatalf("indexExp.Index[0] not 1. got=%d", i0.Value)
+				}
+			}
+
+			if i1, ok := index[1].(*ast.IntegerLiteral); !ok {
+				t.Fatalf("indexExp.Index[1] not ast.IntegerLiteral. got=%T", index[1])
+			} else {
+				if i1.Value != 1 {
+					t.Fatalf("indexExp.Index[1] not 1. got=%d", i1.Value)
+				}
 			}
 		})
 		t.Run("method calls as index", func(t *testing.T) {
@@ -4051,13 +4068,9 @@ func TestParsingIndexExpressions(t *testing.T) {
 			}
 
 			index := indexExp.Index.String()
-			if index != "foo.bar()" {
-				t.Logf("Expected index arg to equal %s, got %s", "foo.bar()", index)
+			if index != "foo.bar(), 1" {
+				t.Logf("Expected index arg to equal '%s', got '%s'", "foo.bar()", index)
 				t.Fail()
-			}
-
-			if !testIntegerLiteral(t, indexExp.Length, 1) {
-				return
 			}
 		})
 		t.Run("method calls as length", func(t *testing.T) {
@@ -4075,13 +4088,9 @@ func TestParsingIndexExpressions(t *testing.T) {
 				return
 			}
 
-			if !testIntegerLiteral(t, indexExp.Index, 1) {
-				return
-			}
-
-			length := indexExp.Length.String()
-			if length != "foo.bar()" {
-				t.Logf("Expected length arg to equal %s, got %s", "foo.bar()", length)
+			index := indexExp.Index.String()
+			if index != "1, foo.bar()" {
+				t.Logf("Expected index arg to equal '%s', got '%s'", "1, foo.bar()", index)
 				t.Fail()
 			}
 		})
@@ -4520,6 +4529,25 @@ func testExpression(t *testing.T, exp ast.Expression, expected interface{}) bool
 		return testInfixExpression(t, exp, inf.left, inf.operator, inf.right)
 	}
 	return testLiteralExpression(t, exp, expected)
+}
+
+func testExpressionList(t *testing.T, list ast.ExpressionList, expected ...interface{}) bool {
+	t.Helper()
+
+	if len(list) != len(expected) {
+		t.Errorf("wrong length of list. got=%d", len(list))
+		return false
+	}
+	for i, expr := range list {
+		if !testExpression(t, expr, expected[i]) {
+			return false
+		}
+	}
+	if list.TokenLiteral() != "," {
+		t.Errorf("list.TokenLiteral not , . got=%s", list.TokenLiteral())
+		return false
+	}
+	return true
 }
 
 type infix struct {

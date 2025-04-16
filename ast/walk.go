@@ -204,9 +204,6 @@ func Walk(v Visitor, node Node) {
 	case *IndexExpression:
 		Walk(v, n.Left)
 		Walk(v, n.Index)
-		if n.Length != nil {
-			Walk(v, n.Length)
-		}
 
 	case *ContextCallExpression:
 		Walk(v, n.Context)

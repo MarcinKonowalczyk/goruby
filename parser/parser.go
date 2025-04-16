@@ -1058,19 +1058,18 @@ func (p *parser) parseIndexExpression(left ast.Expression) ast.Expression {
 	content := p.parseExpression(precLowest)
 	exp.Index = content
 
-	if elist, ok := exp.Index.(ast.ExpressionList); ok {
-		// NOTE: What is this??
-		// fmt.Println("Got an ExpressionList for the IndexExpression:", elist)
-		exp.Index = elist[0]
-		exp.Length = elist[1]
-	} else if splat, ok := exp.Index.(*ast.Splat); ok {
-		// Indexing with a splat, e.g. array[*a]
-		exp.Index = splat
-	}
+	// if elist, ok := exp.Index.(ast.ExpressionList); ok {
+	// 	// fmt.Println("Got an ExpressionList for the IndexExpression:", elist)
+	// 	exp.Index = elist
+	// } else if splat, ok := exp.Index.(*ast.Splat); ok {
+	// 	// Indexing with a splat, e.g. array[*a]
+	// 	exp.Index = splat
+	// }
 
 	if !p.accept(token.RBRACKET) {
 		return nil
 	}
+	// fmt.Println("IndexExpression:", exp)
 	return exp
 }
 

@@ -1061,10 +1061,9 @@ var _ Expression = &Splat{}
 
 // An IndexExpression represents an array or hash access in the AST
 type IndexExpression struct {
-	Token  token.Token // The [ token
-	Left   Expression
-	Index  Expression
-	Length Expression
+	Token token.Token // The [ token
+	Left  Expression
+	Index Expression
 }
 
 func (ie *IndexExpression) expressionNode() {}
@@ -1083,10 +1082,6 @@ func (ie *IndexExpression) String() string {
 	out.WriteString(ie.Left.String())
 	out.WriteString("[")
 	out.WriteString(ie.Index.String())
-	if ie.Length != nil {
-		out.WriteString(", ")
-		out.WriteString(ie.Index.String())
-	}
 	out.WriteString("])")
 	return out.String()
 }

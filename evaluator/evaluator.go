@@ -867,30 +867,21 @@ func evalProcIndexExpression(env object.Environment, target *object.Proc, index 
 	}
 }
 func evalArrayIndexExpression(arrayObject *object.Array, index object.RubyObject) (object.RubyObject, error) {
-	index_int, ok := index.(*object.Integer)
-	if !ok {
-		return nil, errors.Wrap(
-			object.NewImplicitConversionTypeError(index_int, index),
+	switch index := index.(type) {
+	case *object.Integer:
+		idx, out_of_bounds := objectIntegerToIndex(index, int64(len(arrayObject.Elements)))
+		if out_of_bounds {
+			return object.NIL, nil
+		}
+		return arrayObject.Elements[idx], nil
+	default:
+		// fmt.Printf("index: %s(%T)\n", index.Inspect(), index)
+		err := errors.Wrap(
+			object.NewImplicitConversionTypeErrorMany(index, object.NewInteger(0), object.NewFloat(0.0)),
 			"eval array index",
 		)
+		return nil, err
 	}
-	idx := index_int.Value
-	maxNegative := -int64(len(arrayObject.Elements))
-	maxPositive := maxNegative*-1 - 1
-	if maxPositive < 0 {
-		return object.NIL, nil
-	}
-
-	if idx > 0 && idx > maxPositive {
-		return object.NIL, nil
-	}
-	if idx < 0 && idx < maxNegative {
-		return object.NIL, nil
-	}
-	if idx < 0 {
-		return arrayObject.Elements[len(arrayObject.Elements)+int(idx)], nil
-	}
-	return arrayObject.Elements[idx], nil
 }
 
 func evalHashIndexExpression(hash *object.Hash, index object.RubyObject) (object.RubyObject, error) {
@@ -901,24 +892,35 @@ func evalHashIndexExpression(hash *object.Hash, index object.RubyObject) (object
 	return result, nil
 }
 
+func objectIntegerToIndex(index *object.Integer, len int64) (int64, bool) {
+	idx := index.Value
+	max_negative := -len
+	max_positive := max_negative*-1 - 1
+	if max_positive < 0 {
+		return 0, true
+	}
+	if idx > 0 && idx > max_positive {
+		return 0, true
+	}
+	if idx < 0 && idx < max_negative {
+		return 0, true
+	}
+	// wrap negative index
+	for idx < 0 {
+		idx += len
+	}
+	if idx < 0 {
+		return 0, true
+	}
+	return idx, false
+}
+
 func evalStringIndexExpression(stringObject *object.String, index object.RubyObject) (object.RubyObject, error) {
 	switch index := index.(type) {
 	case *object.Integer:
-		idx := index.Value
-		maxNegative := -int64(len(stringObject.Value))
-		maxPositive := maxNegative*-1 - 1
-		if maxPositive < 0 {
+		idx, out_of_bounds := objectIntegerToIndex(index, int64(len(stringObject.Value)))
+		if out_of_bounds {
 			return object.NIL, nil
-		}
-
-		if idx > 0 && idx > maxPositive {
-			return object.NIL, nil
-		}
-		if idx < 0 && idx < maxNegative {
-			return object.NIL, nil
-		}
-		if idx < 0 {
-			return &object.String{Value: string(stringObject.Value[len(stringObject.Value)+int(idx)])}, nil
 		}
 		return &object.String{Value: string(stringObject.Value[idx])}, nil
 	case *object.Array:
@@ -926,31 +928,80 @@ func evalStringIndexExpression(stringObject *object.String, index object.RubyObj
 			return object.NIL, nil
 		}
 		// index with each element of the array
-		var result string
-		for _, e := range index.Elements {
-			eval, err := evalStringIndexExpression(stringObject, e)
-			// fmt.Printf("evalStringIndexExpression %T\n", eval)
-			if err != nil {
-				return nil, errors.WithMessage(err, "eval string index")
-			}
-			if eval == nil || eval.Type() == object.NIL_OBJ {
-				// we've hit a nil value, so we stop. this is likely because we've indexed with a range,
-				// the range got evaluated and eventually we indexed past the end of the string
-				// e.g. "hello"[0..10]
-				break
-			}
-			if str, ok := eval.(*object.String); ok {
-				result += str.Value
-			} else {
-				return nil, errors.Wrap(
-					object.NewImplicitConversionTypeError(index, str),
-					"eval string index",
-				)
-			}
+		first_element := index.Elements[0]
+		last_element := index.Elements[len(index.Elements)-1]
+
+		// take the subset of the string between the first and last element
+		if first_element.Type() != object.INTEGER_OBJ {
+			return nil, errors.Wrap(
+				object.NewImplicitConversionTypeError(first_element, first_element),
+				"eval string index",
+			)
 		}
+		if last_element.Type() != object.INTEGER_OBJ {
+			return nil, errors.Wrap(
+				object.NewImplicitConversionTypeError(last_element, last_element),
+				"eval string index",
+			)
+		}
+
+		first_index, ok := first_element.(*object.Integer)
+		if !ok {
+			return nil, errors.Wrap(
+				object.NewImplicitConversionTypeError(first_element, first_element),
+				"eval string index",
+			)
+		}
+		// wrap
+		// TODO: check correctness of this
+		first_idx := first_index.Value
+		if first_idx < 0 {
+			first_idx = int64(len(stringObject.Value)) + first_idx
+		}
+		if first_idx < 0 {
+			first_idx = 0
+		}
+		if first_idx > int64(len(stringObject.Value)) {
+			first_idx = int64(len(stringObject.Value))
+		}
+
+		last_index, ok := last_element.(*object.Integer)
+		if !ok {
+			return nil, errors.Wrap(
+				object.NewImplicitConversionTypeError(last_element, last_element),
+				"eval string index",
+			)
+		}
+		last_idx := last_index.Value + 1
+		if last_idx < 0 {
+			last_idx = int64(len(stringObject.Value)) + last_idx
+		}
+		if last_idx < 0 {
+			last_idx = 0
+		}
+		if last_idx > int64(len(stringObject.Value)) {
+			last_idx = int64(len(stringObject.Value))
+		}
+		if first_idx > last_idx {
+			return nil, errors.Wrap(
+				object.NewImplicitConversionTypeErrorMany(index, first_element, last_element),
+				"eval string index",
+			)
+		}
+
+		// fmt.Printf("first_idx: %d, last_idx: %d\n", first_idx, last_idx)
+
+		result := string(stringObject.Value[first_idx:last_idx])
+
 		return &object.String{Value: result}, nil
 
+	case rubyObjects:
+		// we got a bunch of objects as the index
+		index_array := object.NewArray(index...)
+		return evalStringIndexExpression(stringObject, index_array)
+
 	default:
+		// fmt.Printf("index: %s(%T)\n", index.Inspect(), index)
 		err := errors.Wrap(
 			object.NewImplicitConversionTypeErrorMany(index, object.NewInteger(0), object.NewFloat(0.0)),
 			"eval string index",
