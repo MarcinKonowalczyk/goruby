@@ -40,6 +40,7 @@ const (
 	MINUS      // -
 	BANG       // !
 	ASTERISK   // *
+	POW        // **
 	SLASH      // /
 	MODULO     // %
 	AND        // &
@@ -171,6 +172,7 @@ var type_strings = [...]string{
 	MINUS:      "MINUS",
 	BANG:       "BANG",
 	ASTERISK:   "ASTERISK",
+	POW:        "POW",
 	SLASH:      "SLASH",
 	MODULO:     "MODULO",
 	AND:        "AND",
@@ -261,6 +263,7 @@ var type_reprs = [...]string{
 	MINUS:      "-",
 	BANG:       "!",
 	ASTERISK:   "*",
+	POW:        "**",
 	SLASH:      "/",
 	MODULO:     "%",
 	AND:        "&",

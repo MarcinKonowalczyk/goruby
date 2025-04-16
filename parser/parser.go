@@ -31,6 +31,7 @@ const (
 	precShift       // <<
 	precSum         // + or -
 	precProduct     // *, /, %
+	precPower       // **
 	precPrefix      // -X or !X
 	precSplat       // x = [*y, 1]
 	precCallArg     // func x
@@ -60,6 +61,7 @@ var precedences = map[token.Type]int{
 	token.MINUS:      precSum,
 	token.SLASH:      precProduct,
 	token.ASTERISK:   precProduct,
+	token.POW:        precPower,
 	token.MODULO:     precProduct,
 	token.ASSIGN:     precAssignment,
 	token.ADDASSIGN:  precAssignment,
@@ -188,6 +190,7 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerInfix(token.MINUS, p.parseInfixExpression)
 	p.registerInfix(token.SLASH, p.parseInfixExpression)
 	p.registerInfix(token.ASTERISK, p.parseInfixExpression)
+	p.registerInfix(token.POW, p.parseInfixExpression)
 	p.registerInfix(token.MODULO, p.parseInfixExpression)
 	p.registerInfix(token.AND, p.parseInfixExpression)
 	p.registerInfix(token.PIPE, p.parseInfixExpression)

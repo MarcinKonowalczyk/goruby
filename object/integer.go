@@ -54,6 +54,7 @@ var integerMethods = map[string]RubyMethod{
 	"<=":   withArity(1, publicMethod(integerLte)),
 	"<=>":  withArity(1, publicMethod(integerSpaceship)),
 	"to_i": withArity(0, publicMethod(integerToI)),
+	"**":   withArity(1, publicMethod(integerPow)),
 }
 
 func integerDiv(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -215,4 +216,17 @@ func integerLte(context CallContext, args ...RubyObject) (RubyObject, error) {
 func integerToI(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Integer)
 	return i, nil
+}
+
+func integerPow(context CallContext, args ...RubyObject) (RubyObject, error) {
+	i := context.Receiver().(*Integer)
+	power, ok := args[0].(*Integer)
+	if !ok {
+		return nil, NewCoercionTypeError(args[0], i)
+	}
+	result := int64(1)
+	for j := int64(0); j < power.Value; j++ {
+		result *= i.Value
+	}
+	return NewInteger(result), nil
 }

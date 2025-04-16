@@ -280,6 +280,10 @@ func startLexer(l *Lexer) StateFn {
 			l.next()
 			l.emit(token.MULASSIGN)
 			return startLexer
+		} else if l.peek() == '*' {
+			l.next()
+			l.emit(token.POW)
+			return startLexer
 		}
 		l.emit(token.ASTERISK)
 		return startLexer
