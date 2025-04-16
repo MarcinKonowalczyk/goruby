@@ -114,25 +114,36 @@ func floatSub(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return NewFloat(i.Value - sub.Value), nil
 }
 
-// func floatModulo(context CallContext, args ...RubyObject) (RubyObject, error) {
-// 	i := context.Receiver().(*Float)
-// 	mod, ok := args[0].(*Float)
-// 	if !ok {
-// 		return nil, NewCoercionTypeError(args[0], i)
-// 	}
-// 	return NewFloat(i.Value % mod.Value), nil
-// }
-
-func floatLt(context CallContext, args ...RubyObject) (RubyObject, error) {
-	i := context.Receiver().(*Float)
-	right, ok := args[0].(*Float)
-	if !ok {
-		return nil, NewArgumentError(
+//	func floatModulo(context CallContext, args ...RubyObject) (RubyObject, error) {
+//		i := context.Receiver().(*Float)
+//		mod, ok := args[0].(*Float)
+//		if !ok {
+//			return nil, NewCoercionTypeError(args[0], i)
+//		}
+//		return NewFloat(i.Value % mod.Value), nil
+//	}
+func rightToFloat(args []RubyObject) (float64, error) {
+	var right float64
+	switch arg := args[0].(type) {
+	case *Float:
+		right = arg.Value
+	case *Integer:
+		right = float64(arg.Value)
+	default:
+		return 0, NewArgumentError(
 			"comparison of Float with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
+			arg.Class().(RubyObject).Inspect(),
 		)
 	}
-	if i.Value < right.Value {
+	return right, nil
+}
+func floatLt(context CallContext, args ...RubyObject) (RubyObject, error) {
+	i := context.Receiver().(*Float)
+	right, err := rightToFloat(args)
+	if err != nil {
+		return nil, err
+	}
+	if i.Value < right {
 		return TRUE, nil
 	}
 	return FALSE, nil
@@ -140,14 +151,11 @@ func floatLt(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func floatGt(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	right, ok := args[0].(*Float)
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Float with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := rightToFloat(args)
+	if err != nil {
+		return nil, err
 	}
-	if i.Value > right.Value {
+	if i.Value > right {
 		return TRUE, nil
 	}
 	return FALSE, nil
@@ -155,14 +163,11 @@ func floatGt(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func floatEq(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	right, ok := args[0].(*Float)
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Float with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := rightToFloat(args)
+	if err != nil {
+		return nil, err
 	}
-	if i.Value == right.Value {
+	if i.Value == right {
 		return TRUE, nil
 	}
 	return FALSE, nil
@@ -170,14 +175,11 @@ func floatEq(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func floatNeq(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	right, ok := args[0].(*Float)
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Float with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := rightToFloat(args)
+	if err != nil {
+		return nil, err
 	}
-	if i.Value != right.Value {
+	if i.Value != right {
 		return TRUE, nil
 	}
 	return FALSE, nil
@@ -185,16 +187,16 @@ func floatNeq(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func floatSpaceship(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	right, ok := args[0].(*Float)
-	if !ok {
-		return NIL, nil
+	right, err := rightToFloat(args)
+	if err != nil {
+		return nil, err
 	}
 	switch {
-	case i.Value > right.Value:
+	case i.Value > right:
 		return &Float{Value: 1}, nil
-	case i.Value < right.Value:
+	case i.Value < right:
 		return &Float{Value: -1}, nil
-	case i.Value == right.Value:
+	case i.Value == right:
 		return &Float{Value: 0}, nil
 	default:
 		panic("not reachable")
@@ -203,14 +205,11 @@ func floatSpaceship(context CallContext, args ...RubyObject) (RubyObject, error)
 
 func floatGte(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	right, ok := args[0].(*Float)
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Float with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := rightToFloat(args)
+	if err != nil {
+		return nil, err
 	}
-	if i.Value >= right.Value {
+	if i.Value >= right {
 		return TRUE, nil
 	}
 	return FALSE, nil
@@ -218,14 +217,11 @@ func floatGte(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func floatLte(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	right, ok := args[0].(*Float)
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Float with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := rightToFloat(args)
+	if err != nil {
+		return nil, err
 	}
-	if i.Value <= right.Value {
+	if i.Value <= right {
 		return TRUE, nil
 	}
 	return FALSE, nil
