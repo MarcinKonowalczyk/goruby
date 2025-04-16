@@ -61,7 +61,7 @@ var rangeMethods = map[string]RubyMethod{
 	// "push":     publicMethod(rangePush),
 	// "unshift":  publicMethod(rangeUnshift),
 	// "size":     publicMethod(rangeSize),
-	// "find_all": publicMethod(rangeFindAll),
+	"find_all": publicMethod(rangeFindAll),
 	// "first":    publicMethod(rangeFirst),
 	// "map":      publicMethod(rangeMap),
 	// "all?":     publicMethod(rangeAll),
@@ -85,38 +85,51 @@ var rangeMethods = map[string]RubyMethod{
 // 	return &Integer{Value: int64(len(range.Elements))}, nil
 // }
 
-// func rangeFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {
-// 	range, _ := context.Receiver().(*Range)
-// 	if len(args) == 0 {
-// 		return nil, NewArgumentError("find_all requires a block")
-// 	}
-// 	block := args[0]
-// 	proc, ok := block.(*Proc)
-// 	if !ok {
-// 		return nil, NewArgumentError("find_all requires a block")
-// 	}
-// 	result := NewRange()
-// 	for _, elem := range range.Elements {
-// 		ret, err := proc.Call(context, elem)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		if ret == nil {
-// 			return nil, NewArgumentError("find_all requires a block to return a boolean")
-// 		}
-// 		if ret.Type() != BOOLEAN_OBJ {
-// 			return nil, NewArgumentError("find_all requires a block to return a boolean")
-// 		}
-// 		boolean, ok := ret.(*Boolean)
-// 		if !ok {
-// 			return nil, NewArgumentError("find_all requires a block to return a boolean")
-// 		}
-// 		if boolean.Value {
-// 			result.Elements = append(result.Elements, elem)
-// 		}
-// 	}
-// 	return result, nil
-// }
+func (rang *Range) ToArray() *Array {
+	result := NewArray()
+	left, right := rang.Left.Value, rang.Right.Value
+	if rang.Inclusive {
+		right++
+	}
+	for i := left; i < right; i++ {
+		result.Elements = append(result.Elements, &Integer{Value: i})
+	}
+	return result
+}
+
+func rangeFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {
+	rang, _ := context.Receiver().(*Range)
+	if len(args) == 0 {
+		return nil, NewArgumentError("find_all requires a block")
+	}
+	block := args[0]
+	proc, ok := block.(*Proc)
+	if !ok {
+		return nil, NewArgumentError("find_all requires a block")
+	}
+	// evaluate the range
+	result := NewArray()
+	for _, elem := range rang.ToArray().Elements {
+		ret, err := proc.Call(context, elem)
+		if err != nil {
+			return nil, err
+		}
+		if ret == nil {
+			return nil, NewArgumentError("find_all requires a block to return a boolean")
+		}
+		if ret.Type() != BOOLEAN_OBJ {
+			return nil, NewArgumentError("find_all requires a block to return a boolean")
+		}
+		boolean, ok := ret.(*Boolean)
+		if !ok {
+			return nil, NewArgumentError("find_all requires a block to return a boolean")
+		}
+		if boolean.Value {
+			result.Elements = append(result.Elements, elem)
+		}
+	}
+	return result, nil
+}
 
 // func rangeFirst(context CallContext, args ...RubyObject) (RubyObject, error) {
 // 	range, _ := context.Receiver().(*Range)
