@@ -22,8 +22,19 @@ var nilClassMethods = map[string]RubyMethod{}
 
 var nilMethods = map[string]RubyMethod{
 	"nil?": withArity(0, publicMethod(nilIsNil)),
+	"==":   withArity(1, publicMethod(nilEqual)),
 }
 
 func nilIsNil(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return TRUE, nil
+}
+
+func nilEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
+	if len(args) == 0 {
+		return nil, NewArgumentError("wrong number of arguments (given 0, expected 1)")
+	}
+	if args[0] == NIL {
+		return TRUE, nil
+	}
+	return FALSE, nil
 }
