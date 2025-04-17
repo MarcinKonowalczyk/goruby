@@ -113,7 +113,7 @@ var hashMethods = map[string]RubyMethod{
 func hashHasKey(context CallContext, args ...RubyObject) (RubyObject, error) {
 	hash, _ := context.Receiver().(*Hash)
 	if len(args) != 1 {
-		return nil, NewArgumentError("wrong number of arguments (given 1, expected 0)")
+		return nil, NewWrongNumberOfArgumentsError(1, len(args))
 	}
 	key := args[0]
 	if _, ok := hash.Get(key); ok {

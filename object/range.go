@@ -131,55 +131,6 @@ func rangeFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return result, nil
 }
 
-// func rangeFirst(context CallContext, args ...RubyObject) (RubyObject, error) {
-// 	range, _ := context.Receiver().(*Range)
-// 	if len(args) == 0 {
-// 		if len(range.Elements) == 0 {
-// 			return nil, NewArgumentError("range is empty")
-// 		}
-// 		return range.Elements[0], nil
-// 	}
-// 	if len(args) > 1 {
-// 		return nil, NewArgumentError("wrong number of arguments (given %d, expected 0..1)", len(args))
-// 	}
-// 	n, ok := args[0].(*Integer)
-// 	if !ok {
-// 		return nil, NewArgumentError("argument must be an Integer")
-// 	}
-// 	if n.Value < 0 {
-// 		return nil, NewArgumentError("negative range size (or size too big)")
-// 	}
-// 	if int(n.Value) > len(range.Elements) {
-// 		return nil, NewArgumentError("range size too big")
-// 	}
-// 	result := NewRange()
-// 	for i := 0; i < int(n.Value); i++ {
-// 		result.Elements = append(result.Elements, range.Elements[i])
-// 	}
-// 	return result, nil
-// }
-
-// func rangeMap(context CallContext, args ...RubyObject) (RubyObject, error) {
-// 	range, _ := context.Receiver().(*Range)
-// 	if len(args) == 0 {
-// 		return nil, NewArgumentError("map requires a block")
-// 	}
-// 	block := args[0]
-// 	proc, ok := block.(*Proc)
-// 	if !ok {
-// 		return nil, NewArgumentError("map requires a block")
-// 	}
-// 	result := NewRange()
-// 	for _, elem := range range.Elements {
-// 		ret, err := proc.Call(context, elem)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		result.Elements = append(result.Elements, ret)
-// 	}
-// 	return result, nil
-// }
-
 func rangeAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 	rng, _ := context.Receiver().(*Range)
 	if len(args) == 0 {

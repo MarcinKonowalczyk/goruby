@@ -3,7 +3,10 @@ package object
 import (
 	"fmt"
 	"math"
+	"runtime"
 	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 var floatClass RubyClassObject = newClass(
@@ -144,17 +147,37 @@ func safeObjectToFloat(arg RubyObject) (float64, bool) {
 	}
 	return right, true
 }
-func floatLt(context CallContext, args ...RubyObject) (RubyObject, error) {
-	i := context.Receiver().(*Float)
+
+func callersName() string {
+	parent, _, _, _ := runtime.Caller(1)
+	fn := runtime.FuncForPC(parent)
+	return fn.Name()
+}
+
+func floatCmpHelper(args []RubyObject) (float64, error) {
 	if len(args) != 1 {
-		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
+		return 0, errors.WithMessage(
+			NewWrongNumberOfArgumentsError(1, len(args)),
+			callersName(),
+		)
 	}
 	right, ok := safeObjectToFloat(args[0])
 	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Float with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
+		return 0, errors.WithMessage(
+			NewArgumentError(
+				"comparison of Float with %s failed",
+				args[0].Class().(RubyObject).Inspect(),
+			),
+			callersName(),
 		)
+	}
+	return right, nil
+}
+func floatLt(context CallContext, args ...RubyObject) (RubyObject, error) {
+	i := context.Receiver().(*Float)
+	right, err := floatCmpHelper(args)
+	if err != nil {
+		return nil, err
 	}
 	if i.Value < right {
 		return TRUE, nil
@@ -164,15 +187,9 @@ func floatLt(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func floatGt(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	if len(args) != 1 {
-		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
-	}
-	right, ok := safeObjectToFloat(args[0])
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Float with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := floatCmpHelper(args)
+	if err != nil {
+		return nil, err
 	}
 	if i.Value > right {
 		return TRUE, nil
@@ -206,15 +223,9 @@ func floatGt(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func floatSpaceship(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	if len(args) != 1 {
-		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
-	}
-	right, ok := safeObjectToFloat(args[0])
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Float with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := floatCmpHelper(args)
+	if err != nil {
+		return nil, err
 	}
 	switch {
 	case i.Value > right:
@@ -230,15 +241,9 @@ func floatSpaceship(context CallContext, args ...RubyObject) (RubyObject, error)
 
 func floatGte(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	if len(args) != 1 {
-		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
-	}
-	right, ok := safeObjectToFloat(args[0])
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Float with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := floatCmpHelper(args)
+	if err != nil {
+		return nil, err
 	}
 	if i.Value >= right {
 		return TRUE, nil
@@ -248,15 +253,9 @@ func floatGte(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func floatLte(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	if len(args) != 1 {
-		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
-	}
-	right, ok := safeObjectToFloat(args[0])
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Float with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := floatCmpHelper(args)
+	if err != nil {
+		return nil, err
 	}
 	if i.Value <= right {
 		return TRUE, nil
@@ -272,7 +271,7 @@ func floatToI(context CallContext, args ...RubyObject) (RubyObject, error) {
 func floatPow(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
 	if len(args) != 1 {
-		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
+		return nil, NewWrongNumberOfArgumentsError(1, len(args))
 	}
 	right, ok := safeObjectToFloat(args[0])
 	if !ok {

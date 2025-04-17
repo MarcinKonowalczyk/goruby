@@ -31,7 +31,7 @@ func nilIsNil(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 // func nilEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
 // 	if len(args) == 0 {
-// 		return nil, NewArgumentError("wrong number of arguments (given 0, expected 1)")
+// 		return nil, NewWrongNumberOfArgumentsError(0, len(args)),
 // 	}
 // 	if args[0] == NIL {
 // 		return TRUE, nil

@@ -3,6 +3,8 @@ package object
 import (
 	"fmt"
 	"math"
+
+	"github.com/pkg/errors"
 )
 
 var integerClass RubyClassObject = newClass(
@@ -117,32 +119,40 @@ func safeObjectToInteger(arg RubyObject) (int64, bool) {
 	return right, true
 }
 
-func integerModulo(context CallContext, args ...RubyObject) (RubyObject, error) {
-	i := context.Receiver().(*Integer)
+func integerCmpHelper(args []RubyObject) (int64, error) {
 	if len(args) != 1 {
-		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
+		return 0, errors.WithMessage(
+			NewWrongNumberOfArgumentsError(1, len(args)),
+			callersName(),
+		)
 	}
 	right, ok := safeObjectToInteger(args[0])
 	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Integer with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
+		return 0, errors.WithMessage(
+			NewArgumentError(
+				"comparison of Integer with %s failed",
+				args[0].Class().(RubyObject).Inspect(),
+			),
+			callersName(),
 		)
+	}
+	return right, nil
+}
+
+func integerModulo(context CallContext, args ...RubyObject) (RubyObject, error) {
+	i := context.Receiver().(*Integer)
+	right, err := integerCmpHelper(args)
+	if err != nil {
+		return nil, err
 	}
 	return NewInteger(i.Value % right), nil
 }
 
 func integerLt(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Integer)
-	if len(args) != 1 {
-		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
-	}
-	right, ok := safeObjectToInteger(args[0])
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Integer with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := integerCmpHelper(args)
+	if err != nil {
+		return nil, err
 	}
 	if i.Value < right {
 		return TRUE, nil
@@ -152,15 +162,9 @@ func integerLt(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func integerGt(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Integer)
-	if len(args) != 1 {
-		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
-	}
-	right, ok := safeObjectToInteger(args[0])
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Integer with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := integerCmpHelper(args)
+	if err != nil {
+		return nil, err
 	}
 	if i.Value > right {
 		return TRUE, nil
@@ -200,15 +204,9 @@ func integerGt(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func integerSpaceship(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Integer)
-	if len(args) != 1 {
-		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
-	}
-	right, ok := safeObjectToInteger(args[0])
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Integer with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := integerCmpHelper(args)
+	if err != nil {
+		return nil, err
 	}
 	switch {
 	case i.Value > right:
@@ -224,15 +222,9 @@ func integerSpaceship(context CallContext, args ...RubyObject) (RubyObject, erro
 
 func integerGte(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Integer)
-	if len(args) != 1 {
-		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
-	}
-	right, ok := safeObjectToInteger(args[0])
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Integer with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := integerCmpHelper(args)
+	if err != nil {
+		return nil, err
 	}
 	if i.Value >= right {
 		return TRUE, nil
@@ -242,15 +234,9 @@ func integerGte(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func integerLte(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Integer)
-	if len(args) != 1 {
-		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
-	}
-	right, ok := safeObjectToInteger(args[0])
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Integer with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := integerCmpHelper(args)
+	if err != nil {
+		return nil, err
 	}
 	if i.Value <= right {
 		return TRUE, nil
