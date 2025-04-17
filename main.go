@@ -28,9 +28,15 @@ func (m *multiString) Set(s string) error {
 var onelineScripts multiString
 var trace bool
 
+func printError(err error) {
+	// fmt.Printf("%v\n", errors.Cause(err))
+	fmt.Printf("%T : %v\n", errors.Cause(err), err)
+}
+
 func main() {
 	flag.Var(&onelineScripts, "e", "one line of script. Several -e's allowed. Omit [programfile]")
 	flag.BoolVar(&trace, "trace", false, "trace execution")
+	// flag.BoolVar(&debug, "debug", false, "debug execution")
 	flag.Parse()
 	// fmt.Println("goruby version 0.1.0")
 	interpreter := interpreter.NewInterpreter()
@@ -56,7 +62,7 @@ func main() {
 	}
 	_, err = interpreter.Interpret(args[0], fileBytes)
 	if err != nil {
-		fmt.Printf("%v\n", errors.Cause(err))
+		printError(err)
 		os.Exit(1)
 	}
 }
