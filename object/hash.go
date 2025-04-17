@@ -12,12 +12,21 @@ var hashClass RubyClassObject = newClass(
 	hashMethods,
 	hashClassMethods,
 	func(RubyClassObject, ...RubyObject) (RubyObject, error) {
-		return &Hash{hashMap: make(map[hashKey]hashPair)}, nil
+		return &Hash{Map: make(map[hashKey]hashPair)}, nil
 	},
 )
 
 func init() {
 	classes.Set("Hash", hashClass)
+}
+
+// Map returns a map of RubyObject to RubyObject
+func (h *Hash) ObjectMap() map[RubyObject]RubyObject {
+	hashmap := make(map[RubyObject]RubyObject)
+	for _, v := range h.Map {
+		hashmap[v.Key] = v.Value
+	}
+	return hashmap
 }
 
 type hashKey struct {
@@ -46,42 +55,29 @@ type hashPair struct {
 
 // A Hash represents a Ruby Hash
 type Hash struct {
-	hashMap map[hashKey]hashPair
+	Map map[hashKey]hashPair
 }
 
 func (h *Hash) init() {
-	if h.hashMap == nil {
-		h.hashMap = make(map[hashKey]hashPair)
+	if h.Map == nil {
+		h.Map = make(map[hashKey]hashPair)
 	}
 }
 
 // Set puts the object obj into the Hash
 func (h *Hash) Set(key, value RubyObject) RubyObject {
 	h.init()
-	h.hashMap[hash(key)] = hashPair{Key: key, Value: value}
+	h.Map[hash(key)] = hashPair{Key: key, Value: value}
 	return value
 }
 
 // Get retrieves the object for key within the hash. If not found, the boolean will be false
 func (h *Hash) Get(key RubyObject) (RubyObject, bool) {
-	v, ok := h.hashMap[hash(key)]
+	v, ok := h.Map[hash(key)]
 	if !ok {
 		return nil, false
 	}
 	return v.Value, true
-}
-
-// Map returns a map of RubyObject to RubyObject
-func (h *Hash) Map() map[RubyObject]RubyObject {
-	hashmap := make(map[RubyObject]RubyObject)
-	for _, v := range h.hashMap {
-		hashmap[v.Key] = v.Value
-	}
-	return hashmap
-}
-
-func (h *Hash) Len() int {
-	return len(h.hashMap)
 }
 
 // Type returns the ObjectType of the array
@@ -91,7 +87,7 @@ func (h *Hash) Type() Type { return HASH_OBJ }
 // surrounded by brackets
 func (h *Hash) Inspect() string {
 	elems := []string{}
-	for _, v := range h.hashMap {
+	for _, v := range h.Map {
 		elems = append(elems, fmt.Sprintf("%q => %q", v.Key.Inspect(), v.Value.Inspect()))
 	}
 	return "{" + strings.Join(elems, ", ") + "}"
@@ -102,7 +98,7 @@ func (h *Hash) Class() RubyClass { return hashClass }
 
 func (h *Hash) hashKey() hashKey {
 	hash := fnv.New64a()
-	for k := range h.hashMap {
+	for k := range h.Map {
 		hash.Write(k.bytes())
 	}
 	return hashKey{Type: h.Type(), Value: hash.Sum64()}

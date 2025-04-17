@@ -1508,7 +1508,7 @@ func TestHashLiteral(t *testing.T) {
 	}
 
 	actual := make(map[string]object.RubyObject)
-	for k, v := range hash.Map() {
+	for k, v := range hash.ObjectMap() {
 		actual[k.Inspect()] = v
 	}
 
@@ -1781,7 +1781,7 @@ func testHashObject(t *testing.T, obj object.RubyObject, expected map[string]str
 		return false
 	}
 	hashMap := make(map[string]string)
-	for k, v := range result.Map() {
+	for k, v := range result.ObjectMap() {
 		hashMap[k.Inspect()] = v.Inspect()
 	}
 	if !reflect.DeepEqual(hashMap, expected) {

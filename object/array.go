@@ -65,6 +65,7 @@ var arrayMethods = map[string]RubyMethod{
 	"map":      publicMethod(arrayMap),
 	"all?":     publicMethod(arrayAll),
 	"join":     publicMethod(arrayJoin),
+	"include?": publicMethod(arrayInclude),
 }
 
 func arrayPush(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -212,18 +213,36 @@ func arrayJoin(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return &String{Value: result}, nil
 }
 
-// func arrayIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
-// 	if len(args) == 0 {
-// 		return nil, NewWrongNumberOfArgumentsError(1, len(args))
-// 	}
-// 	switch arg := args[0].(type) {
-// 	case RubyClassObject:
-// 		if arg.Name() == "Array" {
-// 			return TRUE, nil
-// 		} else {
-// 			return FALSE, nil
-// 		}
-// 	default:
-// 		return nil, NewTypeError("argument must be a Class")
-// 	}
-// }
+func arrayInclude(context CallContext, args ...RubyObject) (RubyObject, error) {
+	array, _ := context.Receiver().(*Array)
+	if len(args) == 0 {
+		return nil, NewArgumentError("include? requires at least 1 argument")
+	}
+	// compare the first argument with all elements in the array
+	arg := args[0]
+	for _, elem := range array.Elements {
+		// if elem.Class() == arg.Class() {
+		// 	if elem.Inspect() == arg.Inspect() {
+		// 		return TRUE, nil
+		// 	}
+		// 	return FALSE, nil
+		// } else {
+		// 	if _, ok := elem.(*Integer); ok {
+		// 		// also compare as if it was a float
+
+		// 	}
+		// }
+		ctx := NewCallContext(context.Env(), elem)
+		ret, err := Send(ctx, "==", arg)
+		if err != nil {
+			// fmt.Println("Error in arrayInclude:", err)
+			continue
+			// return nil, err
+		}
+		boolean := ret.(*Boolean)
+		if boolean.Value {
+			return TRUE, nil
+		}
+	}
+	return FALSE, nil
+}

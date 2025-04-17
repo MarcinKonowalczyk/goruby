@@ -33,6 +33,8 @@ var kernelMethodSet = map[string]RubyMethod{
 	"block_given?":      withArity(0, privateMethod(kernelBlockGiven)),
 	"tap":               publicMethod(kernelTap),
 	"raise":             privateMethod(kernelRaise),
+	"==":                withArity(1, publicMethod(kernelEqual)),
+	"!=":                withArity(1, publicMethod(kernelNotEqual)),
 }
 
 func kernelToS(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -294,4 +296,143 @@ func kernelRaise(context CallContext, args ...RubyObject) (RubyObject, error) {
 	default:
 		return nil, NewRuntimeError("")
 	}
+}
+
+func swapOr(result bool, left, right RubyObject, swapped bool) bool {
+	if swapped {
+		// we've already swapped. just return the result
+		return result
+	} else {
+		// 1-depth recursive call with swapped arguments
+		return rubyObjectsEqual(right, left, true)
+	}
+}
+
+func rubyObjectsEqual(left, right RubyObject, swapped bool) bool {
+	// leftClass := left.Class()
+	// rightClass := right.Class()
+	// if leftClass != rightClass {
+	// 	return swapOr(false, left, right, swapped)
+	// }
+	// if left == nil {
+	// 	return right == nil || right.Class().Name() == "NilClass"
+	// }
+	// if left.Class().Name() == "NilClass" {
+	// 	return right == nil || right.Class().Name() == "NilClass"
+	// }
+	// fmt.Printf("left: %T right: %T\n", left, right)
+	// fmt.Println("left:", left.Class().Name(), "right:", right.Class().Name())
+	switch left := left.(type) {
+	case *Boolean:
+		if right_t, ok := right.(*Boolean); !ok {
+			// swap. maybe the other thing knows how to compare
+			// itself to a boolean
+			return swapOr(false, left, right, swapped)
+		} else {
+			return left.Value == right_t.Value
+		}
+	case *Integer:
+		right_t, ok := safeObjectToInteger(right)
+		if !ok {
+			return swapOr(false, left, right, swapped)
+		} else {
+			return left.Value == right_t
+		}
+	case *Float:
+		right_t, ok := safeObjectToFloat(right)
+		if !ok {
+			return swapOr(false, left, right, swapped)
+		} else {
+			return left.Value == right_t
+		}
+	case *String:
+		if right_t, ok := right.(*String); !ok {
+			return swapOr(false, left, right, swapped)
+		} else {
+			return left.Value == right_t.Value
+		}
+	case *Array:
+		if right_t, ok := right.(*Array); !ok {
+			return swapOr(false, left, right, swapped)
+		} else {
+			if len(left.Elements) != len(right_t.Elements) {
+				return false
+			}
+			for i, elem := range left.Elements {
+				if !rubyObjectsEqual(elem, right_t.Elements[i], swapped) {
+					return false
+				}
+			}
+			return true
+		}
+	case *Hash:
+		if right_t, ok := right.(*Hash); !ok {
+			return swapOr(false, left, right, swapped)
+		} else {
+			if len(left.Map) != len(right_t.Map) {
+				return false
+			}
+			for key, leftValue := range left.ObjectMap() {
+				rightValue, ok := right_t.Get(key)
+				if !ok {
+					return false
+				}
+				if !rubyObjectsEqual(leftValue, rightValue, swapped) {
+					return false
+				}
+			}
+
+			return true
+		}
+	case *Symbol:
+		if right_t, ok := right.(*Symbol); !ok {
+			return swapOr(false, left, right, swapped)
+		} else {
+			return left.Value == right_t.Value
+		}
+	case *nilObject:
+		if right_t, ok := right.(*nilObject); !ok {
+			return swapOr(false, left, right, swapped)
+		} else {
+			return left == right_t
+		}
+	default:
+		return false
+	}
+}
+
+func RubyObjectsEqual(left, right RubyObject) bool {
+	return rubyObjectsEqual(left, right, false)
+}
+
+func kernelEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
+	receiver := context.Receiver()
+	// if self, ok := receiver.(*Self); ok {
+	// 	receiver = self.RubyObject
+	// }
+	if len(args) != 1 {
+		return nil, NewWrongNumberOfArgumentsError(1, len(args))
+	}
+	arg := args[0]
+	res := RubyObjectsEqual(receiver, arg)
+	if res {
+		return TRUE, nil
+	}
+	return FALSE, nil
+}
+
+func kernelNotEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
+	receiver := context.Receiver()
+	// if self, ok := receiver.(*Self); ok {
+	// 	receiver = self.RubyObject
+	// }
+	if len(args) != 1 {
+		return nil, NewWrongNumberOfArgumentsError(1, len(args))
+	}
+	arg := args[0]
+	res := RubyObjectsEqual(receiver, arg)
+	if res {
+		return FALSE, nil
+	}
+	return TRUE, nil
 }

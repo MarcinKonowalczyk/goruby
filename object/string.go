@@ -80,10 +80,10 @@ var stringMethods = map[string]RubyMethod{
 	"gsub":       withArity(2, publicMethod(stringGsub)),
 	"length":     withArity(0, publicMethod(stringLength)),
 	"size":       withArity(0, publicMethod(stringLength)),
-	"==":         withArity(1, publicMethod(stringEqual)),
-	"!=":         withArity(1, publicMethod(stringNotEqual)),
-	"lines":      withArity(0, publicMethod(stringLines)),
-	"to_f":       withArity(0, publicMethod(stringToF)),
+	// "==":         withArity(1, publicMethod(stringEqual)),
+	// "!=":         withArity(1, publicMethod(stringNotEqual)),
+	"lines": withArity(0, publicMethod(stringLines)),
+	"to_f":  withArity(0, publicMethod(stringToF)),
 }
 
 func stringInitialize(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -146,23 +146,23 @@ func stringLength(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return &Integer{Value: int64(len(s.Value))}, nil
 }
 
-func stringEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
-	s := context.Receiver().(*String)
-	other, ok := args[0].(*String)
-	if !ok {
-		return nil, NewImplicitConversionTypeError(other, args[0])
-	}
-	return &Boolean{Value: s.Value == other.Value}, nil
-}
+// func stringEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
+// 	s := context.Receiver().(*String)
+// 	other, ok := args[0].(*String)
+// 	if !ok {
+// 		return nil, NewImplicitConversionTypeError(other, args[0])
+// 	}
+// 	return &Boolean{Value: s.Value == other.Value}, nil
+// }
 
-func stringNotEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
-	s := context.Receiver().(*String)
-	other, ok := args[0].(*String)
-	if !ok {
-		return nil, NewImplicitConversionTypeError(other, args[0])
-	}
-	return &Boolean{Value: s.Value != other.Value}, nil
-}
+// func stringNotEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
+// 	s := context.Receiver().(*String)
+// 	other, ok := args[0].(*String)
+// 	if !ok {
+// 		return nil, NewImplicitConversionTypeError(other, args[0])
+// 	}
+// 	return &Boolean{Value: s.Value != other.Value}, nil
+// }
 
 func stringLines(context CallContext, args ...RubyObject) (RubyObject, error) {
 	s := context.Receiver().(*String)
@@ -176,9 +176,12 @@ func stringLines(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func stringToF(context CallContext, args ...RubyObject) (RubyObject, error) {
 	s := context.Receiver().(*String)
+	if s.Value == "" {
+		return &Float{Value: 0.0}, nil
+	}
 	val, err := strconv.ParseFloat(s.Value, 64)
 	if err != nil {
-		return nil, NewTypeError("Invalid float value")
+		return nil, NewTypeError("Invalid float value: " + s.Value)
 	}
 	return &Float{Value: val}, nil
 }

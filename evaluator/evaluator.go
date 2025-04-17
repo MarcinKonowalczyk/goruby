@@ -1266,7 +1266,7 @@ func isTruthy(obj object.RubyObject) bool {
 		case *object.Array:
 			return len(obj.Elements) > 0
 		case *object.Hash:
-			return obj.Len() > 0
+			return len(obj.Map) > 0
 		default:
 			return true
 		}

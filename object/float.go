@@ -55,10 +55,10 @@ var floatMethods = map[string]RubyMethod{
 	"+":   withArity(1, publicMethod(floatAdd)),
 	"-":   withArity(1, publicMethod(floatSub)),
 	// "%":   withArity(1, publicMethod(floatModulo)),
-	"<":    withArity(1, publicMethod(floatLt)),
-	">":    withArity(1, publicMethod(floatGt)),
-	"==":   withArity(1, publicMethod(floatEq)),
-	"!=":   withArity(1, publicMethod(floatNeq)),
+	"<": withArity(1, publicMethod(floatLt)),
+	">": withArity(1, publicMethod(floatGt)),
+	// "==":   withArity(1, publicMethod(floatEq)),
+	// "!=":   withArity(1, publicMethod(floatNeq)),
 	">=":   withArity(1, publicMethod(floatGte)),
 	"<=":   withArity(1, publicMethod(floatLte)),
 	"<=>":  withArity(1, publicMethod(floatSpaceship)),
@@ -124,26 +124,37 @@ func floatSub(context CallContext, args ...RubyObject) (RubyObject, error) {
 //		}
 //		return NewFloat(i.Value % mod.Value), nil
 //	}
-func rightToFloat(args []RubyObject) (float64, error) {
+
+// Objects which can *safely* be converted to a float
+func safeObjectToFloat(arg RubyObject) (float64, bool) {
 	var right float64
-	switch arg := args[0].(type) {
+	switch arg := arg.(type) {
 	case *Float:
 		right = arg.Value
 	case *Integer:
 		right = float64(arg.Value)
+	// case *Boolean:
+	// 	if arg.Value {
+	// 		right = 1.0
+	// 	} else {
+	// 		right = 0.0
+	// 	}
 	default:
-		return 0, NewArgumentError(
-			"comparison of Float with %s failed",
-			arg.Class().(RubyObject).Inspect(),
-		)
+		return 0, false
 	}
-	return right, nil
+	return right, true
 }
 func floatLt(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	right, err := rightToFloat(args)
-	if err != nil {
-		return nil, err
+	if len(args) != 1 {
+		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
+	}
+	right, ok := safeObjectToFloat(args[0])
+	if !ok {
+		return nil, NewArgumentError(
+			"comparison of Float with %s failed",
+			args[0].Class().(RubyObject).Inspect(),
+		)
 	}
 	if i.Value < right {
 		return TRUE, nil
@@ -153,9 +164,15 @@ func floatLt(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func floatGt(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	right, err := rightToFloat(args)
-	if err != nil {
-		return nil, err
+	if len(args) != 1 {
+		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
+	}
+	right, ok := safeObjectToFloat(args[0])
+	if !ok {
+		return nil, NewArgumentError(
+			"comparison of Float with %s failed",
+			args[0].Class().(RubyObject).Inspect(),
+		)
 	}
 	if i.Value > right {
 		return TRUE, nil
@@ -163,35 +180,41 @@ func floatGt(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-func floatEq(context CallContext, args ...RubyObject) (RubyObject, error) {
-	i := context.Receiver().(*Float)
-	right, err := rightToFloat(args)
-	if err != nil {
-		return nil, err
-	}
-	if i.Value == right {
-		return TRUE, nil
-	}
-	return FALSE, nil
-}
+// func floatEq(context CallContext, args ...RubyObject) (RubyObject, error) {
+// 	i := context.Receiver().(*Float)
+// 	right, err := rightToFloat(args)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	if i.Value == right {
+// 		return TRUE, nil
+// 	}
+// 	return FALSE, nil
+// }
 
-func floatNeq(context CallContext, args ...RubyObject) (RubyObject, error) {
-	i := context.Receiver().(*Float)
-	right, err := rightToFloat(args)
-	if err != nil {
-		return nil, err
-	}
-	if i.Value != right {
-		return TRUE, nil
-	}
-	return FALSE, nil
-}
+// func floatNeq(context CallContext, args ...RubyObject) (RubyObject, error) {
+// 	i := context.Receiver().(*Float)
+// 	right, err := rightToFloat(args)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	if i.Value != right {
+// 		return TRUE, nil
+// 	}
+// 	return FALSE, nil
+// }
 
 func floatSpaceship(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	right, err := rightToFloat(args)
-	if err != nil {
-		return nil, err
+	if len(args) != 1 {
+		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
+	}
+	right, ok := safeObjectToFloat(args[0])
+	if !ok {
+		return nil, NewArgumentError(
+			"comparison of Float with %s failed",
+			args[0].Class().(RubyObject).Inspect(),
+		)
 	}
 	switch {
 	case i.Value > right:
@@ -207,9 +230,15 @@ func floatSpaceship(context CallContext, args ...RubyObject) (RubyObject, error)
 
 func floatGte(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	right, err := rightToFloat(args)
-	if err != nil {
-		return nil, err
+	if len(args) != 1 {
+		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
+	}
+	right, ok := safeObjectToFloat(args[0])
+	if !ok {
+		return nil, NewArgumentError(
+			"comparison of Float with %s failed",
+			args[0].Class().(RubyObject).Inspect(),
+		)
 	}
 	if i.Value >= right {
 		return TRUE, nil
@@ -219,9 +248,15 @@ func floatGte(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func floatLte(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	right, err := rightToFloat(args)
-	if err != nil {
-		return nil, err
+	if len(args) != 1 {
+		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
+	}
+	right, ok := safeObjectToFloat(args[0])
+	if !ok {
+		return nil, NewArgumentError(
+			"comparison of Float with %s failed",
+			args[0].Class().(RubyObject).Inspect(),
+		)
 	}
 	if i.Value <= right {
 		return TRUE, nil
@@ -236,9 +271,15 @@ func floatToI(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func floatPow(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
-	right, err := rightToFloat(args)
-	if err != nil {
-		return nil, err
+	if len(args) != 1 {
+		return nil, NewArgumentError("wrong number of arguments (given %d, expected 1)", len(args))
+	}
+	right, ok := safeObjectToFloat(args[0])
+	if !ok {
+		return nil, NewArgumentError(
+			"comparison of Float with %s failed",
+			args[0].Class().(RubyObject).Inspect(),
+		)
 	}
 	if right < 0 {
 		return nil, NewArgumentError("negative exponent")
