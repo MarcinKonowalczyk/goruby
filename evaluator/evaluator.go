@@ -1191,7 +1191,10 @@ func handleException(err error, rescues []*ast.RescueBlock, env object.Environme
 	if err != nil && len(rescues) == 0 {
 		return nil, err
 	}
-	errorObject := err.(object.RubyObject)
+	errorObject, ok := err.(object.RubyObject)
+	if !ok {
+		errorObject = object.NewException(err.Error())
+	}
 	errClass := errorObject.Class().Name()
 	rescueEnv := object.WithScopedLocalVariables(env)
 
