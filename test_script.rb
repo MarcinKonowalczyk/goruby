@@ -1,13 +1,13 @@
-a = [1, 2, 3]
-b1 = [*a]
-b2 = [99, *a]
-b3 = [*a, 99]
-puts("b1:", b1)
-puts("b2:", b2)
-puts("b3:", b3)
+# a = [1, 2, 3]
+# b1 = [*a]
+# b2 = [99, *a]
+# b3 = [*a, 99]
+# puts("b1:", b1)
+# puts("b2:", b2)
+# puts("b3:", b3)
 
-a = [1, 2, 3]
-b1 = [*a]
+# a = [1, 2, 3]
+# b1 = [*a]
 
 
 # # puts("zoo:", zoo["?"][3])
@@ -36,17 +36,127 @@ b1 = [*a]
 # puts("this_file:", this_file)
 # puts("content:", content)
 
-x = 0
+# x = 0
 # while x < 20
 #     x += 1
 #     puts("x:", x)
 #     break if x == 10
 #     puts("past break")
 # end
-loop {
-    x += 1
-    puts("x:", x)
-    break unless x < 10
-    puts("past break")
-    raise "my little exception" if false or x == 5
+# loop {
+#     x += 1
+#     puts("x:", x)
+#     break unless x < 10
+#     puts("past break")
+#     # raise "my little exception" if false or x == 5
+# }
+
+# $R_SIDE = "\\"
+# puts("R_SIDE:", $R_SIDE, $R_SIDE.length) 
+
+# $L_SIDE = "/"
+
+# if "/" != $L_SIDE
+#     puts("not equal")
+# else
+#     puts("equal")
+# end
+
+# puts([0, 1, 2, 3, 4, 5][2, 3])
+# puts()
+# puts([0, 1, 2, 3, 4, 5][2..-1])
+# puts("hello"[2, 3])
+# puts("hello"[2..3])
+# puts("hello"[3..-1])
+# puts([1, 2, 3].is_a?(Array))
+# puts([1, 2, 3].is_a?(String))
+
+# puts([0,1,2,3,4,5,6,7].all? { |e| e < 8 })
+# puts([0,1,2,3,4,5,6,7].join(","))
+# puts(*(0..3))
+# puts(*(1..-1))
+
+# raise "bzzzz"
+
+
+# $zoo = {
+#     "?" => [0,1,2,3,4,5],
+#     "/" => -> (a, b) { 1.0 * a / b }
+# }
+
+# op = []
+# puts("undefined operation `#{op}`")
+
+# chain = ['set', 'v', 312312]
+# op, args = chain
+# puts("> chain", chain, "> op", op, "> args", args)
+
+# if false then
+#     puts("1")
+# elsif false then
+#     puts("2")
+# elsif true then
+#     puts("3")
+# else
+#     puts("4")
+# end
+
+foo = [2, 16.0]
+bar = -> (a, b) {a ** b}
+puts(bar[*foo])
+puts("".to_f)
+
+$UNDEF = :UNDEF
+
+def falsey(val)
+    [0, [], "", $UNDEF, "\x00", nil, 123].include?(val)
+end
+
+# puts(0 == false)
+# puts(0.0 == false)
+# puts([] == false)
+# puts ("" == false)
+# puts($UNDEF == false)
+# puts("\x00" == false)
+# puts(nil == false)
+# puts(123 == false)
+# puts(false == 0)
+# puts(false == 0.0)
+# puts(false == [])
+# puts(false == "")
+# puts(false == $UNDEF)
+# puts(false == "\x00")
+# puts(false == nil)
+# puts(false == 123)
+# puts([0, [], "", $UNDEF, "\x00", nil, 123].include?(false))
+
+# puts(falsey(false))
+# puts(falsey(true))
+# puts(falsey(0))
+# puts(falsey([]))
+# puts(falsey(""))
+# puts(falsey($UNDEF))
+# puts(falsey("\x00"))
+puts(falsey(nil))
+puts(falsey(1))
+puts(falsey(1.0))
+puts(falsey([1, 2, 3]))
+puts(falsey("hello"))
+puts(falsey(0.0))
+puts(falsey(0.1))
+puts(falsey(123))
+puts(falsey(123.0))
+
+puts(0.0 == 0)
+
+def unwrap(t)
+    t.size == 1 ? t[0] : t
+end
+
+$zoo = {
+    "" => -> (*a) { unwrap(a) }
 }
+
+arg = [$UNDEF, $UNDEF]
+# puts($zoo[""][*arg])
+puts($zoo[""][arg])
