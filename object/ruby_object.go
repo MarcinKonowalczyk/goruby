@@ -171,10 +171,14 @@ func (f functionParameters) separateDefaultParams() ([]*FunctionParameter, []*Fu
 type FunctionParameter struct {
 	Name    string
 	Default RubyObject
+	Splat   bool
 }
 
 func (f *FunctionParameter) String() string {
 	var out strings.Builder
+	if f.Splat {
+		out.WriteString("*")
+	}
 	out.WriteString(f.Name)
 	if f.Default != nil {
 		out.WriteString(" = ")

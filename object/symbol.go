@@ -22,7 +22,7 @@ type Symbol struct {
 }
 
 // Inspect returns the value of the symbol
-func (s *Symbol) Inspect() string { return ":" + s.Value }
+func (s *Symbol) Inspect() string { return s.Value }
 
 // Type returns SYMBOL_OBJ
 func (s *Symbol) Type() Type { return SYMBOL_OBJ }
@@ -40,11 +40,19 @@ var symbolClassMethods = map[string]RubyMethod{}
 
 var symbolMethods = map[string]RubyMethod{
 	"to_s": withArity(0, publicMethod(symbolToS)),
+	"size": withArity(0, publicMethod(symbolSize)),
 }
 
 func symbolToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 	if sym, ok := context.Receiver().(*Symbol); ok {
 		return &String{Value: sym.Value}, nil
+	}
+	return nil, nil
+}
+
+func symbolSize(context CallContext, args ...RubyObject) (RubyObject, error) {
+	if sym, ok := context.Receiver().(*Symbol); ok {
+		return NewInteger(int64(len(sym.Value))), nil
 	}
 	return nil, nil
 }

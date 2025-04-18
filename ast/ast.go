@@ -953,6 +953,9 @@ func (f *FunctionParameter) End() int {
 func (f *FunctionParameter) TokenLiteral() string { return f.Name.TokenLiteral() }
 func (f *FunctionParameter) String() string {
 	var out strings.Builder
+	if f.Splat {
+		out.WriteString("*")
+	}
 	out.WriteString(f.Name.String())
 	if f.Default != nil {
 		out.WriteString(" = ")

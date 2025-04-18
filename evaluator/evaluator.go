@@ -158,7 +158,9 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			if err != nil {
 				return nil, errors.WithMessage(err, "eval function literal param")
 			}
-			params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def}
+			// params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def}
+			// fmt.Println("param.Name.Value", param.Name.Value, "param.Splat", param.Splat)
+			params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def, Splat: param.Splat}
 		}
 		body := node.Body
 		function := &object.Function{
@@ -194,7 +196,7 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			if err != nil {
 				return nil, errors.WithMessage(err, "eval function literal param")
 			}
-			params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def}
+			params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def, Splat: param.Splat}
 		}
 		body := node.Body
 		// function := &object.Function{

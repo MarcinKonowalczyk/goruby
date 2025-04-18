@@ -60,15 +60,31 @@ func (p *Proc) Class() RubyClass { return procClass }
 
 // Call implements the RubyMethod interface. It evaluates p.Body and returns its result
 func (p *Proc) Call(context CallContext, args ...RubyObject) (RubyObject, error) {
-	if p.ArgumentCountMandatory && len(args) != len(p.Parameters) {
-		return nil, NewWrongNumberOfArgumentsError(len(p.Parameters), len(args))
+	// fmt.Println("ProcCall", p.Parameters[0])
+	// TODO: Handle tail splats
+	if len(p.Parameters) == 1 && p.Parameters[0].Splat {
+		// Only one splat parameter.
+		args_arr := NewArray(args...)
+
+		extendedEnv := NewEnclosedEnvironment(p.Env)
+		extendedEnv.Set(p.Parameters[0].Name, args_arr)
+		evaluated, err := context.Eval(p.Body, extendedEnv)
+		if err != nil {
+			return nil, err
+		}
+		return evaluated, nil
+	} else {
+		// normal evaluation
+		if p.ArgumentCountMandatory && len(args) != len(p.Parameters) {
+			return nil, NewWrongNumberOfArgumentsError(len(p.Parameters), len(args))
+		}
+		extendedEnv := p.extendProcEnv(args)
+		evaluated, err := context.Eval(p.Body, extendedEnv)
+		if err != nil {
+			return nil, err
+		}
+		return evaluated, nil
 	}
-	extendedEnv := p.extendProcEnv(args)
-	evaluated, err := context.Eval(p.Body, extendedEnv)
-	if err != nil {
-		return nil, err
-	}
-	return evaluated, nil
 }
 
 func (p *Proc) extendProcEnv(args []RubyObject) Environment {
