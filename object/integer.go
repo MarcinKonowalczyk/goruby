@@ -60,6 +60,7 @@ var integerMethods = map[string]RubyMethod{
 	"<=>":  withArity(1, publicMethod(integerSpaceship)),
 	"to_i": withArity(0, publicMethod(integerToI)),
 	"**":   withArity(1, publicMethod(integerPow)),
+	"chr":  withArity(0, publicMethod(integerChr)),
 }
 
 func integerDiv(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -264,4 +265,12 @@ func integerPow(context CallContext, args ...RubyObject) (RubyObject, error) {
 	default:
 		return nil, NewCoercionTypeError(args[0], i)
 	}
+}
+
+func integerChr(context CallContext, args ...RubyObject) (RubyObject, error) {
+	i := context.Receiver().(*Integer)
+	if i.Value < 0 || i.Value > 255 {
+		return nil, NewArgumentError("chr out of range")
+	}
+	return &String{Value: string(i.Value)}, nil
 }
