@@ -70,6 +70,9 @@ var arrayMethods = map[string]RubyMethod{
 	"each":     publicMethod(arrayEach),
 	"reject":   publicMethod(arrayReject),
 	"pop":      publicMethod(arrayPop),
+	"-":        publicMethod(arrayMinus),
+	"+":        publicMethod(arrayPlus),
+	"*":        publicMethod(arrayAst),
 }
 
 func arrayPush(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -312,3 +315,100 @@ func arrayPop(context CallContext, args ...RubyObject) (RubyObject, error) {
 	array.Elements = array.Elements[:len(array.Elements)-1]
 	return elem, nil
 }
+
+func arrayMinus(context CallContext, args ...RubyObject) (RubyObject, error) {
+	array, _ := context.Receiver().(*Array)
+	if len(args) == 0 {
+		return nil, NewArgumentError("array minus requires at least 1 argument")
+	}
+	otherArray, ok := args[0].(*Array)
+	if !ok {
+		return nil, NewArgumentError("argument must be an Array")
+	}
+	result := NewArray()
+	for _, elem := range array.Elements {
+		include := false
+		for _, otherElem := range otherArray.Elements {
+			ctx := NewCallContext(context.Env(), elem)
+			ret, err := Send(ctx, "==", otherElem)
+			if err != nil {
+				return nil, err
+			}
+			boolean := ret.(*Boolean)
+			if boolean.Value {
+				include = true
+				break
+			}
+		}
+		if !include {
+			result.Elements = append(result.Elements, elem)
+		}
+	}
+	return result, nil
+}
+
+func arrayPlus(context CallContext, args ...RubyObject) (RubyObject, error) {
+	array, _ := context.Receiver().(*Array)
+	if len(args) == 0 {
+		return nil, NewArgumentError("array plus requires at least 1 argument")
+	}
+	otherArray, ok := args[0].(*Array)
+	if !ok {
+		return nil, NewArgumentError("argument must be an Array")
+	}
+	result := NewArray()
+	result.Elements = append(result.Elements, array.Elements...)
+	result.Elements = append(result.Elements, otherArray.Elements...)
+	return result, nil
+}
+
+func arrayAst(context CallContext, args ...RubyObject) (RubyObject, error) {
+	array, _ := context.Receiver().(*Array)
+	if len(args) == 0 {
+		return nil, NewArgumentError("array ast requires at least 1 argument")
+	}
+	switch arg := args[0].(type) {
+	case *Integer:
+		// repeat the array n times
+		if arg.Value < 0 {
+			return nil, NewArgumentError("negative array size (or size too big)")
+		}
+		// repeat the array n times
+		result := NewArray()
+		for i := int64(0); i < arg.Value; i++ {
+			result.Elements = append(result.Elements, array.Elements...)
+		}
+		// fmt.Println("arrayAst", result.Inspect())
+		return result, nil
+	case *Float:
+		// repeat the array floor(n) times
+		if arg.Value < 0 {
+			return nil, NewArgumentError("negative array size (or size too big)")
+		}
+		times := int64(arg.Value)
+		result := NewArray()
+		for i := int64(0); i < times; i++ {
+			result.Elements = append(result.Elements, array.Elements...)
+		}
+		return result, nil
+	case *String:
+		// [1, 2,3] * ',' id the same as [1, 2,3].join(',')
+
+		joiner := arg.Value
+		element_strings := make([]string, len(array.Elements))
+		for i, elem := range array.Elements {
+			element_strings[i] = elem.Inspect()
+		}
+		result := strings.Join(element_strings, joiner)
+		return &String{Value: result}, nil
+
+	default:
+		return nil, NewArgumentError("argument must be an Integer, or a String")
+	}
+}
+
+// times, ok := args[0].(*Integer)
+// if !ok {
+// 	fmt.Println("arrayAst", args[0].Inspect(), args[0].Type())
+// 	return nil, NewArgumentError("argument must be an Integer")
+// }

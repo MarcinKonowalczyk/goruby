@@ -64,7 +64,21 @@ func kernelIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
 	}
 }
 
-func argsToLines(args []RubyObject) []string {
+func print(lines []string, end bool) {
+	var out strings.Builder
+	for i, line := range lines {
+		out.WriteString(line)
+		if i != len(lines)-1 {
+			out.WriteString("\n")
+		}
+	}
+	if end {
+		out.WriteString("\n")
+	}
+	fmt.Print(out.String())
+}
+
+func kernelPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
 	var lines []string
 	for _, arg := range args {
 		if arr, ok := arg.(*Array); ok {
@@ -82,31 +96,29 @@ func argsToLines(args []RubyObject) []string {
 			}
 		}
 	}
-	return lines
-}
-
-func print(lines []string, end bool) {
-	var out strings.Builder
-	for i, line := range lines {
-		out.WriteString(line)
-		if i != len(lines)-1 {
-			out.WriteString("\n")
-		}
-	}
-	if end {
-		out.WriteString("\n")
-	}
-	fmt.Print(out.String())
-}
-
-func kernelPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
-	lines := argsToLines(args)
 	print(lines, true)
 	return NIL, nil
 }
 
 func kernelPrint(context CallContext, args ...RubyObject) (RubyObject, error) {
-	lines := argsToLines(args)
+	var lines []string
+	for _, arg := range args {
+		if arr, ok := arg.(*Array); ok {
+			// arg is an array. splat it out
+			// todo: make it a deep splat? check with original ruby implementation
+			// for _, elem := range arr.Elements {
+			// 	lines = append(lines, elem.Inspect())
+			// }
+			lines = append(lines, arr.Inspect())
+		} else {
+			switch arg := arg.(type) {
+			case *nilObject:
+				//
+			default:
+				lines = append(lines, arg.Inspect())
+			}
+		}
+	}
 	print(lines, false)
 	return NIL, nil
 }

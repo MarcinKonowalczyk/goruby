@@ -36,9 +36,13 @@ func printError(err error) {
 func main() {
 	flag.Var(&onelineScripts, "e", "one line of script. Several -e's allowed. Omit [programfile]")
 	flag.BoolVar(&trace, "trace", false, "trace execution")
+	version := flag.Bool("version", false, "print version")
 	// flag.BoolVar(&debug, "debug", false, "debug execution")
 	flag.Parse()
-	// fmt.Println("goruby version 0.1.0")
+	if *version {
+		fmt.Println("goruby version 0.1.0")
+		os.Exit(0)
+	}
 	interpreter := interpreter.NewInterpreter()
 	interpreter.Trace = trace
 	if len(onelineScripts) != 0 {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/object"
+	"github.com/MarcinKonowalczyk/goruby/token"
 	"github.com/pkg/errors"
 )
 
@@ -41,6 +42,7 @@ func expandToArrayIfNeeded(obj object.RubyObject) object.RubyObject {
 
 // Eval evaluates the given node and traverses recursive over its children
 func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
+	// fmt.Println("Eval", node, fmt.Sprintf("%T", node))
 	switch node := node.(type) {
 
 	// Statements
@@ -459,15 +461,35 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			return nil, errors.WithMessage(err, "eval operator left side")
 		}
 
-		if node.IsControlExpression() && !node.MustEvaluateRight() && isTruthy(left) {
-			return left, nil
+		if node.Token.Type == token.LOGICALOR {
+			if isTruthy(left) {
+				// left is altready truthy. don't evaluate right side
+				return left, nil
+			}
+		} else if node.Token.Type == token.LOGICALAND {
+			if !isTruthy(left) {
+				// left is altready falsy. don't evaluate right side
+				return left, nil
+			}
 		}
+
+		// 	if !node.MustEvaluateRight() && isTruthy(left) {
+		// 		return left, nil
+		// 	}
+		// }
 
 		right, err := Eval(node.Right, env)
 		if err != nil {
 			return nil, errors.WithMessage(err, "eval operator right side")
 		}
-		if node.IsControlExpression() {
+
+		if node.Token.Type == token.LOGICALOR {
+			// left is not truthy, since we're here
+			// result is right
+			return right, nil
+		} else if node.Token.Type == token.LOGICALAND {
+			// left is not falsy, since we're here
+			// result is right
 			return right, nil
 		}
 		context := &callContext{object.NewCallContext(env, left)}
