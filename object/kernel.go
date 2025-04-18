@@ -28,6 +28,7 @@ var kernelMethodSet = map[string]RubyMethod{
 	"private_methods":   publicMethod(kernelPrivateMethods),
 	"class":             withArity(0, publicMethod(kernelClass)),
 	"puts":              privateMethod(kernelPuts),
+	"print":             privateMethod(kernelPrint),
 	"require":           withArity(1, privateMethod(kernelRequire)),
 	"extend":            publicMethod(kernelExtend),
 	"block_given?":      withArity(0, privateMethod(kernelBlockGiven)),
@@ -63,7 +64,7 @@ func kernelIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
 	}
 }
 
-func kernelPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
+func argsToLines(args []RubyObject) []string {
 	var lines []string
 	for _, arg := range args {
 		if arr, ok := arg.(*Array); ok {
@@ -73,9 +74,18 @@ func kernelPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
 				lines = append(lines, elem.Inspect())
 			}
 		} else {
-			lines = append(lines, arg.Inspect())
+			switch arg := arg.(type) {
+			case *nilObject:
+				//
+			default:
+				lines = append(lines, arg.Inspect())
+			}
 		}
 	}
+	return lines
+}
+
+func print(lines []string, end bool) {
 	var out strings.Builder
 	for i, line := range lines {
 		out.WriteString(line)
@@ -83,8 +93,21 @@ func kernelPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
 			out.WriteString("\n")
 		}
 	}
-	// out = strings.ReplaceAll(out, "\n", "\\n") // debug
-	fmt.Println(out.String())
+	if end {
+		out.WriteString("\n")
+	}
+	fmt.Print(out.String())
+}
+
+func kernelPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
+	lines := argsToLines(args)
+	print(lines, true)
+	return NIL, nil
+}
+
+func kernelPrint(context CallContext, args ...RubyObject) (RubyObject, error) {
+	lines := argsToLines(args)
+	print(lines, false)
 	return NIL, nil
 }
 
