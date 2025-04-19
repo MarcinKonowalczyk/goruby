@@ -159,4 +159,81 @@ $zoo = {
 
 arg = [$UNDEF, $UNDEF]
 # puts($zoo[""][*arg])
-puts($zoo[""][arg])
+puts(unwrap(arg))
+puts($zoo[""][*arg])
+puts($UNDEF.size)
+
+b = arg.each { |e| print(1) }
+puts(b)
+
+a = [1, 2, 3]
+puts(a.pop)
+puts(a.pop)
+puts(a.pop)
+puts(a.pop)
+puts(nil)
+print(nil)
+
+plop = nil
+
+if plop && plop[1] == "d"
+    puts("plop")
+else
+    puts("no plop")
+end
+
+puts([])
+print([])
+puts()
+# puts([], 1)
+# print([], 1)
+# puts(*[])
+# print(*[])
+
+print([1, 2, 3] - [])
+puts()
+print([1, 2, 3] - [1])
+puts()
+print([1, 2, 3] - [2])
+puts()
+print([1, 2, 3] - [3])
+puts()
+print([1, 2, 3] - [4])
+puts()
+print([1, 2, 3] - [1, 2])
+
+
+print([1, 2, 3] + [])
+puts()
+print([1, 2, 3] + [1])
+puts()
+print([1, 2, 3] + [2])
+puts()
+print([1, 2, 3] + [3])
+puts()
+print([1, 2, 3] + [4])
+puts()
+print([1, 2, 3] + [1, 2])
+puts()
+
+print([1, 2, 3] * 1)
+puts()
+print([1, 2, 3] * 2)
+puts()
+print([1, 2, 3] * 3.999)
+puts()
+print([1, 2, 3] * ',')
+puts()
+
+puts("hello", 1)
+print("hello", 1)
+puts(["hello", 1])
+print(["hello", 1])
+puts()
+
+puts(0.1+0.2)
+
+# Still not working:
+# - favourite_number
+# - golf_pyramid_scheme_negation
+# - xor
