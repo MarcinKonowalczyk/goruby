@@ -179,7 +179,13 @@ func stringToF(context CallContext, args ...RubyObject) (RubyObject, error) {
 	if s.Value == "" {
 		return &Float{Value: 0.0}, nil
 	}
-	val, err := strconv.ParseFloat(s.Value, 64)
+	float_re := regexp.MustCompile(`[-+]?\d*\.?\d+`)
+	match := float_re.FindString(s.Value)
+	if match == "" {
+		return &Float{Value: 0.0}, nil
+	}
+	// Convert the string to a float
+	val, err := strconv.ParseFloat(match, 64)
 	if err != nil {
 		return nil, NewTypeError("Invalid float value: " + s.Value)
 	}
