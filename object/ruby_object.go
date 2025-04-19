@@ -33,6 +33,7 @@ const (
 	EXCEPTION_OBJ      Type = "EXCEPTION"
 	MODULE_OBJ         Type = "MODULE"
 	PROC_OBJ           Type = "PROC"
+	IO_OBJ             Type = "IO"
 	SELF               Type = "SELF"
 )
 

@@ -39,6 +39,11 @@ func NewInterpreter() Interpreter {
 		argvArr.Elements = append(argvArr.Elements, &object.String{Value: arg})
 	}
 	env.SetGlobal("ARGV", argvArr)
+
+	// setup $stdin
+	// stdin := object.NewIo(os.Stdin)
+	stdin := object.NewIo()
+	env.SetGlobal("$stdin", stdin)
 	return Interpreter{environment: env}
 }
 
