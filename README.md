@@ -131,10 +131,11 @@ To run the command as one off run `go run main.go`.
 	- [x] `||`
 	- [x] `&&`
 - [ ] control flow
-	- [ ] for loop
-	- [x] while loop
-	- [ ] until loop
-	- [ ] break
+	- [ ] `for` loop
+	- [x] `while` loop
+	- [ ] `break`
+        - [ ] `break unless`
+        - [ ] `break if`
 	- [ ] next
 	- [ ] redo
 	- [ ] flip flop
@@ -217,20 +218,19 @@ To run the command as one off run `go run main.go`.
         - [x] string gsub, e.g. `"hello".gsub(/l/,"1")`
         - [ ] modifiers (implemented but don't do anything atm)
 	- [ ] `%r{regex}`
-- [ ] ranges
-	- [ ] `..` inclusive
-	- [ ] `...` exclusive
-- [ ] procs `->`
+- [x] ranges
+	- [x] `..` inclusive
+	- [x] `...` exclusive
 - [ ] procs 
     <!-- https://ruby-doc.org/core-2.6/Proc.html -->
     - [ ] `Proc.new`
     - [ ] `proc`
     - [ ] receiving a bloc of code into an argument
     - [ ] `lambda`
-    - [ ] `->` # WIP
-        - [ ] pure, e.g. `-> (a, b) {a + b}`
-        - [ ] captures
-        - [ ] args splat, e.g. `-> (*a) { a }`
+    - [x] `->`
+        - [x] pure, e.g. `-> (a, b) {a + b}`
+        - [x] captures
+        - [x] args splat, e.g. `-> (*a) { a }`
 - [ ] variables
 	- [x] variable assignments
 	- [x] globals
