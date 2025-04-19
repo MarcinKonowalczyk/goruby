@@ -64,17 +64,15 @@ func kernelIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
 	}
 }
 
-func print(lines []string, end bool) {
+func print(lines []string, delimiter string) {
 	var out strings.Builder
 	for i, line := range lines {
 		out.WriteString(line)
 		if i != len(lines)-1 {
-			out.WriteString("\n")
+			out.WriteString(delimiter)
 		}
 	}
-	if end {
-		out.WriteString("\n")
-	}
+	out.WriteString(delimiter)
 	fmt.Print(out.String())
 }
 
@@ -96,7 +94,7 @@ func kernelPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
 			}
 		}
 	}
-	print(lines, true)
+	print(lines, "\n")
 	return NIL, nil
 }
 
@@ -119,7 +117,7 @@ func kernelPrint(context CallContext, args ...RubyObject) (RubyObject, error) {
 			}
 		}
 	}
-	print(lines, false)
+	print(lines, "")
 	return NIL, nil
 }
 

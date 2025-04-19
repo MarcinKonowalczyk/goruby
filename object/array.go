@@ -39,7 +39,14 @@ func (a *Array) Type() Type { return ARRAY_OBJ }
 func (a *Array) Inspect() string {
 	elems := make([]string, len(a.Elements))
 	for i, elem := range a.Elements {
-		elems[i] = elem.Inspect()
+		var elem_str string
+		switch elem.(type) {
+		case *String:
+			elem_str = "\"" + elem.Inspect() + "\""
+		default:
+			elem_str = elem.Inspect()
+		}
+		elems[i] = elem_str
 	}
 	return "[" + strings.Join(elems, ", ") + "]"
 }
