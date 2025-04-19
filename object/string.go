@@ -5,6 +5,7 @@ import (
 	"hash/fnv"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 var stringClass RubyClassObject = newClass(
@@ -166,10 +167,11 @@ func stringLength(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func stringLines(context CallContext, args ...RubyObject) (RubyObject, error) {
 	s := context.Receiver().(*String)
-	lines := regexp.MustCompile("\n").Split(s.Value, -1)
+	lines := strings.Split(s.Value, "\n")
 	arr := NewArray()
 	for _, line := range lines {
-		arr.Elements = append(arr.Elements, &String{Value: line})
+		arr.Elements = append(arr.Elements, &String{Value: line + "\n"})
+		// arr.Elements = append(arr.Elements, &String{Value: line})
 	}
 	return arr, nil
 }
