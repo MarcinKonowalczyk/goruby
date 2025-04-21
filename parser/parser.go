@@ -438,6 +438,9 @@ func (p *parser) parseReturnStatement() *ast.ReturnStatement {
 		p.nextToken()
 		return stmt
 	}
+	if p.currentTokenOneOf(token.NEWLINE, token.SEMICOLON) {
+		return stmt
+	}
 
 	if !p.peekTokenIs(token.COMMA) {
 		p.Error(p.peekToken.Type, "", token.COMMA)
