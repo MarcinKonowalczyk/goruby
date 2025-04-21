@@ -92,6 +92,7 @@ func TestTypeSting(t *testing.T) {
 		{tk: LBRACE, str: "LBRACE", repr: "{"},
 		{tk: RBRACE, str: "RBRACE", repr: "}"},
 		{tk: LBRACKET, str: "LBRACKET", repr: "["},
+		{tk: SLBRACKET, str: "SLBRACKET", repr: "_["},
 		{tk: RBRACKET, str: "RBRACKET", repr: "]"},
 		//
 		{tk: SCOPE, str: "SCOPE", repr: "::"},
@@ -100,6 +101,7 @@ func TestTypeSting(t *testing.T) {
 		{tk: QMARK, str: "QMARK", repr: "?"},
 		{tk: SQMARK, str: "SQMARK", repr: "_?"},
 		{tk: SYMBEG, str: "SYMBEG", repr: ":"},
+		{tk: POW, str: "POW", repr: "**"},
 		//
 		{tk: DEF, str: "DEF", repr: "def"},
 		{tk: SELF, str: "SELF", repr: "self"},
@@ -107,6 +109,7 @@ func TestTypeSting(t *testing.T) {
 		{tk: IF, str: "IF", repr: "if"},
 		{tk: THEN, str: "THEN", repr: "then"},
 		{tk: ELSE, str: "ELSE", repr: "else"},
+		{tk: ELSIF, str: "ELSIF", repr: "elsif"},
 		{tk: UNLESS, str: "UNLESS", repr: "unless"},
 		{tk: TRUE, str: "TRUE", repr: "true"},
 		{tk: FALSE, str: "FALSE", repr: "false"},

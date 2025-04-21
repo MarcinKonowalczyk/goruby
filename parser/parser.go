@@ -79,6 +79,7 @@ var precedences = map[token.Type]int{
 	token.INT:        precCallArg,
 	token.STRING:     precCallArg,
 	token.SELF:       precCallArg,
+	token.SLBRACKET:  precCallArg,
 	token.LBRACKET:   precIndex,
 	token.LBRACE:     precBlockBraces,
 	token.DO:         precBlockDo,
@@ -170,6 +171,7 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerPrefix(token.DEF, p.parseFunctionLiteral)
 	p.registerPrefix(token.SYMBEG, p.parseSymbolLiteral)
 	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
+	p.registerPrefix(token.SLBRACKET, p.parseArrayLiteral)
 	p.registerPrefix(token.NIL, p.parseNilLiteral)
 	p.registerPrefix(token.SELF, p.parseSelf)
 	p.registerPrefix(token.MODULE, p.parseModule)
@@ -230,6 +232,7 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerInfix(token.DOT, p.parseMethodCall)
 	p.registerInfix(token.COMMA, p.parseExpressions)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
+	p.registerInfix(token.SLBRACKET, p.parseCallArgument)
 	p.registerInfix(token.SCOPE, p.parseScopedIdentifierExpression)
 
 	// Read two tokens, so curToken and peekToken are both set

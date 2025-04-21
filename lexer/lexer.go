@@ -144,6 +144,9 @@ func startLexer(l *Lexer) StateFn {
 		case '?':
 			l.next() // consume the whitespace
 			l.emit(token.SQMARK)
+		case '[':
+			l.next() // consume the whitespace
+			l.emit(token.SLBRACKET)
 		case 'o':
 			// hack to handle space-disambiguated 'or'
 			if l.peek_string_match("or ") {

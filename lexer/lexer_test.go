@@ -553,12 +553,24 @@ func TestLex(t *testing.T) {
 			desc: "brackets",
 			lines: `
 				[1, 2]
+				a[1]
+				a [1]
 			`,
 			exp: []expected{
 				expect("LBRACKET", "["),
 				expect("INT", "1"),
 				expect("COMMA", ","),
 				expect("INT", "2"),
+				expect("RBRACKET", "]"),
+				NL,
+				expect("IDENT", "a"),
+				expect("LBRACKET", "["),
+				expect("INT", "1"),
+				expect("RBRACKET", "]"),
+				NL,
+				expect("IDENT", "a"),
+				expect("SLBRACKET", " ["),
+				expect("INT", "1"),
 				expect("RBRACKET", "]"),
 			},
 		},

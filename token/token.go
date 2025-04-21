@@ -69,17 +69,18 @@ const (
 	SEMICOLON // ;
 	HASH      // #
 
-	CAPTURE  // &
-	DOT      // .
-	DDOT     // ..
-	DDDOT    // ...
-	COLON    // :
-	LPAREN   // (
-	RPAREN   // )
-	LBRACE   // {
-	RBRACE   // }
-	LBRACKET // [
-	RBRACKET // ]
+	CAPTURE   // &
+	DOT       // .
+	DDOT      // ..
+	DDDOT     // ...
+	COLON     // :
+	LPAREN    // (
+	RPAREN    // )
+	LBRACE    // {
+	RBRACE    // }
+	LBRACKET  // [
+	SLBRACKET // _[
+	RBRACKET  // ]
 
 	SCOPE // ::
 	AT    // @
@@ -203,6 +204,7 @@ var type_strings = [...]string{
 	LBRACE:    "LBRACE",
 	RBRACE:    "RBRACE",
 	LBRACKET:  "LBRACKET",
+	SLBRACKET: "SLBRACKET",
 	RBRACKET:  "RBRACKET",
 	PIPE:      "PIPE",
 
@@ -286,17 +288,18 @@ var type_reprs = [...]string{
 	SEMICOLON: ";",
 	HASH:      "#",
 
-	DOT:      ".",
-	DDOT:     "..",
-	DDDOT:    "...",
-	COLON:    ":",
-	LPAREN:   "(",
-	RPAREN:   ")",
-	LBRACE:   "{",
-	RBRACE:   "}",
-	LBRACKET: "[",
-	RBRACKET: "]",
-	PIPE:     "|",
+	DOT:       ".",
+	DDOT:      "..",
+	DDDOT:     "...",
+	COLON:     ":",
+	LPAREN:    "(",
+	RPAREN:    ")",
+	LBRACE:    "{",
+	RBRACE:    "}",
+	LBRACKET:  "[",
+	SLBRACKET: "_[",
+	RBRACKET:  "]",
+	PIPE:      "|",
 
 	SCOPE:        "::",
 	HASHROCKET:   "=>",
