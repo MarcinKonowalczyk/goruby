@@ -101,139 +101,152 @@
 #     puts("4")
 # end
 
-foo = [2, 16.0]
-bar = -> (a, b) {a ** b}
-puts(bar[*foo])
-puts("".to_f)
+# foo = [2, 16.0]
+# bar = -> (a, b) {a ** b}
+# puts(bar[*foo])
+# puts("".to_f)
 
-$UNDEF = :UNDEF
+# $UNDEF = :UNDEF
 
-def falsey(val)
-    [0, [], "", $UNDEF, "\x00", nil, 123].include?(val)
-end
+# def falsey(val)
+#     [0, [], "", $UNDEF, "\x00", nil, 123].include?(val)
+# end
 
-# puts(0 == false)
-# puts(0.0 == false)
-# puts([] == false)
-# puts ("" == false)
-# puts($UNDEF == false)
-# puts("\x00" == false)
-# puts(nil == false)
-# puts(123 == false)
-# puts(false == 0)
-# puts(false == 0.0)
-# puts(false == [])
-# puts(false == "")
-# puts(false == $UNDEF)
-# puts(false == "\x00")
-# puts(false == nil)
-# puts(false == 123)
-# puts([0, [], "", $UNDEF, "\x00", nil, 123].include?(false))
+# # puts(0 == false)
+# # puts(0.0 == false)
+# # puts([] == false)
+# # puts ("" == false)
+# # puts($UNDEF == false)
+# # puts("\x00" == false)
+# # puts(nil == false)
+# # puts(123 == false)
+# # puts(false == 0)
+# # puts(false == 0.0)
+# # puts(false == [])
+# # puts(false == "")
+# # puts(false == $UNDEF)
+# # puts(false == "\x00")
+# # puts(false == nil)
+# # puts(false == 123)
+# # puts([0, [], "", $UNDEF, "\x00", nil, 123].include?(false))
 
-# puts(falsey(false))
-# puts(falsey(true))
-# puts(falsey(0))
-# puts(falsey([]))
-# puts(falsey(""))
-# puts(falsey($UNDEF))
-# puts(falsey("\x00"))
-puts(falsey(nil))
-puts(falsey(1))
-puts(falsey(1.0))
-puts(falsey([1, 2, 3]))
-puts(falsey("hello"))
-puts(falsey(0.0))
-puts(falsey(0.1))
-puts(falsey(123))
-puts(falsey(123.0))
+# # puts(falsey(false))
+# # puts(falsey(true))
+# # puts(falsey(0))
+# # puts(falsey([]))
+# # puts(falsey(""))
+# # puts(falsey($UNDEF))
+# # puts(falsey("\x00"))
+# puts(falsey(nil))
+# puts(falsey(1))
+# puts(falsey(1.0))
+# puts(falsey([1, 2, 3]))
+# puts(falsey("hello"))
+# puts(falsey(0.0))
+# puts(falsey(0.1))
+# puts(falsey(123))
+# puts(falsey(123.0))
 
-puts(0.0 == 0)
+# puts(0.0 == 0)
 
-def unwrap(t)
-    t.size == 1 ? t[0] : t
-end
+# def unwrap(t)
+#     t.size == 1 ? t[0] : t
+# end
 
-$zoo = {
-    "" => -> (*a) { unwrap(a) }
-}
+# $zoo = {
+#     "" => -> (*a) { unwrap(a) }
+# }
 
-arg = [$UNDEF, $UNDEF]
+# arg = [$UNDEF, $UNDEF]
+# # puts($zoo[""][*arg])
+# puts(unwrap(arg))
 # puts($zoo[""][*arg])
-puts(unwrap(arg))
-puts($zoo[""][*arg])
-puts($UNDEF.size)
+# puts($UNDEF.size)
 
-b = arg.each { |e| print(1) }
-puts(b)
+# b = arg.each { |e| print(1) }
+# puts(b)
 
-a = [1, 2, 3]
-puts(a.pop)
-puts(a.pop)
-puts(a.pop)
-puts(a.pop)
-puts(nil)
-print(nil)
+# a = [1, 2, 3]
+# puts(a.pop)
+# puts(a.pop)
+# puts(a.pop)
+# puts(a.pop)
+# puts(nil)
+# print(nil)
 
-plop = nil
+# plop = nil
 
-if plop && plop[1] == "d"
-    puts("plop")
-else
-    puts("no plop")
-end
+# if plop && plop[1] == "d"
+#     puts("plop")
+# else
+#     puts("no plop")
+# end
 
-puts([])
-print([])
-puts()
-# puts([], 1)
-# print([], 1)
-# puts(*[])
-# print(*[])
+# puts([])
+# print([])
+# puts()
+# # puts([], 1)
+# # print([], 1)
+# # puts(*[])
+# # print(*[])
 
-print([1, 2, 3] - [])
-puts()
-print([1, 2, 3] - [1])
-puts()
-print([1, 2, 3] - [2])
-puts()
-print([1, 2, 3] - [3])
-puts()
-print([1, 2, 3] - [4])
-puts()
-print([1, 2, 3] - [1, 2])
+# print([1, 2, 3] - [])
+# puts()
+# print([1, 2, 3] - [1])
+# puts()
+# print([1, 2, 3] - [2])
+# puts()
+# print([1, 2, 3] - [3])
+# puts()
+# print([1, 2, 3] - [4])
+# puts()
+# print([1, 2, 3] - [1, 2])
 
 
-print([1, 2, 3] + [])
-puts()
-print([1, 2, 3] + [1])
-puts()
-print([1, 2, 3] + [2])
-puts()
-print([1, 2, 3] + [3])
-puts()
-print([1, 2, 3] + [4])
-puts()
-print([1, 2, 3] + [1, 2])
-puts()
+# print([1, 2, 3] + [])
+# puts()
+# print([1, 2, 3] + [1])
+# puts()
+# print([1, 2, 3] + [2])
+# puts()
+# print([1, 2, 3] + [3])
+# puts()
+# print([1, 2, 3] + [4])
+# puts()
+# print([1, 2, 3] + [1, 2])
+# puts()
 
-print([1, 2, 3] * 1)
-puts()
-print([1, 2, 3] * 2)
-puts()
-print([1, 2, 3] * 3.999)
-puts()
-print([1, 2, 3] * ',')
-puts()
+# print([1, 2, 3] * 1)
+# puts()
+# print([1, 2, 3] * 2)
+# puts()
+# print([1, 2, 3] * 3.999)
+# puts()
+# print([1, 2, 3] * ',')
+# puts()
 
-puts("hello", 1)
-print("hello", 1)
-puts(["hello", 1])
-print(["hello", 1])
-puts()
+# puts("hello", 1)
+# print("hello", 1)
+# puts(["hello", 1])
+# print(["hello", 1])
+# puts()
 
-puts(0.1+0.2)
+# puts(0.1+0.2)
 
 # Still not working:
 # - favourite_number
 # - golf_pyramid_scheme_negation
 # - xor
+
+# def foo(a)
+#     return a
+# end
+# def bar(a)
+#     return foo a
+# end
+
+# puts foo 'a'
+# puts bar('a')
+# puts bar 'a'
+puts 'a'
+puts [1,2,3]
