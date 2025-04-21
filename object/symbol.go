@@ -22,7 +22,7 @@ type Symbol struct {
 }
 
 // Inspect returns the value of the symbol
-func (s *Symbol) Inspect() string { return s.Value }
+func (s *Symbol) Inspect() string { return ":" + s.Value }
 
 // Type returns SYMBOL_OBJ
 func (s *Symbol) Type() Type { return SYMBOL_OBJ }

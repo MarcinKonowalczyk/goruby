@@ -207,7 +207,7 @@ func integerSpaceship(context CallContext, args ...RubyObject) (RubyObject, erro
 	i := context.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
 	if err != nil {
-		return nil, err
+		return NIL, err
 	}
 	switch {
 	case i.Value > right:
@@ -225,7 +225,7 @@ func integerGte(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
 	if err != nil {
-		return nil, err
+		return NIL, err
 	}
 	if i.Value >= right {
 		return TRUE, nil
@@ -237,7 +237,7 @@ func integerLte(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
 	if err != nil {
-		return nil, err
+		return NIL, err
 	}
 	if i.Value <= right {
 		return TRUE, nil
@@ -272,5 +272,6 @@ func integerChr(context CallContext, args ...RubyObject) (RubyObject, error) {
 	if i.Value < 0 || i.Value > 255 {
 		return nil, NewArgumentError("chr out of range")
 	}
-	return &String{Value: string(i.Value)}, nil
+	// return &String{Value: string(i.Value)}, nil
+	return &String{Value: string(rune(i.Value))}, nil
 }

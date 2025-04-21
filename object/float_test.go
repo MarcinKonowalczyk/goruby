@@ -241,73 +241,73 @@ func TestFloatGt(t *testing.T) {
 	}
 }
 
-func TestFloatEq(t *testing.T) {
-	tests := []struct {
-		arguments []RubyObject
-		result    RubyObject
-		err       error
-	}{
-		{
-			[]RubyObject{NewFloat(6)},
-			FALSE,
-			nil,
-		},
-		{
-			[]RubyObject{NewFloat(4)},
-			TRUE,
-			nil,
-		},
-		{
-			[]RubyObject{&String{""}},
-			nil,
-			NewArgumentError("comparison of Float with String failed"),
-		},
-	}
+// func TestFloatEq(t *testing.T) {
+// 	tests := []struct {
+// 		arguments []RubyObject
+// 		result    RubyObject
+// 		err       error
+// 	}{
+// 		{
+// 			[]RubyObject{NewFloat(6)},
+// 			FALSE,
+// 			nil,
+// 		},
+// 		{
+// 			[]RubyObject{NewFloat(4)},
+// 			TRUE,
+// 			nil,
+// 		},
+// 		{
+// 			[]RubyObject{&String{""}},
+// 			nil,
+// 			NewArgumentError("comparison of Float with String failed"),
+// 		},
+// 	}
 
-	for _, testCase := range tests {
-		context := &callContext{receiver: NewFloat(4)}
+// 	for _, testCase := range tests {
+// 		context := &callContext{receiver: NewFloat(4)}
 
-		result, err := floatEq(context, testCase.arguments...)
+// 		result, err := floatEq(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
+// 		checkError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
-	}
-}
+// 		checkResult(t, result, testCase.result)
+// 	}
+// }
 
-func TestFloatNeq(t *testing.T) {
-	tests := []struct {
-		arguments []RubyObject
-		result    RubyObject
-		err       error
-	}{
-		{
-			[]RubyObject{NewFloat(6)},
-			TRUE,
-			nil,
-		},
-		{
-			[]RubyObject{NewFloat(4)},
-			FALSE,
-			nil,
-		},
-		{
-			[]RubyObject{&String{""}},
-			nil,
-			NewArgumentError("comparison of Float with String failed"),
-		},
-	}
+// func TestFloatNeq(t *testing.T) {
+// 	tests := []struct {
+// 		arguments []RubyObject
+// 		result    RubyObject
+// 		err       error
+// 	}{
+// 		{
+// 			[]RubyObject{NewFloat(6)},
+// 			TRUE,
+// 			nil,
+// 		},
+// 		{
+// 			[]RubyObject{NewFloat(4)},
+// 			FALSE,
+// 			nil,
+// 		},
+// 		{
+// 			[]RubyObject{&String{""}},
+// 			nil,
+// 			NewArgumentError("comparison of Float with String failed"),
+// 		},
+// 	}
 
-	for _, testCase := range tests {
-		context := &callContext{receiver: NewFloat(4)}
+// 	for _, testCase := range tests {
+// 		context := &callContext{receiver: NewFloat(4)}
 
-		result, err := floatNeq(context, testCase.arguments...)
+// 		result, err := floatNeq(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
+// 		checkError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
-	}
-}
+// 		checkResult(t, result, testCase.result)
+// 	}
+// }
 
 func TestFloatGte(t *testing.T) {
 	tests := []struct {

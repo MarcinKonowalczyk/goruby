@@ -105,8 +105,8 @@ func TestModuleAncestors(t *testing.T) {
 			t.Fail()
 		}
 
-		expected := fmt.Sprintf("[%s]", strings.Join([]string{"BasicObjectAsParent", "BasicObject"}, ", "))
-		actual := fmt.Sprintf("%s", array.Inspect())
+		expected := fmt.Sprintf("[%s]", strings.Join([]string{"\"BasicObjectAsParent\"", "\"BasicObject\""}, ", "))
+		actual := array.Inspect()
 
 		if expected != actual {
 			t.Logf("Expected ancestors to equal %s, got %s", expected, actual)
@@ -138,8 +138,8 @@ func TestModuleAncestors(t *testing.T) {
 			t.Fail()
 		}
 
-		expected := fmt.Sprintf("[%s]", strings.Join([]string{"BasicObjectAsParent", "Kernel", "BasicObject"}, ", "))
-		actual := fmt.Sprintf("%s", array.Inspect())
+		expected := fmt.Sprintf("[%s]", strings.Join([]string{"\"BasicObjectAsParent\"", "\"Kernel\"", "\"BasicObject\""}, ", "))
+		actual := array.Inspect()
 
 		if expected != actual {
 			t.Logf("Expected ancestors to equal %s, got %s", expected, actual)
@@ -153,11 +153,11 @@ func TestModuleAncestors(t *testing.T) {
 		}{
 			{
 				basicObjectClass,
-				[]string{"BasicObject"},
+				[]string{"\"BasicObject\""},
 			},
 			{
 				objectClass,
-				[]string{"Object", "Kernel", "BasicObject"},
+				[]string{"\"Object\"", "\"Kernel\"", "\"BasicObject\""},
 			},
 		}
 
@@ -184,7 +184,7 @@ func TestModuleAncestors(t *testing.T) {
 				}
 
 				expected := fmt.Sprintf("[%s]", strings.Join(testCase.expectedAncestors, ", "))
-				actual := fmt.Sprintf("%s", array.Inspect())
+				actual := array.Inspect()
 
 				if expected != actual {
 					t.Logf("Expected ancestors to equal %s, got %s", expected, actual)
@@ -212,7 +212,7 @@ func TestModuleIncludedModules(t *testing.T) {
 		t.FailNow()
 	}
 
-	expectedModules := []string{"Kernel"}
+	expectedModules := []string{"\"Kernel\""}
 
 	if len(array.Elements) != len(expectedModules) {
 		t.Logf(
@@ -224,7 +224,7 @@ func TestModuleIncludedModules(t *testing.T) {
 	}
 
 	expected := fmt.Sprintf("[%s]", strings.Join(expectedModules, ", "))
-	actual := fmt.Sprintf("%s", array.Inspect())
+	actual := array.Inspect()
 
 	if expected != actual {
 		t.Logf("Expected modules to equal %s, got %s", expected, actual)
