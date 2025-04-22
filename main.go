@@ -62,7 +62,7 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 	args := flag.Args()
-	interpreter := interpreter.NewInterpreter(args[1:])
+	interpreter := interpreter.NewInterpreterEx(args[1:])
 	interpreter.Trace = trace
 	if len(onelineScripts) != 0 {
 		input := strings.Join(onelineScripts, "\n")

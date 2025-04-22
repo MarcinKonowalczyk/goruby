@@ -15,9 +15,7 @@ import (
 // 	Interpret(filename string, input interface{}) (object.RubyObject, error)
 // }
 
-// NewInterpreter returns an Interpreter ready to use and with the environment set to
-// object.NewMainEnvironment()
-func NewInterpreter(argv []string) Interpreter {
+func NewInterpreterEx(argv []string) Interpreter {
 	cwd, err := os.Getwd()
 	if err != nil {
 		log.Printf("Cannot get working directory: %s\n", err)
@@ -45,6 +43,12 @@ func NewInterpreter(argv []string) Interpreter {
 	stdin := object.NewIo()
 	env.SetGlobal("$stdin", stdin)
 	return Interpreter{environment: env}
+}
+
+// NewInterpreter returns an Interpreter ready to use and with the environment set to
+// object.NewMainEnvironment()
+func NewInterpreter() Interpreter {
+	return NewInterpreterEx(os.Args[1:])
 }
 
 type Interpreter struct {

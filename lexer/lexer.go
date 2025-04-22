@@ -515,7 +515,7 @@ func lexGlobal(l *Lexer) StateFn {
 		return l.errorf("Illegal character: '%c'", r)
 	}
 
-	for !isWhitespace(r) && !isExpressionDelimiter(r) && r != '.' && r != ',' && r != '=' && r != '>' && r != '<' && r != '(' && r != ')' && r != '{' && r != '}' && r != '[' && r != ']' && r != ';' && r != ':' {
+	for !isWhitespace(r) && !isExpressionDelimiter(r) && r != '.' && r != ',' && r != '=' && r != '>' && r != '<' && r != '(' && r != ')' && r != '{' && r != '}' && r != '[' && r != ']' && r != ';' {
 		r = l.next()
 	}
 	l.backup()

@@ -225,7 +225,7 @@ func floatSpaceship(context CallContext, args ...RubyObject) (RubyObject, error)
 	i := context.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
 	if err != nil {
-		return nil, err
+		return NIL, err
 	}
 	switch {
 	case i.Value > right:
