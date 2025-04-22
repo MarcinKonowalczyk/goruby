@@ -43,7 +43,8 @@ func main() {
 		fmt.Println("goruby version 0.1.0")
 		os.Exit(0)
 	}
-	interpreter := interpreter.NewInterpreter()
+	args := flag.Args()
+	interpreter := interpreter.NewInterpreter(args[1:])
 	interpreter.Trace = trace
 	if len(onelineScripts) != 0 {
 		input := strings.Join(onelineScripts, "\n")

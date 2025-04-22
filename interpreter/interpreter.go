@@ -17,7 +17,7 @@ import (
 
 // NewInterpreter returns an Interpreter ready to use and with the environment set to
 // object.NewMainEnvironment()
-func NewInterpreter() Interpreter {
+func NewInterpreter(argv []string) Interpreter {
 	cwd, err := os.Getwd()
 	if err != nil {
 		log.Printf("Cannot get working directory: %s\n", err)
@@ -29,11 +29,11 @@ func NewInterpreter() Interpreter {
 	env.SetGlobal("$:", loadPathArr)
 
 	// setup ARGV
-	argv := os.Args[1:]
-	if len(argv) > 0 {
-		// take off one more element
-		argv = argv[1:]
-	}
+	// argv := os.Args[1:]
+	// if len(argv) > 0 {
+	// 	// take off one more element
+	// 	argv = argv[1:]
+	// }
 	argvArr := object.NewArray()
 	for _, arg := range argv {
 		argvArr.Elements = append(argvArr.Elements, &object.String{Value: arg})
