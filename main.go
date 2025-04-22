@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime/pprof"
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/interpreter"
@@ -27,6 +28,7 @@ func (m *multiString) Set(s string) error {
 
 var onelineScripts multiString
 var trace bool
+var cpuprofile string = ""
 
 func printError(err error) {
 	// fmt.Printf("%v\n", errors.Cause(err))
@@ -34,6 +36,7 @@ func printError(err error) {
 }
 
 func main() {
+	flag.StringVar(&cpuprofile, "cpuprofile", "", "write cpu profile to file")
 	flag.Var(&onelineScripts, "e", "one line of script. Several -e's allowed. Omit [programfile]")
 	flag.BoolVar(&trace, "trace", false, "trace execution")
 	version := flag.Bool("version", false, "print version")
@@ -42,6 +45,21 @@ func main() {
 	if *version {
 		fmt.Println("goruby version 0.1.0")
 		os.Exit(0)
+	}
+	if cpuprofile != "" {
+		f, err := os.Create(cpuprofile)
+		if err != nil {
+			log.Fatal("could not create CPU profile: ", err)
+		}
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Fatal("could not close CPU profile: ", err)
+			}
+		}()
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Fatal("could not start CPU profile: ", err)
+		}
+		defer pprof.StopCPUProfile()
 	}
 	args := flag.Args()
 	interpreter := interpreter.NewInterpreter(args[1:])
@@ -55,7 +73,6 @@ func main() {
 		}
 		return
 	}
-	args := flag.Args()
 	if len(args) == 0 {
 		log.Println("No program files specified")
 		os.Exit(1)
