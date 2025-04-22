@@ -176,13 +176,14 @@ func stringLines(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return arr, nil
 }
 
+var FLOAT_RE = regexp.MustCompile(`[-+]?\d*\.?\d+`)
+
 func stringToF(context CallContext, args ...RubyObject) (RubyObject, error) {
 	s := context.Receiver().(*String)
 	if s.Value == "" {
 		return &Float{Value: 0.0}, nil
 	}
-	float_re := regexp.MustCompile(`[-+]?\d*\.?\d+`)
-	match := float_re.FindString(s.Value)
+	match := FLOAT_RE.FindString(s.Value)
 	if match == "" {
 		return &Float{Value: 0.0}, nil
 	}
