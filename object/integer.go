@@ -45,16 +45,14 @@ func (i *Integer) hashKey() hashKey {
 var integerClassMethods = map[string]RubyMethod{}
 
 var integerMethods = map[string]RubyMethod{
-	"div": withArity(1, publicMethod(integerDiv)),
-	"/":   withArity(1, publicMethod(integerDiv)),
-	"*":   withArity(1, publicMethod(integerMul)),
-	"+":   withArity(1, publicMethod(integerAdd)),
-	"-":   withArity(1, publicMethod(integerSub)),
-	"%":   withArity(1, publicMethod(integerModulo)),
-	"<":   withArity(1, publicMethod(integerLt)),
-	">":   withArity(1, publicMethod(integerGt)),
-	// "==":   withArity(1, publicMethod(integerEq)),
-	// "!=":   withArity(1, publicMethod(integerNeq)),
+	"div":  withArity(1, publicMethod(integerDiv)),
+	"/":    withArity(1, publicMethod(integerDiv)),
+	"*":    withArity(1, publicMethod(integerMul)),
+	"+":    withArity(1, publicMethod(integerAdd)),
+	"-":    withArity(1, publicMethod(integerSub)),
+	"%":    withArity(1, publicMethod(integerModulo)),
+	"<":    withArity(1, publicMethod(integerLt)),
+	">":    withArity(1, publicMethod(integerGt)),
 	">=":   withArity(1, publicMethod(integerGte)),
 	"<=":   withArity(1, publicMethod(integerLte)),
 	"<=>":  withArity(1, publicMethod(integerSpaceship)),
@@ -121,12 +119,13 @@ func safeObjectToInteger(arg RubyObject) (int64, bool) {
 }
 
 func integerCmpHelper(args []RubyObject) (int64, error) {
-	if len(args) != 1 {
-		return 0, errors.WithMessage(
-			NewWrongNumberOfArgumentsError(1, len(args)),
-			callersName(),
-		)
-	}
+	// NOTE: len args already checked by `withArity`
+	// if len(args) != 1 {
+	// 	return 0, errors.WithMessage(
+	// 		NewWrongNumberOfArgumentsError(1, len(args)),
+	// 		callersName(),
+	// 	)
+	// }
 	right, ok := safeObjectToInteger(args[0])
 	if !ok {
 		return 0, errors.WithMessage(

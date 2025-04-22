@@ -48,9 +48,6 @@ func kernelToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 }
 
 func kernelIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
-	if len(args) != 1 {
-		return nil, NewWrongNumberOfArgumentsError(1, len(args))
-	}
 	receiver_class := context.Receiver().Class()
 	switch arg := args[0].(type) {
 	case RubyClassObject:
@@ -201,9 +198,6 @@ func kernelClass(context CallContext, args ...RubyObject) (RubyObject, error) {
 }
 
 func kernelRequire(context CallContext, args ...RubyObject) (RubyObject, error) {
-	if len(args) != 1 {
-		return nil, NewWrongNumberOfArgumentsError(1, len(args))
-	}
 	name, ok := args[0].(*String)
 	if !ok {
 		return nil, NewImplicitConversionTypeError(name, args[0])
@@ -439,32 +433,14 @@ func RubyObjectsEqual(left, right RubyObject) bool {
 }
 
 func kernelEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
-	receiver := context.Receiver()
-	// if self, ok := receiver.(*Self); ok {
-	// 	receiver = self.RubyObject
-	// }
-	if len(args) != 1 {
-		return nil, NewWrongNumberOfArgumentsError(1, len(args))
-	}
-	arg := args[0]
-	res := RubyObjectsEqual(receiver, arg)
-	if res {
+	if RubyObjectsEqual(context.Receiver(), args[0]) {
 		return TRUE, nil
 	}
 	return FALSE, nil
 }
 
 func kernelNotEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
-	receiver := context.Receiver()
-	// if self, ok := receiver.(*Self); ok {
-	// 	receiver = self.RubyObject
-	// }
-	if len(args) != 1 {
-		return nil, NewWrongNumberOfArgumentsError(1, len(args))
-	}
-	arg := args[0]
-	res := RubyObjectsEqual(receiver, arg)
-	if res {
+	if RubyObjectsEqual(context.Receiver(), args[0]) {
 		return FALSE, nil
 	}
 	return TRUE, nil
