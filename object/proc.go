@@ -1,10 +1,9 @@
 package object
 
 import (
-	"bytes"
 	"strings"
 
-	"github.com/goruby/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/ast"
 )
 
 var procClass RubyClassObject = newClass(
@@ -32,18 +31,18 @@ func extractBlockFromArgs(args []RubyObject) (*Proc, []RubyObject, bool) {
 
 // A Proc represents a user defined block of code.
 type Proc struct {
-	Parameters             []*ast.FunctionParameter
+	Parameters             []*FunctionParameter
 	Body                   *ast.BlockStatement
 	Env                    Environment
 	ArgumentCountMandatory bool
 }
 
 // Type returns proc_OBJ
-func (p *Proc) Type() Type { return "" }
+func (p *Proc) Type() Type { return PROC_OBJ }
 
 // Inspect returns the proc body
 func (p *Proc) Inspect() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	params := []string{}
 	for _, p := range p.Parameters {
 		params = append(params, p.String())
@@ -61,15 +60,31 @@ func (p *Proc) Class() RubyClass { return procClass }
 
 // Call implements the RubyMethod interface. It evaluates p.Body and returns its result
 func (p *Proc) Call(context CallContext, args ...RubyObject) (RubyObject, error) {
-	if p.ArgumentCountMandatory && len(args) != len(p.Parameters) {
-		return nil, NewWrongNumberOfArgumentsError(len(p.Parameters), len(args))
+	// fmt.Println("ProcCall", p.Parameters[0])
+	// TODO: Handle tail splats
+	if len(p.Parameters) == 1 && p.Parameters[0].Splat {
+		// Only one splat parameter.
+		args_arr := NewArray(args...)
+
+		extendedEnv := NewEnclosedEnvironment(p.Env)
+		extendedEnv.Set(p.Parameters[0].Name, args_arr)
+		evaluated, err := context.Eval(p.Body, extendedEnv)
+		if err != nil {
+			return nil, err
+		}
+		return evaluated, nil
+	} else {
+		// normal evaluation
+		if p.ArgumentCountMandatory && len(args) != len(p.Parameters) {
+			return nil, NewWrongNumberOfArgumentsError(len(p.Parameters), len(args))
+		}
+		extendedEnv := p.extendProcEnv(args)
+		evaluated, err := context.Eval(p.Body, extendedEnv)
+		if err != nil {
+			return nil, err
+		}
+		return evaluated, nil
 	}
-	extendedEnv := p.extendProcEnv(args)
-	evaluated, err := context.Eval(p.Body, extendedEnv)
-	if err != nil {
-		return nil, err
-	}
-	return evaluated, nil
 }
 
 func (p *Proc) extendProcEnv(args []RubyObject) Environment {
@@ -81,11 +96,25 @@ func (p *Proc) extendProcEnv(args []RubyObject) Environment {
 		}
 	}
 	for paramIdx, param := range p.Parameters {
-		env.Set(param.Name.Value, arguments[paramIdx])
+		env.Set(param.Name, arguments[paramIdx])
 	}
 	return env
 }
 
 var procClassMethods = map[string]RubyMethod{}
 
-var procMethods = map[string]RubyMethod{}
+var procMethods = map[string]RubyMethod{
+	"call": publicMethod(procCall),
+}
+
+func procCall(context CallContext, args ...RubyObject) (RubyObject, error) {
+	proc, _ := context.Receiver().(*Proc)
+	if proc == nil {
+		return nil, NewArgumentError("call requires a block")
+	}
+	block, args, ok := extractBlockFromArgs(args)
+	if ok {
+		args = append(args, block)
+	}
+	return proc.Call(context, args...)
+}

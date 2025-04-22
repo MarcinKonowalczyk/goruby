@@ -98,6 +98,15 @@ func (c *class) SuperClass() RubyClass {
 func (c *class) Methods() MethodSet {
 	return c.instanceMethods
 }
+
+func (c *class) GetMethod(name string) (RubyMethod, bool) {
+	method, ok := c.instanceMethods.Get(name)
+	if ok {
+		return method, true
+	}
+	return nil, false
+}
+
 func (c *class) hashKey() hashKey {
 	h := fnv.New64a()
 	h.Write([]byte(c.name))
@@ -110,6 +119,11 @@ func (c *class) New(args ...RubyObject) (RubyObject, error) {
 	return c.builder(c)
 }
 func (c *class) Name() string { return c.name }
+
+var (
+	_ RubyObject = &class{}
+	_ RubyClass  = &class{}
+)
 
 var classClassMethods = map[string]RubyMethod{}
 

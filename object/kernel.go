@@ -3,13 +3,12 @@ package object
 import (
 	"fmt"
 	"go/token"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
-	"github.com/goruby/goruby/parser"
+	"github.com/MarcinKonowalczyk/goruby/parser"
 	"github.com/pkg/errors"
 )
 
@@ -21,6 +20,7 @@ func init() {
 
 var kernelMethodSet = map[string]RubyMethod{
 	"to_s":              withArity(0, publicMethod(kernelToS)),
+	"is_a?":             withArity(1, publicMethod(kernelIsA)),
 	"nil?":              withArity(0, publicMethod(kernelIsNil)),
 	"methods":           publicMethod(kernelMethods),
 	"public_methods":    publicMethod(kernelPublicMethods),
@@ -28,11 +28,14 @@ var kernelMethodSet = map[string]RubyMethod{
 	"private_methods":   publicMethod(kernelPrivateMethods),
 	"class":             withArity(0, publicMethod(kernelClass)),
 	"puts":              privateMethod(kernelPuts),
+	"print":             privateMethod(kernelPrint),
 	"require":           withArity(1, privateMethod(kernelRequire)),
 	"extend":            publicMethod(kernelExtend),
 	"block_given?":      withArity(0, privateMethod(kernelBlockGiven)),
 	"tap":               publicMethod(kernelTap),
 	"raise":             privateMethod(kernelRaise),
+	"==":                withArity(1, publicMethod(kernelEqual)),
+	"!=":                withArity(1, publicMethod(kernelNotEqual)),
 }
 
 func kernelToS(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -44,12 +47,74 @@ func kernelToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return &String{Value: val}, nil
 }
 
-func kernelPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
-	out := ""
-	for _, arg := range args {
-		out += arg.Inspect()
+func kernelIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
+	receiver_class := context.Receiver().Class()
+	switch arg := args[0].(type) {
+	case RubyClassObject:
+		if arg.Name() == receiver_class.Name() {
+			return TRUE, nil
+		} else {
+			return FALSE, nil
+		}
+	default:
+		return nil, NewTypeError("argument must be a Class")
 	}
-	fmt.Println(out)
+}
+
+func print(lines []string, delimiter string) {
+	var out strings.Builder
+	for i, line := range lines {
+		out.WriteString(line)
+		if i != len(lines)-1 {
+			out.WriteString(delimiter)
+		}
+	}
+	out.WriteString(delimiter)
+	fmt.Print(out.String())
+}
+
+func kernelPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
+	var lines []string
+	for _, arg := range args {
+		if arr, ok := arg.(*Array); ok {
+			// arg is an array. splat it out
+			// todo: make it a deep splat? check with original ruby implementation
+			for _, elem := range arr.Elements {
+				lines = append(lines, elem.Inspect())
+			}
+		} else {
+			switch arg := arg.(type) {
+			case *nilObject:
+				//
+			default:
+				lines = append(lines, arg.Inspect())
+			}
+		}
+	}
+	print(lines, "\n")
+	return NIL, nil
+}
+
+func kernelPrint(context CallContext, args ...RubyObject) (RubyObject, error) {
+	var lines []string
+	for _, arg := range args {
+		if arr, ok := arg.(*Array); ok {
+			// arg is an array. splat it out
+			// todo: make it a deep splat? check with original ruby implementation
+			// for _, elem := range arr.Elements {
+			// 	lines = append(lines, elem.Inspect())
+			// }
+			lines = append(lines, arr.Inspect())
+		} else {
+			switch arg := arg.(type) {
+			case *nilObject:
+				//
+			default:
+				lines = append(lines, arg.Inspect())
+			}
+		}
+	}
+	print(lines, "")
 	return NIL, nil
 }
 
@@ -133,9 +198,6 @@ func kernelClass(context CallContext, args ...RubyObject) (RubyObject, error) {
 }
 
 func kernelRequire(context CallContext, args ...RubyObject) (RubyObject, error) {
-	if len(args) != 1 {
-		return nil, NewWrongNumberOfArgumentsError(1, len(args))
-	}
 	name, ok := args[0].(*String)
 	if !ok {
 		return nil, NewImplicitConversionTypeError(name, args[0])
@@ -165,13 +227,13 @@ func kernelRequire(context CallContext, args ...RubyObject) (RubyObject, error) 
 		return FALSE, nil
 	}
 
-	file, err := ioutil.ReadFile(filename)
+	file, err := os.ReadFile(filename)
 	if os.IsNotExist(err) {
 		found := false
 		loadPath, _ := context.Env().Get("$:")
 		for _, p := range loadPath.(*Array).Elements {
 			newPath := path.Join(p.(*String).Value, filename)
-			file, err = ioutil.ReadFile(newPath)
+			file, err = os.ReadFile(newPath)
 			if !os.IsNotExist(err) {
 				absolutePath = newPath
 				found = true
@@ -247,7 +309,7 @@ func kernelRaise(context CallContext, args ...RubyObject) (RubyObject, error) {
 	case 1:
 		switch arg := args[0].(type) {
 		case *String:
-			return nil, NewRuntimeError(arg.Value)
+			return nil, NewRuntimeError("%s", arg.Value)
 		default:
 			exc, err := Send(NewCallContext(context.Env(), arg), "exception")
 			if err != nil {
@@ -261,4 +323,125 @@ func kernelRaise(context CallContext, args ...RubyObject) (RubyObject, error) {
 	default:
 		return nil, NewRuntimeError("")
 	}
+}
+
+func swapOr(result bool, left, right RubyObject, swapped bool) bool {
+	if swapped {
+		// we've already swapped. just return the result
+		return result
+	} else {
+		// 1-depth recursive call with swapped arguments
+		return rubyObjectsEqual(right, left, true)
+	}
+}
+
+func rubyObjectsEqual(left, right RubyObject, swapped bool) bool {
+	// leftClass := left.Class()
+	// rightClass := right.Class()
+	// if leftClass != rightClass {
+	// 	return swapOr(false, left, right, swapped)
+	// }
+	// if left == nil {
+	// 	return right == nil || right.Class().Name() == "NilClass"
+	// }
+	// if left.Class().Name() == "NilClass" {
+	// 	return right == nil || right.Class().Name() == "NilClass"
+	// }
+	// fmt.Printf("left: %T right: %T\n", left, right)
+	// fmt.Println("left:", left.Class().Name(), "right:", right.Class().Name())
+	switch left := left.(type) {
+	case *Boolean:
+		if right_t, ok := right.(*Boolean); !ok {
+			// swap. maybe the other thing knows how to compare
+			// itself to a boolean
+			return swapOr(false, left, right, swapped)
+		} else {
+			return left.Value == right_t.Value
+		}
+	case *Integer:
+		right_t, ok := safeObjectToInteger(right)
+		if !ok {
+			return swapOr(false, left, right, swapped)
+		} else {
+			return left.Value == right_t
+		}
+	case *Float:
+		right_t, ok := safeObjectToFloat(right)
+		if !ok {
+			return swapOr(false, left, right, swapped)
+		} else {
+			return left.Value == right_t
+		}
+	case *String:
+		if right_t, ok := right.(*String); !ok {
+			return swapOr(false, left, right, swapped)
+		} else {
+			return left.Value == right_t.Value
+		}
+	case *Array:
+		if right_t, ok := right.(*Array); !ok {
+			return swapOr(false, left, right, swapped)
+		} else {
+			if len(left.Elements) != len(right_t.Elements) {
+				return false
+			}
+			for i, elem := range left.Elements {
+				if !rubyObjectsEqual(elem, right_t.Elements[i], swapped) {
+					return false
+				}
+			}
+			return true
+		}
+	case *Hash:
+		if right_t, ok := right.(*Hash); !ok {
+			return swapOr(false, left, right, swapped)
+		} else {
+			if len(left.Map) != len(right_t.Map) {
+				return false
+			}
+			for key, leftValue := range left.ObjectMap() {
+				rightValue, ok := right_t.Get(key)
+				if !ok {
+					return false
+				}
+				if !rubyObjectsEqual(leftValue, rightValue, swapped) {
+					return false
+				}
+			}
+
+			return true
+		}
+	case *Symbol:
+		if right_t, ok := right.(*Symbol); !ok {
+			return swapOr(false, left, right, swapped)
+		} else {
+			return left.Value == right_t.Value
+		}
+	case *nilObject:
+		if right_t, ok := right.(*nilObject); !ok {
+			return swapOr(false, left, right, swapped)
+		} else {
+			return left == right_t
+		}
+	default:
+		return false
+	}
+}
+
+func RubyObjectsEqual(left, right RubyObject) bool {
+	return rubyObjectsEqual(left, right, false)
+}
+
+func kernelEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
+	if RubyObjectsEqual(context.Receiver(), args[0]) {
+		return TRUE, nil
+	}
+	return FALSE, nil
+}
+
+func kernelNotEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
+	if RubyObjectsEqual(context.Receiver(), args[0]) {
+		return FALSE, nil
+	}
+	return TRUE, nil
 }

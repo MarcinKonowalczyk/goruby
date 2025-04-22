@@ -7,20 +7,20 @@ import (
 
 func TestHashSet(t *testing.T) {
 	t.Run("Set on initialized hash", func(t *testing.T) {
-		hash := &Hash{hashMap: make(map[hashKey]hashPair)}
+		hash := &Hash{Map: make(map[hashKey]hashPair)}
 
 		key := &String{Value: "foo"}
 		value := &Integer{Value: 42}
 
 		result := hash.Set(key, value)
 
-		if len(hash.hashMap) != 1 {
-			t.Logf("Expected hashMap to contain 1 item, got %d\n", len(hash.hashMap))
+		if len(hash.Map) != 1 {
+			t.Logf("Expected hashMap to contain 1 item, got %d\n", len(hash.Map))
 			t.Fail()
 		}
 
 		var values []hashPair
-		for _, v := range hash.hashMap {
+		for _, v := range hash.Map {
 			values = append(values, v)
 		}
 
@@ -46,13 +46,13 @@ func TestHashSet(t *testing.T) {
 
 		result := hash.Set(key, value)
 
-		if len(hash.hashMap) != 1 {
-			t.Logf("Expected hashMap to contain 1 item, got %d\n", len(hash.hashMap))
+		if len(hash.Map) != 1 {
+			t.Logf("Expected hashMap to contain 1 item, got %d\n", len(hash.Map))
 			t.Fail()
 		}
 
 		var values []hashPair
-		for _, v := range hash.hashMap {
+		for _, v := range hash.Map {
 			values = append(values, v)
 		}
 
@@ -77,7 +77,7 @@ func TestHashGet(t *testing.T) {
 		key := &String{Value: "foo"}
 		value := &Integer{Value: 42}
 
-		hash := &Hash{hashMap: map[hashKey]hashPair{
+		hash := &Hash{Map: map[hashKey]hashPair{
 			key.hashKey(): hashPair{Key: key, Value: value},
 		}}
 
@@ -96,7 +96,7 @@ func TestHashGet(t *testing.T) {
 	t.Run("value not found", func(t *testing.T) {
 		key := &String{Value: "foo"}
 
-		hash := &Hash{hashMap: map[hashKey]hashPair{}}
+		hash := &Hash{Map: map[hashKey]hashPair{}}
 
 		result, ok := hash.Get(key)
 
@@ -134,11 +134,11 @@ func TestHashMap(t *testing.T) {
 		key := &String{Value: "foo"}
 		value := &Integer{Value: 42}
 
-		hash := &Hash{hashMap: map[hashKey]hashPair{
+		hash := &Hash{Map: map[hashKey]hashPair{
 			key.hashKey(): hashPair{Key: key, Value: value},
 		}}
 
-		var result map[RubyObject]RubyObject = hash.Map()
+		var result map[RubyObject]RubyObject = hash.ObjectMap()
 
 		expected := map[string]RubyObject{
 			"foo": value,
@@ -156,7 +156,7 @@ func TestHashMap(t *testing.T) {
 	t.Run("on uninitialized hash", func(t *testing.T) {
 		var hash Hash
 
-		var result map[RubyObject]RubyObject = hash.Map()
+		var result map[RubyObject]RubyObject = hash.ObjectMap()
 
 		expected := map[string]RubyObject{}
 		actual := make(map[string]RubyObject)

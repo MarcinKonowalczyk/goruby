@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goruby/goruby/object"
-	"github.com/goruby/goruby/parser"
+	"github.com/MarcinKonowalczyk/goruby/object"
+	"github.com/MarcinKonowalczyk/goruby/parser"
 	"github.com/pkg/errors"
 )
 
@@ -1423,16 +1423,41 @@ func TestArrayIndexExpressions(t *testing.T) {
 			"[1, 2, 3][-4]",
 			nil,
 		},
+		{
+			"[0, 1, 2, 3, 4, 5][2, 3]",
+			[]int{2, 3, 4},
+		},
+		{
+			"[0, 1, 2, 3, 4, 5][2..3]",
+			[]int{2, 3},
+		},
+		{
+			"[0, 1, 2, 3, 4, 5][2..-1]",
+			[]int{2, 3, 4, 5},
+		},
 	}
 
 	for _, tt := range tests {
 		evaluated, err := testEval(tt.input)
 		checkError(t, err)
-		integer, ok := tt.expected.(int)
-		if ok {
-			testIntegerObject(t, evaluated, int64(integer))
-		} else {
+		switch expected := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(expected))
+		case []int:
+			array, ok := evaluated.(*object.Array)
+			if !ok {
+				t.Fatalf("Expected evaluated object to be *object.Array, got=%T", evaluated)
+			}
+			if len(array.Elements) != len(expected) {
+				t.Fatalf("Expected array length to be %d, got %d", len(expected), len(array.Elements))
+			}
+			for i, v := range expected {
+				testIntegerObject(t, array.Elements[i], int64(v))
+			}
+		case nil:
 			testNilObject(t, evaluated)
+		default:
+			t.Logf("Expected %T, got %T\n", expected, evaluated)
 		}
 	}
 }
@@ -1483,7 +1508,7 @@ func TestHashLiteral(t *testing.T) {
 	}
 
 	actual := make(map[string]object.RubyObject)
-	for k, v := range hash.Map() {
+	for k, v := range hash.ObjectMap() {
 		actual[k.Inspect()] = v
 	}
 
@@ -1756,7 +1781,7 @@ func testHashObject(t *testing.T, obj object.RubyObject, expected map[string]str
 		return false
 	}
 	hashMap := make(map[string]string)
-	for k, v := range result.Map() {
+	for k, v := range result.ObjectMap() {
 		hashMap[k.Inspect()] = v.Inspect()
 	}
 	if !reflect.DeepEqual(hashMap, expected) {

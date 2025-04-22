@@ -115,6 +115,7 @@ To run the command as one off run `go run main.go`.
 	- [ ] keyword arguments
 	- [x] block arguments
 	- [ ] hash as last argument without braces
+    - [ ] splat args (`*a`)
 - [x] function calls
 	- [x] with parens
 	- [x] without parens	
@@ -123,17 +124,18 @@ To run the command as one off run `go run main.go`.
 	- [x] if
 	- [x] if/else
 	- [ ] if/elif/else
-	- [x] tenary `? : `
+	- [x] ternary `? : `
 	- [x] unless
 	- [x] unless/else
 	- [ ] case
 	- [x] `||`
 	- [x] `&&`
 - [ ] control flow
-	- [ ] for loop
-	- [x] while loop
-	- [ ] until loop
-	- [ ] break
+	- [ ] `for` loop
+	- [x] `while` loop
+	- [ ] `break`
+        - [ ] `break unless`
+        - [ ] `break if`
 	- [ ] next
 	- [ ] redo
 	- [ ] flip flop
@@ -146,9 +148,9 @@ To run the command as one off run `go run main.go`.
 		- [ ] octal numbers `0252`, `0o252`, `0O252`
 		- [ ] hexadecimal numbers `0xaa`, `0xAa`, `0xAA`, `0Xaa`, `0XAa`, `0XaA`
 		- [ ] binary numbers `0b10101010`, `0B10101010`
-	- [ ] floats
+	- [x] floats
 		- [ ] float arithmetics
-		- [ ] `12.34`
+		- [x] `12.34`
 		- [ ] `1234e-2`
 		- [ ] `1.234E1`
 		- [ ] floats with underscores `2.2_22`
@@ -200,7 +202,7 @@ To run the command as one off run `go run main.go`.
 	- [ ] array of symbols `%i{}`
 - [x] nil
 - [ ] hashes
-	- [x] literal with `=>` notation
+	- [x] literal with `=>` notation (hashrocket)
 	- [ ] literal with `key:` notation
 	- [x] indexing `hash[:foo]`
 	- [x] every Ruby Object can be a hash key
@@ -213,11 +215,22 @@ To run the command as one off run `go run main.go`.
 	- [ ] singleton symbols
 - [ ] regexp
 	- [ ] `/regex/`
+        - [x] string gsub, e.g. `"hello".gsub(/l/,"1")`
+        - [ ] modifiers (implemented but don't do anything atm)
 	- [ ] `%r{regex}`
-- [ ] ranges
-	- [ ] `..` inclusive
-	- [ ] `...` exclusive
-- [ ] procs `->`
+- [x] ranges
+	- [x] `..` inclusive
+	- [x] `...` exclusive
+- [ ] procs 
+    <!-- https://ruby-doc.org/core-2.6/Proc.html -->
+    - [ ] `Proc.new`
+    - [ ] `proc`
+    - [ ] receiving a bloc of code into an argument
+    - [ ] `lambda`
+    - [x] `->`
+        - [x] pure, e.g. `-> (a, b) {a + b}`
+        - [x] captures
+        - [x] args splat, e.g. `-> (*a) { a }`
 - [ ] variables
 	- [x] variable assignments
 	- [x] globals

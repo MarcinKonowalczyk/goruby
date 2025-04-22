@@ -3,6 +3,7 @@ package object
 import (
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 var (
@@ -75,7 +76,7 @@ var (
 		nil,
 		nil,
 		func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
-			return &TypeError{message: c.Name()}, nil
+			return &TypeError{Message: c.Name()}, nil
 		},
 	)
 	scriptErrorClass RubyClassObject = newClass(
@@ -149,7 +150,7 @@ type exception interface {
 }
 
 // NewException creates a new exception with the given message template and
-//uses fmt.Sprintf to interpolate the args into messageinto message.
+// uses fmt.Sprintf to interpolate the args into messageinto message.
 func NewException(message string, args ...interface{}) *Exception {
 	return &Exception{message: fmt.Sprintf(message, args...)}
 }
@@ -466,7 +467,7 @@ func (e *NoMethodError) Class() RubyClass { return noMethodErrorClass }
 // NewWrongArgumentTypeError returns a TypeError with the default message for wrong arugument type errors
 func NewWrongArgumentTypeError(expected, actual RubyObject) *TypeError {
 	return &TypeError{
-		message: fmt.Sprintf(
+		Message: fmt.Sprintf(
 			"wrong argument type %s (expected %s)",
 			reflect.TypeOf(actual).Elem().Name(),
 			reflect.TypeOf(expected).Elem().Name(),
@@ -477,7 +478,7 @@ func NewWrongArgumentTypeError(expected, actual RubyObject) *TypeError {
 // NewCoercionTypeError returns a TypeError with the default message for coercing errors
 func NewCoercionTypeError(expected, actual RubyObject) *TypeError {
 	return &TypeError{
-		message: fmt.Sprintf(
+		Message: fmt.Sprintf(
 			"%s can't be coerced into %s",
 			reflect.TypeOf(actual).Elem().Name(),
 			reflect.TypeOf(expected).Elem().Name(),
@@ -488,7 +489,7 @@ func NewCoercionTypeError(expected, actual RubyObject) *TypeError {
 // NewImplicitConversionTypeError returns a TypeError with the default message for impossible implicit conversions
 func NewImplicitConversionTypeError(expected, actual RubyObject) *TypeError {
 	return &TypeError{
-		message: fmt.Sprintf(
+		Message: fmt.Sprintf(
 			"no implicit conversion of %s into %s",
 			reflect.TypeOf(actual).Elem().Name(),
 			reflect.TypeOf(expected).Elem().Name(),
@@ -496,25 +497,46 @@ func NewImplicitConversionTypeError(expected, actual RubyObject) *TypeError {
 	}
 }
 
+func NewImplicitConversionTypeErrorMany(actual RubyObject, expected ...RubyObject) *TypeError {
+	if len(expected) == 0 {
+		return nil
+	}
+	if len(expected) == 1 {
+		return NewImplicitConversionTypeError(expected[0], actual)
+	}
+	types := make([]string, len(expected))
+	for i, e := range expected {
+		types[i] = reflect.TypeOf(e).Elem().Name()
+	}
+
+	return &TypeError{
+		Message: fmt.Sprintf(
+			"no implicit conversion of %s into one of [%s]",
+			reflect.TypeOf(actual).Elem().Name(),
+			strings.Join(types, ", "),
+		),
+	}
+}
+
 // NewTypeError returns a TypeError with the provided message
 func NewTypeError(message string) *TypeError {
-	return &TypeError{message: message}
+	return &TypeError{Message: message}
 }
 
 // TypeError represents an error when the given type does not fit in the given context
 type TypeError struct {
-	message string
+	Message string
 }
 
 // Type returns EXCEPTION_OBJ
 func (e *TypeError) Type() Type { return EXCEPTION_OBJ }
 
 // Inspect returns a string starting with the exception class name, followed by the message
-func (e *TypeError) Inspect() string { return formatException(e, e.message) }
-func (e *TypeError) Error() string   { return e.message }
+func (e *TypeError) Inspect() string { return formatException(e, e.Message) }
+func (e *TypeError) Error() string   { return e.Message }
 
 func (e *TypeError) setErrorMessage(msg string) {
-	e.message = msg
+	e.Message = msg
 }
 
 // Class returns typeErrorClass

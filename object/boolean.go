@@ -45,36 +45,40 @@ func (b *Boolean) hashKey() hashKey {
 	return hashKey{Type: b.Type(), Value: value}
 }
 
+var (
+	_ RubyObject = (*Boolean)(nil)
+)
+
 var booleanTrueMethods = map[string]RubyMethod{
-	"==": withArity(1, publicMethod(booleanEq)),
-	"!=": withArity(1, publicMethod(booleanNeq)),
+	// "==": withArity(1, publicMethod(booleanEq)),
+	// "!=": withArity(1, publicMethod(booleanNeq)),
 }
 
 var booleanFalseMethods = map[string]RubyMethod{
-	"==": withArity(1, publicMethod(booleanEq)),
-	"!=": withArity(1, publicMethod(booleanNeq)),
+	// "==": withArity(1, publicMethod(booleanEq)),
+	// "!=": withArity(1, publicMethod(booleanNeq)),
 }
 
-func booleanEq(context CallContext, args ...RubyObject) (RubyObject, error) {
-	b := context.Receiver().(*Boolean)
-	right, ok := args[0].(*Boolean)
-	if !ok {
-		return FALSE, nil
-	}
-	if b.Value == right.Value {
-		return TRUE, nil
-	}
-	return FALSE, nil
-}
+// func booleanEq(context CallContext, args ...RubyObject) (RubyObject, error) {
+// 	b := context.Receiver().(*Boolean)
+// 	right, ok := args[0].(*Boolean)
+// 	if !ok {
+// 		return FALSE, nil
+// 	}
+// 	if b.Value == right.Value {
+// 		return TRUE, nil
+// 	}
+// 	return FALSE, nil
+// }
 
-func booleanNeq(context CallContext, args ...RubyObject) (RubyObject, error) {
-	b := context.Receiver().(*Boolean)
-	right, ok := args[0].(*Boolean)
-	if !ok {
-		return TRUE, nil
-	}
-	if b.Value != right.Value {
-		return TRUE, nil
-	}
-	return FALSE, nil
-}
+// func booleanNeq(context CallContext, args ...RubyObject) (RubyObject, error) {
+// 	b := context.Receiver().(*Boolean)
+// 	right, ok := args[0].(*Boolean)
+// 	if !ok {
+// 		return TRUE, nil
+// 	}
+// 	if b.Value != right.Value {
+// 		return TRUE, nil
+// 	}
+// 	return FALSE, nil
+// }

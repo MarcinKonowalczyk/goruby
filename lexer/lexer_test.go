@@ -1,366 +1,632 @@
 package lexer
 
 import (
+	"fmt"
+	"os"
+	"strings"
 	"testing"
 
-	"github.com/goruby/goruby/token"
+	"github.com/MarcinKonowalczyk/goruby/token"
 )
 
-func TestLexerNextToken(t *testing.T) {
-	input := `five = 5
-while x < y do
-	x += x
-end
-seven,
-# just comment
-fifty = 5_0
-ten = 10
-?-
-?\n
-? foo : bar
+// raise "foo" unless x < 10
+type expected struct {
+	typ token.Type
+	lit string
+}
 
-def add(x, y)
-	x + y
-end
-|
-||
+func expect[T string | token.Token](tk T, literal string) expected {
+	typ := token.ToType(tk)
+	if typ == token.ILLEGAL {
+		panic(fmt.Sprintf("expect: %q is not a valid token type", tk))
+	}
+	return expected{
+		typ: typ,
+		lit: literal,
+	}
+}
 
-result = add(five, ten)
-!-/*%5;
-+= -= *= /= %=
-5 < 10 > 5
-return
-if 5 < 10 then
-	true
-else
-	false
-end
+var NL = expect("NEWLINE", "\n")
 
-begin
-rescue
-end
+func preprocessLines(lines string) string {
+	slines := strings.Split(lines, "\n")
+	new_slines := make([]string, 0)
+	for _, line := range slines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		new_slines = append(new_slines, line)
+	}
+	return strings.Join(new_slines, "\n")
+}
 
-10 == 10
-10 != 9
-10 <= 9
-10 >= 9
-10 <=> 9
-10 << 9
-""
-"foobar"
-'foobar'
-"foo bar"
-'foo bar'
-:sym
-:"sym"
-:'sym'
-.
-&foo
-&
-&&
-:dotAfter.
+func allTokens(lexer *Lexer) []token.Token {
+	tokens := []token.Token{}
+	for {
+		tk := lexer.NextToken()
+		if tk.Type == token.EOF {
+			break
+		}
+		tokens = append(tokens, tk)
+	}
+	return tokens
+}
 
-def nil?
-end
+type test struct {
+	desc  string
+	lines string
+	exp   []expected
+}
 
-def run!
-end
-[1, 2]
-nil
-self
-Ten = 10
-module Abc
-end
-class Abc
-end
-add { |x| x }
-add do |x|
-end
-yield
-while
-A::B
-=>
-__FILE__
-@
-$foo,
-$foo;
-$Foo
-$dotAfter.
-$@
-$a`
-
-	tests := []struct {
-		expectedType    token.Type
-		expectedLiteral string
-	}{
-		{token.IDENT, "five"},
-		{token.ASSIGN, "="},
-		{token.INT, "5"},
-		{token.NEWLINE, "\n"},
-		{token.WHILE, "while"},
-		{token.IDENT, "x"},
-		{token.LT, "<"},
-		{token.IDENT, "y"},
-		{token.DO, "do"},
-		{token.NEWLINE, "\n"},
-		{token.IDENT, "x"},
-		{token.ADDASSIGN, "+="},
-		{token.IDENT, "x"},
-		{token.NEWLINE, "\n"},
-		{token.END, "end"},
-		{token.NEWLINE, "\n"},
-		{token.IDENT, "seven"},
-		{token.COMMA, ","},
-		{token.NEWLINE, "\n"},
-		{token.HASH, "#"},
-		{token.STRING, " just comment"},
-		{token.NEWLINE, "\n"},
-		{token.IDENT, "fifty"},
-		{token.ASSIGN, "="},
-		{token.INT, "5_0"},
-		{token.NEWLINE, "\n"},
-		{token.IDENT, "ten"},
-		{token.ASSIGN, "="},
-		{token.INT, "10"},
-		{token.NEWLINE, "\n"},
-		{token.STRING, "-"},
-		{token.NEWLINE, "\n"},
-		{token.STRING, "\\n"},
-		{token.NEWLINE, "\n"},
-		{token.QMARK, "?"},
-		{token.IDENT, "foo"},
-		{token.COLON, ":"},
-		{token.IDENT, "bar"},
-		{token.NEWLINE, "\n"},
-		{token.NEWLINE, "\n"},
-		{token.DEF, "def"},
-		{token.IDENT, "add"},
-		{token.LPAREN, "("},
-		{token.IDENT, "x"},
-		{token.COMMA, ","},
-		{token.IDENT, "y"},
-		{token.RPAREN, ")"},
-		{token.NEWLINE, "\n"},
-		{token.IDENT, "x"},
-		{token.PLUS, "+"},
-		{token.IDENT, "y"},
-		{token.NEWLINE, "\n"},
-		{token.END, "end"},
-		{token.NEWLINE, "\n"},
-		{token.PIPE, "|"},
-		{token.NEWLINE, "\n"},
-		{token.LOGICALOR, "||"},
-		{token.NEWLINE, "\n"},
-		{token.NEWLINE, "\n"},
-		{token.IDENT, "result"},
-		{token.ASSIGN, "="},
-		{token.IDENT, "add"},
-		{token.LPAREN, "("},
-		{token.IDENT, "five"},
-		{token.COMMA, ","},
-		{token.IDENT, "ten"},
-		{token.RPAREN, ")"},
-		{token.NEWLINE, "\n"},
-		{token.BANG, "!"},
-		{token.MINUS, "-"},
-		{token.SLASH, "/"},
-		{token.ASTERISK, "*"},
-		{token.MODULO, "%"},
-		{token.INT, "5"},
-		{token.SEMICOLON, ";"},
-		{token.NEWLINE, "\n"},
-		{token.ADDASSIGN, "+="},
-		{token.SUBASSIGN, "-="},
-		{token.MULASSIGN, "*="},
-		{token.DIVASSIGN, "/="},
-		{token.MODASSIGN, "%="},
-		{token.NEWLINE, "\n"},
-		{token.INT, "5"},
-		{token.LT, "<"},
-		{token.INT, "10"},
-		{token.GT, ">"},
-		{token.INT, "5"},
-		{token.NEWLINE, "\n"},
-		{token.RETURN, "return"},
-		{token.NEWLINE, "\n"},
-		{token.IF, "if"},
-		{token.INT, "5"},
-		{token.LT, "<"},
-		{token.INT, "10"},
-		{token.THEN, "then"},
-		{token.NEWLINE, "\n"},
-		{token.TRUE, "true"},
-		{token.NEWLINE, "\n"},
-		{token.ELSE, "else"},
-		{token.NEWLINE, "\n"},
-		{token.FALSE, "false"},
-		{token.NEWLINE, "\n"},
-		{token.END, "end"},
-		{token.NEWLINE, "\n"},
-		{token.NEWLINE, "\n"},
-		{token.BEGIN, "begin"},
-		{token.NEWLINE, "\n"},
-		{token.RESCUE, "rescue"},
-		{token.NEWLINE, "\n"},
-		{token.END, "end"},
-		{token.NEWLINE, "\n"},
-		{token.NEWLINE, "\n"},
-		{token.INT, "10"},
-		{token.EQ, "=="},
-		{token.INT, "10"},
-		{token.NEWLINE, "\n"},
-		{token.INT, "10"},
-		{token.NOTEQ, "!="},
-		{token.INT, "9"},
-		{token.NEWLINE, "\n"},
-		{token.INT, "10"},
-		{token.LTE, "<="},
-		{token.INT, "9"},
-		{token.NEWLINE, "\n"},
-		{token.INT, "10"},
-		{token.GTE, ">="},
-		{token.INT, "9"},
-		{token.NEWLINE, "\n"},
-		{token.INT, "10"},
-		{token.SPACESHIP, "<=>"},
-		{token.INT, "9"},
-		{token.NEWLINE, "\n"},
-		{token.INT, "10"},
-		{token.LSHIFT, "<<"},
-		{token.INT, "9"},
-		{token.NEWLINE, "\n"},
-		{token.STRING, ""},
-		{token.NEWLINE, "\n"},
-		{token.STRING, "foobar"},
-		{token.NEWLINE, "\n"},
-		{token.STRING, "foobar"},
-		{token.NEWLINE, "\n"},
-		{token.STRING, "foo bar"},
-		{token.NEWLINE, "\n"},
-		{token.STRING, "foo bar"},
-		{token.NEWLINE, "\n"},
-		{token.SYMBEG, ":"},
-		{token.IDENT, "sym"},
-		{token.NEWLINE, "\n"},
-		{token.SYMBEG, ":"},
-		{token.STRING, "sym"},
-		{token.NEWLINE, "\n"},
-		{token.SYMBEG, ":"},
-		{token.STRING, "sym"},
-		{token.NEWLINE, "\n"},
-		{token.DOT, "."},
-		{token.NEWLINE, "\n"},
-		{token.CAPTURE, "&"},
-		{token.IDENT, "foo"},
-		{token.NEWLINE, "\n"},
-		{token.AND, "&"},
-		{token.NEWLINE, "\n"},
-		{token.LOGICALAND, "&&"},
-		{token.NEWLINE, "\n"},
-		{token.SYMBEG, ":"},
-		{token.IDENT, "dotAfter"},
-		{token.DOT, "."},
-		{token.NEWLINE, "\n"},
-		{token.NEWLINE, "\n"},
-		{token.DEF, "def"},
-		{token.IDENT, "nil?"},
-		{token.NEWLINE, "\n"},
-		{token.END, "end"},
-		{token.NEWLINE, "\n"},
-		{token.NEWLINE, "\n"},
-		{token.DEF, "def"},
-		{token.IDENT, "run!"},
-		{token.NEWLINE, "\n"},
-		{token.END, "end"},
-		{token.NEWLINE, "\n"},
-		{token.LBRACKET, "["},
-		{token.INT, "1"},
-		{token.COMMA, ","},
-		{token.INT, "2"},
-		{token.RBRACKET, "]"},
-		{token.NEWLINE, "\n"},
-		{token.NIL, "nil"},
-		{token.NEWLINE, "\n"},
-		{token.SELF, "self"},
-		{token.NEWLINE, "\n"},
-		{token.CONST, "Ten"},
-		{token.ASSIGN, "="},
-		{token.INT, "10"},
-		{token.NEWLINE, "\n"},
-		{token.MODULE, "module"},
-		{token.CONST, "Abc"},
-		{token.NEWLINE, "\n"},
-		{token.END, "end"},
-		{token.NEWLINE, "\n"},
-		{token.CLASS, "class"},
-		{token.CONST, "Abc"},
-		{token.NEWLINE, "\n"},
-		{token.END, "end"},
-		{token.NEWLINE, "\n"},
-		{token.IDENT, "add"},
-		{token.LBRACE, "{"},
-		{token.PIPE, "|"},
-		{token.IDENT, "x"},
-		{token.PIPE, "|"},
-		{token.IDENT, "x"},
-		{token.RBRACE, "}"},
-		{token.NEWLINE, "\n"},
-		{token.IDENT, "add"},
-		{token.DO, "do"},
-		{token.PIPE, "|"},
-		{token.IDENT, "x"},
-		{token.PIPE, "|"},
-		{token.NEWLINE, "\n"},
-		{token.END, "end"},
-		{token.NEWLINE, "\n"},
-		{token.YIELD, "yield"},
-		{token.NEWLINE, "\n"},
-		{token.WHILE, "while"},
-		{token.NEWLINE, "\n"},
-		{token.CONST, "A"},
-		{token.SCOPE, "::"},
-		{token.CONST, "B"},
-		{token.NEWLINE, "\n"},
-		{token.HASHROCKET, "=>"},
-		{token.NEWLINE, "\n"},
-		{token.KEYWORD__FILE__, "__FILE__"},
-		{token.NEWLINE, "\n"},
-		{token.AT, "@"},
-		{token.NEWLINE, "\n"},
-		{token.GLOBAL, "$foo"},
-		{token.COMMA, ","},
-		{token.NEWLINE, "\n"},
-		{token.GLOBAL, "$foo"},
-		{token.SEMICOLON, ";"},
-		{token.NEWLINE, "\n"},
-		{token.GLOBAL, "$Foo"},
-		{token.NEWLINE, "\n"},
-		{token.GLOBAL, "$dotAfter"},
-		{token.DOT, "."},
-		{token.NEWLINE, "\n"},
-		{token.GLOBAL, "$@"},
-		{token.NEWLINE, "\n"},
-		{token.GLOBAL, "$a"},
-		{token.EOF, ""},
+func TestLex(t *testing.T) {
+	tests := []test{
+		{
+			desc: "numbers",
+			lines: `
+				5
+				5_0
+				1.0
+				123.456
+				123.to_s
+			`,
+			exp: []expected{
+				expect("INT", "5"),
+				NL,
+				expect("INT", "5_0"),
+				NL,
+				expect("FLOAT", "1.0"),
+				NL,
+				expect("FLOAT", "123.456"),
+				NL,
+				expect("INT", "123"),
+				expect("DOT", "."),
+				expect("IDENT", "to_s"),
+			},
+		},
+		{
+			desc: "assignments",
+			lines: `
+				five = 5
+				Ten = 10
+			`,
+			exp: []expected{
+				expect("IDENT", "five"),
+				expect("ASSIGN", "="),
+				expect("INT", "5"),
+				NL,
+				expect("CONST", "Ten"),
+				expect("ASSIGN", "="),
+				expect("INT", "10"),
+			},
+		},
+		{
+			desc: "strings",
+			lines: `
+				""
+				"foobar"
+				'foobar'
+				"foo bar"
+				'foo bar'
+				"\\"
+			`,
+			exp: []expected{
+				expect("STRING", ""),
+				NL,
+				expect("STRING", "foobar"),
+				NL,
+				expect("STRING", "foobar"),
+				NL,
+				expect("STRING", "foo bar"),
+				NL,
+				expect("STRING", "foo bar"),
+				NL,
+				expect("STRING", "\\\\"),
+			},
+		},
+		{
+			desc: "symbols",
+			lines: `
+				:sym
+				:"sym"
+				:'sym'
+				:dotAfter.
+			`,
+			exp: []expected{
+				expect("SYMBEG", ":"),
+				expect("IDENT", "sym"),
+				NL,
+				expect("SYMBEG", ":"),
+				expect("STRING", "sym"),
+				NL,
+				expect("SYMBEG", ":"),
+				expect("STRING", "sym"),
+				NL,
+				expect("SYMBEG", ":"),
+				expect("IDENT", "dotAfter"),
+				expect("DOT", "."),
+			},
+		},
+		{
+			desc: "ampersand",
+			lines: `
+				&foo
+				&
+				&&
+			`,
+			exp: []expected{
+				expect("CAPTURE", "&"),
+				expect("IDENT", "foo"),
+				NL,
+				expect("AND", "&"),
+				NL,
+				expect("LOGICALAND", "&&"),
+			},
+		},
+		{
+			desc: "operators",
+			lines: `
+				!-/ *%5;
+				+= -= *= /= %=
+				5 < 10 > 5
+				10 == 10
+				10 != 9
+				10 <= 9
+				10 >= 9
+				10 <=> 9
+				10 << 9
+			`,
+			exp: []expected{
+				expect("BANG", "!"),
+				expect("MINUS", "-"),
+				expect("SLASH", "/"),
+				expect("ASTERISK", "*"),
+				expect("MODULO", "%"),
+				expect("INT", "5"),
+				expect("SEMICOLON", ";"),
+				NL,
+				expect("ADDASSIGN", "+="),
+				expect("SUBASSIGN", "-="),
+				expect("MULASSIGN", "*="),
+				expect("DIVASSIGN", "/="),
+				expect("MODASSIGN", "%="),
+				NL,
+				expect("INT", "5"),
+				expect("LT", "<"),
+				expect("INT", "10"),
+				expect("GT", ">"),
+				expect("INT", "5"),
+				NL,
+				expect("INT", "10"),
+				expect("EQ", "=="),
+				expect("INT", "10"),
+				NL,
+				expect("INT", "10"),
+				expect("NOTEQ", "!="),
+				expect("INT", "9"),
+				NL,
+				expect("INT", "10"),
+				expect("LTE", "<="),
+				expect("INT", "9"),
+				NL,
+				expect("INT", "10"),
+				expect("GTE", ">="),
+				expect("INT", "9"),
+				NL,
+				expect("INT", "10"),
+				expect("SPACESHIP", "<=>"),
+				expect("INT", "9"),
+				NL,
+				expect("INT", "10"),
+				expect("LSHIFT", "<<"),
+				expect("INT", "9"),
+			},
+		},
+		{
+			desc: "while",
+			lines: `
+				while x < y do
+					x += x
+				end
+			`,
+			exp: []expected{
+				expect("WHILE", "while"),
+				expect("IDENT", "x"),
+				expect("LT", "<"),
+				expect("IDENT", "y"),
+				expect("DO", "do"),
+				NL,
+				expect("IDENT", "x"),
+				expect("ADDASSIGN", "+="),
+				expect("IDENT", "x"),
+				NL,
+				expect("END", "end"),
+			},
+		},
+		{
+			desc: "loop",
+			lines: `
+				loop {
+					break unless x < 10
+				}
+			`,
+			exp: []expected{
+				expect("LOOP", "loop"),
+				expect("LBRACE", "{"),
+				NL,
+				expect("BREAK", "break"),
+				expect("UNLESS", "unless"),
+				expect("IDENT", "x"),
+				expect("LT", "<"),
+				expect("INT", "10"),
+				NL,
+				expect("RBRACE", "}"),
+			},
+		},
+		{
+			desc: "if",
+			lines: `
+				if x < y then
+					true
+				else
+					false
+				end
+			`,
+			exp: []expected{
+				expect("IF", "if"),
+				expect("IDENT", "x"),
+				expect("LT", "<"),
+				expect("IDENT", "y"),
+				expect("THEN", "then"),
+				NL,
+				expect("TRUE", "true"),
+				NL,
+				expect("ELSE", "else"),
+				NL,
+				expect("FALSE", "false"),
+				NL,
+				expect("END", "end"),
+			},
+		},
+		{
+			desc: "qmark",
+			lines: `
+				foo.bar?
+				foo.bar ? 1 : 2
+				?-
+				?\n
+				? foo : bar
+				`,
+			exp: []expected{
+				expect("IDENT", "foo"),
+				expect("DOT", "."),
+				expect("IDENT", "bar?"),
+				NL,
+				expect("IDENT", "foo"),
+				expect("DOT", "."),
+				expect("IDENT", "bar"),
+				expect("SQMARK", " ?"),
+				expect("INT", "1"),
+				expect("COLON", ":"),
+				expect("INT", "2"),
+				NL,
+				expect("STRING", "-"),
+				NL,
+				expect("STRING", "\\n"),
+				NL,
+				expect("QMARK", "?"),
+				expect("IDENT", "foo"),
+				expect("COLON", ":"),
+				expect("IDENT", "bar"),
+			},
+		},
+		{
+			desc: "regex",
+			lines: `
+				/\//
+				/a/i
+			`,
+			exp: []expected{
+				expect("REGEX", "\\/"),
+				NL,
+				expect("REGEX", "a"),
+				expect("REGEX_MODIFIER", "i"),
+			},
+		},
+		{
+			desc: "globals",
+			lines: `
+				$foo,
+				$foo;
+				$Foo
+				$dotAfter.
+				$@
+			`,
+			exp: []expected{
+				expect("GLOBAL", "$foo"),
+				expect("COMMA", ","),
+				NL,
+				expect("GLOBAL", "$foo"),
+				expect("SEMICOLON", ";"),
+				NL,
+				expect("GLOBAL", "$Foo"),
+				NL,
+				expect("GLOBAL", "$dotAfter"),
+				expect("DOT", "."),
+				NL,
+				expect("GLOBAL", "$@"),
+			},
+		},
+		{
+			desc: "defs",
+			lines: `
+				def add(x, y)
+					return x + y
+				end
+				def nil?
+				end
+				def run!
+				end
+				module Abc
+				end
+				class Abc
+				end
+			`,
+			exp: []expected{
+				expect("DEF", "def"),
+				expect("IDENT", "add"),
+				expect("LPAREN", "("),
+				expect("IDENT", "x"),
+				expect("COMMA", ","),
+				expect("IDENT", "y"),
+				expect("RPAREN", ")"),
+				NL,
+				expect("RETURN", "return"),
+				expect("IDENT", "x"),
+				expect("PLUS", "+"),
+				expect("IDENT", "y"),
+				NL,
+				expect("END", "end"),
+				NL,
+				expect("DEF", "def"),
+				expect("IDENT", "nil?"),
+				NL,
+				expect("END", "end"),
+				NL,
+				expect("DEF", "def"),
+				expect("IDENT", "run!"),
+				NL,
+				expect("END", "end"),
+				NL,
+				expect("MODULE", "module"),
+				expect("CONST", "Abc"),
+				NL,
+				expect("END", "end"),
+				NL,
+				expect("CLASS", "class"),
+				expect("CONST", "Abc"),
+				NL,
+				expect("END", "end"),
+			},
+		},
+		{
+			desc: "blocks",
+			lines: `
+				begin
+					rescue
+				end
+				add { |x| x }
+				add do |x|
+				end
+			`,
+			exp: []expected{
+				expect("BEGIN", "begin"),
+				NL,
+				expect("RESCUE", "rescue"),
+				NL,
+				expect("END", "end"),
+				NL,
+				expect("IDENT", "add"),
+				expect("LBRACE", "{"),
+				expect("PIPE", "|"),
+				expect("IDENT", "x"),
+				expect("PIPE", "|"),
+				expect("IDENT", "x"),
+				expect("RBRACE", "}"),
+				NL,
+				expect("IDENT", "add"),
+				expect("DO", "do"),
+				expect("PIPE", "|"),
+				expect("IDENT", "x"),
+				expect("PIPE", "|"),
+				NL,
+				expect("END", "end"),
+			},
+		},
+		{
+			desc: "comments",
+			lines: `
+				# just comment
+				# just comment
+			`,
+			exp: []expected{
+				expect("HASH", "#"),
+				expect("STRING", " just comment"),
+				NL,
+				expect("HASH", "#"),
+				expect("STRING", " just comment"),
+			},
+		},
+		{
+			desc: "logical",
+			lines: `
+				a || b
+				a or b
+				a && b
+				a and b
+				`,
+			exp: []expected{
+				expect("IDENT", "a"),
+				expect("LOGICALOR", "||"),
+				expect("IDENT", "b"),
+				NL,
+				expect("IDENT", "a"),
+				expect("LOGICALOR", "or"),
+				expect("IDENT", "b"),
+				NL,
+				expect("IDENT", "a"),
+				expect("LOGICALAND", "&&"),
+				expect("IDENT", "b"),
+				NL,
+				expect("IDENT", "a"),
+				expect("LOGICALAND", "and"),
+				expect("IDENT", "b"),
+			},
+		},
+		{
+			desc: "pipe",
+			lines: `
+				|
+				||
+			`,
+			exp: []expected{
+				expect("PIPE", "|"),
+				NL,
+				expect("LOGICALOR", "||"),
+			},
+		},
+		{
+			desc: "misc",
+			lines: `
+				A::B
+				=>
+				->
+				__FILE__
+				@
+				self
+				nil
+				yield
+			`,
+			exp: []expected{
+				expect("CONST", "A"),
+				expect("SCOPE", "::"),
+				expect("CONST", "B"),
+				NL,
+				expect("HASHROCKET", "=>"),
+				NL,
+				expect("LAMBDAROCKET", "->"),
+				NL,
+				expect("KEYWORD__FILE__", "__FILE__"),
+				NL,
+				expect("AT", "@"),
+				NL,
+				expect("SELF", "self"),
+				NL,
+				expect("NIL", "nil"),
+				NL,
+				expect("YIELD", "yield"),
+			},
+		},
+		{
+			desc: "range",
+			lines: `
+				1..2
+				1...2	
+				..
+				...
+			`,
+			exp: []expected{
+				expect("INT", "1"),
+				expect("DDOT", ".."),
+				expect("INT", "2"),
+				NL,
+				expect("INT", "1"),
+				expect("DDDOT", "..."),
+				expect("INT", "2"),
+				NL,
+				expect("DDOT", ".."),
+				NL,
+				expect("DDDOT", "..."),
+			},
+		},
+		{
+			desc: "brackets",
+			lines: `
+				[1, 2]
+				a[1]
+				a [1]
+			`,
+			exp: []expected{
+				expect("LBRACKET", "["),
+				expect("INT", "1"),
+				expect("COMMA", ","),
+				expect("INT", "2"),
+				expect("RBRACKET", "]"),
+				NL,
+				expect("IDENT", "a"),
+				expect("LBRACKET", "["),
+				expect("INT", "1"),
+				expect("RBRACKET", "]"),
+				NL,
+				expect("IDENT", "a"),
+				expect("SLBRACKET", " ["),
+				expect("INT", "1"),
+				expect("RBRACKET", "]"),
+			},
+		},
+		{
+			desc: "hash_of_lambdas",
+			lines: `
+				"\"" => -> (a) { val_to_str a }
+			`,
+			exp: []expected{
+				expect("STRING", "\\\""),
+				expect("HASHROCKET", "=>"),
+				expect("LAMBDAROCKET", "->"),
+				expect("LPAREN", "("),
+				expect("IDENT", "a"),
+				expect("RPAREN", ")"),
+				expect("LBRACE", "{"),
+				expect("IDENT", "val_to_str"),
+				expect("IDENT", "a"),
+				expect("RBRACE", "}"),
+			},
+		},
 	}
 
-	lexer := New(input)
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			lexer := New(preprocessLines(test.lines))
+			tokens := allTokens(lexer)
+			if len(tokens) != len(test.exp) {
+				t.Fatalf("Expected %d tokens, got %d: %v", len(test.exp), len(tokens), tokens)
+			}
+			for i, exp := range test.exp {
+				if tokens[i].Type != exp.typ {
+					t.Fatalf("Expected token %d to be %q, got %q", i, exp.typ, tokens[i].Type)
+				}
+				if tokens[i].Literal != exp.lit {
+					t.Fatalf("Expected token %d to be %q, got %q", i, exp.lit, tokens[i].Literal)
+				}
+			}
+		})
+	}
+}
 
-	for pos, testCase := range tests {
-		if !lexer.HasNext() {
-			t.Logf("Unexpected EOF at %d\n", lexer.pos)
-			t.FailNow()
-		}
-		token := lexer.NextToken()
+// Tests that the lexer can handle the source of pyra.rb
+// https://github.com/ConorOBrien-Foxx/Pyramid-Scheme/blob/master/pyra.rb
+func TestLexPyraRb(t *testing.T) {
+	filename := "../pyra.rb"
+	file, err := os.ReadFile(filename)
+	if err != nil {
+		t.Skip("Skipping test, file not found:", filename)
+	}
+	lexer := New(string(file))
 
-		if token.Type != testCase.expectedType {
-			t.Logf("Expected token with type %q at position %d, got type %q\n", testCase.expectedType, pos, token.Type)
-			t.Fail()
-		}
-
-		if token.Literal != testCase.expectedLiteral {
-			t.Logf("Expected token with literal %q at position %d, got literal %q\n", testCase.expectedLiteral, pos, token.Literal)
-			t.Fail()
+	for {
+		tk := lexer.NextToken()
+		if tk.Type == token.EOF {
+			break
 		}
 	}
 }

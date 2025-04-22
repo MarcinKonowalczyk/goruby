@@ -138,7 +138,6 @@ func walkStmtList(v Visitor, list []Statement) {
 // v.Visit(node) is not nil, Walk is invoked recursively with visitor
 // w for each of the non-nil children of node, followed by a call of
 // w.Visit(nil).
-//
 func Walk(v Visitor, node Node) {
 	if v = v.Visit(node); v == nil {
 		return
@@ -159,6 +158,7 @@ func Walk(v Visitor, node Node) {
 		*Self,
 		*BlockCapture,
 		*Keyword__FILE__,
+		*RegexLiteral,
 		*Comment:
 		// nothing to do
 
@@ -204,9 +204,6 @@ func Walk(v Visitor, node Node) {
 	case *IndexExpression:
 		Walk(v, n.Left)
 		Walk(v, n.Index)
-		if n.Length != nil {
-			Walk(v, n.Length)
-		}
 
 	case *ContextCallExpression:
 		Walk(v, n.Context)
@@ -291,6 +288,10 @@ func Walk(v Visitor, node Node) {
 	case nil:
 		// nothing to do
 
+	case *RangeLiteral:
+		Walk(v, n.Left)
+		Walk(v, n.Right)
+
 	default:
 		panic(fmt.Sprintf("ast.Walk: unexpected node type %T", n))
 	}
@@ -311,7 +312,6 @@ func (f inspector) Visit(node Node) Visitor {
 // f(node); node must not be nil. If f returns true, Inspect invokes f
 // recursively for each of the non-nil children of node, followed by a
 // call of f(nil).
-//
 func Inspect(node Node, f func(Node) bool) {
 	Walk(inspector(f), node)
 }

@@ -2,25 +2,25 @@ package interpreter_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
 	"testing"
 
-	"github.com/goruby/goruby/interpreter"
-	"github.com/goruby/goruby/object"
+	"github.com/MarcinKonowalczyk/goruby/interpreter"
+	"github.com/MarcinKonowalczyk/goruby/object"
 	"github.com/pkg/errors"
 )
 
 func TestLoadPath(t *testing.T) {
 	content := []byte("$foo = 12")
-	tmpDir, err := ioutil.TempDir("", "example")
+	tmpDir := os.TempDir()
+	tmpDir, err := os.MkdirTemp(tmpDir, "goruby")
 	if err != nil {
 		panic(err)
 	}
 	tmpAbsPath := path.Join(tmpDir, "example.rb")
-	err = ioutil.WriteFile(tmpAbsPath, content, 0600)
+	err = os.WriteFile(tmpAbsPath, content, 0600)
 	if err != nil {
 		panic(err)
 	}
@@ -34,7 +34,7 @@ func TestLoadPath(t *testing.T) {
 		$foo
 		`, tmpAbsPath)
 
-		i := interpreter.New()
+		i := interpreter.NewInterpreter()
 
 		_, err = i.Interpret("", input)
 
@@ -49,7 +49,7 @@ func TestLoadPath(t *testing.T) {
 		$foo
 		`, tmpBase)
 
-		i := interpreter.New()
+		i := interpreter.NewInterpreter()
 
 		_, err = i.Interpret("", input)
 
@@ -68,7 +68,7 @@ func TestLoadPath(t *testing.T) {
 		$foo
 		`, tmpAbsPath, tmpBase)
 
-		i := interpreter.New()
+		i := interpreter.NewInterpreter()
 
 		_, err = i.Interpret("", input)
 

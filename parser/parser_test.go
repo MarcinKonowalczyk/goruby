@@ -1,4 +1,4 @@
-package parser
+package parser_test
 
 import (
 	"flag"
@@ -10,18 +10,19 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goruby/goruby/ast"
-	"github.com/goruby/goruby/token"
+	"github.com/MarcinKonowalczyk/goruby/ast"
+	p "github.com/MarcinKonowalczyk/goruby/parser"
+	"github.com/MarcinKonowalczyk/goruby/token"
 	"github.com/pkg/errors"
 )
 
-var parseMode Mode = ParseComments
+var parseMode p.Mode = p.ParseComments
 
 func TestMain(m *testing.M) {
 	mode := flag.String("parser.mode", "ParseComments", "parser.mode=ParseComments")
 	flag.Parse()
 	var ok bool
-	parseMode, ok = parseModes[*mode]
+	parseMode, ok = p.ParseModes[*mode]
 	if !ok {
 		fmt.Printf("Unknown parse mode %s\n", *mode)
 		os.Exit(1)
@@ -64,18 +65,18 @@ func TestBlockCapture(t *testing.T) {
 			desc:   "block capture in func params not last arguments",
 			input:  "def foo x, &block, y; end",
 			result: nil,
-			err: &unexpectedTokenError{
-				expectedTokens: []token.Type{token.NEWLINE, token.SEMICOLON},
-				actualToken:    token.COMMA,
+			err: &p.UnexpectedTokenError{
+				ExpectedTokens: []token.Type{token.NEWLINE, token.SEMICOLON},
+				ActualToken:    token.COMMA,
 			},
 		},
 		{
 			desc:   "block capture in func params on integer",
 			input:  "def foo &2; end",
 			result: nil,
-			err: &unexpectedTokenError{
-				expectedTokens: []token.Type{token.IDENT},
-				actualToken:    token.INT,
+			err: &p.UnexpectedTokenError{
+				ExpectedTokens: []token.Type{token.IDENT},
+				ActualToken:    token.INT,
 			},
 		},
 		{
@@ -391,7 +392,7 @@ func TestVariableExpression(t *testing.T) {
 					t.FailNow()
 				}
 
-				errors := errs.errors
+				errors := errs.Errors
 				if len(errors) != 1 {
 					t.Logf("Exected one error, got %d", len(errors))
 					t.FailNow()
@@ -975,6 +976,46 @@ func TestGlobalExpression(t *testing.T) {
 	}
 }
 
+func TestGlobalExpressionWithIndex(t *testing.T) {
+	input := "$foobar[1];"
+	program, err := parseSource(input)
+	checkParserErrors(t, err)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf(
+			"program has not enough statements. got=%d",
+			len(program.Statements),
+		)
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf(
+			"program.Statements[0] is not ast.ExpressionStatement. got=%T",
+			program.Statements[0],
+		)
+	}
+
+	index, ok := stmt.Expression.(*ast.IndexExpression)
+	if !ok {
+		t.Fatalf("expression not *ast.IndexExpression. got=%T", stmt.Expression)
+	}
+
+	if !testGlobal(t, index.Left, "$foobar") {
+		return
+	}
+	if !testLiteralExpression(t, index.Index, 1) {
+		return
+	}
+	if index.String() != "($foobar[1])" {
+		t.Errorf(
+			"index.TokenLiteral not %s. got=%s", "($foobar[1])",
+			index.TokenLiteral(),
+		)
+	}
+
+}
+
 func TestScopedIdentifierExpression(t *testing.T) {
 	input := "A::B"
 
@@ -1032,7 +1073,7 @@ func TestKeyword__FILE__(t *testing.T) {
 	t.Run("keyword found", func(t *testing.T) {
 		input := "__FILE__;"
 
-		program, err := ParseFile(gotoken.NewFileSet(), "a_filename.rb", input, 0)
+		program, err := p.ParseFile(gotoken.NewFileSet(), "a_filename.rb", input, 0)
 		checkParserErrors(t, err)
 
 		if len(program.Statements) != 1 {
@@ -1068,7 +1109,7 @@ func TestKeyword__FILE__(t *testing.T) {
 
 		expected := "1:9: Can't assign to __FILE__"
 
-		parserErrors := err.errors
+		parserErrors := err.Errors
 		if len(parserErrors) != 1 {
 			t.Logf("Expected one error, got %d\n", len(parserErrors))
 			t.Logf("Errors: %v\n", err)
@@ -2033,21 +2074,21 @@ func TestConditionalExpressionWithAlternative(t *testing.T) {
 			"y",
 		},
 		{
-			"tenary if",
+			"ternary if",
 			"x < y ? x : y;",
 			[3]string{"x", "<", "y"},
 			"x",
 			"y",
 		},
 		{
-			"tenary if with symbol as consequence",
+			"ternary if with symbol as consequence",
 			"x < y ? :x : y;",
 			[3]string{"x", "<", "y"},
 			":x",
 			"y",
 		},
 		{
-			"tenary if with symbol as alternative",
+			"ternary if with symbol as alternative",
 			"x < y ? x : :y;",
 			[3]string{"x", "<", "y"},
 			"x",
@@ -2055,8 +2096,8 @@ func TestConditionalExpressionWithAlternative(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d/%s", i, tt.name), func(t *testing.T) {
 			program, err := parseSource(tt.input)
 			checkParserErrors(t, err)
 
@@ -2111,7 +2152,7 @@ func TestConditionalExpressionWithAlternative(t *testing.T) {
 			}
 		})
 	}
-	t.Run("tenary if with call as consequence", func(t *testing.T) {
+	t.Run("ternary if with call as consequence", func(t *testing.T) {
 		tt := struct {
 			input       string
 			condition   [3]string
@@ -2963,6 +3004,55 @@ func TestCallExpressionParsing(t *testing.T) {
 	})
 }
 
+// puts [1, 2][0]
+
+func TestCallExpressionWithoutParens(t *testing.T) {
+	t.Skip("This is broken and need a significant lexer/parser rewrite")
+	tests := []struct {
+		input string
+	}{
+		{
+			input: "puts([1][0])",
+		},
+		{
+			input: "puts [1][0]",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			program, err := parseSource(tt.input, p.Trace)
+			checkParserErrors(t, err)
+
+			stmt := program.Statements[0].(*ast.ExpressionStatement)
+			// exp, ok := stmt.Expression.(*ast.ContextCallExpression)
+			// if !ok {
+			// 	t.Fatalf(
+			// 		"stmt.Expression is not ast.ContextCallExpression. got=%T",
+			// 		stmt.Expression,
+			// 	)
+			// }
+
+			fmt.Println(stmt.Expression.String())
+
+			// if !testIdentifier(t, exp.Function, tt.expectedIdent) {
+			// 	return
+			// }
+
+			// if len(exp.Arguments) != len(tt.expectedArgs) {
+			// 	t.Fatalf("wrong number of arguments. want=%d, got=%d",
+			// 		len(tt.expectedArgs), len(exp.Arguments))
+			// }
+
+			// for i, arg := range tt.expectedArgs {
+			// 	if exp.Arguments[i].String() != arg {
+			// 		t.Errorf("argument %d wrong. want=%q, got=%q", i,
+			// 			arg, exp.Arguments[i].String())
+			// 	}
+			// }
+		})
+	}
+}
 func TestCallExpressionParameterParsing(t *testing.T) {
 	tests := []struct {
 		input         string
@@ -3283,10 +3373,10 @@ func TestContextCallExpression(t *testing.T) {
 			t.FailNow()
 		}
 
-		errs := err.errors
+		errs := err.Errors
 		cause := errors.Cause(errs[0])
 
-		unexpectErr, ok := cause.(*unexpectedTokenError)
+		unexpectErr, ok := cause.(*p.UnexpectedTokenError)
 		if !ok {
 			t.Logf("Expected err to be %T, got %T\n", unexpectErr, cause)
 			t.FailNow()
@@ -3294,7 +3384,7 @@ func TestContextCallExpression(t *testing.T) {
 
 		{
 			expected := []token.Type{token.NEWLINE, token.SEMICOLON, token.DOT, token.EOF}
-			actual := unexpectErr.expectedTokens
+			actual := unexpectErr.ExpectedTokens
 			if !reflect.DeepEqual(expected, actual) {
 				t.Logf("Expected error to equal\n%+#v\n\tgot\n%+#v\n", expected, actual)
 				t.Fail()
@@ -3303,7 +3393,7 @@ func TestContextCallExpression(t *testing.T) {
 
 		{
 			expected := token.IDENT
-			actual := unexpectErr.actualToken
+			actual := unexpectErr.ActualToken
 			if !reflect.DeepEqual(expected, actual) {
 				t.Logf("Expected error to equal\n%+#v\n\tgot\n%+#v\n", expected, actual)
 				t.Fail()
@@ -3854,6 +3944,10 @@ func TestSymbolExpression(t *testing.T) {
 			`:'symbol';`,
 			"symbol",
 		},
+		{
+			`:UNDEF`,
+			"UNDEF",
+		},
 	}
 
 	for _, tt := range tests {
@@ -3933,12 +4027,29 @@ func TestParsingIndexExpressions(t *testing.T) {
 				return
 			}
 
-			if !testIntegerLiteral(t, indexExp.Index, 1) {
-				return
+			index, ok := indexExp.Index.(ast.ExpressionList)
+			if !ok {
+				t.Fatalf("indexExp.Index not ast.ExpressionList. got=%T", indexExp.Index)
 			}
 
-			if !testIntegerLiteral(t, indexExp.Length, 1) {
-				return
+			if len(index) != 2 {
+				t.Fatalf("indexExp.Index len not 2. got=%d", len(index))
+			}
+
+			if i0, ok := index[0].(*ast.IntegerLiteral); !ok {
+				t.Fatalf("indexExp.Index[0] not ast.IntegerLiteral. got=%T", index[0])
+			} else {
+				if i0.Value != 1 {
+					t.Fatalf("indexExp.Index[0] not 1. got=%d", i0.Value)
+				}
+			}
+
+			if i1, ok := index[1].(*ast.IntegerLiteral); !ok {
+				t.Fatalf("indexExp.Index[1] not ast.IntegerLiteral. got=%T", index[1])
+			} else {
+				if i1.Value != 1 {
+					t.Fatalf("indexExp.Index[1] not 1. got=%d", i1.Value)
+				}
 			}
 		})
 		t.Run("method calls as index", func(t *testing.T) {
@@ -3957,13 +4068,9 @@ func TestParsingIndexExpressions(t *testing.T) {
 			}
 
 			index := indexExp.Index.String()
-			if index != "foo.bar()" {
-				t.Logf("Expected index arg to equal %s, got %s", "foo.bar()", index)
+			if index != "foo.bar(), 1" {
+				t.Logf("Expected index arg to equal '%s', got '%s'", "foo.bar()", index)
 				t.Fail()
-			}
-
-			if !testIntegerLiteral(t, indexExp.Length, 1) {
-				return
 			}
 		})
 		t.Run("method calls as length", func(t *testing.T) {
@@ -3981,13 +4088,9 @@ func TestParsingIndexExpressions(t *testing.T) {
 				return
 			}
 
-			if !testIntegerLiteral(t, indexExp.Index, 1) {
-				return
-			}
-
-			length := indexExp.Length.String()
-			if length != "foo.bar()" {
-				t.Logf("Expected length arg to equal %s, got %s", "foo.bar()", length)
+			index := indexExp.Index.String()
+			if index != "1, foo.bar()" {
+				t.Logf("Expected index arg to equal '%s', got '%s'", "1, foo.bar()", index)
 				t.Fail()
 			}
 		})
@@ -4072,10 +4175,50 @@ func TestParseHash(t *testing.T) {
 			input:   `{"foo" => 42, "bar" => "baz"}`,
 			hashMap: map[string]string{"foo": "42", "bar": "baz"},
 		},
+		{
+			input: `{
+				"foo" => 42,
+			}`,
+			hashMap: map[string]string{"foo": "42"},
+		},
+		{
+			input: `{
+				# "foo" => 42,
+			}`,
+			hashMap: map[string]string{},
+		},
+		{
+			input: `{
+			# comment
+				"foo" => 42,
+			}`,
+			hashMap: map[string]string{"foo": "42"},
+		},
+		{
+			input: `{
+			"foo" => 42,
+				# comment
+			}`,
+			hashMap: map[string]string{"foo": "42"},
+		},
+		{
+			input: `{ # comment
+				"foo" => 42,
+			}`,
+			hashMap: map[string]string{"foo": "42"},
+		},
+		{
+			input: `{
+				"foo" => 42,
+				"bar" => "baz"
+			}`,
+			hashMap: map[string]string{"foo": "42", "bar": "baz"},
+		},
 	}
 
 	for _, tt := range tests {
 		program, err := parseSource(tt.input)
+		// program, err := parseSource(tt.input, p.Trace)
 		checkParserErrors(t, err)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
@@ -4088,12 +4231,323 @@ func TestParseHash(t *testing.T) {
 	}
 }
 
+func TestRangeLiteral(t *testing.T) {
+	tests := []struct {
+		input     string
+		ranges    [2]int
+		inclusive bool
+	}{
+		{
+			input:     `1..10`,
+			ranges:    [2]int{1, 10},
+			inclusive: true,
+		},
+		{
+			input:     `1...10`,
+			ranges:    [2]int{1, 10},
+			inclusive: false,
+		},
+	}
+
+	for _, tt := range tests {
+		// program, err := parseSource(tt.input, p.Trace)
+		program, err := parseSource(tt.input)
+		checkParserErrors(t, err)
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", stmt)
+			t.FailNow()
+		}
+
+		testRangeLiteral(t, stmt.Expression, tt.ranges[0], tt.ranges[1], tt.inclusive)
+	}
+}
+
+func TestProcLiteral(t *testing.T) {
+	type funcParam struct {
+		name         string
+		defaultValue interface{}
+		splat        bool
+	}
+	tests := []struct {
+		input      string
+		parameters []funcParam
+	}{
+		{
+			input: "-> (a, b) { a }",
+			parameters: []funcParam{
+				{
+					name: "a",
+				},
+				{
+					name: "b",
+				},
+			},
+		},
+		{
+			input: "-> (*a) {}",
+			parameters: []funcParam{
+				{
+					name:  "a",
+					splat: true,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		// program, err := parseSource(tt.input, p.Trace)
+		program, err := parseSource(tt.input)
+		checkParserErrors(t, err)
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", stmt)
+			t.FailNow()
+		}
+
+		procLit, ok := stmt.Expression.(*ast.ProcedureLiteral)
+		if !ok {
+			t.Fatalf("stmt.Expression is not ast.ProcedureLiteral. got=%T", stmt.Expression)
+			t.FailNow()
+		}
+
+		if len(procLit.Parameters) != len(tt.parameters) {
+			t.Fatalf("wrong number of parameters. got=%d", len(procLit.Parameters))
+		}
+
+		for i, param := range procLit.Parameters {
+			testLiteralExpression(t, param.Name, tt.parameters[i].name)
+			testLiteralExpression(t, param.Default, tt.parameters[i].defaultValue)
+			if tt.parameters[i].splat != param.Splat {
+				t.Errorf("param.Splat not %t. got=%t", tt.parameters[i].splat, param.Splat)
+			}
+
+		}
+
+	}
+}
+
+func TestRegexLiteral(t *testing.T) {
+	tests := []struct {
+		input     string
+		expected  string
+		modifiers string
+	}{
+		{
+			input:    "/foo/",
+			expected: "foo",
+		},
+		{
+			input:     "/foo/i",
+			expected:  "foo",
+			modifiers: "i",
+		},
+	}
+
+	for _, tt := range tests {
+		// _, err := parseSource(tt.input, p.Trace)
+		// checkParserErrors(t, err)
+
+		program, err := parseSource(tt.input)
+		checkParserErrors(t, err)
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", stmt)
+		}
+
+		regexLit, ok := stmt.Expression.(*ast.RegexLiteral)
+		if !ok {
+			t.Fatalf("stmt.Expression is not ast.RegexLiteral. got=%T", stmt.Expression)
+		}
+
+		if regexLit.Value != tt.expected {
+			t.Errorf("regexLit.Value not %q. got=%q", tt.expected, regexLit.Value)
+		}
+
+		if regexLit.Modifiers != tt.modifiers {
+			t.Errorf("regexLit.Modifiers not %q. got=%q", tt.modifiers, regexLit.Modifiers)
+		}
+	}
+}
+
+func TestArraySplat(t *testing.T) {
+	type Expected struct {
+		name     string
+		is_splat bool
+	}
+	tests := []struct {
+		input    string
+		length   int
+		expected []Expected
+	}{
+		{
+			input:  "[*foo]",
+			length: 1,
+			expected: []Expected{
+				{
+					name:     "foo",
+					is_splat: true,
+				},
+			},
+		},
+		{
+			input:  "[*foo, bar]",
+			length: 2,
+			expected: []Expected{
+				{
+					name:     "foo",
+					is_splat: true,
+				},
+				{
+					name:     "bar",
+					is_splat: false,
+				},
+			},
+		},
+		{
+			input:  "[foo, *bar]",
+			length: 2,
+			expected: []Expected{
+				{
+					name:     "foo",
+					is_splat: false,
+				},
+				{
+					name:     "bar",
+					is_splat: true,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		program, err := parseSource(tt.input)
+		checkParserErrors(t, err)
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", stmt)
+		}
+
+		arrayLit, ok := stmt.Expression.(*ast.ArrayLiteral)
+		if !ok {
+			t.Fatalf("stmt.Expression is not ast.ArrayLiteral. got=%T", stmt.Expression)
+		}
+
+		if len(arrayLit.Elements) != tt.length {
+			t.Fatalf("wrong number of elements. got=%d", len(arrayLit.Elements))
+		}
+
+		for i, expected := range tt.expected {
+			element := arrayLit.Elements[i]
+			if expected.is_splat {
+				expected_expr := &ast.Identifier{
+					Value: expected.name,
+				}
+				if !testSplat(t, element, expected_expr) {
+					return
+				}
+			} else {
+				if !testIdentifier(t, element, expected.name) {
+					return
+				}
+			}
+
+		}
+	}
+}
+
+func TestParsePyraRb(t *testing.T) {
+	// t.Skip("Not implemented yet")
+	filename := "../pyra.rb"
+	file, err := os.ReadFile(filename)
+	if err != nil {
+		t.Skip("Skipping test, file not found:", filename)
+	}
+
+	program, err := parseSource(string(file))
+	checkParserErrors(t, err)
+
+	fmt.Printf("Parsed %d statements\n", len(program.Statements))
+
+}
+
+//===========================================================
+//
+//  ##   ##  #####  ##      #####   #####  #####     ####
+//  ##   ##  ##     ##      ##  ##  ##     ##  ##   ##
+//  #######  #####  ##      #####   #####  #####     ###
+//  ##   ##  ##     ##      ##      ##     ##  ##      ##
+//  ##   ##  #####  ######  ##      #####  ##   ##  ####
+//
+//===========================================================
+
+func testRangeLiteral(
+	t *testing.T,
+	exp ast.Expression,
+	start, end int,
+	inclusive bool,
+) bool {
+	t.Helper()
+	rangeLit, ok := exp.(*ast.RangeLiteral)
+	if !ok {
+		t.Errorf("exp not *ast.RangeLiteral. got=%T", exp)
+		return false
+	}
+	if !testIntegerLiteral(t, rangeLit.Left, int64(start)) {
+		return false
+	}
+	if !testIntegerLiteral(t, rangeLit.Right, int64(end)) {
+		return false
+	}
+	if rangeLit.Inclusive != inclusive {
+		t.Errorf("rangeLit.Inclusive not %t. got=%t", inclusive, rangeLit.Inclusive)
+		return false
+	}
+
+	if inclusive {
+		if rangeLit.TokenLiteral() != ".." {
+			t.Errorf("rangeLit.TokenLiteral not .. . got=%s", rangeLit.TokenLiteral())
+			return false
+		}
+	} else {
+		if rangeLit.TokenLiteral() != "..." {
+			t.Errorf("rangeLit.TokenLiteral not ... . got=%s", rangeLit.TokenLiteral())
+			return false
+		}
+	}
+
+	return true
+}
+
 func testExpression(t *testing.T, exp ast.Expression, expected interface{}) bool {
 	t.Helper()
 	if inf, ok := expected.(infix); ok {
 		return testInfixExpression(t, exp, inf.left, inf.operator, inf.right)
 	}
 	return testLiteralExpression(t, exp, expected)
+}
+
+func testExpressionList(t *testing.T, list ast.ExpressionList, expected ...interface{}) bool {
+	t.Helper()
+
+	if len(list) != len(expected) {
+		t.Errorf("wrong length of list. got=%d", len(list))
+		return false
+	}
+	for i, expr := range list {
+		if !testExpression(t, expr, expected[i]) {
+			return false
+		}
+	}
+	if list.TokenLiteral() != "," {
+		t.Errorf("list.TokenLiteral not , . got=%s", list.TokenLiteral())
+		return false
+	}
+	return true
 }
 
 type infix struct {
@@ -4286,6 +4740,23 @@ func testIdentifier(t *testing.T, exp ast.Expression, value string) bool {
 	return true
 }
 
+func testSplat(t *testing.T, exp ast.Expression, value ast.Expression) bool {
+	t.Helper()
+	splat, ok := exp.(*ast.Splat)
+	if !ok {
+		t.Errorf("exp not *ast.Splat. got=%T", exp)
+		return false
+	}
+	if !testIdentifier(t, splat.Value, value.String()) {
+		return false
+	}
+	if splat.TokenLiteral() != "*" {
+		t.Errorf("splat.TokenLiteral not *. got=%s", splat.TokenLiteral())
+		return false
+	}
+	return true
+}
+
 func testBooleanLiteral(t *testing.T, exp ast.Expression, value bool) bool {
 	t.Helper()
 	bo, ok := exp.(*ast.Boolean)
@@ -4350,28 +4821,28 @@ func testHashLiteral(t *testing.T, expr ast.Expression, value map[string]string)
 	return true
 }
 
-func parseSource(src string, modes ...Mode) (*ast.Program, *Errors) {
+func parseSource(src string, modes ...p.Mode) (*ast.Program, *p.Errors) {
 	mode := parseMode
 	for _, m := range modes {
 		mode = mode | m
 	}
-	prog, err := ParseFile(gotoken.NewFileSet(), "", src, mode)
-	var parserErrors *Errors
+	prog, err := p.ParseFile(gotoken.NewFileSet(), "", src, mode)
+	var parserErrors *p.Errors
 	if err != nil {
-		parserErrors = err.(*Errors)
+		parserErrors = err.(*p.Errors)
 	}
 	return prog, parserErrors
 }
 
-func parseExpression(src string, modes ...Mode) (ast.Expression, *Errors) {
+func parseExpression(src string, modes ...p.Mode) (ast.Expression, *p.Errors) {
 	mode := parseMode
 	for _, m := range modes {
 		mode = mode | m
 	}
-	expr, err := ParseExprFrom(gotoken.NewFileSet(), "", src, mode)
-	var parserErrors *Errors
+	expr, err := p.ParseExprFrom(gotoken.NewFileSet(), "", src, mode)
+	var parserErrors *p.Errors
 	if err != nil {
-		parserErrors = err.(*Errors)
+		parserErrors = err.(*p.Errors)
 	}
 	return expr, parserErrors
 }
@@ -4381,7 +4852,7 @@ func compareFirstParserError(t *testing.T, expected, actual error) {
 	if expected == nil && actual == nil {
 		return
 	}
-	parserErrors, ok := actual.(*Errors)
+	parserErrors, ok := actual.(*p.Errors)
 	if parserErrors == nil && expected == nil {
 		return
 	}
@@ -4393,7 +4864,7 @@ func compareFirstParserError(t *testing.T, expected, actual error) {
 		t.Logf("Expected no error, got %T:%v", actual, actual)
 		t.FailNow()
 	}
-	firstErr := parserErrors.errors[0]
+	firstErr := parserErrors.Errors[0]
 	err := firstErr.Error()
 	firstSpace := strings.Index(err, " ")
 	err = err[firstSpace+1:]
@@ -4412,7 +4883,7 @@ func checkParserErrors(t *testing.T, err error, withStack ...bool) {
 	if len(withStack) != 0 {
 		printStack = withStack[0]
 	}
-	parserErrors, ok := err.(*Errors)
+	parserErrors, ok := err.(*p.Errors)
 	if parserErrors == nil {
 		return
 	}
@@ -4425,8 +4896,8 @@ func checkParserErrors(t *testing.T, err error, withStack ...bool) {
 		StackTrace() errors.StackTrace
 	}
 
-	t.Errorf("parser has %d errors", len(parserErrors.errors))
-	for _, e := range parserErrors.errors {
+	t.Errorf("parser has %d errors", len(parserErrors.Errors))
+	for _, e := range parserErrors.Errors {
 		t.Errorf("%v", e)
 		if stackErr, ok := e.(stackTracer); ok && printStack {
 			st := stackErr.StackTrace()

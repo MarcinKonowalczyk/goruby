@@ -1,6 +1,11 @@
 package object
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+
+	"github.com/pkg/errors"
+)
 
 var integerClass RubyClassObject = newClass(
 	"Integer", objectClass, integerMethods, integerClassMethods, notInstantiatable,
@@ -29,6 +34,10 @@ func (i *Integer) Type() Type { return INTEGER_OBJ }
 // Class returns integerClass
 func (i *Integer) Class() RubyClass { return integerClass }
 
+var (
+	_ RubyObject = &Integer{}
+)
+
 func (i *Integer) hashKey() hashKey {
 	return hashKey{Type: i.Type(), Value: uint64(i.Value)}
 }
@@ -36,19 +45,20 @@ func (i *Integer) hashKey() hashKey {
 var integerClassMethods = map[string]RubyMethod{}
 
 var integerMethods = map[string]RubyMethod{
-	"div": withArity(1, publicMethod(integerDiv)),
-	"/":   withArity(1, publicMethod(integerDiv)),
-	"*":   withArity(1, publicMethod(integerMul)),
-	"+":   withArity(1, publicMethod(integerAdd)),
-	"-":   withArity(1, publicMethod(integerSub)),
-	"%":   withArity(1, publicMethod(integerModulo)),
-	"<":   withArity(1, publicMethod(integerLt)),
-	">":   withArity(1, publicMethod(integerGt)),
-	"==":  withArity(1, publicMethod(integerEq)),
-	"!=":  withArity(1, publicMethod(integerNeq)),
-	">=":  withArity(1, publicMethod(integerGte)),
-	"<=":  withArity(1, publicMethod(integerLte)),
-	"<=>": withArity(1, publicMethod(integerSpaceship)),
+	"div":  withArity(1, publicMethod(integerDiv)),
+	"/":    withArity(1, publicMethod(integerDiv)),
+	"*":    withArity(1, publicMethod(integerMul)),
+	"+":    withArity(1, publicMethod(integerAdd)),
+	"-":    withArity(1, publicMethod(integerSub)),
+	"%":    withArity(1, publicMethod(integerModulo)),
+	"<":    withArity(1, publicMethod(integerLt)),
+	">":    withArity(1, publicMethod(integerGt)),
+	">=":   withArity(1, publicMethod(integerGte)),
+	"<=":   withArity(1, publicMethod(integerLte)),
+	"<=>":  withArity(1, publicMethod(integerSpaceship)),
+	"to_i": withArity(0, publicMethod(integerToI)),
+	"**":   withArity(1, publicMethod(integerPow)),
+	"chr":  withArity(0, publicMethod(integerChr)),
 }
 
 func integerDiv(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -90,25 +100,61 @@ func integerSub(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return NewInteger(i.Value - sub.Value), nil
 }
 
+// Objects which can *safely* be converted to an integer
+func safeObjectToInteger(arg RubyObject) (int64, bool) {
+	var right int64
+	switch arg := arg.(type) {
+	case *Integer:
+		right = int64(arg.Value)
+	// case *Boolean:
+	// 	if arg.Value {
+	// 		right = 1
+	// 	} else {
+	// 		right = 0
+	// 	}
+	default:
+		return 0, false
+	}
+	return right, true
+}
+
+func integerCmpHelper(args []RubyObject) (int64, error) {
+	// NOTE: len args already checked by `withArity`
+	// if len(args) != 1 {
+	// 	return 0, errors.WithMessage(
+	// 		NewWrongNumberOfArgumentsError(1, len(args)),
+	// 		callersName(),
+	// 	)
+	// }
+	right, ok := safeObjectToInteger(args[0])
+	if !ok {
+		return 0, errors.WithMessage(
+			NewArgumentError(
+				"comparison of Integer with %s failed",
+				args[0].Class().(RubyObject).Inspect(),
+			),
+			callersName(),
+		)
+	}
+	return right, nil
+}
+
 func integerModulo(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Integer)
-	mod, ok := args[0].(*Integer)
-	if !ok {
-		return nil, NewCoercionTypeError(args[0], i)
+	right, err := integerCmpHelper(args)
+	if err != nil {
+		return nil, err
 	}
-	return NewInteger(i.Value % mod.Value), nil
+	return NewInteger(i.Value % right), nil
 }
 
 func integerLt(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Integer)
-	right, ok := args[0].(*Integer)
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Integer with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := integerCmpHelper(args)
+	if err != nil {
+		return nil, err
 	}
-	if i.Value < right.Value {
+	if i.Value < right {
 		return TRUE, nil
 	}
 	return FALSE, nil
@@ -116,61 +162,58 @@ func integerLt(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func integerGt(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Integer)
-	right, ok := args[0].(*Integer)
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Integer with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := integerCmpHelper(args)
+	if err != nil {
+		return nil, err
 	}
-	if i.Value > right.Value {
+	if i.Value > right {
 		return TRUE, nil
 	}
 	return FALSE, nil
 }
 
-func integerEq(context CallContext, args ...RubyObject) (RubyObject, error) {
-	i := context.Receiver().(*Integer)
-	right, ok := args[0].(*Integer)
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Integer with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
-	}
-	if i.Value == right.Value {
-		return TRUE, nil
-	}
-	return FALSE, nil
-}
+// func integerEq(context CallContext, args ...RubyObject) (RubyObject, error) {
+// 	i := context.Receiver().(*Integer)
+// 	right, ok := args[0].(*Integer)
+// 	if !ok {
+// 		return nil, NewArgumentError(
+// 			"comparison of Integer with %s failed",
+// 			args[0].Class().(RubyObject).Inspect(),
+// 		)
+// 	}
+// 	if i.Value == right.Value {
+// 		return TRUE, nil
+// 	}
+// 	return FALSE, nil
+// }
 
-func integerNeq(context CallContext, args ...RubyObject) (RubyObject, error) {
-	i := context.Receiver().(*Integer)
-	right, ok := args[0].(*Integer)
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Integer with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
-	}
-	if i.Value != right.Value {
-		return TRUE, nil
-	}
-	return FALSE, nil
-}
+// func integerNeq(context CallContext, args ...RubyObject) (RubyObject, error) {
+// 	i := context.Receiver().(*Integer)
+// 	right, ok := args[0].(*Integer)
+// 	if !ok {
+// 		return nil, NewArgumentError(
+// 			"comparison of Integer with %s failed",
+// 			args[0].Class().(RubyObject).Inspect(),
+// 		)
+// 	}
+// 	if i.Value != right.Value {
+// 		return TRUE, nil
+// 	}
+// 	return FALSE, nil
+// }
 
 func integerSpaceship(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Integer)
-	right, ok := args[0].(*Integer)
-	if !ok {
-		return NIL, nil
+	right, err := integerCmpHelper(args)
+	if err != nil {
+		return NIL, err
 	}
 	switch {
-	case i.Value > right.Value:
+	case i.Value > right:
 		return &Integer{Value: 1}, nil
-	case i.Value < right.Value:
+	case i.Value < right:
 		return &Integer{Value: -1}, nil
-	case i.Value == right.Value:
+	case i.Value == right:
 		return &Integer{Value: 0}, nil
 	default:
 		panic("not reachable")
@@ -179,14 +222,11 @@ func integerSpaceship(context CallContext, args ...RubyObject) (RubyObject, erro
 
 func integerGte(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Integer)
-	right, ok := args[0].(*Integer)
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Integer with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := integerCmpHelper(args)
+	if err != nil {
+		return NIL, err
 	}
-	if i.Value >= right.Value {
+	if i.Value >= right {
 		return TRUE, nil
 	}
 	return FALSE, nil
@@ -194,15 +234,43 @@ func integerGte(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func integerLte(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Integer)
-	right, ok := args[0].(*Integer)
-	if !ok {
-		return nil, NewArgumentError(
-			"comparison of Integer with %s failed",
-			args[0].Class().(RubyObject).Inspect(),
-		)
+	right, err := integerCmpHelper(args)
+	if err != nil {
+		return NIL, err
 	}
-	if i.Value <= right.Value {
+	if i.Value <= right {
 		return TRUE, nil
 	}
 	return FALSE, nil
+}
+
+func integerToI(context CallContext, args ...RubyObject) (RubyObject, error) {
+	i := context.Receiver().(*Integer)
+	return i, nil
+}
+
+func integerPow(context CallContext, args ...RubyObject) (RubyObject, error) {
+	i := context.Receiver().(*Integer)
+	switch arg := args[0].(type) {
+	case *Integer:
+		result := int64(1)
+		for j := int64(0); j < arg.Value; j++ {
+			result *= i.Value
+		}
+		return NewInteger(result), nil
+	case *Float:
+		result := math.Pow(float64(i.Value), arg.Value)
+		return NewFloat(result), nil
+	default:
+		return nil, NewCoercionTypeError(args[0], i)
+	}
+}
+
+func integerChr(context CallContext, args ...RubyObject) (RubyObject, error) {
+	i := context.Receiver().(*Integer)
+	if i.Value < 0 || i.Value > 255 {
+		return nil, NewArgumentError("chr out of range")
+	}
+	// return &String{Value: string(i.Value)}, nil
+	return &String{Value: string(rune(i.Value))}, nil
 }

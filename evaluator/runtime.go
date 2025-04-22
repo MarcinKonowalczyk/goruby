@@ -1,9 +1,9 @@
 package evaluator
 
 import (
-	"bytes"
 	"fmt"
 	"go/token"
+	"strings"
 )
 
 type runtime interface {
@@ -46,7 +46,7 @@ func (r *_runtime) popFromStack() {
 }
 
 func (r *_runtime) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	for _, ctx := range r.stack {
 		fmt.Fprintln(&out, ctx.String())
 	}
@@ -68,7 +68,7 @@ func (ec *executionContext) addStackFrame(name string, position int) error {
 }
 
 func (ec *executionContext) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	fmt.Fprintln(&out, ec.frame.String())
 	return out.String()
 }

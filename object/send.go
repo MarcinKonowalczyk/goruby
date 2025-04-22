@@ -11,7 +11,7 @@ func Send(context CallContext, method string, args ...RubyObject) (RubyObject, e
 
 	// search for the method in the ancestry tree
 	for class != nil {
-		fn, ok := class.Methods().Get(method)
+		fn, ok := class.GetMethod(method)
 		if !ok {
 			class = class.SuperClass()
 			continue

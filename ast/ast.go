@@ -1,12 +1,11 @@
 package ast
 
 import (
-	"bytes"
 	"fmt"
 	gotoken "go/token"
 	"strings"
 
-	"github.com/goruby/goruby/token"
+	"github.com/MarcinKonowalczyk/goruby/token"
 )
 
 // Node represents a node within the AST
@@ -94,7 +93,7 @@ type ReturnStatement struct {
 }
 
 func (rs *ReturnStatement) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(rs.TokenLiteral() + " ")
 	if rs.ReturnValue != nil {
 		out.WriteString(rs.ReturnValue.String())
@@ -154,7 +153,7 @@ func (bs *BlockStatement) End() int { return bs.EndToken.Pos }
 // TokenLiteral returns '{' or the first token from the first statement
 func (bs *BlockStatement) TokenLiteral() string { return bs.Token.Literal }
 func (bs *BlockStatement) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	for _, s := range bs.Statements {
 		if s != nil {
 			out.WriteString(s.String())
@@ -162,6 +161,45 @@ func (bs *BlockStatement) String() string {
 	}
 	return out.String()
 }
+
+var (
+	_ Statement = &BlockStatement{}
+)
+
+// A BreakStatement represents a break statement
+type BreakStatement struct {
+	Token     token.Token // the 'break' token
+	Condition Expression
+	Unless    bool
+}
+
+func (bs *BreakStatement) String() string {
+	var out strings.Builder
+	out.WriteString(bs.Token.Literal)
+	out.WriteString(" ")
+	out.WriteString(bs.Condition.String())
+	return out.String()
+}
+
+func (bs *BreakStatement) statementNode() {}
+
+// Pos returns the position of first character belonging to the node
+func (bs *BreakStatement) Pos() int { return bs.Token.Pos }
+
+// End returns the position of first character immediately after the node
+func (bs *BreakStatement) End() int {
+	if bs.Condition != nil {
+		return bs.Condition.End()
+	}
+	return bs.Token.Pos + len(bs.Token.Literal)
+}
+
+// TokenLiteral returns the 'break' token literal
+func (bs *BreakStatement) TokenLiteral() string { return bs.Token.Literal }
+
+var (
+	_ Statement = &BreakStatement{}
+)
 
 // ExceptionHandlingBlock represents a begin/end block where exceptions are rescued
 type ExceptionHandlingBlock struct {
@@ -182,7 +220,7 @@ func (eh *ExceptionHandlingBlock) End() int { return eh.EndToken.Pos }
 // TokenLiteral returns the token literal from 'begin'
 func (eh *ExceptionHandlingBlock) TokenLiteral() string { return eh.BeginToken.Literal }
 func (eh *ExceptionHandlingBlock) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(eh.BeginToken.Literal)
 	out.WriteString("\n")
 	out.WriteString(eh.TryBody.String())
@@ -213,7 +251,7 @@ func (rb *RescueBlock) End() int { return rb.Body.End() }
 // TokenLiteral returns the token literal from 'rescue'
 func (rb *RescueBlock) TokenLiteral() string { return rb.Token.Literal }
 func (rb *RescueBlock) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(rb.Token.Literal)
 	if len(rb.ExceptionClasses) != 0 {
 		classes := make([]string, len(rb.ExceptionClasses))
@@ -240,7 +278,7 @@ type Assignment struct {
 }
 
 func (a *Assignment) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(encloseInParensIfNeeded(a.Left))
 	out.WriteString(" = ")
 	out.WriteString(encloseInParensIfNeeded(a.Right))
@@ -264,7 +302,7 @@ type InstanceVariable struct {
 }
 
 func (i *InstanceVariable) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(i.Token.Literal)
 	out.WriteString(i.Name.String())
 	return out.String()
@@ -288,7 +326,7 @@ type MultiAssignment struct {
 }
 
 func (m *MultiAssignment) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	vars := make([]string, len(m.Variables))
 	for i, v := range m.Variables {
 		vars[i] = v.Value
@@ -339,7 +377,7 @@ type YieldExpression struct {
 }
 
 func (y *YieldExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(y.Token.Literal)
 	if len(y.Arguments) != 0 {
 		args := []string{}
@@ -427,6 +465,8 @@ func (g *Global) literalNode() {}
 // TokenLiteral returns the literal of the token.GLOBAL token
 func (g *Global) TokenLiteral() string { return g.Token.Literal }
 
+var _ Expression = &Global{}
+
 // ScopedIdentifier represents a scoped Constant declaration
 type ScopedIdentifier struct {
 	Token token.Token // the token.SCOPE
@@ -435,7 +475,7 @@ type ScopedIdentifier struct {
 }
 
 func (i *ScopedIdentifier) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(i.Outer.String())
 	out.WriteString(i.Token.Literal)
 	out.WriteString(i.Inner.String())
@@ -471,6 +511,36 @@ func (il *IntegerLiteral) End() int { return il.Token.Pos + len(fmt.Sprintf("%d"
 // TokenLiteral returns the literal from the token.INT token
 func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
 func (il *IntegerLiteral) String() string       { return fmt.Sprintf("%d", il.Value) }
+
+var (
+	_ Expression = &IntegerLiteral{}
+	_ literal    = &IntegerLiteral{}
+)
+
+// FloatLiteral represents a float in the AST
+type FloatLiteral struct {
+	Token token.Token
+	Value float64
+}
+
+func (fl *FloatLiteral) expressionNode() {}
+func (fl *FloatLiteral) literalNode()    {}
+
+// Pos returns the position of first character belonging to the node
+func (fl *FloatLiteral) Pos() int { return fl.Token.Pos }
+
+// End returns the position of first character immediately after the node
+func (fl *FloatLiteral) End() int { return fl.Token.Pos + len(fmt.Sprintf("%f", fl.Value)) }
+
+// TokenLiteral returns the literal from the token.FLOAT token
+func (fl *FloatLiteral) TokenLiteral() string { return fl.Token.Literal }
+
+func (fl *FloatLiteral) String() string { return fmt.Sprintf("%f", fl.Value) }
+
+var (
+	_ Expression = &FloatLiteral{}
+	_ literal    = &FloatLiteral{}
+)
 
 // Nil represents the 'nil' keyword
 type Nil struct {
@@ -601,7 +671,7 @@ func (ce *ConditionalExpression) End() int {
 // TokenLiteral returns the literal from token token.IF or token.UNLESS
 func (ce *ConditionalExpression) TokenLiteral() string { return ce.Token.Literal }
 func (ce *ConditionalExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(ce.Token.Literal)
 	out.WriteString(ce.Condition.String())
 	out.WriteString(" ")
@@ -637,7 +707,7 @@ func (ce *LoopExpression) End() int {
 // TokenLiteral returns the literal from token token.WHILE
 func (ce *LoopExpression) TokenLiteral() string { return ce.Token.Literal }
 func (ce *LoopExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(ce.Token.Literal)
 	out.WriteString(ce.Condition.String())
 	out.WriteString(" do ")
@@ -676,7 +746,7 @@ func (el ExpressionList) TokenLiteral() string {
 	return el[0].TokenLiteral()
 }
 func (el ExpressionList) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	elements := []string{}
 	for _, e := range el {
 		elements = append(elements, e.String())
@@ -706,7 +776,7 @@ func (al *ArrayLiteral) End() int {
 // TokenLiteral returns the literal of the token token.LBRACKET
 func (al *ArrayLiteral) TokenLiteral() string { return al.Token.Literal }
 func (al *ArrayLiteral) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	elements := []string{}
 	for _, el := range al.Elements {
 		elements = append(elements, el.String())
@@ -736,7 +806,7 @@ func (hl *HashLiteral) End() int { return hl.Rbrace.Pos }
 // TokenLiteral returns the literal of the token token.LBRACE
 func (hl *HashLiteral) TokenLiteral() string { return hl.Token.Literal }
 func (hl *HashLiteral) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	elements := []string{}
 	for key, val := range hl.Map {
 		elements = append(elements, fmt.Sprintf("%q => %q", key.String(), val.String()))
@@ -746,6 +816,43 @@ func (hl *HashLiteral) String() string {
 	out.WriteString("}")
 	return out.String()
 }
+
+var _ Expression = &HashLiteral{}
+var _ literal = &HashLiteral{}
+
+// RangeLiteral represents a range literal within the AST
+type RangeLiteral struct {
+	Token     token.Token // the '..' or '...'
+	Left      Expression
+	Right     Expression
+	Inclusive bool
+}
+
+// Pos returns the position of the first character of the range
+func (rl *RangeLiteral) Pos() int { return rl.Left.Pos() }
+
+// End returns the position of the last character of the range
+func (rl *RangeLiteral) End() int { return rl.Right.End() }
+
+// TokenLiteral returns the literal of the token token.DDOT or token.DDDOT
+func (rl *RangeLiteral) TokenLiteral() string { return rl.Token.Literal }
+
+// String returns the string representation of the range
+func (rl *RangeLiteral) String() string {
+	var out strings.Builder
+	out.WriteString(rl.Left.String())
+	out.WriteString(" ")
+	out.WriteString(rl.Token.Literal)
+	out.WriteString(" ")
+	out.WriteString(rl.Right.String())
+	return out.String()
+}
+
+func (rl *RangeLiteral) expressionNode() {}
+func (rl *RangeLiteral) literalNode()    {}
+
+var _ Expression = &RangeLiteral{}
+var _ literal = &RangeLiteral{}
 
 // A BlockCapture represents a function scoped variable capturing a block
 type BlockCapture struct {
@@ -792,7 +899,7 @@ func (fl *FunctionLiteral) End() int { return fl.EndToken.Pos }
 // TokenLiteral returns the literal from token.DEF
 func (fl *FunctionLiteral) TokenLiteral() string { return fl.Token.Literal }
 func (fl *FunctionLiteral) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	params := []string{}
 	for _, p := range fl.Parameters {
 		params = append(params, p.String())
@@ -819,10 +926,14 @@ func (fl *FunctionLiteral) String() string {
 	return out.String()
 }
 
+var _ Expression = &FunctionLiteral{}
+var _ literal = &FunctionLiteral{}
+
 // A FunctionParameter represents a parameter in a function literal
 type FunctionParameter struct {
 	Name    *Identifier
 	Default Expression
+	Splat   bool
 }
 
 func (f *FunctionParameter) expressionNode() {}
@@ -841,7 +952,10 @@ func (f *FunctionParameter) End() int {
 // TokenLiteral returns the token of the parameter name
 func (f *FunctionParameter) TokenLiteral() string { return f.Name.TokenLiteral() }
 func (f *FunctionParameter) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
+	if f.Splat {
+		out.WriteString("*")
+	}
 	out.WriteString(f.Name.String())
 	if f.Default != nil {
 		out.WriteString(" = ")
@@ -850,12 +964,109 @@ func (f *FunctionParameter) String() string {
 	return out.String()
 }
 
+var _ Expression = &FunctionParameter{}
+
+// A ProcedureLiteral represents a procedure definition in the AST
+type ProcedureLiteral struct {
+	Token      token.Token // The '->' token
+	Parameters []*FunctionParameter
+	Body       *BlockStatement
+}
+
+// Pos returns the position of the `->` token
+func (pl *ProcedureLiteral) Pos() int { return pl.Token.Pos }
+
+// End returns the position of the last body token
+func (pl *ProcedureLiteral) End() int { return pl.Body.End() }
+
+// TokenLiteral returns the literal from token.PROC
+func (pl *ProcedureLiteral) TokenLiteral() string { return pl.Token.Literal }
+
+// String returns the string representation of the procedure
+func (pl *ProcedureLiteral) String() string {
+	var out strings.Builder
+	params := []string{}
+	for _, p := range pl.Parameters {
+		params = append(params, p.String())
+	}
+	out.WriteString("-> (")
+	out.WriteString(strings.Join(params, ", "))
+	out.WriteString(")")
+	if pl.Body != nil {
+		out.WriteString(pl.Body.String())
+	}
+	return out.String()
+}
+func (pl *ProcedureLiteral) expressionNode() {}
+func (pl *ProcedureLiteral) literalNode()    {}
+
+var _ Expression = &ProcedureLiteral{}
+var _ literal = &ProcedureLiteral{}
+
+// RegexLiteral represents a regex literal in the AST
+type RegexLiteral struct {
+	Token     token.Token // the 'REGEX' token
+	Value     string
+	Modifiers string
+}
+
+func (rl *RegexLiteral) literalNode()    {}
+func (rl *RegexLiteral) expressionNode() {}
+
+func (rl *RegexLiteral) Pos() int { return rl.Token.Pos }
+func (rl *RegexLiteral) End() int { return rl.Token.Pos + len(rl.Value) + len(rl.Modifiers) + 1 }
+
+// TokenLiteral returns the literal from token.REGEX
+func (rl *RegexLiteral) TokenLiteral() string { return rl.Token.Literal }
+
+func (rl *RegexLiteral) String() string {
+	var out strings.Builder
+	out.WriteString(rl.Token.Literal)
+	out.WriteString(rl.Value)
+	out.WriteString(rl.Token.Literal)
+	if rl.Modifiers != "" {
+		out.WriteString(rl.Modifiers)
+	}
+	return out.String()
+}
+
+var _ Expression = &RegexLiteral{}
+var _ literal = &RegexLiteral{}
+
+// A Splat represents a splat operator in the AST
+type Splat struct {
+	Token token.Token // the '*'
+	Value Expression
+}
+
+func (s *Splat) expressionNode() {}
+
+// func (s *Splat) literalNode() {}
+
+// Pos returns the position of first character belonging to the node
+func (s *Splat) Pos() int { return s.Token.Pos }
+
+// End returns the position of first character immediately after the node
+
+func (s *Splat) End() int { return s.Value.End() }
+
+// TokenLiteral returns the literal from token.SPLAT
+
+func (s *Splat) TokenLiteral() string { return s.Token.Literal }
+func (s *Splat) String() string {
+	var out strings.Builder
+	out.WriteString(s.Token.Literal)
+	out.WriteString(s.Value.String())
+	return out.String()
+}
+
+var _ Expression = &Splat{}
+
 // An IndexExpression represents an array or hash access in the AST
 type IndexExpression struct {
-	Token  token.Token // The [ token
-	Left   Expression
-	Index  Expression
-	Length Expression
+	Token token.Token // The [ token
+	Left  Expression
+	Index Expression
 }
 
 func (ie *IndexExpression) expressionNode() {}
@@ -869,15 +1080,11 @@ func (ie *IndexExpression) End() int { return ie.Index.End() }
 // TokenLiteral returns the literal from token.LBRACKET
 func (ie *IndexExpression) TokenLiteral() string { return ie.Token.Literal }
 func (ie *IndexExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString("(")
 	out.WriteString(ie.Left.String())
 	out.WriteString("[")
 	out.WriteString(ie.Index.String())
-	if ie.Length != nil {
-		out.WriteString(", ")
-		out.WriteString(ie.Index.String())
-	}
 	out.WriteString("])")
 	return out.String()
 }
@@ -917,7 +1124,7 @@ func (ce *ContextCallExpression) End() int {
 // TokenLiteral returns the literal from token.DOT
 func (ce *ContextCallExpression) TokenLiteral() string { return ce.Token.Literal }
 func (ce *ContextCallExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	if ce.Context != nil {
 		out.WriteString(ce.Context.String())
 		out.WriteString(".")
@@ -958,7 +1165,7 @@ func (b *BlockExpression) TokenLiteral() string { return b.Token.Literal }
 
 // String returns a string representation of the block statement
 func (b *BlockExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(b.Token.Literal)
 	if len(b.Parameters) != 0 {
 		args := []string{}
@@ -999,7 +1206,7 @@ func (m *ModuleExpression) End() int { return m.EndToken.Pos }
 // TokenLiteral returns the literal from token.MODULE
 func (m *ModuleExpression) TokenLiteral() string { return m.Token.Literal }
 func (m *ModuleExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(m.TokenLiteral())
 	out.WriteString(" ")
 	out.WriteString(m.Name.String())
@@ -1030,7 +1237,7 @@ func (m *ClassExpression) End() int { return m.EndToken.Pos }
 // TokenLiteral returns the literal from token.CLASS
 func (m *ClassExpression) TokenLiteral() string { return m.Token.Literal }
 func (m *ClassExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString(m.TokenLiteral())
 	out.WriteString(" ")
 	out.WriteString(m.Name.String())
@@ -1065,7 +1272,7 @@ func (pe *PrefixExpression) End() int { return pe.Right.End() }
 // TokenLiteral returns the literal from the prefix operator token
 func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
 func (pe *PrefixExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString("(")
 	out.WriteString(pe.Operator)
 	out.WriteString(pe.Right.String())
@@ -1081,18 +1288,6 @@ type InfixExpression struct {
 	Right    Expression
 }
 
-// MustEvaluateRight returns true if it is mandatory to evaluate the right side
-// of the operator, false otherwise
-func (oe *InfixExpression) MustEvaluateRight() bool {
-	return oe.Token.Type != token.LOGICALOR
-}
-
-// IsControlExpression returns true if the infix is used for control flow,
-// false otherwise
-func (oe *InfixExpression) IsControlExpression() bool {
-	return oe.Token.Type == token.LOGICALOR || oe.Token.Type == token.LOGICALAND
-}
-
 func (oe *InfixExpression) expressionNode() {}
 
 // Pos returns the position of first character belonging to the left node
@@ -1104,7 +1299,7 @@ func (oe *InfixExpression) End() int { return oe.Right.End() }
 // TokenLiteral returns the literal from the infix operator token
 func (oe *InfixExpression) TokenLiteral() string { return oe.Token.Literal }
 func (oe *InfixExpression) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.WriteString("(")
 	out.WriteString(oe.Left.String())
 	out.WriteString(" " + oe.Operator + " ")

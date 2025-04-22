@@ -7,7 +7,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/goruby/goruby/token"
+	"github.com/MarcinKonowalczyk/goruby/token"
 )
 
 const (
@@ -60,7 +60,7 @@ func (l *Lexer) NextToken() token.Token {
 			if ok {
 				return item
 			}
-			panic(fmt.Errorf("No items left"))
+			panic(fmt.Errorf("no items left"))
 		default:
 			l.state = l.state(l)
 			if l.state == nil {
@@ -114,6 +114,19 @@ func (l *Lexer) peek() rune {
 	return r
 }
 
+// checks if the next substring matches the given string
+func (l *Lexer) peek_string_match(s string) bool {
+	if l.pos+len(s) > len(l.input) {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		if l.input[l.pos+i] != s[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // error returns an error token and terminates the scan by passing
 // back a nil pointer that will be the next state, terminating l.run.
 func (l *Lexer) errorf(format string, args ...interface{}) StateFn {
@@ -124,7 +137,43 @@ func (l *Lexer) errorf(format string, args ...interface{}) StateFn {
 func startLexer(l *Lexer) StateFn {
 	r := l.next()
 	if isWhitespace(r) {
-		l.ignore()
+		// we sometimes need to emit disambiguating whitespace
+		// rules:
+		// before every ?
+		switch l.peek() {
+		case '?':
+			l.next() // consume the whitespace
+			l.emit(token.SQMARK)
+		case '[':
+			l.next() // consume the whitespace
+			l.emit(token.SLBRACKET)
+		case 'o':
+			// hack to handle space-disambiguated 'or'
+			if l.peek_string_match("or ") {
+				l.ignore() // ignore the space
+				l.next()   // consume the o
+				l.next()   // consume the r
+				l.emit(token.LOGICALOR)
+				l.ignore() // ignore the space
+			} else {
+				l.ignore()
+			}
+		case 'a':
+			// hack to handle space-disambiguated 'and'
+			if l.peek_string_match("and ") {
+				l.ignore() // ignore the space
+				l.next()   // consume the a
+				l.next()   // consume the n
+				l.next()   // consume the d
+				l.emit(token.LOGICALAND)
+				l.ignore() // ignore the space
+			} else {
+				l.ignore()
+			}
+
+		default:
+			l.ignore()
+		}
 		return startLexer
 	}
 	switch r {
@@ -151,6 +200,18 @@ func startLexer(l *Lexer) StateFn {
 		l.emit(token.SYMBEG)
 		return startLexer
 	case '.':
+		p := l.next()
+		if p == '.' {
+			p = l.next()
+			if p == '.' {
+				l.emit(token.DDDOT)
+				return startLexer
+			}
+			l.backup()
+			l.emit(token.DDOT)
+			return startLexer
+		}
+		l.backup()
 		l.emit(token.DOT)
 		return startLexer
 	case '=':
@@ -173,9 +234,14 @@ func startLexer(l *Lexer) StateFn {
 		l.emit(token.PLUS)
 		return startLexer
 	case '-':
-		if l.peek() == '=' {
+		p := l.peek()
+		if p == '=' {
 			l.next()
 			l.emit(token.SUBASSIGN)
+			return startLexer
+		} else if p == '>' {
+			l.next()
+			l.emit(token.LAMBDAROCKET)
 			return startLexer
 		}
 		l.emit(token.MINUS)
@@ -201,17 +267,25 @@ func startLexer(l *Lexer) StateFn {
 		}
 		return lexCharacterLiteral
 	case '/':
-		if l.peek() == '=' {
+		p := l.peek()
+		if p == '=' {
 			l.next()
 			l.emit(token.DIVASSIGN)
 			return startLexer
+		} else if isWhitespace(p) || isExpressionDelimiter(p) {
+			l.emit(token.SLASH)
+			return startLexer
+		} else {
+			return lexRegex
 		}
-		l.emit(token.SLASH)
-		return startLexer
 	case '*':
 		if l.peek() == '=' {
 			l.next()
 			l.emit(token.MULASSIGN)
+			return startLexer
+		} else if l.peek() == '*' {
+			l.next()
+			l.emit(token.POW)
 			return startLexer
 		}
 		l.emit(token.ASTERISK)
@@ -309,7 +383,7 @@ func startLexer(l *Lexer) StateFn {
 
 	default:
 		if isDigit(r) {
-			return lexDigit
+			return lexNumber
 		} else if isLetter(r) {
 			return lexIdentifier
 		} else {
@@ -337,13 +411,45 @@ func lexIdentifier(l *Lexer) StateFn {
 	return startLexer
 }
 
-func lexDigit(l *Lexer) StateFn {
+// func lexDigit(l *Lexer) StateFn {
+// 	r := l.next()
+// 	for isDigitOrUnderscore(r) {
+// 		r = l.next()
+// 	}
+// 	l.backup()
+// 	l.emit(token.INT)
+// 	return startLexer
+// }
+
+func lexNumber(l *Lexer) StateFn {
+	// walk until we find a non digit
 	r := l.next()
 	for isDigitOrUnderscore(r) {
 		r = l.next()
 	}
-	l.backup()
-	l.emit(token.INT)
+	if r == '.' {
+		// 123. ..
+		r = l.next()
+		if isDigit(r) {
+			// 123.4 ..
+			// walk until we find a non digit
+			for isDigitOrUnderscore(r) {
+				r = l.next()
+			}
+			l.backup()
+			l.emit(token.FLOAT)
+		} else {
+			// 123. ..
+			// maybe a method call. back up twice
+			l.backup()
+			l.backup()
+			l.emit(token.INT)
+		}
+	} else {
+		// we have an int
+		l.backup()
+		l.emit(token.INT)
+	}
 	return startLexer
 }
 
@@ -382,6 +488,9 @@ func lexString(l *Lexer) StateFn {
 	r := l.next()
 
 	for r != '"' {
+		if r == '\\' {
+			r = l.next()
+		}
 		r = l.next()
 	}
 	l.backup()
@@ -406,11 +515,35 @@ func lexGlobal(l *Lexer) StateFn {
 		return l.errorf("Illegal character: '%c'", r)
 	}
 
-	for !isWhitespace(r) && !isExpressionDelimiter(r) && r != '.' && r != ',' {
+	for !isWhitespace(r) && !isExpressionDelimiter(r) && r != '.' && r != ',' && r != '=' && r != '>' && r != '<' && r != '(' && r != ')' && r != '{' && r != '}' && r != '[' && r != ']' && r != ';' && r != ':' {
 		r = l.next()
 	}
 	l.backup()
 	l.emit(token.GLOBAL)
+	return startLexer
+}
+
+func lexRegex(l *Lexer) StateFn {
+	l.ignore()
+	r := l.next()
+
+	for r != '/' {
+		if r == '\\' {
+			r = l.next()
+		}
+		r = l.next()
+	}
+	l.backup()
+	l.emit(token.REGEX)
+	l.next()
+	l.ignore()
+
+	// parse modifiers
+	p := l.peek()
+	if p == 'i' || p == 'm' || p == 'x' || p == 'o' || p == 'e' || p == 's' || p == 'u' || p == 'n' {
+		l.next()
+		l.emit(token.REGEX_MODIFIER)
+	}
 	return startLexer
 }
 

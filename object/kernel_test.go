@@ -7,8 +7,8 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/goruby/goruby/ast"
-	"github.com/goruby/goruby/parser"
+	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/parser"
 	"github.com/pkg/errors"
 )
 
@@ -927,7 +927,7 @@ func TestKernelTap(t *testing.T) {
 		}
 
 		block := &Proc{
-			Parameters: []*ast.FunctionParameter{&ast.FunctionParameter{Name: &ast.Identifier{Value: "o"}}},
+			Parameters: []*FunctionParameter{&FunctionParameter{Name: "o"}},
 			Body:       &ast.BlockStatement{Statements: []ast.Statement{}},
 			Env:        NewEnvironment(),
 		}
@@ -951,7 +951,7 @@ func TestKernelTap(t *testing.T) {
 		}
 
 		block := &Proc{
-			Parameters: []*ast.FunctionParameter{&ast.FunctionParameter{Name: &ast.Identifier{Value: "o"}}},
+			Parameters: []*FunctionParameter{&FunctionParameter{Name: "o"}},
 			Body:       &ast.BlockStatement{Statements: []ast.Statement{}},
 			Env:        NewEnvironment(),
 		}
@@ -993,7 +993,7 @@ func TestKernelTap(t *testing.T) {
 		}
 
 		block := &Proc{
-			Parameters: []*ast.FunctionParameter{},
+			Parameters: []*FunctionParameter{},
 			Body:       &ast.BlockStatement{Statements: []ast.Statement{}},
 			Env:        NewEnvironment(),
 		}
@@ -1073,7 +1073,7 @@ func TestKernelRaise(t *testing.T) {
 
 				checkResult(t, result, nil)
 
-				checkError(t, err, &TypeError{message: "exception class/object expected"})
+				checkError(t, err, &TypeError{Message: "exception class/object expected"})
 			})
 			t.Run("object with #exception returning exception", func(t *testing.T) {
 				exceptionFn := func(CallContext, ...RubyObject) (RubyObject, error) {
