@@ -654,6 +654,8 @@ func unescapeStringLiteral(node *ast.StringLiteral) string {
 	return value
 }
 
+var FORMAT_DIRECTIVE_RE = regexp.MustCompile(`\x60#\{(?P<content>[^}]*)\}\x60`)
+
 func evaluateFormatDirectives(env object.Environment, value string) (string, error) {
 	if !strings.Contains(value, "`") {
 		return value, nil
@@ -662,8 +664,7 @@ func evaluateFormatDirectives(env object.Environment, value string) (string, err
 	// example sting "hello `#{place}`"
 	// search for `#{...}` pattern
 
-	re := regexp.MustCompile(`\x60#\{(?P<content>[^}]*)\}\x60`)
-	matches := re.FindAllStringSubmatchIndex(value, -1)
+	matches := FORMAT_DIRECTIVE_RE.FindAllStringSubmatchIndex(value, -1)
 	if len(matches) == 0 {
 		return value, nil
 	}
