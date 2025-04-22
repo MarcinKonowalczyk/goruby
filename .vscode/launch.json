@@ -17,6 +17,17 @@
             ],
         },
         {
+            "name": "pyra.rb with modulo",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "main.go",
+            "args": [
+                "pyra.rb",
+                "../../git/psll-lang/examples/modulo_function.pyra"
+            ],
+        },
+        {
             "name": "test_script.rb",
             "type": "go",
             "request": "launch",
