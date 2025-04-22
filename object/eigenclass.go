@@ -28,6 +28,13 @@ func (e *eigenclass) Class() RubyClass {
 	return classClass
 }
 func (e *eigenclass) Methods() MethodSet { return e.methods }
+func (e *eigenclass) GetMethod(name string) (RubyMethod, bool) {
+	if method, ok := e.methods.Get(name); ok {
+		return method, true
+	}
+	return nil, false
+}
+
 func (e *eigenclass) SuperClass() RubyClass {
 	if e.wrappedClass != nil {
 		return e.wrappedClass

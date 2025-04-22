@@ -22,3 +22,15 @@ func (m *mixin) Methods() MethodSet {
 	}
 	return NewMethodSet(methods)
 }
+
+func (m *mixin) GetMethod(name string) (RubyMethod, bool) {
+	if method, ok := m.RubyClassObject.GetMethod(name); ok {
+		return method, true
+	}
+	for _, mod := range m.modules {
+		if method, ok := mod.Class().GetMethod(name); ok {
+			return method, true
+		}
+	}
+	return nil, false
+}
