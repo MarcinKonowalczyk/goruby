@@ -259,12 +259,12 @@ end
 	}
 }
 
-func mustGet(obj object.RubyObject, ok bool) object.RubyObject {
-	if !ok {
-		panic("object not found")
-	}
-	return obj
-}
+// func mustGet(obj object.RubyObject, ok bool) object.RubyObject {
+// 	if !ok {
+// 		panic("object not found")
+// 	}
+// 	return obj
+// }
 
 func TestExceptionHandlingBlock(t *testing.T) {
 	tests := []struct {

@@ -3977,6 +3977,9 @@ func TestParsingArrayLiterals(t *testing.T) {
 	}
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
 	array, ok := stmt.Expression.(*ast.ArrayLiteral)
 	if !ok {
 		t.Fatalf("exp not ast.ArrayLiteral. got=%T", stmt.Expression)
@@ -3998,6 +4001,9 @@ func TestParsingIndexExpressions(t *testing.T) {
 		checkParserErrors(t, err)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
+		}
 		indexExp, ok := stmt.Expression.(*ast.IndexExpression)
 		if !ok {
 			t.Fatalf("exp not *ast.IndexExpression. got=%T", stmt.Expression)
@@ -4018,6 +4024,9 @@ func TestParsingIndexExpressions(t *testing.T) {
 			checkParserErrors(t, err)
 
 			stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+			if !ok {
+				t.Fatalf("stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
+			}
 			indexExp, ok := stmt.Expression.(*ast.IndexExpression)
 			if !ok {
 				t.Fatalf("exp not *ast.IndexExpression. got=%T", stmt.Expression)
@@ -4058,6 +4067,9 @@ func TestParsingIndexExpressions(t *testing.T) {
 			checkParserErrors(t, err)
 
 			stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+			if !ok {
+				t.Fatalf("stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
+			}
 			indexExp, ok := stmt.Expression.(*ast.IndexExpression)
 			if !ok {
 				t.Fatalf("exp not *ast.IndexExpression. got=%T", stmt.Expression)
@@ -4079,6 +4091,9 @@ func TestParsingIndexExpressions(t *testing.T) {
 			checkParserErrors(t, err)
 
 			stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+			if !ok {
+				t.Fatalf("stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
+			}
 			indexExp, ok := stmt.Expression.(*ast.IndexExpression)
 			if !ok {
 				t.Fatalf("exp not *ast.IndexExpression. got=%T", stmt.Expression)
@@ -4104,6 +4119,9 @@ func TestParsingModuleExpressions(t *testing.T) {
 	checkParserErrors(t, err)
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
 	_, ok = stmt.Expression.(*ast.ModuleExpression)
 	if !ok {
 		t.Fatalf("exp not *ast.ModuleExpression. got=%T", stmt.Expression)
@@ -4118,6 +4136,9 @@ func TestParsingClassExpressions(t *testing.T) {
 		checkParserErrors(t, err)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
+		}
 		class, ok := stmt.Expression.(*ast.ClassExpression)
 		if !ok {
 			t.Fatalf("exp not *ast.ClassExpression. got=%T", stmt.Expression)
@@ -4136,6 +4157,10 @@ func TestParsingClassExpressions(t *testing.T) {
 		checkParserErrors(t, err)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
+		}
+
 		class, ok := stmt.Expression.(*ast.ClassExpression)
 		if !ok {
 			t.Fatalf("exp not *ast.ClassExpression. got=%T", stmt.Expression)
@@ -4531,24 +4556,24 @@ func testExpression(t *testing.T, exp ast.Expression, expected interface{}) bool
 	return testLiteralExpression(t, exp, expected)
 }
 
-func testExpressionList(t *testing.T, list ast.ExpressionList, expected ...interface{}) bool {
-	t.Helper()
+// func testExpressionList(t *testing.T, list ast.ExpressionList, expected ...interface{}) bool {
+// 	t.Helper()
 
-	if len(list) != len(expected) {
-		t.Errorf("wrong length of list. got=%d", len(list))
-		return false
-	}
-	for i, expr := range list {
-		if !testExpression(t, expr, expected[i]) {
-			return false
-		}
-	}
-	if list.TokenLiteral() != "," {
-		t.Errorf("list.TokenLiteral not , . got=%s", list.TokenLiteral())
-		return false
-	}
-	return true
-}
+// 	if len(list) != len(expected) {
+// 		t.Errorf("wrong length of list. got=%d", len(list))
+// 		return false
+// 	}
+// 	for i, expr := range list {
+// 		if !testExpression(t, expr, expected[i]) {
+// 			return false
+// 		}
+// 	}
+// 	if list.TokenLiteral() != "," {
+// 		t.Errorf("list.TokenLiteral not , . got=%s", list.TokenLiteral())
+// 		return false
+// 	}
+// 	return true
+// }
 
 type infix struct {
 	left     interface{}
@@ -4615,29 +4640,29 @@ func testLiteralExpression(
 	return false
 }
 
-func testStringLiteral(t *testing.T, sl ast.Expression, value string) bool {
-	t.Helper()
-	str, ok := sl.(*ast.StringLiteral)
-	if !ok {
-		t.Errorf("expression not *ast.StringLiteral. got=%T", sl)
-		return false
-	}
+// func testStringLiteral(t *testing.T, sl ast.Expression, value string) bool {
+// 	t.Helper()
+// 	str, ok := sl.(*ast.StringLiteral)
+// 	if !ok {
+// 		t.Errorf("expression not *ast.StringLiteral. got=%T", sl)
+// 		return false
+// 	}
 
-	if str.Value != value {
-		t.Errorf("str.Value not %s. got=%s", value, str.Value)
-		return false
-	}
+// 	if str.Value != value {
+// 		t.Errorf("str.Value not %s. got=%s", value, str.Value)
+// 		return false
+// 	}
 
-	if str.TokenLiteral() != value {
-		t.Errorf(
-			"integer.TokenLiteral not %s. got=%s", value,
-			str.TokenLiteral(),
-		)
-		return false
-	}
+// 	if str.TokenLiteral() != value {
+// 		t.Errorf(
+// 			"integer.TokenLiteral not %s. got=%s", value,
+// 			str.TokenLiteral(),
+// 		)
+// 		return false
+// 	}
 
-	return true
-}
+// 	return true
+// }
 
 func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
 	t.Helper()

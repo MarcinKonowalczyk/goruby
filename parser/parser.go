@@ -117,10 +117,10 @@ type (
 	infixParseFn  func(ast.Expression) ast.Expression
 )
 
-var defaultExpressionTerminators = []token.Type{
-	token.SEMICOLON,
-	token.NEWLINE,
-}
+// var defaultExpressionTerminators = []token.Type{
+// 	token.SEMICOLON,
+// 	token.NEWLINE,
+// }
 
 // A parser parses the token emitted by the provided lexer.Lexer and returns an
 // AST describing the parsed program.
@@ -972,11 +972,11 @@ func (p *parser) parseHash() ast.Expression {
 	return hash
 }
 
-func (p *parser) debugPrintState() {
-	if p.trace {
-		fmt.Println("DBG:", p.curToken, p.peekToken, p.errors)
-	}
-}
+// func (p *parser) debugPrintState() {
+// 	if p.trace {
+// 		fmt.Println("DBG:", p.curToken, p.peekToken, p.errors)
+// 	}
+// }
 
 func (p *parser) parseKeyValue() (ast.Expression, ast.Expression, bool) {
 	if p.trace {
@@ -1456,63 +1456,6 @@ func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast
 
 	if !hasDelimiters && p.peekTokenIs(endToken) {
 		p.Error(p.peekToken.Type, "no delimiters but end delimiter found", endToken)
-		return nil
-	}
-
-	if hasDelimiters && p.peekTokenIs(endToken) {
-		p.accept(endToken)
-	}
-
-	return identifiers
-}
-
-func (p *parser) parseProcedureParameters(startToken, endToken token.Type) []*ast.FunctionParameter {
-	if p.trace {
-		defer un(trace(p, "parseProcedureParameters"))
-	}
-	hasDelimiters := false
-	if p.peekTokenIs(startToken) {
-		hasDelimiters = true
-		p.accept(startToken)
-	}
-
-	identifiers := []*ast.FunctionParameter{}
-	if !hasDelimiters && p.peekTokenIs(endToken) {
-		return nil
-	}
-
-	if hasDelimiters && p.peekTokenIs(endToken) {
-		p.accept(endToken)
-		return identifiers
-	}
-
-	if p.peekTokenIs(token.ASTERISK) {
-		p.accept(token.ASTERISK)
-	}
-
-	p.accept(token.IDENT)
-	ident := &ast.FunctionParameter{Name: &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}}
-	if p.peekTokenIs(token.ASSIGN) {
-		p.consume(token.ASSIGN)
-		ident.Default = p.parseExpression(precAssignment)
-	}
-	identifiers = append(identifiers, ident)
-	for p.peekTokenIs(token.COMMA) {
-		p.accept(token.COMMA)
-		if p.peekTokenIs(token.ASTERISK) {
-			p.accept(token.ASTERISK)
-		}
-		p.accept(token.IDENT)
-		ident := &ast.FunctionParameter{Name: &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}}
-		if p.peekTokenIs(token.ASSIGN) {
-			p.consume(token.ASSIGN)
-			ident.Default = p.parseExpression(precAssignment)
-		}
-		identifiers = append(identifiers, ident)
-	}
-
-	if !hasDelimiters && p.peekTokenIs(endToken) {
-		p.Error(p.peekToken.Type, "", endToken)
 		return nil
 	}
 

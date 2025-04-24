@@ -115,15 +115,6 @@ var (
 			return &NotImplementedError{message: c.Name()}, nil
 		},
 	)
-	localJumpErrorClass RubyClassObject = newClass(
-		"LocalJumpError",
-		standardErrorClass,
-		nil,
-		nil,
-		func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
-			return &LocalJumpError{message: c.Name()}, nil
-		},
-	)
 )
 
 func init() {

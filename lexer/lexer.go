@@ -474,7 +474,7 @@ func lexCharacterLiteral(l *Lexer) StateFn {
 		return l.errorf("invalid character syntax; use ?\\s")
 	}
 	if r == '\\' {
-		r = l.next()
+		l.next()
 	}
 	if p := l.peek(); !isWhitespace(p) && !isExpressionDelimiter(p) {
 		return l.errorf("unexpected '?'")
@@ -489,7 +489,7 @@ func lexString(l *Lexer) StateFn {
 
 	for r != '"' {
 		if r == '\\' {
-			r = l.next()
+			l.next()
 		}
 		r = l.next()
 	}
@@ -529,7 +529,7 @@ func lexRegex(l *Lexer) StateFn {
 
 	for r != '/' {
 		if r == '\\' {
-			r = l.next()
+			l.next()
 		}
 		r = l.next()
 	}

@@ -20,9 +20,7 @@ func init() {
 // NewArray returns a new array populated with elements.
 func NewArray(elements ...RubyObject) *Array {
 	arr := &Array{Elements: make([]RubyObject, len(elements))}
-	for i, elem := range elements {
-		arr.Elements[i] = elem
-	}
+	copy(arr.Elements, elements)
 	return arr
 }
 

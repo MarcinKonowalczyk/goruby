@@ -107,9 +107,9 @@ func (b *bufferedInterpreter) preserveLineCount(input string) string {
 	return strings.Repeat("\n", b.linecount) + input
 }
 
-func (b *bufferedInterpreter) getLines(input string) {
-	b.linecount = b.linecount + len(strings.Split(input, "\n"))
-}
+// func (b *bufferedInterpreter) getLines(input string) {
+// 	b.linecount = b.linecount + len(strings.Split(input, "\n"))
+// }
 
 func isEOFError(err error) bool {
 	syntaxError, ok := err.(*object.SyntaxError)

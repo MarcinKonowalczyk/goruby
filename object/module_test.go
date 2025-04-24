@@ -494,7 +494,11 @@ func TestModuleAppendFeatures(t *testing.T) {
 
 		module := NewModule("foo", nil)
 
-		moduleAppendFeatures(context, module)
+		_, err := moduleAppendFeatures(context, module)
+		if err != nil {
+			t.Logf("Expected no error, got %s", err)
+			t.Fail()
+		}
 
 		a, ok := module.Get("A")
 		if !ok {
@@ -534,7 +538,11 @@ func TestModuleAppendFeatures(t *testing.T) {
 
 		module := NewModule("foo", nil)
 
-		moduleAppendFeatures(context, module)
+		_, err := moduleAppendFeatures(context, module)
+		if err != nil {
+			t.Logf("Expected no error, got %s", err)
+			t.Fail()
+		}
 
 		a, ok := module.Get("@foo")
 		if !ok {
@@ -574,7 +582,11 @@ func TestModuleAppendFeatures(t *testing.T) {
 
 		module := NewModule("foo", nil)
 
-		moduleAppendFeatures(context, module)
+		_, err := moduleAppendFeatures(context, module)
+		if err != nil {
+			t.Logf("Expected no error, got %s", err)
+			t.Fail()
+		}
 
 		_, ok := module.Get("foo")
 		if ok {
@@ -607,7 +619,11 @@ func TestModuleAppendFeatures(t *testing.T) {
 
 		module := NewModule("foo", nil)
 
-		moduleAppendFeatures(context, module)
+		_, err := moduleAppendFeatures(context, module)
+		if err != nil {
+			t.Logf("Expected no error, got %s", err)
+			t.Fail()
+		}
 
 		moduleMethods := module.class.Methods()
 

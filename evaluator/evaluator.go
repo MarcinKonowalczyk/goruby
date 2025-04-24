@@ -347,7 +347,10 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 					if err != nil {
 						return nil, errors.WithMessage(err, "eval left hand Assignment side: eval right side of IndexExpression")
 					}
-					evalIndexExpressionAssignment(indexLeft, index, values[i])
+					_, err = evalIndexExpressionAssignment(indexLeft, index, values[i])
+					if err != nil {
+						return nil, errors.WithMessage(err, "eval left hand Assignment side: eval right side of IndexExpression")
+					}
 					continue
 				}
 				env.Set(exp.String(), values[i])
@@ -1205,12 +1208,12 @@ func evalIdentifier(node *ast.Identifier, env object.Environment) (object.RubyOb
 	return val, nil
 }
 
-func unwrapReturnValue(obj object.RubyObject) object.RubyObject {
-	if returnValue, ok := obj.(*object.ReturnValue); ok {
-		return returnValue.Value
-	}
-	return obj
-}
+// func unwrapReturnValue(obj object.RubyObject) object.RubyObject {
+// 	if returnValue, ok := obj.(*object.ReturnValue); ok {
+// 		return returnValue.Value
+// 	}
+// 	return obj
+// }
 
 func handleException(err error, rescues []*ast.RescueBlock, env object.Environment) (object.RubyObject, error) {
 	if err != nil && len(rescues) == 0 {
