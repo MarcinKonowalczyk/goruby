@@ -29,12 +29,6 @@ _more_chars : _any_char {_any_char} ;
 
 any_chars : _any_char {_any_char} ;
 
-_regex_modifier : 'i'|'m'|'x'|'o'|'e'|'s'|'u'|'n' ;
-
-literal_regexp  : '/' _more_chars '/' _regex_modifier ;
-
-literal_regexp2 : '%''r' _any_char _more_chars _any_char ;
-
 _identifier : _letter ;
 
 addressable_identifier : ':'':' _identifier ;
@@ -111,9 +105,6 @@ HERE_DOC        : "<<"Heredoc_ident
                   space Heredoc_ident ;
 
 WORDS           : "%""w"char_lit any_chars char_lit ;
-
-REGEXP          : literal_regexp
-                | literal_regexp2 ;
 
 /* End of lexical part */
 /* Begin of grammar part */
@@ -418,8 +409,7 @@ LITERAL         : numeric
                 | SYMBOL
                 | STRING
                 | HERE_DOC
-                | WORDS
-                | REGEXP ;
+                | WORDS;
 
 STRING          : LITERAL_STRING
                 | STRING LITERAL_STRING ;

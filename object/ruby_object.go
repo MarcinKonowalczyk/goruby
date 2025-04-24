@@ -25,7 +25,6 @@ const (
 	INTEGER_OBJ        Type = "INTEGER"
 	FLOAT_OBJ          Type = "FLOAT"
 	STRING_OBJ         Type = "STRING"
-	REGEX_OBJ          Type = "REGEX"
 	SYMBOL_OBJ         Type = "SYMBOL"
 	BOOLEAN_OBJ        Type = "BOOLEAN"
 	NIL_OBJ            Type = "NIL"

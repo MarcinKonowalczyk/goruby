@@ -109,6 +109,8 @@ func TestLex(t *testing.T) {
 				"foo bar"
 				'foo bar'
 				"\\"
+				/\//
+				/a/
 			`,
 			exp: []expected{
 				expect("STRING", ""),
@@ -122,6 +124,10 @@ func TestLex(t *testing.T) {
 				expect("STRING", "foo bar"),
 				NL,
 				expect("STRING", "\\\\"),
+				NL,
+				expect("STRING", "\\/"),
+				NL,
+				expect("STRING", "a"),
 			},
 		},
 		{
@@ -318,19 +324,6 @@ func TestLex(t *testing.T) {
 				expect("IDENT", "foo"),
 				expect("COLON", ":"),
 				expect("IDENT", "bar"),
-			},
-		},
-		{
-			desc: "regex",
-			lines: `
-				/\//
-				/a/i
-			`,
-			exp: []expected{
-				expect("REGEX", "\\/"),
-				NL,
-				expect("REGEX", "a"),
-				expect("REGEX_MODIFIER", "i"),
 			},
 		},
 		{

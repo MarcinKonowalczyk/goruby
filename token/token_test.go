@@ -44,8 +44,6 @@ func TestTypeSting(t *testing.T) {
 		{tk: INT, str: "INT", repr: "INT"},
 		{tk: FLOAT, str: "FLOAT", repr: "FLOAT"},
 		{tk: STRING, str: "STRING", repr: "STRING"},
-		{tk: REGEX, str: "REGEX", repr: "REGEX"},
-		{tk: REGEX_MODIFIER, str: "REGEX_MODIFIER", repr: "REGEX_MODIFIER"},
 		//
 		{tk: ASSIGN, str: "ASSIGN", repr: "="},
 		{tk: ADDASSIGN, str: "ADDASSIGN", repr: "+="},

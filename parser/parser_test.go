@@ -4364,11 +4364,6 @@ func TestRegexLiteral(t *testing.T) {
 			input:    "/foo/",
 			expected: "foo",
 		},
-		{
-			input:     "/foo/i",
-			expected:  "foo",
-			modifiers: "i",
-		},
 	}
 
 	for _, tt := range tests {
@@ -4383,7 +4378,7 @@ func TestRegexLiteral(t *testing.T) {
 			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", stmt)
 		}
 
-		regexLit, ok := stmt.Expression.(*ast.RegexLiteral)
+		regexLit, ok := stmt.Expression.(*ast.StringLiteral)
 		if !ok {
 			t.Fatalf("stmt.Expression is not ast.RegexLiteral. got=%T", stmt.Expression)
 		}
@@ -4392,9 +4387,6 @@ func TestRegexLiteral(t *testing.T) {
 			t.Errorf("regexLit.Value not %q. got=%q", tt.expected, regexLit.Value)
 		}
 
-		if regexLit.Modifiers != tt.modifiers {
-			t.Errorf("regexLit.Modifiers not %q. got=%q", tt.modifiers, regexLit.Modifiers)
-		}
 	}
 }
 

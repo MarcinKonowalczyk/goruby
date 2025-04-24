@@ -226,7 +226,6 @@ LITERAL         : numeric
                 | STRING
                 | HERE_DOC
                 | WORDS
-                | REGEXP
 
 STRING          : LITERAL_STRING+
 
@@ -287,8 +286,6 @@ HERE_DOC        : `&lt;&lt;'(identifier|STRING)
 
 WORDS           : `%'`w'char any_char* char
 
-REGEXP          : `/' any_char* `/'[`i'|`m'|`x'|`o'|`e'|`s'|`u'|`n']
-                | `%'`r' char any_char* char
 </pre>
 
 

@@ -21,8 +21,6 @@ const (
 	INT
 	FLOAT
 	STRING
-	REGEX
-	REGEX_MODIFIER
 	literal_end
 
 	// Operators
@@ -153,14 +151,12 @@ var type_strings = [...]string{
 	ILLEGAL: "ILLEGAL",
 	EOF:     "EOF",
 
-	IDENT:          "IDENT",
-	CONST:          "CONST",
-	GLOBAL:         "GLOBAL",
-	INT:            "INT",
-	FLOAT:          "FLOAT",
-	STRING:         "STRING",
-	REGEX:          "REGEX",
-	REGEX_MODIFIER: "REGEX_MODIFIER",
+	IDENT:  "IDENT",
+	CONST:  "CONST",
+	GLOBAL: "GLOBAL",
+	INT:    "INT",
+	FLOAT:  "FLOAT",
+	STRING: "STRING",
 
 	ASSIGN:    "ASSIGN",
 	ADDASSIGN: "ADDASSIGN",
@@ -245,14 +241,12 @@ var type_reprs = [...]string{
 	ILLEGAL: "ILLEGAL",
 	EOF:     "EOF",
 
-	IDENT:          "IDENT",
-	CONST:          "CONST",
-	GLOBAL:         "GLOBAL",
-	INT:            "INT",
-	FLOAT:          "FLOAT",
-	STRING:         "STRING",
-	REGEX:          "REGEX",
-	REGEX_MODIFIER: "REGEX_MODIFIER",
+	IDENT:  "IDENT",
+	CONST:  "CONST",
+	GLOBAL: "GLOBAL",
+	INT:    "INT",
+	FLOAT:  "FLOAT",
+	STRING: "STRING",
 
 	ASSIGN:    "=",
 	ADDASSIGN: "+=",
@@ -282,8 +276,7 @@ var type_reprs = [...]string{
 	SPACESHIP: "<=>",
 	LSHIFT:    "<<",
 
-	NEWLINE: "\\n",
-	// WHITESPACE: "WHITESPACE",
+	NEWLINE:   "\\n",
 	COMMA:     ",",
 	SEMICOLON: ";",
 	HASH:      "#",

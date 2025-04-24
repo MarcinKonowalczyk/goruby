@@ -185,7 +185,7 @@ func startLexer(l *Lexer) StateFn {
 	case '\'':
 		return lexSingleQuoteString
 	case '"':
-		return lexString
+		return lexString('"')
 	case ':':
 		p := l.peek()
 		if p == ':' {
@@ -276,7 +276,7 @@ func startLexer(l *Lexer) StateFn {
 			l.emit(token.SLASH)
 			return startLexer
 		} else {
-			return lexRegex
+			return lexString('/')
 		}
 	case '*':
 		if l.peek() == '=' {
@@ -483,21 +483,23 @@ func lexCharacterLiteral(l *Lexer) StateFn {
 	return startLexer
 }
 
-func lexString(l *Lexer) StateFn {
-	l.ignore()
-	r := l.next()
+func lexString(end rune) StateFn {
+	return func(l *Lexer) StateFn {
+		l.ignore()
+		r := l.next()
 
-	for r != '"' {
-		if r == '\\' {
-			l.next()
+		for r != end {
+			if r == '\\' {
+				l.next()
+			}
+			r = l.next()
 		}
-		r = l.next()
+		l.backup()
+		l.emit(token.STRING)
+		l.next()
+		l.ignore()
+		return startLexer
 	}
-	l.backup()
-	l.emit(token.STRING)
-	l.next()
-	l.ignore()
-	return startLexer
 }
 
 func lexGlobal(l *Lexer) StateFn {
@@ -520,30 +522,6 @@ func lexGlobal(l *Lexer) StateFn {
 	}
 	l.backup()
 	l.emit(token.GLOBAL)
-	return startLexer
-}
-
-func lexRegex(l *Lexer) StateFn {
-	l.ignore()
-	r := l.next()
-
-	for r != '/' {
-		if r == '\\' {
-			l.next()
-		}
-		r = l.next()
-	}
-	l.backup()
-	l.emit(token.REGEX)
-	l.next()
-	l.ignore()
-
-	// parse modifiers
-	p := l.peek()
-	if p == 'i' || p == 'm' || p == 'x' || p == 'o' || p == 'e' || p == 's' || p == 'u' || p == 'n' {
-		l.next()
-		l.emit(token.REGEX_MODIFIER)
-	}
 	return startLexer
 }
 

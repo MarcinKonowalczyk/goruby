@@ -534,9 +534,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 	case nil:
 		return nil, nil
 
-	case *ast.RegexLiteral:
-		return &object.Regex{Value: node.Value, Modifiers: node.Modifiers}, nil
-
 	case *ast.RangeLiteral:
 		left, err := Eval(node.Left, env)
 		if err != nil {
