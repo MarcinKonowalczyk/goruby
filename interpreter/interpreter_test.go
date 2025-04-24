@@ -1,8 +1,9 @@
-package interpreter
+package interpreter_test
 
 import (
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/interpreter"
 	"github.com/MarcinKonowalczyk/goruby/object"
 	"github.com/pkg/errors"
 )
@@ -22,7 +23,7 @@ func TestInterpreterInterpret(t *testing.T) {
 
 			add foo, x
 			`
-		i := NewInterpreter()
+		i := interpreter.NewInterpreter()
 
 		out, err := i.Interpret("", input)
 		if err != nil {
@@ -51,7 +52,7 @@ func TestModuleInEnv(t *testing.T) {
 		end
 		Foo
 	`
-	interpreter := NewInterpreter()
+	interpreter := interpreter.NewInterpreter()
 
 	evaluated, err := interpreter.Interpret("", input)
 	if err != nil {
@@ -77,7 +78,7 @@ func TestInterpretModules(t *testing.T) {
 		Foo
 		`
 
-		i := NewInterpreter()
+		i := interpreter.NewInterpreter()
 
 		evaluated, err := i.Interpret("", input)
 		if err != nil {
@@ -107,7 +108,7 @@ func TestInterpretModules(t *testing.T) {
 		self
 		`
 
-		i := NewInterpreter()
+		i := interpreter.NewInterpreter()
 
 		evaluated, err := i.Interpret("", input)
 		if err != nil {
@@ -143,7 +144,7 @@ func TestInterpretModules(t *testing.T) {
 		Foo
 		`
 
-		i := NewInterpreter()
+		i := interpreter.NewInterpreter()
 
 		evaluated, err := i.Interpret("", input)
 		if err != nil {
@@ -185,7 +186,7 @@ func TestInterpretModules(t *testing.T) {
 		end
 		`
 
-		i := NewInterpreter()
+		i := interpreter.NewInterpreter()
 
 		evaluated, err := i.Interpret("", input)
 		if err != nil {
@@ -219,7 +220,7 @@ func TestInterpretModules(t *testing.T) {
 		Bar
 		`
 
-		i := NewInterpreter()
+		i := interpreter.NewInterpreter()
 
 		_, err := i.Interpret("", input)
 		if err == nil {
@@ -246,7 +247,7 @@ func TestInterpretClasses(t *testing.T) {
 		Foo
 		`
 
-		i := NewInterpreter()
+		i := interpreter.NewInterpreter()
 
 		evaluated, err := i.Interpret("", input)
 		if err != nil {
@@ -276,7 +277,7 @@ func TestInterpretClasses(t *testing.T) {
 		self
 		`
 
-		i := NewInterpreter()
+		i := interpreter.NewInterpreter()
 
 		evaluated, err := i.Interpret("", input)
 		if err != nil {
@@ -312,7 +313,7 @@ func TestInterpretClasses(t *testing.T) {
 		Foo
 		`
 
-		i := NewInterpreter()
+		i := interpreter.NewInterpreter()
 
 		evaluated, err := i.Interpret("", input)
 		if err != nil {
@@ -354,7 +355,7 @@ func TestInterpretClasses(t *testing.T) {
 		end
 		`
 
-		i := NewInterpreter()
+		i := interpreter.NewInterpreter()
 
 		evaluated, err := i.Interpret("", input)
 		if err != nil {
@@ -388,7 +389,7 @@ func TestInterpretClasses(t *testing.T) {
 		Bar
 		`
 
-		i := NewInterpreter()
+		i := interpreter.NewInterpreter()
 
 		_, err := i.Interpret("", input)
 		if err == nil {

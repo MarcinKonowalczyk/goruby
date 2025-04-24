@@ -1,4 +1,4 @@
-package evaluator
+package evaluator_test
 
 import (
 	"go/token"
@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/evaluator"
 	"github.com/MarcinKonowalczyk/goruby/object"
 	"github.com/MarcinKonowalczyk/goruby/parser"
 	"github.com/pkg/errors"
@@ -1595,7 +1596,7 @@ func TestKeyword__File__(t *testing.T) {
 	env := object.NewEnvironment()
 	program, err := parser.ParseFile(token.NewFileSet(), "some_file.rb", input, 0)
 	checkError(t, err)
-	evaluated, err := Eval(program, env)
+	evaluated, err := evaluator.Eval(program, env)
 	checkError(t, err)
 
 	str, ok := evaluated.(*object.String)
@@ -1614,7 +1615,7 @@ func TestKeyword__File__(t *testing.T) {
 
 func testExceptionObject(t *testing.T, obj object.RubyObject, errorMessage string) {
 	t.Helper()
-	if !IsError(obj) {
+	if !evaluator.IsError(obj) {
 		t.Logf("Expected error or exception, got %T", obj)
 		t.Fail()
 	}
@@ -1645,7 +1646,7 @@ func testEval(input string, context ...object.Environment) (object.RubyObject, e
 	if err != nil {
 		return nil, object.NewSyntaxError(err)
 	}
-	return Eval(program, env)
+	return evaluator.Eval(program, env)
 }
 
 func checkError(t *testing.T, err error) {
