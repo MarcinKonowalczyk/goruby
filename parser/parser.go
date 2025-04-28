@@ -409,7 +409,7 @@ func (p *parser) parseStatement() ast.Statement {
 		return nil
 	case token.RETURN:
 		return p.parseReturnStatement()
-	case token.HASH:
+	case token.COMMENT:
 		return p.parseComment()
 	case token.BREAK:
 		return p.parseBreakStatement()
@@ -507,9 +507,6 @@ func (p *parser) parseComment() ast.Statement {
 		defer un(trace(p, "parseComment"))
 	}
 	comment := &ast.Comment{Token: p.curToken}
-	if !p.accept(token.STRING) {
-		return nil
-	}
 	comment.Value = p.curToken.Literal
 	if !p.peekTokenOneOf(token.NEWLINE, token.EOF) {
 		epos := p.file.Position(p.pos)
@@ -890,7 +887,7 @@ func (p *parser) consumeNewlineOrComment() {
 		if p.currentTokenIs(token.NEWLINE) {
 			// consume the newline
 			p.nextToken()
-		} else if p.currentTokenIs(token.HASH) {
+		} else if p.currentTokenIs(token.COMMENT) {
 			// consume the comment
 			p.nextToken()
 			if p.currentTokenIs(token.STRING) {
@@ -1086,11 +1083,8 @@ func (p *parser) parseIfExpression() ast.Expression {
 	}
 
 	// there may be a comment here. gobble it up
-	if p.peekTokenIs(token.HASH) {
-		p.accept(token.HASH)
-		if p.peekTokenIs(token.STRING) {
-			p.accept(token.STRING)
-		}
+	if p.peekTokenIs(token.COMMENT) {
+		p.accept(token.COMMENT)
 	}
 
 	if !p.peekTokenOneOf(token.NEWLINE, token.SEMICOLON) {

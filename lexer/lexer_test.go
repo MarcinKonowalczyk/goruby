@@ -440,14 +440,12 @@ func TestLex(t *testing.T) {
 			desc: "comments",
 			lines: `
 				# just comment
-				# just comment
+				#
 			`,
 			exp: []expected{
-				expect("HASH", "#"),
-				expect("STRING", " just comment"),
+				expect("COMMENT", "# just comment"),
 				NL,
-				expect("HASH", "#"),
-				expect("STRING", " just comment"),
+				expect("COMMENT", "#"),
 			},
 		},
 		{

@@ -61,11 +61,10 @@ const (
 
 	// Delimiters
 
-	NEWLINE // \n
-	// WHITESPACE // \s
+	NEWLINE   // \n
 	COMMA     // ,
 	SEMICOLON // ;
-	HASH      // #
+	COMMENT   // # ...
 
 	CAPTURE   // &
 	DOT       // .
@@ -186,11 +185,11 @@ var type_strings = [...]string{
 	SPACESHIP: "SPACESHIP",
 	LSHIFT:    "LSHIFT",
 
-	NEWLINE: "NEWLINE",
-	// WHITESPACE: "WHITESPACE",
+	NEWLINE:   "NEWLINE",
 	COMMA:     "COMMA",
 	SEMICOLON: "SEMICOLON",
-	HASH:      "HASH",
+	COMMENT:   "COMMENT",
+
 	DOT:       "DOT",
 	DDOT:      "DDOT",
 	DDDOT:     "DDDOT",
@@ -279,7 +278,7 @@ var type_reprs = [...]string{
 	NEWLINE:   "\\n",
 	COMMA:     ",",
 	SEMICOLON: ";",
-	HASH:      "#",
+	COMMENT:   "# ...",
 
 	DOT:       ".",
 	DDOT:      "..",

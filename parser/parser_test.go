@@ -791,15 +791,15 @@ func TestParseComment(t *testing.T) {
 		}{
 			{
 				input:        "# a comment\n",
-				commentValue: " a comment",
+				commentValue: "# a comment",
 			},
 			{
 				input:        "# a comment",
-				commentValue: " a comment",
+				commentValue: "# a comment",
 			},
 			{
 				input:        "# a comment;",
-				commentValue: " a comment;",
+				commentValue: "# a comment;",
 			},
 		}
 
@@ -833,15 +833,15 @@ func TestParseComment(t *testing.T) {
 		}{
 			{
 				input:        "foo # a comment\n",
-				commentValue: " a comment",
+				commentValue: "# a comment",
 			},
 			{
 				input:        "foo # a comment",
-				commentValue: " a comment",
+				commentValue: "# a comment",
 			},
 			{
 				input:        "foo # a comment;",
-				commentValue: " a comment;",
+				commentValue: "# a comment;",
 			},
 		}
 
