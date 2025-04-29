@@ -450,27 +450,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 
 	case *ast.ConditionalExpression:
 		return evalConditionalExpression(node, env)
-	case *ast.ScopedIdentifier:
-		self, _ := env.Get("self")
-		outer, ok := env.Get(node.Outer.Value)
-		if !ok {
-			return nil, errors.Wrap(
-				object.NewUndefinedLocalVariableOrMethodNameError(self, node.Outer.Value),
-				"eval scope outer",
-			)
-		}
-		outerEnv, ok := outer.(object.Environment)
-		if !ok {
-			return nil, errors.Wrap(
-				object.NewUndefinedLocalVariableOrMethodNameError(self, node.Outer.Value),
-				"eval scope outer",
-			)
-		}
-		inner, err := Eval(node.Inner, outerEnv)
-		if err != nil {
-			return nil, errors.WithMessage(err, "eval scope inner")
-		}
-		return inner, nil
 	case *ast.ExceptionHandlingBlock:
 		bodyReturn, err := Eval(node.TryBody, env)
 		if err == nil {

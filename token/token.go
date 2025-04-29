@@ -79,9 +79,6 @@ const (
 	SLBRACKET // _[
 	RBRACKET  // ]
 
-	SCOPE // ::
-	AT    // @
-
 	QMARK  // ?
 	SQMARK // _?
 	SYMBEG // :
@@ -203,10 +200,8 @@ var type_strings = [...]string{
 	RBRACKET:  "RBRACKET",
 	PIPE:      "PIPE",
 
-	SCOPE:        "SCOPE",
 	HASHROCKET:   "HASHROCKET",
 	LAMBDAROCKET: "LAMBDAROCKET",
-	AT:           "AT",
 
 	QMARK:  "QMARK",
 	SQMARK: "SQMARK",
@@ -293,10 +288,8 @@ var type_reprs = [...]string{
 	RBRACKET:  "]",
 	PIPE:      "|",
 
-	SCOPE:        "::",
 	HASHROCKET:   "=>",
 	LAMBDAROCKET: "->",
-	AT:           "@",
 
 	QMARK:  "?",
 	SQMARK: "_?",

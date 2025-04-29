@@ -489,27 +489,19 @@ func TestLex(t *testing.T) {
 		{
 			desc: "misc",
 			lines: `
-				A::B
 				=>
 				->
 				__FILE__
-				@
 				self
 				nil
 				yield
 			`,
 			exp: []expected{
-				expect("CONST", "A"),
-				expect("SCOPE", "::"),
-				expect("CONST", "B"),
-				NL,
 				expect("HASHROCKET", "=>"),
 				NL,
 				expect("LAMBDAROCKET", "->"),
 				NL,
 				expect("KEYWORD__FILE__", "__FILE__"),
-				NL,
-				expect("AT", "@"),
 				NL,
 				expect("SELF", "self"),
 				NL,

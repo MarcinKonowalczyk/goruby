@@ -276,7 +276,7 @@ To run the command as one off run `go run main.go`.
 	- [ ] ensure
 	- [ ] retry
 - [x] constants
-- [x] scope operator `::`
+- [ ] scope operator `::`
 - [ ] classes
 	- [x] class objects
 	- [x] class Class

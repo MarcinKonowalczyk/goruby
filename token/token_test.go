@@ -93,9 +93,6 @@ func TestTypeSting(t *testing.T) {
 		{tk: SLBRACKET, str: "SLBRACKET", repr: "_["},
 		{tk: RBRACKET, str: "RBRACKET", repr: "]"},
 		//
-		{tk: SCOPE, str: "SCOPE", repr: "::"},
-		{tk: AT, str: "AT", repr: "@"},
-		//
 		{tk: QMARK, str: "QMARK", repr: "?"},
 		{tk: SQMARK, str: "SQMARK", repr: "_?"},
 		{tk: SYMBEG, str: "SYMBEG", repr: ":"},

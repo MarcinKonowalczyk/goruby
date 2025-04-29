@@ -337,28 +337,6 @@ var (
 	_ Expression = &Global{}
 )
 
-// ScopedIdentifier represents a scoped Constant declaration
-type ScopedIdentifier struct {
-	Outer *Identifier
-	Inner Expression
-}
-
-func (i *ScopedIdentifier) node()           {}
-func (i *ScopedIdentifier) expressionNode() {}
-
-func (i *ScopedIdentifier) String() string {
-	var out strings.Builder
-	out.WriteString(i.Outer.String())
-	out.WriteString("::")
-	out.WriteString(i.Inner.String())
-	return out.String()
-}
-
-var (
-	_ Node       = &ScopedIdentifier{}
-	_ Expression = &ScopedIdentifier{}
-)
-
 // IntegerLiteral represents an integer in the AST
 type IntegerLiteral struct {
 	Value int64
