@@ -25,11 +25,6 @@ type Expression interface {
 	expressionNode()
 }
 
-type Literal interface {
-	Node
-	literalNode()
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
 // A Program node is the root node within the AST.
@@ -230,7 +225,6 @@ type InstanceVariable struct {
 }
 
 func (i *InstanceVariable) node()           {}
-func (i *InstanceVariable) literalNode()    {}
 func (i *InstanceVariable) expressionNode() {}
 
 func (i *InstanceVariable) String() string {
@@ -242,7 +236,6 @@ func (i *InstanceVariable) String() string {
 var (
 	_ Node       = &InstanceVariable{}
 	_ Expression = &InstanceVariable{}
-	_ Literal    = &InstanceVariable{}
 )
 
 // MultiAssignment represents multiple variables on the left-hand side
@@ -252,7 +245,6 @@ type MultiAssignment struct {
 }
 
 func (m *MultiAssignment) node()           {}
-func (m *MultiAssignment) literalNode()    {}
 func (m *MultiAssignment) expressionNode() {}
 
 func (m *MultiAssignment) String() string {
@@ -274,7 +266,6 @@ func (m *MultiAssignment) String() string {
 var (
 	_ Node       = &MultiAssignment{}
 	_ Expression = &MultiAssignment{}
-	_ Literal    = &MultiAssignment{}
 )
 
 // Self represents self in the current context in the program
@@ -282,14 +273,12 @@ type Self struct{}
 
 func (s *Self) node()           {}
 func (s *Self) expressionNode() {}
-func (s *Self) literalNode()    {}
 
 func (s *Self) String() string { return "self" }
 
 var (
 	_ Node       = &Self{}
 	_ Expression = &Self{}
-	_ Literal    = &Self{}
 )
 
 // YieldExpression represents self in the current context in the program
@@ -326,13 +315,11 @@ type Keyword__FILE__ struct {
 
 func (f *Keyword__FILE__) node()           {}
 func (f *Keyword__FILE__) expressionNode() {}
-func (f *Keyword__FILE__) literalNode()    {}
 func (f *Keyword__FILE__) String() string  { return "__FILE__" }
 
 var (
 	_ Node       = &Keyword__FILE__{}
 	_ Expression = &Keyword__FILE__{}
-	_ Literal    = &Keyword__FILE__{}
 )
 
 // An Identifier represents an identifier in the program
@@ -343,14 +330,12 @@ type Identifier struct {
 
 func (i *Identifier) node()           {}
 func (i *Identifier) expressionNode() {}
-func (i *Identifier) literalNode()    {}
 
 func (i *Identifier) String() string { return i.Value }
 
 var (
 	_ Node       = &Identifier{}
 	_ Expression = &Identifier{}
-	_ Literal    = &Identifier{}
 )
 
 // IsConstant returns true if the Identifier represents a Constant, false otherwise
@@ -363,14 +348,12 @@ type Global struct {
 
 func (g *Global) node()           {}
 func (g *Global) expressionNode() {}
-func (g *Global) literalNode()    {}
 
 func (g *Global) String() string { return g.Value }
 
 var (
 	_ Node       = &Global{}
 	_ Expression = &Global{}
-	_ Literal    = &Global{}
 )
 
 // ScopedIdentifier represents a scoped Constant declaration
@@ -381,7 +364,6 @@ type ScopedIdentifier struct {
 
 func (i *ScopedIdentifier) node()           {}
 func (i *ScopedIdentifier) expressionNode() {}
-func (i *ScopedIdentifier) literalNode()    {}
 
 func (i *ScopedIdentifier) String() string {
 	var out strings.Builder
@@ -394,7 +376,6 @@ func (i *ScopedIdentifier) String() string {
 var (
 	_ Node       = &ScopedIdentifier{}
 	_ Expression = &ScopedIdentifier{}
-	_ Literal    = &ScopedIdentifier{}
 )
 
 // IntegerLiteral represents an integer in the AST
@@ -404,13 +385,11 @@ type IntegerLiteral struct {
 
 func (il *IntegerLiteral) node()           {}
 func (il *IntegerLiteral) expressionNode() {}
-func (il *IntegerLiteral) literalNode()    {}
 func (il *IntegerLiteral) String() string  { return fmt.Sprintf("%d", il.Value) }
 
 var (
 	_ Node       = &IntegerLiteral{}
 	_ Expression = &IntegerLiteral{}
-	_ Literal    = &IntegerLiteral{}
 )
 
 // FloatLiteral represents a float in the AST
@@ -420,14 +399,12 @@ type FloatLiteral struct {
 
 func (fl *FloatLiteral) node()           {}
 func (fl *FloatLiteral) expressionNode() {}
-func (fl *FloatLiteral) literalNode()    {}
 
 func (fl *FloatLiteral) String() string { return fmt.Sprintf("%f", fl.Value) }
 
 var (
 	_ Node       = &FloatLiteral{}
 	_ Expression = &FloatLiteral{}
-	_ Literal    = &FloatLiteral{}
 )
 
 // Nil represents the 'nil' keyword
@@ -435,14 +412,12 @@ type Nil struct{}
 
 func (n *Nil) node()           {}
 func (n *Nil) expressionNode() {}
-func (n *Nil) literalNode()    {}
 
 func (n *Nil) String() string { return "nil" }
 
 var (
 	_ Node       = &Nil{}
 	_ Expression = &Nil{}
-	_ Literal    = &Nil{}
 )
 
 // Boolean represents a boolean in the AST
@@ -452,14 +427,12 @@ type Boolean struct {
 
 func (b *Boolean) node()           {}
 func (b *Boolean) expressionNode() {}
-func (b *Boolean) literalNode()    {}
 
 func (b *Boolean) String() string { return fmt.Sprintf("%t", b.Value) }
 
 var (
 	_ Node       = &Boolean{}
 	_ Expression = &Boolean{}
-	_ Literal    = &Boolean{}
 )
 
 // StringLiteral represents a double quoted string in the AST
@@ -469,14 +442,12 @@ type StringLiteral struct {
 
 func (sl *StringLiteral) node()           {}
 func (sl *StringLiteral) expressionNode() {}
-func (sl *StringLiteral) literalNode()    {}
 
 func (sl *StringLiteral) String() string { return sl.Value }
 
 var (
 	_ Node       = &StringLiteral{}
 	_ Expression = &StringLiteral{}
-	_ Literal    = &StringLiteral{}
 )
 
 // Comment represents a double quoted string in the AST
@@ -486,14 +457,12 @@ type Comment struct {
 
 func (c *Comment) node()          {}
 func (c *Comment) statementNode() {}
-func (c *Comment) literalNode()   {}
 
 func (c *Comment) String() string { return "#" + c.Value }
 
 var (
 	_ Node      = &Comment{}
 	_ Statement = &Comment{}
-	_ Literal   = &Comment{}
 )
 
 // SymbolLiteral represents a symbol within the AST
@@ -503,14 +472,12 @@ type SymbolLiteral struct {
 
 func (s *SymbolLiteral) node()           {}
 func (s *SymbolLiteral) expressionNode() {}
-func (s *SymbolLiteral) literalNode()    {}
 
 func (s *SymbolLiteral) String() string { return ":" + s.Value.String() }
 
 var (
 	_ Node       = &SymbolLiteral{}
 	_ Expression = &SymbolLiteral{}
-	_ Literal    = &SymbolLiteral{}
 )
 
 // ConditionalExpression represents an if expression within the AST
@@ -576,7 +543,6 @@ type ExpressionList []Expression
 
 func (el ExpressionList) node()           {}
 func (el ExpressionList) expressionNode() {}
-func (el ExpressionList) literalNode()    {}
 
 func (el ExpressionList) String() string {
 	var out strings.Builder
@@ -591,7 +557,6 @@ func (el ExpressionList) String() string {
 var (
 	_ Node       = ExpressionList{}
 	_ Expression = ExpressionList{}
-	_ Literal    = ExpressionList{}
 )
 
 // ArrayLiteral represents an Array literal within the AST
@@ -601,7 +566,6 @@ type ArrayLiteral struct {
 
 func (al *ArrayLiteral) node()           {}
 func (al *ArrayLiteral) expressionNode() {}
-func (al *ArrayLiteral) literalNode()    {}
 
 func (al *ArrayLiteral) String() string {
 	var out strings.Builder
@@ -618,7 +582,6 @@ func (al *ArrayLiteral) String() string {
 var (
 	_ Node       = &ArrayLiteral{}
 	_ Expression = &ArrayLiteral{}
-	_ Literal    = &ArrayLiteral{}
 )
 
 // HashLiteral represents an Hash literal within the AST
@@ -628,7 +591,6 @@ type HashLiteral struct {
 
 func (hl *HashLiteral) node()           {}
 func (hl *HashLiteral) expressionNode() {}
-func (hl *HashLiteral) literalNode()    {}
 
 func (hl *HashLiteral) String() string {
 	var out strings.Builder
@@ -645,7 +607,6 @@ func (hl *HashLiteral) String() string {
 var (
 	_ Node       = &HashLiteral{}
 	_ Expression = &HashLiteral{}
-	_ Literal    = &HashLiteral{}
 )
 
 // RangeLiteral represents a range literal within the AST
@@ -657,7 +618,6 @@ type RangeLiteral struct {
 
 func (rl *RangeLiteral) node()           {}
 func (rl *RangeLiteral) expressionNode() {}
-func (rl *RangeLiteral) literalNode()    {}
 
 // String returns the string representation of the range
 func (rl *RangeLiteral) String() string {
@@ -677,7 +637,6 @@ func (rl *RangeLiteral) String() string {
 var (
 	_ Node       = &RangeLiteral{}
 	_ Expression = &RangeLiteral{}
-	_ Literal    = &RangeLiteral{}
 )
 
 // A BlockCapture represents a function scoped variable capturing a block
@@ -687,7 +646,6 @@ type BlockCapture struct {
 
 func (b *BlockCapture) node()           {}
 func (b *BlockCapture) expressionNode() {}
-func (b *BlockCapture) literalNode()    {}
 
 func (b *BlockCapture) String() string {
 	return "&" + b.Name.Value
@@ -696,7 +654,6 @@ func (b *BlockCapture) String() string {
 var (
 	_ Node       = &BlockCapture{}
 	_ Expression = &BlockCapture{}
-	_ Literal    = &BlockCapture{}
 )
 
 // A FunctionLiteral represents a function definition in the AST
@@ -711,7 +668,6 @@ type FunctionLiteral struct {
 
 func (fl *FunctionLiteral) node()           {}
 func (fl *FunctionLiteral) expressionNode() {}
-func (fl *FunctionLiteral) literalNode()    {}
 
 func (fl *FunctionLiteral) String() string {
 	var out strings.Builder
@@ -744,7 +700,6 @@ func (fl *FunctionLiteral) String() string {
 var (
 	_ Node       = &FunctionLiteral{}
 	_ Expression = &FunctionLiteral{}
-	_ Literal    = &FunctionLiteral{}
 )
 
 // A FunctionParameter represents a parameter in a function literal
@@ -783,7 +738,6 @@ type ProcedureLiteral struct {
 
 func (pl *ProcedureLiteral) node()           {}
 func (pl *ProcedureLiteral) expressionNode() {}
-func (pl *ProcedureLiteral) literalNode()    {}
 
 // String returns the string representation of the procedure
 func (pl *ProcedureLiteral) String() string {
@@ -804,7 +758,6 @@ func (pl *ProcedureLiteral) String() string {
 var (
 	_ Node       = &ProcedureLiteral{}
 	_ Expression = &ProcedureLiteral{}
-	_ Literal    = &ProcedureLiteral{}
 )
 
 // A Splat represents a splat operator in the AST
@@ -1022,8 +975,7 @@ func (oe *InfixExpression) String() string {
 func encloseInParensIfNeeded(expr Expression) string {
 	val := expr.String()
 	hasParens := strings.HasPrefix(val, "(") && strings.HasSuffix(val, ")")
-	_, isLiteral := expr.(Literal)
-	if !isLiteral && !hasParens {
+	if !hasParens {
 		val = "(" + val + ")"
 	}
 	return val
