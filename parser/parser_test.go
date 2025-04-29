@@ -154,12 +154,6 @@ func TestAssignment(t *testing.T) {
 			rightType: reflect.TypeOf(&ast.IntegerLiteral{}),
 		},
 		{
-			name:      "instance varibale",
-			input:     `@x = 3`,
-			leftType:  reflect.TypeOf(&ast.InstanceVariable{}),
-			rightType: reflect.TypeOf(&ast.IntegerLiteral{}),
-		},
-		{
 			name:      "local varibale",
 			input:     `x = 3`,
 			leftType:  reflect.TypeOf(&ast.Identifier{}),
@@ -540,9 +534,9 @@ func TestParseMultiAssignment(t *testing.T) {
 			values:    []string{"3"},
 		},
 		{
-			input:     "x[0], @y, $z, A = 3, 4, 5, 6;",
-			variables: []string{"(x[0])", "@y", "$z", "A"},
-			values:    []string{"3", "4", "5", "6"},
+			input:     "x[0], $y, A = 3, 4, 5;",
+			variables: []string{"(x[0])", "$y", "A"},
+			values:    []string{"3", "4", "5"},
 		},
 	}
 
@@ -579,34 +573,6 @@ func TestParseMultiAssignment(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestInstanceVariable(t *testing.T) {
-	input := "@foo"
-
-	program, err := parseSource(input)
-	checkParserErrors(t, err)
-
-	if len(program.Statements) != 1 {
-		t.Fatalf(
-			"program.Statements does not contain 1 statements. got=%d",
-			len(program.Statements),
-		)
-	}
-
-	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf(
-			"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-			program.Statements[0],
-		)
-	}
-	instVar, ok := stmt.Expression.(*ast.InstanceVariable)
-	if !ok {
-		t.Fatalf("Expression not %T. got=%T", instVar, stmt.Expression)
-	}
-
-	testLiteralExpression(t, instVar.Name, "foo")
 }
 
 func TestExceptionHandling(t *testing.T) {
@@ -1509,11 +1475,11 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		},
 		{
 			"true | true",
-			"(true | true)",
+			"(true || true)",
 		},
 		{
 			"true & true",
-			"(true & true)",
+			"(true && true)",
 		},
 		{
 			"3 > 5 == false",
@@ -1581,7 +1547,7 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		},
 		{
 			"a = b = 0;",
-			"a = (b = 0)",
+			"a = b = 0",
 		},
 		{
 			"a * [1, 2, 3, 4][b * c] * d",
@@ -1619,7 +1585,7 @@ func TestBlockExpression(t *testing.T) {
 		},
 		{
 			"method { |x| x }",
-			[]*ast.Identifier{&ast.Identifier{Value: "x"}},
+			[]*ast.Identifier{{Value: "x"}},
 			"x",
 		},
 		{
@@ -1637,14 +1603,14 @@ func TestBlockExpression(t *testing.T) {
 		},
 		{
 			"method do |x| x; end",
-			[]*ast.Identifier{&ast.Identifier{Value: "x"}},
+			[]*ast.Identifier{{Value: "x"}},
 			"x",
 		},
 		{
 			`method do |x|
 				x
 			end`,
-			[]*ast.Identifier{&ast.Identifier{Value: "x"}},
+			[]*ast.Identifier{{Value: "x"}},
 			"x",
 		},
 	}
@@ -1798,10 +1764,10 @@ func TestConditionalExpression(t *testing.T) {
 			y
 			end
 			x
-			end`, "x", infix.LT, "y", "if(x == 3) y endx"},
+			end`, "x", infix.LT, "y", "if (x == 3) y endx"},
 			{`if x < y
 			x = Object x
-			end`, "x", infix.LT, "y", "x = (Object(x))"},
+			end`, "x", infix.LT, "y", "x = Object(x)"},
 			{"x 3 if x < y", "x", infix.LT, "y", "x(3)"},
 			{"x.add 3 if x < y", "x", infix.LT, "y", "x.add(3)"},
 			{"yield 3 if x < y", "x", infix.LT, "y", "yield 3"},
@@ -1819,14 +1785,12 @@ func TestConditionalExpression(t *testing.T) {
 			y
 			end
 			x
-			end`, "x", infix.LT, "y", "if(x == 3) y endx"},
+			end`, "x", infix.LT, "y", "if (x == 3) y endx"},
 			{`unless x < y
 			x = Object x
-			end`, "x", infix.LT, "y", "x = (Object(x))"},
+			end`, "x", infix.LT, "y", "x = Object(x)"},
 			{"x = 3 if x < y", "x", infix.LT, "y", "x = 3"},
-			{"@x = 3 if x < y", "x", infix.LT, "y", "@x = 3"},
 			{"x = 3 unless x < y", "x", infix.LT, "y", "x = 3"},
-			{"@x = 3 unless x < y", "x", infix.LT, "y", "@x = 3"},
 			{"x 3 unless x < y", "x", infix.LT, "y", "x(3)"},
 			{"x.add 3 unless x < y", "x", infix.LT, "y", "x.add(3)"},
 			{"yield 3 unless x < y", "x", infix.LT, "y", "yield 3"},

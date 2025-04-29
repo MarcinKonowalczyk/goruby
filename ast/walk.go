@@ -252,9 +252,6 @@ func Walk(v Visitor, node Node) {
 	case *ExpressionStatement:
 		Walk(v, n.Expression)
 
-	case *InstanceVariable:
-		Walk(v, n.Name)
-
 	case *Assignment:
 		Walk(v, n.Left)
 		Walk(v, n.Right)

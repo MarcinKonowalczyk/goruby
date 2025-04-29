@@ -250,3 +250,14 @@
 # puts bar 'a'
 puts 'a'
 puts [1,2,3]
+
+if true || false 
+    puts("true")
+else
+    puts("false")
+end
+
+a = (b = 99)
+
+puts("a:", a)
+puts("b:", b)

@@ -151,7 +151,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.prefixParseFns = make(map[token.Type]prefixParseFn)
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	p.registerPrefix(token.CONST, p.parseIdentifier)
-	p.registerPrefix(token.AT, p.parseInstanceVariable)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
 	p.registerPrefix(token.FLOAT, p.parseFloatLiteral)
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
@@ -688,7 +687,6 @@ func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
 	case *ast.Identifier:
 	case *ast.Global:
 	case *ast.IndexExpression:
-	case *ast.InstanceVariable:
 	case ast.ExpressionList:
 	case *ast.Keyword__FILE__:
 		epos := p.file.Position(p.pos)
@@ -727,18 +725,6 @@ func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
 	}
 
 	return cond
-}
-
-func (p *parser) parseInstanceVariable() ast.Expression {
-	if p.trace {
-		defer un(trace(p, "parseInstanceVariable"))
-	}
-	instanceVariable := &ast.InstanceVariable{}
-	if !p.accept(token.IDENT) {
-		return nil
-	}
-	instanceVariable.Name = p.parseIdentifier().(*ast.Identifier)
-	return instanceVariable
 }
 
 func (p *parser) parseNilLiteral() ast.Expression {

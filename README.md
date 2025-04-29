@@ -280,7 +280,7 @@ To run the command as one off run `go run main.go`.
 - [ ] classes
 	- [x] class objects
 	- [x] class Class
-	- [x] instance variables
+	- [ ] instance variables
 	- [ ] class variables
 	- [x] class methods
 	- [x] instance methods

@@ -87,23 +87,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		return self, nil
 	case (*ast.Keyword__FILE__):
 		return &object.String{Value: node.Filename}, nil
-	case (*ast.InstanceVariable):
-		self, _ := env.Get("self")
-		selfObj := self.(*object.Self)
-		selfAsEnv, ok := selfObj.RubyObject.(object.Environment)
-		if !ok {
-			return nil, errors.WithStack(
-				object.NewSyntaxError(
-					fmt.Errorf("instance variable not allowed for %s", selfObj.Name),
-				),
-			)
-		}
-
-		val, ok := selfAsEnv.Get(node.String())
-		if !ok {
-			return object.NIL, nil
-		}
-		return val, nil
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
 	case *ast.Global:
@@ -285,20 +268,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 				return nil, errors.WithMessage(err, "eval left hand Assignment side: eval right side of IndexExpression")
 			}
 			return evalIndexExpressionAssignment(indexLeft, index, expandToArrayIfNeeded(right))
-		case *ast.InstanceVariable:
-			self, _ := env.Get("self")
-			selfObj := self.(*object.Self)
-			selfAsEnv, ok := selfObj.RubyObject.(object.Environment)
-			if !ok {
-				return nil, errors.Wrap(
-					object.NewSyntaxError(fmt.Errorf("instance variable not allowed for %s", selfObj.Name)),
-					"eval left hand Assignment side",
-				)
-			}
-
-			right = expandToArrayIfNeeded(right)
-			selfAsEnv.Set(left.String(), right)
-			return right, nil
 		case *ast.Identifier:
 			right = expandToArrayIfNeeded(right)
 			env.Set(left.Value, right)
@@ -324,20 +293,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 				}
 			}
 			for i, exp := range left {
-				if _, ok := exp.(*ast.InstanceVariable); ok {
-					self, _ := env.Get("self")
-					selfObj := self.(*object.Self)
-					selfAsEnv, ok := selfObj.RubyObject.(object.Environment)
-					if !ok {
-						return nil, errors.Wrap(
-							object.NewSyntaxError(fmt.Errorf("instance variable not allowed for %s", selfObj.Name)),
-							"eval left hand Assignment side",
-						)
-					}
-
-					selfAsEnv.Set(exp.String(), values[i])
-					continue
-				}
 				if indexExp, ok := exp.(*ast.IndexExpression); ok {
 					indexLeft, err := Eval(indexExp.Left, env)
 					if err != nil {

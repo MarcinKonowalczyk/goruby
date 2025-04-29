@@ -496,35 +496,6 @@ func TestScopedIdentifierExpression(t *testing.T) {
 	}
 }
 
-func TestInstanceVariable(t *testing.T) {
-	tests := []struct {
-		input  string
-		output object.RubyObject
-	}{
-		{
-			input: `
-class X
-	@foo
-end`,
-			output: object.NIL,
-		},
-		{
-			input:  "@foo",
-			output: object.NIL,
-		},
-	}
-
-	for _, tt := range tests {
-		evaluated, err := testEval(tt.input, object.NewMainEnvironment())
-		checkError(t, err)
-
-		if evaluated != tt.output {
-			t.Logf("Expected result to equal %v, got %v\n", tt.output, evaluated)
-			t.Fail()
-		}
-	}
-}
-
 func TestAssignment(t *testing.T) {
 	t.Run("assign to hash", func(t *testing.T) {
 		tests := []struct {
@@ -595,10 +566,6 @@ func TestAssignment(t *testing.T) {
 				`foo = 5, 4; foo`,
 				[]string{"5", "4"},
 			},
-			{
-				`@foo = 5, 6; @foo`,
-				[]string{"5", "6"},
-			},
 		}
 
 		for _, tt := range tests {
@@ -606,28 +573,6 @@ func TestAssignment(t *testing.T) {
 			checkError(t, err)
 
 			testObject(t, evaluated, tt.expected)
-		}
-	})
-	t.Run("assign to InstanceVariable", func(t *testing.T) {
-		tests := []struct {
-			input    string
-			expected int64
-		}{
-			{
-				`@foo = 5`,
-				5,
-			},
-			{
-				`@foo = 5; x = @foo; x = 3; x`,
-				3,
-			},
-		}
-
-		for _, tt := range tests {
-			evaluated, err := testEval(tt.input, object.NewMainEnvironment())
-			checkError(t, err)
-
-			testIntegerObject(t, evaluated, tt.expected)
 		}
 	})
 	t.Run("assign to array", func(t *testing.T) {
@@ -729,15 +674,6 @@ func TestMultiAssignment(t *testing.T) {
 				&object.Integer{Value: 1},
 				object.NIL,
 				object.NIL,
-			}},
-		},
-		{
-			name:  "lhs with array index and instance var",
-			input: "x = []; x[0], y, @z = 1, 2, 3; [x[0], y, @z]",
-			output: &object.Array{Elements: []object.RubyObject{
-				&object.Integer{Value: 1},
-				&object.Integer{Value: 2},
-				&object.Integer{Value: 3},
 			}},
 		},
 		{

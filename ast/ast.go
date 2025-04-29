@@ -219,25 +219,6 @@ var (
 	_ Expression = &Assignment{}
 )
 
-// An InstanceVariable represents an instance variable in the AST
-type InstanceVariable struct {
-	Name *Identifier
-}
-
-func (i *InstanceVariable) node()           {}
-func (i *InstanceVariable) expressionNode() {}
-
-func (i *InstanceVariable) String() string {
-	var out strings.Builder
-	out.WriteString(i.Name.String())
-	return out.String()
-}
-
-var (
-	_ Node       = &InstanceVariable{}
-	_ Expression = &InstanceVariable{}
-)
-
 // MultiAssignment represents multiple variables on the left-hand side
 type MultiAssignment struct {
 	Variables []*Identifier
