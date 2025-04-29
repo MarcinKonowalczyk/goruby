@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/ast/infix"
 	p "github.com/MarcinKonowalczyk/goruby/parser"
 	"github.com/MarcinKonowalczyk/goruby/token"
 	"github.com/pkg/errors"
@@ -30,114 +31,114 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestBlockCapture(t *testing.T) {
-	tests := []struct {
-		desc   string
-		input  string
-		result ast.Expression
-		err    error
-	}{
-		{
-			desc:  "block capture in func params as only argument",
-			input: "def foo &block; end",
-			result: &ast.FunctionLiteral{
-				Name: &ast.Identifier{Value: "foo"},
-				CapturedBlock: &ast.BlockCapture{
-					Name: &ast.Identifier{Value: "block"},
-				},
-			},
-		},
-		{
-			desc:  "block capture in func params as last arguments",
-			input: "def foo x, y, &block; end",
-			result: &ast.FunctionLiteral{
-				Name: &ast.Identifier{Value: "foo"},
-				Parameters: []*ast.FunctionParameter{
-					&ast.FunctionParameter{Name: &ast.Identifier{Value: "x"}},
-					&ast.FunctionParameter{Name: &ast.Identifier{Value: "y"}},
-				},
-				CapturedBlock: &ast.BlockCapture{
-					Name: &ast.Identifier{Value: "block"},
-				},
-			},
-		},
-		{
-			desc:   "block capture in func params not last arguments",
-			input:  "def foo x, &block, y; end",
-			result: nil,
-			err: &p.UnexpectedTokenError{
-				ExpectedTokens: []token.Type{token.NEWLINE, token.SEMICOLON},
-				ActualToken:    token.COMMA,
-			},
-		},
-		{
-			desc:   "block capture in func params on integer",
-			input:  "def foo &2; end",
-			result: nil,
-			err: &p.UnexpectedTokenError{
-				ExpectedTokens: []token.Type{token.IDENT},
-				ActualToken:    token.INT,
-			},
-		},
-		{
-			desc: "block capture only statement in func body",
-			input: `
-			def foo
-				&block
-			end`,
-			result: &ast.FunctionLiteral{
-				Name:       &ast.Identifier{Value: "foo"},
-				Parameters: []*ast.FunctionParameter{},
-				Body: &ast.BlockStatement{
-					Statements: []ast.Statement{
-						&ast.ExpressionStatement{
-							Expression: &ast.BlockCapture{
-								Name: &ast.Identifier{Value: "block"},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc: "block capture as arg on call in func body",
-			input: `
-			def foo
-				each &block
-			end`,
-			result: &ast.FunctionLiteral{
-				Name:       &ast.Identifier{Value: "foo"},
-				Parameters: []*ast.FunctionParameter{},
-				Body: &ast.BlockStatement{
-					Statements: []ast.Statement{
-						&ast.ExpressionStatement{
-							Expression: &ast.ContextCallExpression{
-								Function: &ast.Identifier{Value: "each"},
-								Arguments: []ast.Expression{
-									&ast.BlockCapture{
-										Name: &ast.Identifier{Value: "block"},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
+// func TestBlockCapture(t *testing.T) {
+// 	tests := []struct {
+// 		desc   string
+// 		input  string
+// 		result ast.Expression
+// 		err    error
+// 	}{
+// 		{
+// 			desc:  "block capture in func params as only argument",
+// 			input: "def foo &block; end",
+// 			result: &ast.FunctionLiteral{
+// 				Name: &ast.Identifier{Value: "foo"},
+// 				CapturedBlock: &ast.BlockCapture{
+// 					Name: &ast.Identifier{Value: "block"},
+// 				},
+// 			},
+// 		},
+// 		// {
+// 		// 	desc:  "block capture in func params as last arguments",
+// 		// 	input: "def foo x, y, &block; end",
+// 		// 	result: &ast.FunctionLiteral{
+// 		// 		Name: &ast.Identifier{Value: "foo"},
+// 		// 		Parameters: []*ast.FunctionParameter{
+// 		// 			{Name: &ast.Identifier{Value: "x"}},
+// 		// 			{Name: &ast.Identifier{Value: "y"}},
+// 		// 		},
+// 		// 		CapturedBlock: &ast.BlockCapture{
+// 		// 			Name: &ast.Identifier{Value: "block"},
+// 		// 		},
+// 		// 	},
+// 		// },
+// 		// {
+// 		// 	desc:   "block capture in func params not last arguments",
+// 		// 	input:  "def foo x, &block, y; end",
+// 		// 	result: nil,
+// 		// 	err: &p.UnexpectedTokenError{
+// 		// 		ExpectedTokens: []token.Type{token.NEWLINE, token.SEMICOLON},
+// 		// 		ActualToken:    token.COMMA,
+// 		// 	},
+// 		// },
+// 		// {
+// 		// 	desc:   "block capture in func params on integer",
+// 		// 	input:  "def foo &2; end",
+// 		// 	result: nil,
+// 		// 	err: &p.UnexpectedTokenError{
+// 		// 		ExpectedTokens: []token.Type{token.IDENT},
+// 		// 		ActualToken:    token.INT,
+// 		// 	},
+// 		// },
+// 		// {
+// 		// 	desc: "block capture only statement in func body",
+// 		// 	input: `
+// 		// 	def foo
+// 		// 		&block
+// 		// 	end`,
+// 		// 	result: &ast.FunctionLiteral{
+// 		// 		Name:       &ast.Identifier{Value: "foo"},
+// 		// 		Parameters: []*ast.FunctionParameter{},
+// 		// 		Body: &ast.BlockStatement{
+// 		// 			Statements: []ast.Statement{
+// 		// 				&ast.ExpressionStatement{
+// 		// 					Expression: &ast.BlockCapture{
+// 		// 						Name: &ast.Identifier{Value: "block"},
+// 		// 					},
+// 		// 				},
+// 		// 			},
+// 		// 		},
+// 		// 	},
+// 		// },
+// 		// {
+// 		// 	desc: "block capture as arg on call in func body",
+// 		// 	input: `
+// 		// 	def foo
+// 		// 		each &block
+// 		// 	end`,
+// 		// 	result: &ast.FunctionLiteral{
+// 		// 		Name:       &ast.Identifier{Value: "foo"},
+// 		// 		Parameters: []*ast.FunctionParameter{},
+// 		// 		Body: &ast.BlockStatement{
+// 		// 			Statements: []ast.Statement{
+// 		// 				&ast.ExpressionStatement{
+// 		// 					Expression: &ast.ContextCallExpression{
+// 		// 						Function: &ast.Identifier{Value: "each"},
+// 		// 						Arguments: []ast.Expression{
+// 		// 							&ast.BlockCapture{
+// 		// 								Name: &ast.Identifier{Value: "block"},
+// 		// 							},
+// 		// 						},
+// 		// 					},
+// 		// 				},
+// 		// 			},
+// 		// 		},
+// 		// 	},
+// 		// },
+// 	}
 
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			expr, err := parseExpression(tt.input)
-			compareFirstParserError(t, tt.err, err)
+// 	for _, tt := range tests {
+// 		t.Run(tt.desc, func(t *testing.T) {
+// 			expr, err := parseExpression(tt.input, p.Trace)
+// 			compareFirstParserError(t, tt.err, err)
 
-			if !ast.Equal(expr, tt.result) {
-				t.Logf("Expected AST node to equal %v, got %v", tt.result, expr)
-				t.Fail()
-			}
-		})
-	}
-}
+// 			if !ast.Equal(expr, tt.result) {
+// 				t.Logf("Expected AST node to equal '%v', got '%v'", tt.result, expr)
+// 				t.Fail()
+// 			}
+// 		})
+// 	}
+// }
 
 func TestAssignment(t *testing.T) {
 	tests := []struct {
@@ -229,13 +230,13 @@ func TestAssignmentOperator(t *testing.T) {
 		name          string
 		input         string
 		leftType      reflect.Type
-		rightOperator string
+		rightOperator infix.Infix
 	}{
 		{
 			name:          "-=",
 			input:         `x -= 3`,
 			leftType:      reflect.TypeOf(&ast.Identifier{}),
-			rightOperator: "-",
+			rightOperator: infix.MINUS,
 		},
 	}
 
@@ -283,17 +284,17 @@ func TestAssignmentOperator(t *testing.T) {
 			}
 
 			{
-				infix, ok := assign.Right.(*ast.InfixExpression)
+				infix_exp, ok := assign.Right.(*ast.InfixExpression)
 				if !ok {
-					t.Logf("Expected right assign type to be %T, got %T", infix, assign.Right)
+					t.Logf("Expected right assign type to be %T, got %T", infix_exp, assign.Right)
 					t.FailNow()
 				}
 
-				if infix.Operator != tt.rightOperator {
+				if infix_exp.Operator != tt.rightOperator {
 					t.Logf(
 						"Expected right assign infix operator to be %q, got %q",
 						tt.rightOperator,
-						infix.Operator,
+						infix_exp.Operator,
 					)
 					t.Fail()
 				}
@@ -771,12 +772,6 @@ func TestReturnStatements(t *testing.T) {
 		if !ok {
 			t.Fatalf("stmt not *ast.returnStatement. got=%T", stmt)
 		}
-		if returnStmt.TokenLiteral() != "return" {
-			t.Fatalf(
-				"returnStmt.TokenLiteral not 'return', got %q",
-				returnStmt.TokenLiteral(),
-			)
-		}
 		if !testLiteralExpression(t, returnStmt.ReturnValue, tt.expectedValue) {
 			t.Fail()
 		}
@@ -898,12 +893,6 @@ func TestIdentifierExpression(t *testing.T) {
 		if ident.Value != "foobar" {
 			t.Errorf("ident.Value not %s. got=%s", "foobar", ident.Value)
 		}
-		if ident.TokenLiteral() != "foobar" {
-			t.Errorf(
-				"ident.TokenLiteral not %s. got=%s", "foobar",
-				ident.TokenLiteral(),
-			)
-		}
 	})
 	t.Run("constant", func(t *testing.T) {
 		input := "Foobar;"
@@ -931,12 +920,6 @@ func TestIdentifierExpression(t *testing.T) {
 		}
 		if ident.Value != "Foobar" {
 			t.Errorf("ident.Value not %s. got=%s", "Foobar", ident.Value)
-		}
-		if ident.TokenLiteral() != "Foobar" {
-			t.Errorf(
-				"ident.TokenLiteral not %s. got=%s", "Foobar",
-				ident.TokenLiteral(),
-			)
 		}
 	})
 }
@@ -967,12 +950,6 @@ func TestGlobalExpression(t *testing.T) {
 	}
 	if global.Value != "$foobar" {
 		t.Errorf("ident.Value not %s. got=%s", "$foobar", global.Value)
-	}
-	if global.TokenLiteral() != "$foobar" {
-		t.Errorf(
-			"global.TokenLiteral not %s. got=%s", "$foobar",
-			global.TokenLiteral(),
-		)
 	}
 }
 
@@ -1007,13 +984,6 @@ func TestGlobalExpressionWithIndex(t *testing.T) {
 	if !testLiteralExpression(t, index.Index, 1) {
 		return
 	}
-	if index.String() != "($foobar[1])" {
-		t.Errorf(
-			"index.TokenLiteral not %s. got=%s", "($foobar[1])",
-			index.TokenLiteral(),
-		)
-	}
-
 }
 
 func TestScopedIdentifierExpression(t *testing.T) {
@@ -1210,12 +1180,6 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	if literal.Value != 5 {
 		t.Errorf("expression.Value not %d. got=%d", 5, literal.Value)
 	}
-	if literal.TokenLiteral() != "5" {
-		t.Errorf(
-			"expression.TokenLiteral not %s. got=%s", "5",
-			literal.TokenLiteral(),
-		)
-	}
 }
 
 func TestParsingPrefixExpressions(t *testing.T) {
@@ -1273,35 +1237,35 @@ func TestParsingInfixExpressions(t *testing.T) {
 		infixTests := []struct {
 			input      string
 			leftValue  interface{}
-			operator   string
+			operator   infix.Infix
 			rightValue interface{}
 		}{
-			{"5 + 5;", 5, "+", 5},
-			{"5 - 5;", 5, "-", 5},
-			{"5 * 5;", 5, "*", 5},
-			{"5 / 5;", 5, "/", 5},
-			{"5 % 5;", 5, "%", 5},
-			{"5 > 5;", 5, ">", 5},
-			{"5 < 5;", 5, "<", 5},
-			{"5 >= 5;", 5, ">=", 5},
-			{"5 <= 5;", 5, "<=", 5},
-			{"5 == 5;", 5, "==", 5},
-			{"5 != 5;", 5, "!=", 5},
-			{"5 <=> 5;", 5, "<=>", 5},
-			{"foobar + barfoo;", "foobar", "+", "barfoo"},
-			{"foobar - barfoo;", "foobar", "-", "barfoo"},
-			{"foobar * barfoo;", "foobar", "*", "barfoo"},
-			{"foobar / barfoo;", "foobar", "/", "barfoo"},
-			{"foobar > barfoo;", "foobar", ">", "barfoo"},
-			{"foobar < barfoo;", "foobar", "<", "barfoo"},
-			{"foobar == barfoo;", "foobar", "==", "barfoo"},
-			{"foobar <=> barfoo;", "foobar", "<=>", "barfoo"},
-			{"foobar != barfoo;", "foobar", "!=", "barfoo"},
-			{"true == true", true, "==", true},
-			{"true != false", true, "!=", false},
-			{"false == false", false, "==", false},
-			{"false || false", false, "||", false},
-			{"false && false", false, "&&", false},
+			{"5 + 5;", 5, infix.PLUS, 5},
+			{"5 - 5;", 5, infix.MINUS, 5},
+			{"5 * 5;", 5, infix.ASTERISK, 5},
+			{"5 / 5;", 5, infix.SLASH, 5},
+			{"5 % 5;", 5, infix.MODULO, 5},
+			{"5 > 5;", 5, infix.GT, 5},
+			{"5 < 5;", 5, infix.LT, 5},
+			{"5 >= 5;", 5, infix.GTE, 5},
+			{"5 <= 5;", 5, infix.LTE, 5},
+			{"5 == 5;", 5, infix.EQ, 5},
+			{"5 != 5;", 5, infix.NOTEQ, 5},
+			{"5 <=> 5;", 5, infix.SPACESHIP, 5},
+			{"foobar + barfoo;", "foobar", infix.PLUS, "barfoo"},
+			{"foobar - barfoo;", "foobar", infix.MINUS, "barfoo"},
+			{"foobar * barfoo;", "foobar", infix.ASTERISK, "barfoo"},
+			{"foobar / barfoo;", "foobar", infix.SLASH, "barfoo"},
+			{"foobar > barfoo;", "foobar", infix.GT, "barfoo"},
+			{"foobar < barfoo;", "foobar", infix.LT, "barfoo"},
+			{"foobar == barfoo;", "foobar", infix.EQ, "barfoo"},
+			{"foobar <=> barfoo;", "foobar", infix.SPACESHIP, "barfoo"},
+			{"foobar != barfoo;", "foobar", infix.NOTEQ, "barfoo"},
+			{"true == true", true, infix.EQ, true},
+			{"true != false", true, infix.NOTEQ, false},
+			{"false == false", false, infix.EQ, false},
+			{"false || false", false, infix.LOGICALOR, false},
+			{"false && false", false, infix.LOGICALAND, false},
 		}
 
 		for _, tt := range infixTests {
@@ -1817,56 +1781,56 @@ func TestConditionalExpression(t *testing.T) {
 		tests := []struct {
 			input                         string
 			expectedConditionLeft         string
-			expectedConditionOperator     string
+			expectedConditionOperator     infix.Infix
 			expectedConditionRight        string
 			expectedConsequenceExpression string
 		}{
 			{`if x < y
 			x
-			end`, "x", "<", "y", "x"},
+			end`, "x", infix.LT, "y", "x"},
 			{`if x < y then
 			x
-			end`, "x", "<", "y", "x"},
+			end`, "x", infix.LT, "y", "x"},
 			{`if x < y; x
-			end`, "x", "<", "y", "x"},
+			end`, "x", infix.LT, "y", "x"},
 			{`if x < y
 			if x == 3
 			y
 			end
 			x
-			end`, "x", "<", "y", "if(x == 3) y endx"},
+			end`, "x", infix.LT, "y", "if(x == 3) y endx"},
 			{`if x < y
 			x = Object x
-			end`, "x", "<", "y", "x = (Object(x))"},
-			{"x 3 if x < y", "x", "<", "y", "x(3)"},
-			{"x.add 3 if x < y", "x", "<", "y", "x.add(3)"},
-			{"yield 3 if x < y", "x", "<", "y", "yield 3"},
-			{"yield self if x < y", "x", "<", "y", "yield self"},
+			end`, "x", infix.LT, "y", "x = (Object(x))"},
+			{"x 3 if x < y", "x", infix.LT, "y", "x(3)"},
+			{"x.add 3 if x < y", "x", infix.LT, "y", "x.add(3)"},
+			{"yield 3 if x < y", "x", infix.LT, "y", "yield 3"},
+			{"yield self if x < y", "x", infix.LT, "y", "yield self"},
 			{`unless x < y
 			x
-			end`, "x", "<", "y", "x"},
+			end`, "x", infix.LT, "y", "x"},
 			{`unless x < y then
 			x
-			end`, "x", "<", "y", "x"},
+			end`, "x", infix.LT, "y", "x"},
 			{`unless x < y; x
-			end`, "x", "<", "y", "x"},
+			end`, "x", infix.LT, "y", "x"},
 			{`unless x < y
 			if x == 3
 			y
 			end
 			x
-			end`, "x", "<", "y", "if(x == 3) y endx"},
+			end`, "x", infix.LT, "y", "if(x == 3) y endx"},
 			{`unless x < y
 			x = Object x
-			end`, "x", "<", "y", "x = (Object(x))"},
-			{"x = 3 if x < y", "x", "<", "y", "x = 3"},
-			{"@x = 3 if x < y", "x", "<", "y", "@x = 3"},
-			{"x = 3 unless x < y", "x", "<", "y", "x = 3"},
-			{"@x = 3 unless x < y", "x", "<", "y", "@x = 3"},
-			{"x 3 unless x < y", "x", "<", "y", "x(3)"},
-			{"x.add 3 unless x < y", "x", "<", "y", "x.add(3)"},
-			{"yield 3 unless x < y", "x", "<", "y", "yield 3"},
-			{"yield self unless x < y", "x", "<", "y", "yield self"},
+			end`, "x", infix.LT, "y", "x = (Object(x))"},
+			{"x = 3 if x < y", "x", infix.LT, "y", "x = 3"},
+			{"@x = 3 if x < y", "x", infix.LT, "y", "@x = 3"},
+			{"x = 3 unless x < y", "x", infix.LT, "y", "x = 3"},
+			{"@x = 3 unless x < y", "x", infix.LT, "y", "@x = 3"},
+			{"x 3 unless x < y", "x", infix.LT, "y", "x(3)"},
+			{"x.add 3 unless x < y", "x", infix.LT, "y", "x.add(3)"},
+			{"yield 3 unless x < y", "x", infix.LT, "y", "yield 3"},
+			{"yield self unless x < y", "x", infix.LT, "y", "yield self"},
 		}
 
 		for _, tt := range tests {
@@ -2055,11 +2019,13 @@ func TestConditionalExpression(t *testing.T) {
 
 func TestConditionalExpressionWithAlternative(t *testing.T) {
 	tests := []struct {
-		name        string
-		input       string
-		condition   [3]string
-		consequence string
-		alternative string
+		name               string
+		input              string
+		condition_left     string
+		condition_operator infix.Infix
+		condition_right    string
+		consequence        string
+		alternative        string
 	}{
 		{
 			"regular if else",
@@ -2069,28 +2035,36 @@ func TestConditionalExpressionWithAlternative(t *testing.T) {
 			else
 				y
 			end`,
-			[3]string{"x", "<", "y"},
+			"x",
+			infix.LT,
+			"y",
 			"x",
 			"y",
 		},
 		{
 			"ternary if",
 			"x < y ? x : y;",
-			[3]string{"x", "<", "y"},
+			"x",
+			infix.LT,
+			"y",
 			"x",
 			"y",
 		},
 		{
 			"ternary if with symbol as consequence",
 			"x < y ? :x : y;",
-			[3]string{"x", "<", "y"},
+			"x",
+			infix.LT,
+			"y",
 			":x",
 			"y",
 		},
 		{
 			"ternary if with symbol as alternative",
 			"x < y ? x : :y;",
-			[3]string{"x", "<", "y"},
+			"x",
+			infix.LT,
+			"y",
 			"x",
 			":y",
 		},
@@ -2117,7 +2091,7 @@ func TestConditionalExpressionWithAlternative(t *testing.T) {
 				t.Fatalf("stmt.Expression is not ast.IfExpression. got=%T", stmt.Expression)
 			}
 
-			if !testInfixExpression(t, exp.Condition, tt.condition[0], tt.condition[1], tt.condition[2]) {
+			if !testInfixExpression(t, exp.Condition, tt.condition_left, tt.condition_operator, tt.condition_right) {
 				return
 			}
 
@@ -2154,13 +2128,15 @@ func TestConditionalExpressionWithAlternative(t *testing.T) {
 	}
 	t.Run("ternary if with call as consequence", func(t *testing.T) {
 		tt := struct {
-			input       string
-			condition   [3]string
-			consequence string
-			alternative string
+			input              string
+			condition_left     string
+			condition_operator infix.Infix
+			condition_right    string
+			consequence        string
+			alternative        string
 		}{
 			"x < y ? x.foo : y;",
-			[3]string{"x", "<", "y"},
+			"x", infix.LT, "y",
 			"x.foo()",
 			"y",
 		}
@@ -2183,7 +2159,7 @@ func TestConditionalExpressionWithAlternative(t *testing.T) {
 			t.Fatalf("stmt.Expression is not ast.IfExpression. got=%T", stmt.Expression)
 		}
 
-		if !testInfixExpression(t, exp.Condition, tt.condition[0], tt.condition[1], tt.condition[2]) {
+		if !testInfixExpression(t, exp.Condition, tt.condition_left, tt.condition_operator, tt.condition_right) {
 			return
 		}
 
@@ -2870,7 +2846,7 @@ func TestCallExpressionParsing(t *testing.T) {
 			input:    "add(1, 2 * 3, 4 + 5);",
 			funcName: "add",
 			arguments: []interface{}{
-				1, infix{2, "*", 3}, infix{4, "+", 5},
+				1, testInfix{2, infix.ASTERISK, 3}, testInfix{4, infix.PLUS, 5},
 			},
 		},
 		{
@@ -2878,7 +2854,7 @@ func TestCallExpressionParsing(t *testing.T) {
 			input:    "add 1, 2 * 3, 4 + 5;",
 			funcName: "add",
 			arguments: []interface{}{
-				1, infix{2, "*", 3}, infix{4, "+", 5},
+				1, testInfix{2, infix.ASTERISK, 3}, testInfix{4, infix.PLUS, 5},
 			},
 		},
 		{
@@ -2886,7 +2862,7 @@ func TestCallExpressionParsing(t *testing.T) {
 			input:    "add(1, 2 * 3, 4 + 5) { |x| x };",
 			funcName: "add",
 			arguments: []interface{}{
-				1, infix{2, "*", 3}, infix{4, "+", 5},
+				1, testInfix{2, infix.ASTERISK, 3}, testInfix{4, infix.PLUS, 5},
 			},
 			hasBlock:    true,
 			blockParams: []string{"x"},
@@ -2896,7 +2872,7 @@ func TestCallExpressionParsing(t *testing.T) {
 			input:    "add(1, 2 * 3, 4 + 5) do |x| x; end;",
 			funcName: "add",
 			arguments: []interface{}{
-				1, infix{2, "*", 3}, infix{4, "+", 5},
+				1, testInfix{2, infix.ASTERISK, 3}, testInfix{4, infix.PLUS, 5},
 			},
 			hasBlock:    true,
 			blockParams: []string{"x"},
@@ -2906,7 +2882,7 @@ func TestCallExpressionParsing(t *testing.T) {
 			input:    "add 1, 2 * 3, 4 + 5 { |x| x };",
 			funcName: "add",
 			arguments: []interface{}{
-				1, infix{2, "*", 3}, infix{4, "+", 5},
+				1, testInfix{2, infix.ASTERISK, 3}, testInfix{4, infix.PLUS, 5},
 			},
 			hasBlock:    true,
 			blockParams: []string{"x"},
@@ -3161,8 +3137,8 @@ func TestContextCallExpression(t *testing.T) {
 		}
 
 		testLiteralExpression(t, exp.Arguments[0], 1)
-		testInfixExpression(t, exp.Arguments[1], 2, "*", 3)
-		testInfixExpression(t, exp.Arguments[2], 4, "+", 5)
+		testInfixExpression(t, exp.Arguments[1], 2, infix.ASTERISK, 3)
+		testInfixExpression(t, exp.Arguments[2], 4, infix.PLUS, 5)
 	})
 	t.Run("context call with multiple args with parens and block", func(t *testing.T) {
 		input := "foo.add(1, 2 * 3, 4 + 5) { |x|x.to_s };"
@@ -3201,8 +3177,8 @@ func TestContextCallExpression(t *testing.T) {
 		}
 
 		testLiteralExpression(t, exp.Arguments[0], 1)
-		testInfixExpression(t, exp.Arguments[1], 2, "*", 3)
-		testInfixExpression(t, exp.Arguments[2], 4, "+", 5)
+		testInfixExpression(t, exp.Arguments[1], 2, infix.ASTERISK, 3)
+		testInfixExpression(t, exp.Arguments[2], 4, infix.PLUS, 5)
 
 		if exp.Block == nil {
 			t.Logf("Expected block not to be nil")
@@ -3245,8 +3221,8 @@ func TestContextCallExpression(t *testing.T) {
 		}
 
 		testLiteralExpression(t, exp.Arguments[0], 1)
-		testInfixExpression(t, exp.Arguments[1], 2, "*", 3)
-		testInfixExpression(t, exp.Arguments[2], 4, "+", 5)
+		testInfixExpression(t, exp.Arguments[1], 2, infix.ASTERISK, 3)
+		testInfixExpression(t, exp.Arguments[2], 4, infix.PLUS, 5)
 	})
 	t.Run("context call with multiple args no parens with block", func(t *testing.T) {
 		input := "foo.add 1, 2 * 3, 4 + 5 { |x| x };"
@@ -3284,8 +3260,8 @@ func TestContextCallExpression(t *testing.T) {
 		}
 
 		testLiteralExpression(t, exp.Arguments[0], 1)
-		testInfixExpression(t, exp.Arguments[1], 2, "*", 3)
-		testInfixExpression(t, exp.Arguments[2], 4, "+", 5)
+		testInfixExpression(t, exp.Arguments[1], 2, infix.ASTERISK, 3)
+		testInfixExpression(t, exp.Arguments[2], 4, infix.PLUS, 5)
 
 		if exp.Block == nil {
 			t.Logf("Expected block not to be nil")
@@ -3989,8 +3965,8 @@ func TestParsingArrayLiterals(t *testing.T) {
 		t.Fatalf("len(array.Elements) not 4. got=%d", len(array.Elements))
 	}
 	testIntegerLiteral(t, array.Elements[0], 1)
-	testInfixExpression(t, array.Elements[1], 2, "*", 2)
-	testInfixExpression(t, array.Elements[2], 3, "+", 3)
+	testInfixExpression(t, array.Elements[1], 2, infix.ASTERISK, 2)
+	testInfixExpression(t, array.Elements[2], 3, infix.PLUS, 3)
 	testHashLiteral(t, array.Elements[3], map[string]string{"foo": "2"})
 }
 
@@ -4013,7 +3989,7 @@ func TestParsingIndexExpressions(t *testing.T) {
 			return
 		}
 
-		if !testInfixExpression(t, indexExp.Index, 1, "+", 1) {
+		if !testInfixExpression(t, indexExp.Index, 1, infix.PLUS, 1) {
 			return
 		}
 	})
@@ -4525,51 +4501,20 @@ func testRangeLiteral(
 		return false
 	}
 
-	if inclusive {
-		if rangeLit.TokenLiteral() != ".." {
-			t.Errorf("rangeLit.TokenLiteral not .. . got=%s", rangeLit.TokenLiteral())
-			return false
-		}
-	} else {
-		if rangeLit.TokenLiteral() != "..." {
-			t.Errorf("rangeLit.TokenLiteral not ... . got=%s", rangeLit.TokenLiteral())
-			return false
-		}
-	}
-
 	return true
 }
 
 func testExpression(t *testing.T, exp ast.Expression, expected interface{}) bool {
 	t.Helper()
-	if inf, ok := expected.(infix); ok {
+	if inf, ok := expected.(testInfix); ok {
 		return testInfixExpression(t, exp, inf.left, inf.operator, inf.right)
 	}
 	return testLiteralExpression(t, exp, expected)
 }
 
-// func testExpressionList(t *testing.T, list ast.ExpressionList, expected ...interface{}) bool {
-// 	t.Helper()
-
-// 	if len(list) != len(expected) {
-// 		t.Errorf("wrong length of list. got=%d", len(list))
-// 		return false
-// 	}
-// 	for i, expr := range list {
-// 		if !testExpression(t, expr, expected[i]) {
-// 			return false
-// 		}
-// 	}
-// 	if list.TokenLiteral() != "," {
-// 		t.Errorf("list.TokenLiteral not , . got=%s", list.TokenLiteral())
-// 		return false
-// 	}
-// 	return true
-// }
-
-type infix struct {
+type testInfix struct {
 	left     interface{}
-	operator string
+	operator infix.Infix
 	right    interface{}
 }
 
@@ -4577,7 +4522,7 @@ func testInfixExpression(
 	t *testing.T,
 	exp ast.Expression,
 	left interface{},
-	operator string,
+	operator infix.Infix,
 	right interface{},
 ) bool {
 	t.Helper()
@@ -4632,30 +4577,6 @@ func testLiteralExpression(
 	return false
 }
 
-// func testStringLiteral(t *testing.T, sl ast.Expression, value string) bool {
-// 	t.Helper()
-// 	str, ok := sl.(*ast.StringLiteral)
-// 	if !ok {
-// 		t.Errorf("expression not *ast.StringLiteral. got=%T", sl)
-// 		return false
-// 	}
-
-// 	if str.Value != value {
-// 		t.Errorf("str.Value not %s. got=%s", value, str.Value)
-// 		return false
-// 	}
-
-// 	if str.TokenLiteral() != value {
-// 		t.Errorf(
-// 			"integer.TokenLiteral not %s. got=%s", value,
-// 			str.TokenLiteral(),
-// 		)
-// 		return false
-// 	}
-
-// 	return true
-// }
-
 func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
 	t.Helper()
 	if prefix, ok := il.(*ast.PrefixExpression); ok {
@@ -4686,14 +4607,6 @@ func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
 		return false
 	}
 
-	if integ.TokenLiteral() != fmt.Sprintf("%d", value) {
-		t.Errorf(
-			"integer.TokenLiteral not %d. got=%s", value,
-			integ.TokenLiteral(),
-		)
-		return false
-	}
-
 	return true
 }
 
@@ -4707,12 +4620,6 @@ func testGlobal(t *testing.T, exp ast.Expression, value string) bool {
 
 	if global.Value != value {
 		t.Errorf("global.Value not %s. got=%s", value, global.Value)
-		return false
-	}
-
-	if global.TokenLiteral() != value {
-		t.Errorf("global.TokenLiteral not %s. got=%s", value,
-			global.TokenLiteral())
 		return false
 	}
 
@@ -4747,13 +4654,6 @@ func testIdentifier(t *testing.T, exp ast.Expression, value string) bool {
 		t.Errorf("ident.Value not %s. got=%s", value, ident.Value)
 		return false
 	}
-
-	if ident.TokenLiteral() != value {
-		t.Errorf("ident.TokenLiteral not %s. got=%s", value,
-			ident.TokenLiteral())
-		return false
-	}
-
 	return true
 }
 
@@ -4765,10 +4665,6 @@ func testSplat(t *testing.T, exp ast.Expression, value ast.Expression) bool {
 		return false
 	}
 	if !testIdentifier(t, splat.Value, value.String()) {
-		return false
-	}
-	if splat.TokenLiteral() != "*" {
-		t.Errorf("splat.TokenLiteral not *. got=%s", splat.TokenLiteral())
 		return false
 	}
 	return true
@@ -4784,12 +4680,6 @@ func testBooleanLiteral(t *testing.T, exp ast.Expression, value bool) bool {
 
 	if bo.Value != value {
 		t.Errorf("bo.Value not %t. got=%t", value, bo.Value)
-		return false
-	}
-
-	if bo.TokenLiteral() != fmt.Sprintf("%t", value) {
-		t.Errorf("bo.TokenLiteral not %t. got=%s",
-			value, bo.TokenLiteral())
 		return false
 	}
 

@@ -974,9 +974,10 @@ func (oe *InfixExpression) String() string {
 
 func encloseInParensIfNeeded(expr Expression) string {
 	val := expr.String()
-	hasParens := strings.HasPrefix(val, "(") && strings.HasSuffix(val, ")")
-	if !hasParens {
-		val = "(" + val + ")"
-	}
 	return val
+	// hasParens := strings.HasPrefix(val, "(") && strings.HasSuffix(val, ")")
+	// if !hasParens {
+	// 	val = "(" + val + ")"
+	// }
+	// return val
 }
