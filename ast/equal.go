@@ -17,7 +17,7 @@ func Equal(a, b Node) bool {
 		return false
 	}
 
-	if _, ok := a.(literal); ok {
+	if _, ok := a.(Literal); ok {
 		return a.String() == b.String()
 	}
 	return compareTrees(a, b)

@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/ast/infix"
 	"github.com/MarcinKonowalczyk/goruby/object"
-	"github.com/MarcinKonowalczyk/goruby/token"
 	"github.com/pkg/errors"
 )
 
@@ -464,39 +464,35 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			return nil, errors.WithMessage(err, "eval operator left side")
 		}
 
-		if node.Token.Type == token.LOGICALOR {
+		if node.Operator == infix.LOGICALOR {
 			if isTruthy(left) {
 				// left is altready truthy. don't evaluate right side
 				return left, nil
 			}
-		} else if node.Token.Type == token.LOGICALAND {
+		} else if node.Operator == infix.LOGICALAND {
 			if !isTruthy(left) {
 				// left is altready falsy. don't evaluate right side
 				return left, nil
 			}
 		}
 
-		// 	if !node.MustEvaluateRight() && isTruthy(left) {
-		// 		return left, nil
-		// 	}
-		// }
-
 		right, err := Eval(node.Right, env)
 		if err != nil {
 			return nil, errors.WithMessage(err, "eval operator right side")
 		}
 
-		if node.Token.Type == token.LOGICALOR {
+		if node.Operator == infix.LOGICALOR {
 			// left is not truthy, since we're here
 			// result is right
 			return right, nil
-		} else if node.Token.Type == token.LOGICALAND {
+		} else if node.Operator == infix.LOGICALAND {
 			// left is not falsy, since we're here
 			// result is right
 			return right, nil
 		}
 		context := &callContext{object.NewCallContext(env, left)}
-		return object.Send(context, node.Operator, right)
+		return object.Send(context, node.Operator.String(), right)
+
 	case *ast.ConditionalExpression:
 		return evalConditionalExpression(node, env)
 	case *ast.ScopedIdentifier:
@@ -642,11 +638,8 @@ func unescapeStringLiteral(node *ast.StringLiteral) string {
 		"\\b":  "\b",
 		"\\\\": "\\",
 	}
-	if node.Token.Literal == "\"" {
-		rep["\""] = "\""
-	} else {
-		rep["'"] = "'"
-	}
+	// NOTE: we support only double-quoted strings
+	rep["\""] = "\""
 	value := node.Value
 	for k, v := range rep {
 		value = strings.ReplaceAll(value, k, v)
@@ -844,7 +837,7 @@ func evalConditionalExpression(ce *ast.ConditionalExpression, env object.Environ
 		return nil, err
 	}
 	evaluateConsequence := isTruthy(condition)
-	if ce.IsNegated() {
+	if ce.Unless {
 		evaluateConsequence = !evaluateConsequence
 	}
 	if evaluateConsequence {
@@ -1186,7 +1179,7 @@ func evalIdentifier(node *ast.Identifier, env object.Environment) (object.RubyOb
 		return val, nil
 	}
 
-	if node.IsConstant() {
+	if node.Constant {
 		return nil, errors.Wrap(
 			object.NewUninitializedConstantNameError(node.Value),
 			"eval identifier",

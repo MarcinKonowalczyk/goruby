@@ -26,20 +26,12 @@ func NewInterpreterEx(argv []string) Interpreter {
 	loadPathArr.Elements = append(loadPathArr.Elements, &object.String{Value: cwd})
 	env.SetGlobal("$:", loadPathArr)
 
-	// setup ARGV
-	// argv := os.Args[1:]
-	// if len(argv) > 0 {
-	// 	// take off one more element
-	// 	argv = argv[1:]
-	// }
 	argvArr := object.NewArray()
 	for _, arg := range argv {
 		argvArr.Elements = append(argvArr.Elements, &object.String{Value: arg})
 	}
 	env.SetGlobal("ARGV", argvArr)
 
-	// setup $stdin
-	// stdin := object.NewIo(os.Stdin)
 	stdin := object.NewIo()
 	env.SetGlobal("$stdin", stdin)
 	return Interpreter{environment: env}

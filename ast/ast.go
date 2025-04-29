@@ -2,71 +2,43 @@ package ast
 
 import (
 	"fmt"
-	gotoken "go/token"
 	"strings"
 
-	"github.com/MarcinKonowalczyk/goruby/token"
+	"github.com/MarcinKonowalczyk/goruby/ast/infix"
 )
 
 // Node represents a node within the AST
 //
 // All node types implement the Node interface.
 type Node interface {
-	// Pos returns the position of first character belonging to the node
-	Pos() int
-	// End returns the position of first character immediately after the node
-	End() int
-	// TokenLiteral returns the literal of the node
-	TokenLiteral() string
-	// String returns a string representation of the node
+	node() // marks this as a node
 	String() string
 }
 
-// A Statement represents a statement within the AST
-//
-// All statement nodes implement the Statement interface.
 type Statement interface {
 	Node
 	statementNode()
 }
 
-// An Expression represents an expression within the AST
-//
-// All expression nodes implement the Expression interface.
 type Expression interface {
 	Node
 	expressionNode()
 }
 
-// literal
-type literal interface {
+type Literal interface {
 	Node
 	literalNode()
 }
 
-// IsLiteral returns true if n is a literal node, false otherwise
-func IsLiteral(n Node) bool {
-	_, ok := n.(literal)
-	return ok
-}
+////////////////////////////////////////////////////////////////////////////////
 
 // A Program node is the root node within the AST.
 type Program struct {
-	pos        int
-	File       *gotoken.File
 	Statements []Statement
 }
 
-// Pos returns the position of first character belonging to the node
-func (p *Program) Pos() int { return p.pos }
+func (p *Program) node() {}
 
-// End returns the position of first character immediately after the node
-func (p *Program) End() int {
-	if len(p.Statements) == 0 {
-		return p.pos
-	}
-	return p.Statements[len(p.Statements)-1].End()
-}
 func (p *Program) String() string {
 	stmts := make([]string, len(p.Statements))
 	for i, s := range p.Statements {
@@ -77,45 +49,39 @@ func (p *Program) String() string {
 	return strings.Join(stmts, "\n")
 }
 
-// TokenLiteral returns the literal of the first statement and empty string if
-// there is no statement.
-func (p *Program) TokenLiteral() string {
-	if len(p.Statements) > 0 {
-		return p.Statements[0].TokenLiteral()
-	}
-	return ""
-}
+var (
+	_ Node = &Program{}
+)
 
 // A ReturnStatement represents a return node which yields another Expression.
 type ReturnStatement struct {
-	Token       token.Token // the 'return' token
 	ReturnValue Expression
 }
 
+func (rs *ReturnStatement) node()          {}
+func (rs *ReturnStatement) statementNode() {}
+
 func (rs *ReturnStatement) String() string {
 	var out strings.Builder
-	out.WriteString(rs.TokenLiteral() + " ")
+	out.WriteString("return ")
 	if rs.ReturnValue != nil {
 		out.WriteString(rs.ReturnValue.String())
 	}
 	return out.String()
 }
-func (rs *ReturnStatement) statementNode() {}
 
-// TokenLiteral returns the 'return' token literal
-func (rs *ReturnStatement) TokenLiteral() string { return rs.Token.Literal }
-
-// Pos returns the position of first character belonging to the node
-func (rs *ReturnStatement) Pos() int { return rs.Token.Pos }
-
-// End returns the position of first character immediately after the node
-func (rs *ReturnStatement) End() int { return rs.ReturnValue.End() }
+var (
+	_ Node      = &ReturnStatement{}
+	_ Statement = &ReturnStatement{}
+)
 
 // An ExpressionStatement is a Statement wrapping an Expression
 type ExpressionStatement struct {
-	Token      token.Token // the first token of the expression
 	Expression Expression
 }
+
+func (es *ExpressionStatement) node()          {}
+func (es *ExpressionStatement) statementNode() {}
 
 func (es *ExpressionStatement) String() string {
 	if es.Expression != nil {
@@ -123,35 +89,20 @@ func (es *ExpressionStatement) String() string {
 	}
 	return ""
 }
-func (es *ExpressionStatement) statementNode() {}
 
-// Pos returns the position of first character belonging to the node
-func (es *ExpressionStatement) Pos() int { return es.Expression.Pos() }
-
-// End returns the position of first character immediately after the node
-func (es *ExpressionStatement) End() int { return es.Expression.End() }
-
-// TokenLiteral returns the first token of the Expression
-func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Literal }
+var (
+	_ Node      = &ExpressionStatement{}
+	_ Statement = &ExpressionStatement{}
+)
 
 // BlockStatement represents a list of statements
 type BlockStatement struct {
-	// the { token or the first token from the first statement
-	Token      token.Token
-	EndToken   token.Token // the } token
 	Statements []Statement
 }
 
+func (bs *BlockStatement) node()          {}
 func (bs *BlockStatement) statementNode() {}
 
-// Pos returns the position of first character belonging to the node
-func (bs *BlockStatement) Pos() int { return bs.Token.Pos }
-
-// End returns the position of first character immediately after the node
-func (bs *BlockStatement) End() int { return bs.EndToken.Pos }
-
-// TokenLiteral returns '{' or the first token from the first statement
-func (bs *BlockStatement) TokenLiteral() string { return bs.Token.Literal }
 func (bs *BlockStatement) String() string {
 	var out strings.Builder
 	for _, s := range bs.Statements {
@@ -163,65 +114,44 @@ func (bs *BlockStatement) String() string {
 }
 
 var (
+	_ Node      = &BlockStatement{}
 	_ Statement = &BlockStatement{}
 )
 
 // A BreakStatement represents a break statement
 type BreakStatement struct {
-	Token     token.Token // the 'break' token
 	Condition Expression
 	Unless    bool
 }
 
+func (bs *BreakStatement) node()          {}
+func (bs *BreakStatement) statementNode() {}
+
 func (bs *BreakStatement) String() string {
 	var out strings.Builder
-	out.WriteString(bs.Token.Literal)
+	out.WriteString("break")
 	out.WriteString(" ")
 	out.WriteString(bs.Condition.String())
 	return out.String()
 }
 
-func (bs *BreakStatement) statementNode() {}
-
-// Pos returns the position of first character belonging to the node
-func (bs *BreakStatement) Pos() int { return bs.Token.Pos }
-
-// End returns the position of first character immediately after the node
-func (bs *BreakStatement) End() int {
-	if bs.Condition != nil {
-		return bs.Condition.End()
-	}
-	return bs.Token.Pos + len(bs.Token.Literal)
-}
-
-// TokenLiteral returns the 'break' token literal
-func (bs *BreakStatement) TokenLiteral() string { return bs.Token.Literal }
-
 var (
+	_ Node      = &BreakStatement{}
 	_ Statement = &BreakStatement{}
 )
 
 // ExceptionHandlingBlock represents a begin/end block where exceptions are rescued
 type ExceptionHandlingBlock struct {
-	BeginToken token.Token
-	EndToken   token.Token
-	TryBody    *BlockStatement
-	Rescues    []*RescueBlock
+	TryBody *BlockStatement
+	Rescues []*RescueBlock
 }
 
+func (eh *ExceptionHandlingBlock) node()           {}
 func (eh *ExceptionHandlingBlock) expressionNode() {}
 
-// Pos returns the position of first character belonging to the node
-func (eh *ExceptionHandlingBlock) Pos() int { return eh.BeginToken.Pos }
-
-// End returns the position of first character immediately after the node
-func (eh *ExceptionHandlingBlock) End() int { return eh.EndToken.Pos }
-
-// TokenLiteral returns the token literal from 'begin'
-func (eh *ExceptionHandlingBlock) TokenLiteral() string { return eh.BeginToken.Literal }
 func (eh *ExceptionHandlingBlock) String() string {
 	var out strings.Builder
-	out.WriteString(eh.BeginToken.Literal)
+	out.WriteString("begin")
 	out.WriteString("\n")
 	out.WriteString(eh.TryBody.String())
 	out.WriteString("\n")
@@ -232,27 +162,24 @@ func (eh *ExceptionHandlingBlock) String() string {
 	return out.String()
 }
 
+var (
+	_ Node       = &ExceptionHandlingBlock{}
+	_ Expression = &ExceptionHandlingBlock{}
+)
+
 // A RescueBlock represents a rescue block
 type RescueBlock struct {
-	Token            token.Token
 	ExceptionClasses []*Identifier
 	Exception        *Identifier
 	Body             *BlockStatement
 }
 
+func (rb *RescueBlock) node()           {}
 func (rb *RescueBlock) expressionNode() {}
 
-// Pos returns the position of first character belonging to the node
-func (rb *RescueBlock) Pos() int { return rb.Token.Pos }
-
-// End returns the position of first character immediately after the node
-func (rb *RescueBlock) End() int { return rb.Body.End() }
-
-// TokenLiteral returns the token literal from 'rescue'
-func (rb *RescueBlock) TokenLiteral() string { return rb.Token.Literal }
 func (rb *RescueBlock) String() string {
 	var out strings.Builder
-	out.WriteString(rb.Token.Literal)
+	out.WriteString("rescue")
 	if len(rb.ExceptionClasses) != 0 {
 		classes := make([]string, len(rb.ExceptionClasses))
 		for i, c := range rb.ExceptionClasses {
@@ -270,12 +197,19 @@ func (rb *RescueBlock) String() string {
 	return out.String()
 }
 
+var (
+	_ Node       = &RescueBlock{}
+	_ Expression = &RescueBlock{}
+)
+
 // Assignment represents a generic assignment
 type Assignment struct {
-	Token token.Token
 	Left  Expression
 	Right Expression
 }
+
+func (a *Assignment) node()           {}
+func (a *Assignment) expressionNode() {}
 
 func (a *Assignment) String() string {
 	var out strings.Builder
@@ -284,46 +218,42 @@ func (a *Assignment) String() string {
 	out.WriteString(encloseInParensIfNeeded(a.Right))
 	return out.String()
 }
-func (a *Assignment) expressionNode() {}
 
-// Pos returns the position of first character belonging to the node
-func (a *Assignment) Pos() int { return a.Left.Pos() }
-
-// End returns the position of first character immediately after the node
-func (a *Assignment) End() int { return a.Right.End() }
-
-// TokenLiteral returns the literal of the ASSIGN token
-func (a *Assignment) TokenLiteral() string { return a.Token.Literal }
+var (
+	_ Node       = &Assignment{}
+	_ Expression = &Assignment{}
+)
 
 // An InstanceVariable represents an instance variable in the AST
 type InstanceVariable struct {
-	Token token.Token
-	Name  *Identifier
+	Name *Identifier
 }
 
-func (i *InstanceVariable) String() string {
-	var out strings.Builder
-	out.WriteString(i.Token.Literal)
-	out.WriteString(i.Name.String())
-	return out.String()
-}
+func (i *InstanceVariable) node()           {}
 func (i *InstanceVariable) literalNode()    {}
 func (i *InstanceVariable) expressionNode() {}
 
-// Pos returns the position of first character belonging to the node
-func (i *InstanceVariable) Pos() int { return i.Token.Pos }
+func (i *InstanceVariable) String() string {
+	var out strings.Builder
+	out.WriteString(i.Name.String())
+	return out.String()
+}
 
-// End returns the position of first character immediately after the node
-func (i *InstanceVariable) End() int { return i.Name.End() }
+var (
+	_ Node       = &InstanceVariable{}
+	_ Expression = &InstanceVariable{}
+	_ Literal    = &InstanceVariable{}
+)
 
-// TokenLiteral returns the literal of the AT token
-func (i *InstanceVariable) TokenLiteral() string { return i.Token.Literal }
-
-// MultiAssignment represents multiple variables on the lefthand side
+// MultiAssignment represents multiple variables on the left-hand side
 type MultiAssignment struct {
 	Variables []*Identifier
 	Values    []Expression
 }
+
+func (m *MultiAssignment) node()           {}
+func (m *MultiAssignment) literalNode()    {}
+func (m *MultiAssignment) expressionNode() {}
 
 func (m *MultiAssignment) String() string {
 	var out strings.Builder
@@ -340,45 +270,39 @@ func (m *MultiAssignment) String() string {
 	out.WriteString(strings.Join(values, ", "))
 	return out.String()
 }
-func (m *MultiAssignment) literalNode() {}
 
-// Pos returns the position of first character belonging to the node
-func (m *MultiAssignment) Pos() int { return m.Variables[0].Pos() }
-
-// End returns the position of first character immediately after the node
-func (m *MultiAssignment) End() int        { return m.Values[len(m.Values)-1].End() }
-func (m *MultiAssignment) expressionNode() {}
-
-// TokenLiteral returns the literal of the first variable token
-func (m *MultiAssignment) TokenLiteral() string { return m.Variables[0].Token.Literal }
+var (
+	_ Node       = &MultiAssignment{}
+	_ Expression = &MultiAssignment{}
+	_ Literal    = &MultiAssignment{}
+)
 
 // Self represents self in the current context in the program
-type Self struct {
-	Token token.Token // the token.SELF token
-}
+type Self struct{}
 
-func (s *Self) String() string  { return s.Token.Literal }
+func (s *Self) node()           {}
 func (s *Self) expressionNode() {}
 func (s *Self) literalNode()    {}
 
-// Pos returns the position of first character belonging to the node
-func (s *Self) Pos() int { return s.Token.Pos }
+func (s *Self) String() string { return "self" }
 
-// End returns the position of first character immediately after the node
-func (s *Self) End() int { return s.Token.Pos + 4 }
-
-// TokenLiteral returns the literal of the token.SELF token
-func (s *Self) TokenLiteral() string { return s.Token.Literal }
+var (
+	_ Node       = &Self{}
+	_ Expression = &Self{}
+	_ Literal    = &Self{}
+)
 
 // YieldExpression represents self in the current context in the program
 type YieldExpression struct {
-	Token     token.Token  // the token.YIELD token
 	Arguments []Expression // The arguments to yield
 }
 
+func (y *YieldExpression) node()           {}
+func (y *YieldExpression) expressionNode() {}
+
 func (y *YieldExpression) String() string {
 	var out strings.Builder
-	out.WriteString(y.Token.Literal)
+	out.WriteString("yield")
 	if len(y.Arguments) != 0 {
 		args := []string{}
 		for _, a := range y.Arguments {
@@ -389,290 +313,224 @@ func (y *YieldExpression) String() string {
 	}
 	return out.String()
 }
-func (y *YieldExpression) expressionNode() {}
 
-// Pos returns the position of first character belonging to the node
-func (y *YieldExpression) Pos() int { return y.Token.Pos }
-
-// End returns the position of first character immediately after the node
-func (y *YieldExpression) End() int {
-	if len(y.Arguments) == 0 {
-		return y.Pos() + 5
-	}
-	return y.Arguments[len(y.Arguments)-1].End()
-}
-
-// TokenLiteral returns the literal of the token.YIELD token
-func (y *YieldExpression) TokenLiteral() string { return y.Token.Literal }
+var (
+	_ Node       = &YieldExpression{}
+	_ Expression = &YieldExpression{}
+)
 
 // Keyword__FILE__ represents __FILE__ in the AST
 type Keyword__FILE__ struct {
-	Token    token.Token // the token.FILE__ token
 	Filename string
 }
 
-func (f *Keyword__FILE__) String() string  { return f.Token.Literal }
+func (f *Keyword__FILE__) node()           {}
 func (f *Keyword__FILE__) expressionNode() {}
 func (f *Keyword__FILE__) literalNode()    {}
+func (f *Keyword__FILE__) String() string  { return "__FILE__" }
 
-// Pos returns the position of first character belonging to the node
-func (f *Keyword__FILE__) Pos() int { return f.Token.Pos }
-
-// End returns the position of first character immediately after the node
-func (f *Keyword__FILE__) End() int { return f.Token.Pos + 8 }
-
-// TokenLiteral returns the literal of the token.FILE__ token
-func (f *Keyword__FILE__) TokenLiteral() string { return f.Token.Literal }
+var (
+	_ Node       = &Keyword__FILE__{}
+	_ Expression = &Keyword__FILE__{}
+	_ Literal    = &Keyword__FILE__{}
+)
 
 // An Identifier represents an identifier in the program
 type Identifier struct {
-	Token token.Token // the token.IDENT token
-	Value string
+	Constant bool // true if the identifier is a constant
+	Value    string
 }
 
-func (i *Identifier) String() string  { return i.Value }
+func (i *Identifier) node()           {}
 func (i *Identifier) expressionNode() {}
 func (i *Identifier) literalNode()    {}
 
-// Pos returns the position of first character belonging to the node
-func (i *Identifier) Pos() int { return i.Token.Pos }
+func (i *Identifier) String() string { return i.Value }
 
-// End returns the position of first character immediately after the node
-func (i *Identifier) End() int { return i.Token.Pos + len(i.Value) }
+var (
+	_ Node       = &Identifier{}
+	_ Expression = &Identifier{}
+	_ Literal    = &Identifier{}
+)
 
 // IsConstant returns true if the Identifier represents a Constant, false otherwise
-func (i *Identifier) IsConstant() bool { return i.Token.Type == token.CONST }
-
-// TokenLiteral returns the literal of the token.IDENT token
-func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
+// func (i *Identifier) IsConstant() bool { return i.Token.Type == token.CONST }
 
 // Global represents a global in the AST
 type Global struct {
-	Token token.Token // the token.GLOBAL token
 	Value string
 }
 
-func (g *Global) String() string  { return g.Value }
+func (g *Global) node()           {}
 func (g *Global) expressionNode() {}
+func (g *Global) literalNode()    {}
 
-// Pos returns the position of first character belonging to the node
-func (g *Global) Pos() int { return g.Token.Pos }
+func (g *Global) String() string { return g.Value }
 
-// End returns the position of first character immediately after the node
-func (g *Global) End() int     { return g.Token.Pos + len(g.Value) }
-func (g *Global) literalNode() {}
-
-// TokenLiteral returns the literal of the token.GLOBAL token
-func (g *Global) TokenLiteral() string { return g.Token.Literal }
-
-var _ Expression = &Global{}
+var (
+	_ Node       = &Global{}
+	_ Expression = &Global{}
+	_ Literal    = &Global{}
+)
 
 // ScopedIdentifier represents a scoped Constant declaration
 type ScopedIdentifier struct {
-	Token token.Token // the token.SCOPE
 	Outer *Identifier
 	Inner Expression
 }
 
-func (i *ScopedIdentifier) String() string {
-	var out strings.Builder
-	out.WriteString(i.Outer.String())
-	out.WriteString(i.Token.Literal)
-	out.WriteString(i.Inner.String())
-	return out.String()
-}
+func (i *ScopedIdentifier) node()           {}
 func (i *ScopedIdentifier) expressionNode() {}
 func (i *ScopedIdentifier) literalNode()    {}
 
-// Pos returns the position of first character belonging to the node
-func (i *ScopedIdentifier) Pos() int { return i.Outer.Pos() }
+func (i *ScopedIdentifier) String() string {
+	var out strings.Builder
+	out.WriteString(i.Outer.String())
+	out.WriteString("::")
+	out.WriteString(i.Inner.String())
+	return out.String()
+}
 
-// End returns the position of first character immediately after the node
-func (i *ScopedIdentifier) End() int { return i.Inner.End() }
-
-// TokenLiteral returns the literal of the token.SCOPE token
-func (i *ScopedIdentifier) TokenLiteral() string { return i.Token.Literal }
+var (
+	_ Node       = &ScopedIdentifier{}
+	_ Expression = &ScopedIdentifier{}
+	_ Literal    = &ScopedIdentifier{}
+)
 
 // IntegerLiteral represents an integer in the AST
 type IntegerLiteral struct {
-	Token token.Token
 	Value int64
 }
 
+func (il *IntegerLiteral) node()           {}
 func (il *IntegerLiteral) expressionNode() {}
 func (il *IntegerLiteral) literalNode()    {}
-
-// Pos returns the position of first character belonging to the node
-func (il *IntegerLiteral) Pos() int { return il.Token.Pos }
-
-// End returns the position of first character immediately after the node
-func (il *IntegerLiteral) End() int { return il.Token.Pos + len(fmt.Sprintf("%d", il.Value)) }
-
-// TokenLiteral returns the literal from the token.INT token
-func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
-func (il *IntegerLiteral) String() string       { return fmt.Sprintf("%d", il.Value) }
+func (il *IntegerLiteral) String() string  { return fmt.Sprintf("%d", il.Value) }
 
 var (
+	_ Node       = &IntegerLiteral{}
 	_ Expression = &IntegerLiteral{}
-	_ literal    = &IntegerLiteral{}
+	_ Literal    = &IntegerLiteral{}
 )
 
 // FloatLiteral represents a float in the AST
 type FloatLiteral struct {
-	Token token.Token
 	Value float64
 }
 
+func (fl *FloatLiteral) node()           {}
 func (fl *FloatLiteral) expressionNode() {}
 func (fl *FloatLiteral) literalNode()    {}
-
-// Pos returns the position of first character belonging to the node
-func (fl *FloatLiteral) Pos() int { return fl.Token.Pos }
-
-// End returns the position of first character immediately after the node
-func (fl *FloatLiteral) End() int { return fl.Token.Pos + len(fmt.Sprintf("%f", fl.Value)) }
-
-// TokenLiteral returns the literal from the token.FLOAT token
-func (fl *FloatLiteral) TokenLiteral() string { return fl.Token.Literal }
 
 func (fl *FloatLiteral) String() string { return fmt.Sprintf("%f", fl.Value) }
 
 var (
+	_ Node       = &FloatLiteral{}
 	_ Expression = &FloatLiteral{}
-	_ literal    = &FloatLiteral{}
+	_ Literal    = &FloatLiteral{}
 )
 
 // Nil represents the 'nil' keyword
-type Nil struct {
-	Token token.Token
-}
+type Nil struct{}
 
+func (n *Nil) node()           {}
 func (n *Nil) expressionNode() {}
 func (n *Nil) literalNode()    {}
 
-// Pos returns the position of first character belonging to the node
-func (n *Nil) Pos() int { return n.Token.Pos }
+func (n *Nil) String() string { return "nil" }
 
-// End returns the position of first character immediately after the node
-func (n *Nil) End() int { return n.Token.Pos + 3 }
-
-// TokenLiteral returns the literal from the token token.NIL
-func (n *Nil) TokenLiteral() string { return n.Token.Literal }
-func (n *Nil) String() string       { return "nil" }
+var (
+	_ Node       = &Nil{}
+	_ Expression = &Nil{}
+	_ Literal    = &Nil{}
+)
 
 // Boolean represents a boolean in the AST
 type Boolean struct {
-	Token token.Token
 	Value bool
 }
 
+func (b *Boolean) node()           {}
 func (b *Boolean) expressionNode() {}
 func (b *Boolean) literalNode()    {}
 
-// Pos returns the position of first character belonging to the node
-func (b *Boolean) Pos() int { return b.Token.Pos }
+func (b *Boolean) String() string { return fmt.Sprintf("%t", b.Value) }
 
-// End returns the position of first character immediately after the node
-func (b *Boolean) End() int { return b.Token.Pos + len(fmt.Sprintf("%t", b.Value)) }
-
-// TokenLiteral returns the literal from the token token.BOOLEAN
-func (b *Boolean) TokenLiteral() string { return b.Token.Literal }
-func (b *Boolean) String() string       { return fmt.Sprintf("%t", b.Value) }
+var (
+	_ Node       = &Boolean{}
+	_ Expression = &Boolean{}
+	_ Literal    = &Boolean{}
+)
 
 // StringLiteral represents a double quoted string in the AST
 type StringLiteral struct {
-	Token token.Token // the '"'
 	Value string
 }
 
+func (sl *StringLiteral) node()           {}
 func (sl *StringLiteral) expressionNode() {}
 func (sl *StringLiteral) literalNode()    {}
 
-// Pos returns the position of first character belonging to the node
-func (sl *StringLiteral) Pos() int { return sl.Token.Pos }
+func (sl *StringLiteral) String() string { return sl.Value }
 
-// End returns the position of first character immediately after the node
-func (sl *StringLiteral) End() int { return sl.Token.Pos + len(sl.Value) }
-
-// TokenLiteral returns the literal from token token.STRING
-func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Literal }
-func (sl *StringLiteral) String() string       { return sl.Value }
+var (
+	_ Node       = &StringLiteral{}
+	_ Expression = &StringLiteral{}
+	_ Literal    = &StringLiteral{}
+)
 
 // Comment represents a double quoted string in the AST
 type Comment struct {
-	Token token.Token // the #
 	Value string
 }
 
+func (c *Comment) node()          {}
 func (c *Comment) statementNode() {}
 func (c *Comment) literalNode()   {}
 
-// Pos returns the position of first character belonging to the node
-func (c *Comment) Pos() int { return c.Token.Pos }
+func (c *Comment) String() string { return "#" + c.Value }
 
-// End returns the position of first character immediately after the node
-func (c *Comment) End() int { return c.Token.Pos + len(c.Value) }
-
-// TokenLiteral returns the literal from token token.STRING
-func (c *Comment) TokenLiteral() string { return c.Token.Literal }
-func (c *Comment) String() string       { return c.Value }
+var (
+	_ Node      = &Comment{}
+	_ Statement = &Comment{}
+	_ Literal   = &Comment{}
+)
 
 // SymbolLiteral represents a symbol within the AST
 type SymbolLiteral struct {
-	Token token.Token // the ':'
 	Value Expression
 }
 
+func (s *SymbolLiteral) node()           {}
 func (s *SymbolLiteral) expressionNode() {}
 func (s *SymbolLiteral) literalNode()    {}
 
-// Pos returns the position of first character belonging to the node
-func (s *SymbolLiteral) Pos() int { return s.Token.Pos }
+func (s *SymbolLiteral) String() string { return ":" + s.Value.String() }
 
-// End returns the position of first character immediately after the node
-func (s *SymbolLiteral) End() int { return s.Value.End() }
-
-// TokenLiteral returns the literal from token token.SYMBOL
-func (s *SymbolLiteral) TokenLiteral() string { return s.Token.Literal }
-func (s *SymbolLiteral) String() string       { return ":" + s.Value.String() }
+var (
+	_ Node       = &SymbolLiteral{}
+	_ Expression = &SymbolLiteral{}
+	_ Literal    = &SymbolLiteral{}
+)
 
 // ConditionalExpression represents an if expression within the AST
 type ConditionalExpression struct {
-	Token       token.Token // The 'if' or 'unless' token
-	EndToken    token.Token // The 'end' token
+	Unless      bool // true = unless, false = if
 	Condition   Expression
 	Consequence *BlockStatement
 	Alternative *BlockStatement
 }
 
-// IsNegated indicates if the condition uses unless, i.e. is negated
-func (ce *ConditionalExpression) IsNegated() bool {
-	return ce.Token.Type == token.UNLESS
-}
-
+func (ce *ConditionalExpression) node()           {}
 func (ce *ConditionalExpression) expressionNode() {}
 
-// Pos returns the position of first character belonging to the node
-func (ce *ConditionalExpression) Pos() int {
-	if ce.EndToken.Type == token.ILLEGAL {
-		return ce.Consequence.Pos()
-	}
-	return ce.Token.Pos
-}
-
-// End returns the position of first character immediately after the node
-func (ce *ConditionalExpression) End() int {
-	if ce.EndToken.Type == token.ILLEGAL {
-		return ce.Consequence.Pos()
-	}
-	return ce.EndToken.Pos
-}
-
-// TokenLiteral returns the literal from token token.IF or token.UNLESS
-func (ce *ConditionalExpression) TokenLiteral() string { return ce.Token.Literal }
 func (ce *ConditionalExpression) String() string {
 	var out strings.Builder
-	out.WriteString(ce.Token.Literal)
+	if ce.Unless {
+		out.WriteString("unless ")
+	} else {
+		out.WriteString("if ")
+	}
 	out.WriteString(ce.Condition.String())
 	out.WriteString(" ")
 	out.WriteString(ce.Consequence.String())
@@ -684,31 +542,23 @@ func (ce *ConditionalExpression) String() string {
 	return out.String()
 }
 
+var (
+	_ Node       = &ConditionalExpression{}
+	_ Expression = &ConditionalExpression{}
+)
+
 // A LoopExpression represents a loop
 type LoopExpression struct {
-	Token     token.Token // while
-	EndToken  token.Token // end
 	Condition Expression
 	Block     *BlockStatement
 }
 
+func (ce *LoopExpression) node()           {}
 func (ce *LoopExpression) expressionNode() {}
 
-// Pos returns the position of first character belonging to the node
-func (ce *LoopExpression) Pos() int {
-	return ce.Token.Pos
-}
-
-// End returns the position of first character immediately after the node
-func (ce *LoopExpression) End() int {
-	return ce.EndToken.Pos
-}
-
-// TokenLiteral returns the literal from token token.WHILE
-func (ce *LoopExpression) TokenLiteral() string { return ce.Token.Literal }
 func (ce *LoopExpression) String() string {
 	var out strings.Builder
-	out.WriteString(ce.Token.Literal)
+	out.WriteString("while ")
 	out.WriteString(ce.Condition.String())
 	out.WriteString(" do ")
 	out.WriteString(ce.Block.String())
@@ -716,35 +566,18 @@ func (ce *LoopExpression) String() string {
 	return out.String()
 }
 
+var (
+	_ Node       = &LoopExpression{}
+	_ Expression = &LoopExpression{}
+)
+
 // ExpressionList represents a list of expressions within the AST divided by commas
 type ExpressionList []Expression
 
+func (el ExpressionList) node()           {}
 func (el ExpressionList) expressionNode() {}
 func (el ExpressionList) literalNode()    {}
 
-// Pos returns the position of first character from the first expression
-func (el ExpressionList) Pos() int {
-	if len(el) == 0 {
-		return 0
-	}
-	return el[0].End()
-}
-
-// End returns End of the last element
-func (el ExpressionList) End() int {
-	if len(el) == 0 {
-		return 0
-	}
-	return el[len(el)-1].End()
-}
-
-// TokenLiteral returns the literal of the first element
-func (el ExpressionList) TokenLiteral() string {
-	if len(el) == 0 {
-		return ""
-	}
-	return el[0].TokenLiteral()
-}
 func (el ExpressionList) String() string {
 	var out strings.Builder
 	elements := []string{}
@@ -755,26 +588,21 @@ func (el ExpressionList) String() string {
 	return out.String()
 }
 
+var (
+	_ Node       = ExpressionList{}
+	_ Expression = ExpressionList{}
+	_ Literal    = ExpressionList{}
+)
+
 // ArrayLiteral represents an Array literal within the AST
 type ArrayLiteral struct {
-	Token    token.Token // the '['
-	Rbracket token.Token // the ']'
 	Elements []Expression
 }
 
+func (al *ArrayLiteral) node()           {}
 func (al *ArrayLiteral) expressionNode() {}
 func (al *ArrayLiteral) literalNode()    {}
 
-// Pos returns the position of first character belonging to the node
-func (al *ArrayLiteral) Pos() int { return al.Token.Pos }
-
-// End returns the position of first character immediately after the node
-func (al *ArrayLiteral) End() int {
-	return al.Rbracket.Pos
-}
-
-// TokenLiteral returns the literal of the token token.LBRACKET
-func (al *ArrayLiteral) TokenLiteral() string { return al.Token.Literal }
 func (al *ArrayLiteral) String() string {
 	var out strings.Builder
 	elements := []string{}
@@ -787,24 +615,21 @@ func (al *ArrayLiteral) String() string {
 	return out.String()
 }
 
+var (
+	_ Node       = &ArrayLiteral{}
+	_ Expression = &ArrayLiteral{}
+	_ Literal    = &ArrayLiteral{}
+)
+
 // HashLiteral represents an Hash literal within the AST
 type HashLiteral struct {
-	Token  token.Token // the '{'
-	Rbrace token.Token // the '{'
-	Map    map[Expression]Expression
+	Map map[Expression]Expression
 }
 
+func (hl *HashLiteral) node()           {}
 func (hl *HashLiteral) expressionNode() {}
 func (hl *HashLiteral) literalNode()    {}
 
-// Pos returns the position of the left brace
-func (hl *HashLiteral) Pos() int { return hl.Token.Pos }
-
-// End returns the position of the right brace
-func (hl *HashLiteral) End() int { return hl.Rbrace.Pos }
-
-// TokenLiteral returns the literal of the token token.LBRACE
-func (hl *HashLiteral) TokenLiteral() string { return hl.Token.Literal }
 func (hl *HashLiteral) String() string {
 	var out strings.Builder
 	elements := []string{}
@@ -817,68 +642,65 @@ func (hl *HashLiteral) String() string {
 	return out.String()
 }
 
-var _ Expression = &HashLiteral{}
-var _ literal = &HashLiteral{}
+var (
+	_ Node       = &HashLiteral{}
+	_ Expression = &HashLiteral{}
+	_ Literal    = &HashLiteral{}
+)
 
 // RangeLiteral represents a range literal within the AST
 type RangeLiteral struct {
-	Token     token.Token // the '..' or '...'
 	Left      Expression
 	Right     Expression
 	Inclusive bool
 }
 
-// Pos returns the position of the first character of the range
-func (rl *RangeLiteral) Pos() int { return rl.Left.Pos() }
-
-// End returns the position of the last character of the range
-func (rl *RangeLiteral) End() int { return rl.Right.End() }
-
-// TokenLiteral returns the literal of the token token.DDOT or token.DDDOT
-func (rl *RangeLiteral) TokenLiteral() string { return rl.Token.Literal }
+func (rl *RangeLiteral) node()           {}
+func (rl *RangeLiteral) expressionNode() {}
+func (rl *RangeLiteral) literalNode()    {}
 
 // String returns the string representation of the range
 func (rl *RangeLiteral) String() string {
 	var out strings.Builder
 	out.WriteString(rl.Left.String())
 	out.WriteString(" ")
-	out.WriteString(rl.Token.Literal)
+	if rl.Inclusive {
+		out.WriteString("..")
+	} else {
+		out.WriteString("...")
+	}
 	out.WriteString(" ")
 	out.WriteString(rl.Right.String())
 	return out.String()
 }
 
-func (rl *RangeLiteral) expressionNode() {}
-func (rl *RangeLiteral) literalNode()    {}
-
-var _ Expression = &RangeLiteral{}
-var _ literal = &RangeLiteral{}
+var (
+	_ Node       = &RangeLiteral{}
+	_ Expression = &RangeLiteral{}
+	_ Literal    = &RangeLiteral{}
+)
 
 // A BlockCapture represents a function scoped variable capturing a block
 type BlockCapture struct {
-	Token token.Token // the `&`
-	Name  *Identifier
+	Name *Identifier
 }
 
+func (b *BlockCapture) node()           {}
 func (b *BlockCapture) expressionNode() {}
 func (b *BlockCapture) literalNode()    {}
 
-// Pos returns the position of the ampersand
-func (b *BlockCapture) Pos() int { return b.Token.Pos }
-
-// End returns the position of the last character of Name
-func (b *BlockCapture) End() int { return b.Name.End() }
 func (b *BlockCapture) String() string {
 	return "&" + b.Name.Value
 }
 
-// TokenLiteral returns the literal of the token
-func (b *BlockCapture) TokenLiteral() string { return b.Token.Literal }
+var (
+	_ Node       = &BlockCapture{}
+	_ Expression = &BlockCapture{}
+	_ Literal    = &BlockCapture{}
+)
 
 // A FunctionLiteral represents a function definition in the AST
 type FunctionLiteral struct {
-	Token         token.Token // The 'def' token
-	EndToken      token.Token // the 'end' token
 	Receiver      *Identifier
 	Name          *Identifier
 	Parameters    []*FunctionParameter
@@ -887,17 +709,10 @@ type FunctionLiteral struct {
 	Rescues       []*RescueBlock
 }
 
+func (fl *FunctionLiteral) node()           {}
 func (fl *FunctionLiteral) expressionNode() {}
 func (fl *FunctionLiteral) literalNode()    {}
 
-// Pos returns the position of the `def` keyword
-func (fl *FunctionLiteral) Pos() int { return fl.Token.Pos }
-
-// End returns the position of the `end` keyword
-func (fl *FunctionLiteral) End() int { return fl.EndToken.Pos }
-
-// TokenLiteral returns the literal from token.DEF
-func (fl *FunctionLiteral) TokenLiteral() string { return fl.Token.Literal }
 func (fl *FunctionLiteral) String() string {
 	var out strings.Builder
 	params := []string{}
@@ -926,8 +741,11 @@ func (fl *FunctionLiteral) String() string {
 	return out.String()
 }
 
-var _ Expression = &FunctionLiteral{}
-var _ literal = &FunctionLiteral{}
+var (
+	_ Node       = &FunctionLiteral{}
+	_ Expression = &FunctionLiteral{}
+	_ Literal    = &FunctionLiteral{}
+)
 
 // A FunctionParameter represents a parameter in a function literal
 type FunctionParameter struct {
@@ -936,21 +754,9 @@ type FunctionParameter struct {
 	Splat   bool
 }
 
+func (f *FunctionParameter) node()           {}
 func (f *FunctionParameter) expressionNode() {}
 
-// Pos returns the position of first character belonging to the node
-func (f *FunctionParameter) Pos() int { return f.Name.Pos() }
-
-// End returns the position of the default end if it exists, otherwise the end position of Name
-func (f *FunctionParameter) End() int {
-	if f.Default != nil {
-		return f.Default.End()
-	}
-	return f.Name.End()
-}
-
-// TokenLiteral returns the token of the parameter name
-func (f *FunctionParameter) TokenLiteral() string { return f.Name.TokenLiteral() }
 func (f *FunctionParameter) String() string {
 	var out strings.Builder
 	if f.Splat {
@@ -964,23 +770,20 @@ func (f *FunctionParameter) String() string {
 	return out.String()
 }
 
-var _ Expression = &FunctionParameter{}
+var (
+	_ Node       = &FunctionParameter{}
+	_ Expression = &FunctionParameter{}
+)
 
 // A ProcedureLiteral represents a procedure definition in the AST
 type ProcedureLiteral struct {
-	Token      token.Token // The '->' token
 	Parameters []*FunctionParameter
 	Body       *BlockStatement
 }
 
-// Pos returns the position of the `->` token
-func (pl *ProcedureLiteral) Pos() int { return pl.Token.Pos }
-
-// End returns the position of the last body token
-func (pl *ProcedureLiteral) End() int { return pl.Body.End() }
-
-// TokenLiteral returns the literal from token.PROC
-func (pl *ProcedureLiteral) TokenLiteral() string { return pl.Token.Literal }
+func (pl *ProcedureLiteral) node()           {}
+func (pl *ProcedureLiteral) expressionNode() {}
+func (pl *ProcedureLiteral) literalNode()    {}
 
 // String returns the string representation of the procedure
 func (pl *ProcedureLiteral) String() string {
@@ -997,58 +800,42 @@ func (pl *ProcedureLiteral) String() string {
 	}
 	return out.String()
 }
-func (pl *ProcedureLiteral) expressionNode() {}
-func (pl *ProcedureLiteral) literalNode()    {}
 
-var _ Expression = &ProcedureLiteral{}
-var _ literal = &ProcedureLiteral{}
+var (
+	_ Node       = &ProcedureLiteral{}
+	_ Expression = &ProcedureLiteral{}
+	_ Literal    = &ProcedureLiteral{}
+)
 
 // A Splat represents a splat operator in the AST
 type Splat struct {
-	Token token.Token // the '*'
 	Value Expression
 }
 
+func (s *Splat) node()           {}
 func (s *Splat) expressionNode() {}
 
-// func (s *Splat) literalNode() {}
-
-// Pos returns the position of first character belonging to the node
-func (s *Splat) Pos() int { return s.Token.Pos }
-
-// End returns the position of first character immediately after the node
-
-func (s *Splat) End() int { return s.Value.End() }
-
-// TokenLiteral returns the literal from token.SPLAT
-
-func (s *Splat) TokenLiteral() string { return s.Token.Literal }
 func (s *Splat) String() string {
 	var out strings.Builder
-	out.WriteString(s.Token.Literal)
+	out.WriteString("*")
 	out.WriteString(s.Value.String())
 	return out.String()
 }
 
-var _ Expression = &Splat{}
+var (
+	_ Node       = &Splat{}
+	_ Expression = &Splat{}
+)
 
 // An IndexExpression represents an array or hash access in the AST
 type IndexExpression struct {
-	Token token.Token // The [ token
 	Left  Expression
 	Index Expression
 }
 
+func (ie *IndexExpression) node()           {}
 func (ie *IndexExpression) expressionNode() {}
 
-// Pos returns the position of first character belonging to the node
-func (ie *IndexExpression) Pos() int { return ie.Token.Pos }
-
-// End returns the position of the last character belonging to the node
-func (ie *IndexExpression) End() int { return ie.Index.End() }
-
-// TokenLiteral returns the literal from token.LBRACKET
-func (ie *IndexExpression) TokenLiteral() string { return ie.Token.Literal }
 func (ie *IndexExpression) String() string {
 	var out strings.Builder
 	out.WriteString("(")
@@ -1059,40 +846,22 @@ func (ie *IndexExpression) String() string {
 	return out.String()
 }
 
+var (
+	_ Node       = &IndexExpression{}
+	_ Expression = &IndexExpression{}
+)
+
 // A ContextCallExpression represents a method call on a given Context
 type ContextCallExpression struct {
-	Token     token.Token      // The '.' token
 	Context   Expression       // The lefthandside expression
 	Function  *Identifier      // The function to call
 	Arguments []Expression     // The function arguments
 	Block     *BlockExpression // The function block
 }
 
+func (ce *ContextCallExpression) node()           {}
 func (ce *ContextCallExpression) expressionNode() {}
 
-// Pos returns the position of first character belonging to the node
-func (ce *ContextCallExpression) Pos() int {
-	if ce.Context != nil {
-		return ce.Context.Pos()
-	}
-	return ce.Function.Pos()
-}
-
-// End returns the end position of the block if it exists. If not, it returns
-// the end position of the last argument if any. Otherwise it returns the end
-// of the function identifier
-func (ce *ContextCallExpression) End() int {
-	if ce.Block != nil {
-		return ce.Block.End()
-	}
-	if len(ce.Arguments) == 0 {
-		return ce.Function.End()
-	}
-	return ce.Arguments[len(ce.Arguments)-1].End()
-}
-
-// TokenLiteral returns the literal from token.DOT
-func (ce *ContextCallExpression) TokenLiteral() string { return ce.Token.Literal }
 func (ce *ContextCallExpression) String() string {
 	var out strings.Builder
 	if ce.Context != nil {
@@ -1114,29 +883,24 @@ func (ce *ContextCallExpression) String() string {
 	return out.String()
 }
 
+var (
+	_ Node       = &ContextCallExpression{}
+	_ Expression = &ContextCallExpression{}
+)
+
 // A BlockExpression represents a Ruby block
 type BlockExpression struct {
-	Token      token.Token          // token.DO or token.LBRACE
-	EndToken   token.Token          // token.END or token.RBRACE
 	Parameters []*FunctionParameter // the block parameters
 	Body       *BlockStatement      // the block body
 }
 
+func (b *BlockExpression) node()           {}
 func (b *BlockExpression) expressionNode() {}
-
-// Pos returns the position of first character belonging to the node
-func (b *BlockExpression) Pos() int { return b.Token.Pos }
-
-// End returns the position of the end token
-func (b *BlockExpression) End() int { return b.EndToken.Pos }
-
-// TokenLiteral returns the literal from the Token
-func (b *BlockExpression) TokenLiteral() string { return b.Token.Literal }
 
 // String returns a string representation of the block statement
 func (b *BlockExpression) String() string {
 	var out strings.Builder
-	out.WriteString(b.Token.Literal)
+	out.WriteString("{")
 	if len(b.Parameters) != 0 {
 		args := []string{}
 		for _, a := range b.Parameters {
@@ -1149,35 +913,27 @@ func (b *BlockExpression) String() string {
 	}
 	out.WriteString(b.Body.String())
 	out.WriteString("\n")
-	if b.Token.Type == token.LBRACE {
-		out.WriteString("}")
-	} else {
-		out.WriteString("end")
-	}
+	out.WriteString("}")
 	return out.String()
 }
 
+var (
+	_ Node       = &BlockExpression{}
+	_ Expression = &BlockExpression{}
+)
+
 // ModuleExpression represents a module definition
 type ModuleExpression struct {
-	Token    token.Token // The module keyword
-	EndToken token.Token // The end token
-	Name     *Identifier // The module name, will always be a const
-	Body     *BlockStatement
+	Name *Identifier // The module name, will always be a const
+	Body *BlockStatement
 }
 
+func (m *ModuleExpression) node()           {}
 func (m *ModuleExpression) expressionNode() {}
 
-// Pos returns the position of first character belonging to the node
-func (m *ModuleExpression) Pos() int { return m.Token.Pos }
-
-// End returns the position of the `end` token
-func (m *ModuleExpression) End() int { return m.EndToken.Pos }
-
-// TokenLiteral returns the literal from token.MODULE
-func (m *ModuleExpression) TokenLiteral() string { return m.Token.Literal }
 func (m *ModuleExpression) String() string {
 	var out strings.Builder
-	out.WriteString(m.TokenLiteral())
+	out.WriteString("module")
 	out.WriteString(" ")
 	out.WriteString(m.Name.String())
 	out.WriteString("\n")
@@ -1187,28 +943,24 @@ func (m *ModuleExpression) String() string {
 	return out.String()
 }
 
+var (
+	_ Node       = &ModuleExpression{}
+	_ Expression = &ModuleExpression{}
+)
+
 // ClassExpression represents a module definition
 type ClassExpression struct {
-	Token      token.Token // The class keyword
-	EndToken   token.Token // The end token
 	Name       *Identifier // The class name, will always be a const
 	SuperClass *Identifier // The superclass, if any
 	Body       *BlockStatement
 }
 
+func (m *ClassExpression) node()           {}
 func (m *ClassExpression) expressionNode() {}
 
-// Pos returns the position of first character belonging to the node
-func (m *ClassExpression) Pos() int { return m.Token.Pos }
-
-// End returns the position of the `end` token
-func (m *ClassExpression) End() int { return m.EndToken.Pos }
-
-// TokenLiteral returns the literal from token.CLASS
-func (m *ClassExpression) TokenLiteral() string { return m.Token.Literal }
 func (m *ClassExpression) String() string {
 	var out strings.Builder
-	out.WriteString(m.TokenLiteral())
+	out.WriteString("class")
 	out.WriteString(" ")
 	out.WriteString(m.Name.String())
 	if m.SuperClass != nil {
@@ -1224,23 +976,20 @@ func (m *ClassExpression) String() string {
 	return out.String()
 }
 
+var (
+	_ Node       = &ClassExpression{}
+	_ Expression = &ClassExpression{}
+)
+
 // PrefixExpression represents a prefix operator
 type PrefixExpression struct {
-	Token    token.Token // The prefix token, e.g. !
 	Operator string
 	Right    Expression
 }
 
+func (pe *PrefixExpression) node()           {}
 func (pe *PrefixExpression) expressionNode() {}
 
-// Pos returns the position of first character belonging to the node
-func (pe *PrefixExpression) Pos() int { return pe.Token.Pos }
-
-// End returns the end of the right expression
-func (pe *PrefixExpression) End() int { return pe.Right.End() }
-
-// TokenLiteral returns the literal from the prefix operator token
-func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
 func (pe *PrefixExpression) String() string {
 	var out strings.Builder
 	out.WriteString("(")
@@ -1252,27 +1001,19 @@ func (pe *PrefixExpression) String() string {
 
 // An InfixExpression represents an infix operator in the AST
 type InfixExpression struct {
-	Token    token.Token // The operator token, e.g. +
 	Left     Expression
-	Operator string
+	Operator infix.Infix
 	Right    Expression
 }
 
+func (oe *InfixExpression) node()           {}
 func (oe *InfixExpression) expressionNode() {}
 
-// Pos returns the position of first character belonging to the left node
-func (oe *InfixExpression) Pos() int { return oe.Left.Pos() }
-
-// End returns the position of last character belonging to the right node
-func (oe *InfixExpression) End() int { return oe.Right.End() }
-
-// TokenLiteral returns the literal from the infix operator token
-func (oe *InfixExpression) TokenLiteral() string { return oe.Token.Literal }
 func (oe *InfixExpression) String() string {
 	var out strings.Builder
 	out.WriteString("(")
 	out.WriteString(oe.Left.String())
-	out.WriteString(" " + oe.Operator + " ")
+	out.WriteString(" " + oe.Operator.String() + " ")
 	out.WriteString(oe.Right.String())
 	out.WriteString(")")
 	return out.String()
@@ -1281,7 +1022,7 @@ func (oe *InfixExpression) String() string {
 func encloseInParensIfNeeded(expr Expression) string {
 	val := expr.String()
 	hasParens := strings.HasPrefix(val, "(") && strings.HasSuffix(val, ")")
-	_, isLiteral := expr.(literal)
+	_, isLiteral := expr.(Literal)
 	if !isLiteral && !hasParens {
 		val = "(" + val + ")"
 	}

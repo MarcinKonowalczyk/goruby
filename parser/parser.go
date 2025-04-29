@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/ast/infix"
 	"github.com/MarcinKonowalczyk/goruby/lexer"
 	"github.com/MarcinKonowalczyk/goruby/token"
 	"github.com/pkg/errors"
@@ -116,11 +117,6 @@ type (
 	prefixParseFn func() ast.Expression
 	infixParseFn  func(ast.Expression) ast.Expression
 )
-
-// var defaultExpressionTerminators = []token.Type{
-// 	token.SEMICOLON,
-// 	token.NEWLINE,
-// }
 
 // A parser parses the token emitted by the provided lexer.Lexer and returns an
 // AST describing the parsed program.
@@ -302,6 +298,15 @@ func (p *parser) nextToken() {
 	}
 }
 
+func (p *parser) parseIdentifier() ast.Expression {
+	if p.trace {
+		defer un(trace(p, "parseIdentifier"))
+	}
+	return &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
+}
+
+// Constant: p.currentTokenIs(token.CONST),
+
 // Errors returns all errors which happened during the parsing of the input.
 func (p *parser) Errors() []error {
 	return p.errors
@@ -365,7 +370,7 @@ func (p *parser) noPrefixParseFnError(t token.Type) {
 // and callers should always check if they can handle the error with providing
 // more input by checking with e.g. IsEOFError.
 func (p *parser) ParseProgram() (*ast.Program, error) {
-	program := &ast.Program{File: p.file}
+	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 	for !p.currentTokenIs(token.EOF) {
 		if p.currentTokenIs(token.NEWLINE) {
@@ -422,7 +427,7 @@ func (p *parser) parseReturnStatement() *ast.ReturnStatement {
 	if p.trace {
 		defer un(trace(p, "parseReturnStatement"))
 	}
-	stmt := &ast.ReturnStatement{Token: p.curToken}
+	stmt := &ast.ReturnStatement{}
 	p.nextToken()
 
 	if p.currentTokenOneOf(token.NEWLINE, token.SEMICOLON) {
@@ -430,7 +435,6 @@ func (p *parser) parseReturnStatement() *ast.ReturnStatement {
 		return stmt
 	}
 
-	valToken := p.curToken
 	stmt.ReturnValue = p.parseExpression(precLowest)
 	if list, ok := stmt.ReturnValue.(ast.ExpressionList); ok {
 		stmt.ReturnValue = &ast.ArrayLiteral{Elements: list}
@@ -449,12 +453,11 @@ func (p *parser) parseReturnStatement() *ast.ReturnStatement {
 		return nil
 	}
 
-	arr := &ast.ArrayLiteral{Token: valToken, Elements: []ast.Expression{stmt.ReturnValue}}
+	arr := &ast.ArrayLiteral{Elements: []ast.Expression{stmt.ReturnValue}}
 	for p.peekTokenIs(token.COMMA) {
 		p.consume(token.COMMA)
 		arr.Elements = append(arr.Elements, p.parseExpression(precLowest))
 	}
-	arr.Rbracket = p.curToken
 	stmt.ReturnValue = arr
 
 	if !p.acceptOneOf(token.NEWLINE, token.SEMICOLON) {
@@ -467,7 +470,7 @@ func (p *parser) parseExpressionStatement() *ast.ExpressionStatement {
 	if p.trace {
 		defer un(trace(p, "parseExpressionStatement"))
 	}
-	stmt := &ast.ExpressionStatement{Token: p.curToken}
+	stmt := &ast.ExpressionStatement{}
 	stmt.Expression = p.parseExpression(precLowest)
 	if p.peekTokenOneOf(token.SEMICOLON, token.NEWLINE) {
 		p.nextToken()
@@ -506,7 +509,7 @@ func (p *parser) parseComment() ast.Statement {
 	if p.trace {
 		defer un(trace(p, "parseComment"))
 	}
-	comment := &ast.Comment{Token: p.curToken}
+	comment := &ast.Comment{}
 	comment.Value = p.curToken.Literal
 	if !p.peekTokenOneOf(token.NEWLINE, token.EOF) {
 		epos := p.file.Position(p.pos)
@@ -525,7 +528,7 @@ func (p *parser) parseExceptionHandlingBlock() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseExceptionHandlingBlock"))
 	}
-	block := &ast.ExceptionHandlingBlock{BeginToken: p.curToken}
+	block := &ast.ExceptionHandlingBlock{}
 	if !p.accept(token.NEWLINE) {
 		return nil
 	}
@@ -539,7 +542,6 @@ func (p *parser) parseExceptionHandlingBlock() ast.Expression {
 	if !p.accept(token.END) {
 		return nil
 	}
-	block.EndToken = p.curToken
 	return block
 }
 
@@ -550,7 +552,7 @@ func (p *parser) parseLambdaLiteral() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseLambdaLiteral"))
 	}
-	proc := &ast.ProcedureLiteral{Token: p.curToken}
+	proc := &ast.ProcedureLiteral{}
 	if p.peekTokenIs(token.LPAREN) {
 		proc.Parameters = p.parseFunctionParameters(token.LPAREN, token.RPAREN)
 	}
@@ -571,7 +573,7 @@ func (p *parser) parseSplat() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseSplat"))
 	}
-	splat := &ast.Splat{Token: p.curToken}
+	splat := &ast.Splat{}
 	// p.nextToken()
 	// if p.curToken.Type != token.IDENT {
 	// 	p.Error(p.curToken.Type, "", token.IDENT)
@@ -594,11 +596,11 @@ func (p *parser) parseRescueBlock() *ast.RescueBlock {
 	if p.trace {
 		defer un(trace(p, "parseRescueBlock"))
 	}
-	block := &ast.RescueBlock{Token: p.curToken}
+	block := &ast.RescueBlock{}
 	classes := []*ast.Identifier{}
 	for p.peekTokenIs(token.CONST) {
 		p.accept(token.CONST)
-		class := &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+		class := &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
 		classes = append(classes, class)
 		if p.peekTokenIs(token.COMMA) {
 			p.accept(token.COMMA)
@@ -611,7 +613,7 @@ func (p *parser) parseRescueBlock() *ast.RescueBlock {
 		if !p.accept(token.IDENT) {
 			return nil
 		}
-		block.Exception = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+		block.Exception = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
 	}
 	if !p.accept(token.NEWLINE) {
 		return nil
@@ -640,11 +642,11 @@ func (p *parser) parseBlockCapture() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseBlockCapture"))
 	}
-	capture := &ast.BlockCapture{Token: p.curToken}
+	capture := &ast.BlockCapture{}
 	if !p.accept(token.IDENT) {
 		return nil
 	}
-	capture.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	capture.Name = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
 	return capture
 }
 
@@ -656,13 +658,20 @@ func (p *parser) parseAssignmentOperator(left ast.Expression) ast.Expression {
 	if assignIndex < 0 {
 		return nil
 	}
+	op := infix.InfixFromAssignmentOperator(p.curToken)
+	if op == infix.ILLEGAL {
+		epos := p.file.Position(p.pos)
+		msg := fmt.Errorf("%s: invalid assignment operator %q", epos.String(), p.curToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+
 	newInf := &ast.InfixExpression{
 		Left:     left,
-		Operator: p.curToken.Literal[:assignIndex],
+		Operator: op,
 	}
 	assign := &ast.Assignment{
-		Token: p.curToken,
-		Left:  left,
+		Left: left,
 	}
 	p.nextToken()
 	newInf.Right = p.parseExpression(precLowest)
@@ -692,8 +701,7 @@ func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
 	}
 
 	assign := &ast.Assignment{
-		Token: p.curToken,
-		Left:  left,
+		Left: left,
 	}
 	p.nextToken()
 	expr := p.parseExpression(precLowest)
@@ -709,7 +717,7 @@ func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
 	}
 	assign.Right = expStmt.Expression
 	cond := &ast.ConditionalExpression{
-		Token:     right.Token,
+		Unless:    right.Unless,
 		Condition: right.Condition,
 		Consequence: &ast.BlockStatement{
 			Statements: []ast.Statement{
@@ -725,7 +733,7 @@ func (p *parser) parseInstanceVariable() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseInstanceVariable"))
 	}
-	instanceVariable := &ast.InstanceVariable{Token: p.curToken}
+	instanceVariable := &ast.InstanceVariable{}
 	if !p.accept(token.IDENT) {
 		return nil
 	}
@@ -737,21 +745,14 @@ func (p *parser) parseNilLiteral() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseNilLiteral"))
 	}
-	return &ast.Nil{Token: p.curToken}
-}
-
-func (p *parser) parseIdentifier() ast.Expression {
-	if p.trace {
-		defer un(trace(p, "parseIdentifier"))
-	}
-	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	return &ast.Nil{}
 }
 
 func (p *parser) parseGlobal() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseGlobal"))
 	}
-	return &ast.Global{Token: p.curToken, Value: p.curToken.Literal}
+	return &ast.Global{Value: p.curToken.Literal}
 }
 
 func (p *parser) parseScopedIdentifierExpression(outer ast.Expression) ast.Expression {
@@ -763,7 +764,7 @@ func (p *parser) parseScopedIdentifierExpression(outer ast.Expression) ast.Expre
 		return p.parseMethodCall(outer)
 	}
 
-	scopedIdent := &ast.ScopedIdentifier{Token: p.curToken, Outer: ident}
+	scopedIdent := &ast.ScopedIdentifier{Outer: ident}
 	p.nextToken()
 	scopedIdent.Inner = p.parseExpression(precLowest)
 	return scopedIdent
@@ -773,7 +774,7 @@ func (p *parser) parseSelf() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseSelf"))
 	}
-	self := &ast.Self{Token: p.curToken}
+	self := &ast.Self{}
 	if p.peekTokenOneOf(token.IF, token.UNLESS) {
 		return self
 	}
@@ -789,7 +790,6 @@ func (p *parser) parseKeyword__FILE__() ast.Expression {
 		defer un(trace(p, "parseKeyword__FILE__"))
 	}
 	file := &ast.Keyword__FILE__{
-		Token:    p.curToken,
 		Filename: p.file.Name(),
 	}
 	return file
@@ -799,7 +799,7 @@ func (p *parser) parseYield() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseYield"))
 	}
-	yield := &ast.YieldExpression{Token: p.curToken}
+	yield := &ast.YieldExpression{}
 	p.nextToken()
 	if p.currentTokenIs(token.LPAREN) {
 		p.nextToken()
@@ -817,7 +817,7 @@ func (p *parser) parseIntegerLiteral() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseIntegerLiteral"))
 	}
-	lit := &ast.IntegerLiteral{Token: p.curToken}
+	lit := &ast.IntegerLiteral{}
 	value, err := strconv.ParseInt(integerLiteralReplacer.Replace(p.curToken.Literal), 0, 64)
 	if err != nil {
 		msg := fmt.Errorf("could not parse %q as integer", p.curToken.Literal)
@@ -832,7 +832,7 @@ func (p *parser) parseFloatLiteral() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseFloatLiteral"))
 	}
-	lit := &ast.FloatLiteral{Token: p.curToken}
+	lit := &ast.FloatLiteral{}
 	value, err := strconv.ParseFloat(p.curToken.Literal, 64)
 	if err != nil {
 		msg := fmt.Errorf("could not parse %q as float", p.curToken.Literal)
@@ -847,14 +847,15 @@ func (p *parser) parseStringLiteral() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseStringLiteral"))
 	}
-	return &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Literal}
+	return &ast.StringLiteral{
+		Value: p.curToken.Literal}
 }
 
 func (p *parser) parseSymbolLiteral() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseSymbolLiteral"))
 	}
-	symbol := &ast.SymbolLiteral{Token: p.curToken}
+	symbol := &ast.SymbolLiteral{}
 	if !p.acceptOneOf(token.IDENT, token.STRING, token.CONST) {
 		return nil
 	}
@@ -867,11 +868,10 @@ func (p *parser) parseArrayLiteral() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseArrayLiteral"))
 	}
-	array := &ast.ArrayLiteral{Token: p.curToken}
+	array := &ast.ArrayLiteral{}
 
 	p.nextToken()
 	array.Elements = p.parseExpressionList(token.RBRACKET)
-	array.Rbracket = p.curToken
 	return array
 }
 
@@ -879,7 +879,7 @@ func (p *parser) parseBoolean() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseBoolean"))
 	}
-	return &ast.Boolean{Token: p.curToken, Value: p.currentTokenIs(token.TRUE)}
+	return &ast.Boolean{Value: p.currentTokenIs(token.TRUE)}
 }
 
 func (p *parser) consumeNewlineOrComment() {
@@ -899,7 +899,7 @@ func (p *parser) consumeNewlineOrComment() {
 	}
 }
 func (p *parser) parseHash() ast.Expression {
-	hash := &ast.HashLiteral{Token: p.curToken, Map: make(map[ast.Expression]ast.Expression)}
+	hash := &ast.HashLiteral{Map: make(map[ast.Expression]ast.Expression)}
 	if p.trace {
 		defer un(trace(p, "parseHash"))
 	}
@@ -908,7 +908,6 @@ func (p *parser) parseHash() ast.Expression {
 	p.consumeNewlineOrComment()
 
 	if p.currentTokenIs(token.RBRACE) {
-		hash.Rbrace = p.curToken
 		return hash
 	}
 
@@ -945,7 +944,6 @@ func (p *parser) parseHash() ast.Expression {
 			return nil
 		}
 	}
-	hash.Rbrace = p.curToken
 	return hash
 }
 
@@ -971,7 +969,8 @@ func (p *parser) parseBlock() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseBlock"))
 	}
-	block := &ast.BlockExpression{Token: p.curToken}
+	start_token := p.curToken
+	block := &ast.BlockExpression{}
 	if p.peekTokenIs(token.PIPE) {
 		block.Parameters = p.parseFunctionParameters(token.PIPE, token.PIPE)
 	}
@@ -981,13 +980,12 @@ func (p *parser) parseBlock() ast.Expression {
 	}
 
 	endToken := token.RBRACE
-	if block.Token.Type == token.DO {
+	if start_token.Type == token.DO {
 		endToken = token.END
 	}
 
 	block.Body = p.parseBlockStatement(endToken)
 	p.nextToken()
-	block.EndToken = p.curToken
 	return block
 }
 
@@ -996,7 +994,6 @@ func (p *parser) parsePrefixExpression() ast.Expression {
 		defer un(trace(p, "parsePrefixExpression"))
 	}
 	expression := &ast.PrefixExpression{
-		Token:    p.curToken,
 		Operator: p.curToken.Literal,
 	}
 	p.nextToken()
@@ -1008,9 +1005,15 @@ func (p *parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseInfixExpression"))
 	}
+
+	op := infix.InfixFromToken(p.curToken)
+	if op == infix.ILLEGAL {
+		p.errors = append(p.errors, fmt.Errorf("illegal infix operator %q", p.curToken.Literal))
+		return nil
+	}
+
 	expression := &ast.InfixExpression{
-		Token:    p.curToken,
-		Operator: p.curToken.Literal,
+		Operator: op,
 		Left:     left,
 	}
 	precedence := p.curPrecedence()
@@ -1024,7 +1027,6 @@ func (p *parser) parseRangeLiteral(left ast.Expression) ast.Expression {
 		defer un(trace(p, "parseRangeLiteral"))
 	}
 	expression := &ast.RangeLiteral{
-		Token:     p.curToken,
 		Left:      left,
 		Inclusive: p.curToken.Type == token.DDOT,
 	}
@@ -1038,7 +1040,7 @@ func (p *parser) parseIndexExpression(left ast.Expression) ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseIndexExpression"))
 	}
-	exp := &ast.IndexExpression{Token: p.curToken, Left: left}
+	exp := &ast.IndexExpression{Left: left}
 
 	p.nextToken()
 	content := p.parseExpression(precLowest)
@@ -1075,7 +1077,7 @@ func (p *parser) parseIfExpression() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseIfExpression"))
 	}
-	expression := &ast.ConditionalExpression{Token: p.curToken}
+	expression := &ast.ConditionalExpression{Unless: p.currentTokenIs(token.UNLESS)}
 	p.nextToken()
 	expression.Condition = p.parseExpression(precLowest)
 	if p.peekTokenIs(token.THEN) {
@@ -1124,7 +1126,6 @@ func (p *parser) parseIfExpression() ast.Expression {
 	} else {
 		p.accept(token.END)
 	}
-	expression.EndToken = p.curToken
 	return expression
 }
 
@@ -1132,7 +1133,7 @@ func (p *parser) parseTernaryIfExpression(condition ast.Expression) ast.Expressi
 	if p.trace {
 		defer un(trace(p, "parseTernaryIfExpression"))
 	}
-	expression := &ast.ConditionalExpression{Token: p.curToken}
+	expression := &ast.ConditionalExpression{Unless: p.currentTokenIs(token.UNLESS)}
 	p.nextToken()
 	expression.Condition = condition
 	expression.Consequence = &ast.BlockStatement{
@@ -1157,7 +1158,7 @@ func (p *parser) parseModifierConditionalExpression(left ast.Expression) ast.Exp
 	if p.trace {
 		defer un(trace(p, "parseModifierConditionalExpression"))
 	}
-	expression := &ast.ConditionalExpression{Token: p.curToken}
+	expression := &ast.ConditionalExpression{Unless: p.currentTokenIs(token.UNLESS)}
 	p.nextToken()
 	expression.Condition = p.parseExpression(precLowest)
 
@@ -1173,7 +1174,7 @@ func (p *parser) parseLoopExpression() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseLoopExpression"))
 	}
-	loop := &ast.LoopExpression{Token: p.curToken}
+	loop := &ast.LoopExpression{}
 	if p.curToken.Type == token.WHILE {
 		p.nextToken()
 		loop.Condition = p.parseExpression(precBlockDo)
@@ -1183,7 +1184,7 @@ func (p *parser) parseLoopExpression() ast.Expression {
 		loop.Block = p.parseBlockStatement(token.END)
 		p.nextToken()
 	} else if p.curToken.Type == token.LOOP {
-		loop.Condition = &ast.Boolean{Token: p.curToken, Value: true}
+		loop.Condition = &ast.Boolean{Value: true}
 		if p.peekTokenIs(token.DO) {
 			// body is a do block
 			p.accept(token.DO)
@@ -1206,7 +1207,7 @@ func (p *parser) parseBreakStatement() *ast.BreakStatement {
 	if p.trace {
 		defer un(trace(p, "parseBreakExpression"))
 	}
-	stmt := &ast.BreakStatement{Token: p.curToken}
+	stmt := &ast.BreakStatement{}
 	if p.peekTokenIs(token.IF) {
 		p.accept(token.IF)
 		p.nextToken()
@@ -1224,11 +1225,11 @@ func (p *parser) parseModule() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseModule"))
 	}
-	expr := &ast.ModuleExpression{Token: p.curToken}
+	expr := &ast.ModuleExpression{}
 	if !p.accept(token.CONST) {
 		return nil
 	}
-	expr.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	expr.Name = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
 
 	if !p.acceptOneOf(token.NEWLINE, token.SEMICOLON) {
 		return nil
@@ -1239,7 +1240,6 @@ func (p *parser) parseModule() ast.Expression {
 	if !p.accept(token.END) {
 		return nil
 	}
-	expr.EndToken = p.curToken
 	return expr
 }
 
@@ -1247,11 +1247,11 @@ func (p *parser) parseClass() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseClass"))
 	}
-	expr := &ast.ClassExpression{Token: p.curToken}
+	expr := &ast.ClassExpression{}
 	if !p.accept(token.CONST) {
 		return nil
 	}
-	expr.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	expr.Name = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
 
 	if p.peekTokenIs(token.LT) {
 		p.consume(token.LT)
@@ -1267,7 +1267,6 @@ func (p *parser) parseClass() ast.Expression {
 	if !p.accept(token.END) {
 		return nil
 	}
-	expr.EndToken = p.curToken
 	return expr
 }
 
@@ -1275,7 +1274,7 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseFunctionLiteral"))
 	}
-	lit := &ast.FunctionLiteral{Token: p.curToken}
+	lit := &ast.FunctionLiteral{}
 
 	if !p.peekTokenOneOf(token.IDENT, token.SELF, token.CONST) && !p.peekToken.Type.IsOperator() {
 		p.Error(p.peekToken.Type, "", token.IDENT, token.CONST)
@@ -1285,20 +1284,20 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 	if p.peekTokenOneOf(token.IDENT, token.SELF, token.CONST) {
 		p.acceptOneOf(token.IDENT, token.SELF, token.CONST)
 		if p.peekTokenIs(token.DOT) {
-			lit.Receiver = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+			lit.Receiver = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
 			p.accept(token.DOT)
 			if !p.peekTokenOneOf(token.IDENT, token.SELF, token.CONST) && !p.peekToken.Type.IsOperator() {
 				p.Error(p.peekToken.Type, "", token.IDENT, token.CONST)
 				return nil
 			}
 			p.nextToken()
-			lit.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+			lit.Name = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
 		} else {
-			lit.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+			lit.Name = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
 		}
 	} else {
 		p.nextToken()
-		lit.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+		lit.Name = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
 	}
 
 	lit.Parameters = p.parseFunctionParameters(token.LPAREN, token.RPAREN)
@@ -1327,7 +1326,6 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 	if !p.accept(token.END) {
 		return nil
 	}
-	lit.EndToken = p.curToken
 	inspect := func(n ast.Node) bool {
 		if _, ok := n.(*ast.Splat); ok {
 			// skip walking the splat since we don't want to evaluate it
@@ -1339,13 +1337,13 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 		}
 		switch left := x.Left.(type) {
 		case *ast.Identifier:
-			if left.IsConstant() {
+			if left.Constant {
 				p.errors = append(p.errors, fmt.Errorf("dynamic constant assignment"))
 			}
 		case ast.ExpressionList:
 			for _, expr := range left {
 				if ident, ok := expr.(*ast.Identifier); ok {
-					if ident.IsConstant() {
+					if ident.Constant {
 						p.errors = append(p.errors, fmt.Errorf("dynamic constant assignment"))
 					}
 				}
@@ -1394,7 +1392,7 @@ func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast
 	}
 	p.accept(token.IDENT)
 
-	ident := &ast.FunctionParameter{Name: &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}}
+	ident := &ast.FunctionParameter{Name: &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}}
 	if got_splat {
 		ident.Splat = true
 		got_splat = false
@@ -1416,7 +1414,7 @@ func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast
 			return identifiers
 		}
 		p.accept(token.IDENT)
-		ident := &ast.FunctionParameter{Name: &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}}
+		ident := &ast.FunctionParameter{Name: &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}}
 		if got_splat {
 			ident.Splat = true
 			got_splat = false
@@ -1450,7 +1448,7 @@ func (p *parser) parseBlockStatement(t ...token.Type) *ast.BlockStatement {
 		},
 		t...,
 	)
-	block := &ast.BlockStatement{Token: p.curToken}
+	block := &ast.BlockStatement{}
 	block.Statements = []ast.Statement{}
 
 	for !p.peekTokenOneOf(terminatorTokens...) {
@@ -1472,7 +1470,7 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseMethodCall"))
 	}
-	contextCallExpression := &ast.ContextCallExpression{Token: p.curToken, Context: context}
+	contextCallExpression := &ast.ContextCallExpression{Context: context}
 
 	p.nextToken()
 
@@ -1481,7 +1479,7 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 		return nil
 	}
 
-	function := &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	function := &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
 	contextCallExpression.Function = function
 
 	if p.peekTokenOneOf(token.SEMICOLON, token.NEWLINE, token.EOF, token.DOT, token.SCOPE, token.RPAREN, token.SQMARK) {
@@ -1519,7 +1517,7 @@ func (p *parser) parseContextCallExpression(context ast.Expression) ast.Expressi
 	if p.trace {
 		defer un(trace(p, "parseContextCallExpression"))
 	}
-	contextCallExpression := &ast.ContextCallExpression{Token: p.curToken, Context: context}
+	contextCallExpression := &ast.ContextCallExpression{Context: context}
 	if _, ok := context.(*ast.Self); ok && !p.currentTokenOneOf(token.DOT, token.SCOPE) {
 		p.Error(p.curToken.Type, "", token.DOT, token.SCOPE)
 		return nil
@@ -1576,7 +1574,7 @@ func (p *parser) parseCallArgument(function ast.Expression) ast.Expression {
 		// method call on any other object
 		return p.parseContextCallExpression(function)
 	}
-	exp := &ast.ContextCallExpression{Token: ident.Token, Function: ident}
+	exp := &ast.ContextCallExpression{Function: ident}
 	if p.currentTokenOneOf(token.LBRACE, token.DO) {
 		exp.Block = p.parseBlock().(*ast.BlockExpression)
 		return exp
@@ -1595,7 +1593,7 @@ func (p *parser) parseCallBlock(function ast.Expression) ast.Expression {
 		defer un(trace(p, "parseCallBlock"))
 	}
 
-	exp := &ast.ContextCallExpression{Token: p.curToken}
+	exp := &ast.ContextCallExpression{}
 	exp.Block = p.parseBlock().(*ast.BlockExpression)
 	switch fn := function.(type) {
 	case *ast.Identifier:
@@ -1627,7 +1625,7 @@ func (p *parser) parseCallExpressionWithParens(function ast.Expression) ast.Expr
 		p.errors = append(p.errors, msg)
 		return nil
 	}
-	exp := &ast.ContextCallExpression{Token: p.curToken, Function: ident}
+	exp := &ast.ContextCallExpression{Function: ident}
 	p.nextToken()
 	exp.Arguments = p.parseExpressionList(token.RPAREN)
 	if p.peekTokenOneOf(token.LBRACE, token.DO) {
