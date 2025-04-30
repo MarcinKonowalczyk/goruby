@@ -38,7 +38,6 @@ const (
 	precCallArg     // func x
 	precCall        // foo.myFunction(X)
 	precIndex       // array[index]
-	precCapture     // &block
 	precSymbol      // :Symbol
 	precHighest
 )
@@ -90,7 +89,6 @@ var precedences = map[token.Type]int{
 	token.AND:        precAnd,
 	token.LOGICALOR:  precLogicalOr,
 	token.LOGICALAND: precLogicalAnd,
-	token.CAPTURE:    precCapture,
 }
 
 var tokensNotPossibleInCallArgs = []token.Type{
@@ -169,7 +167,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerPrefix(token.DO, p.parseBlock)
 	p.registerPrefix(token.GLOBAL, p.parseGlobal)
 	p.registerPrefix(token.KEYWORD__FILE__, p.parseKeyword__FILE__)
-	p.registerPrefix(token.CAPTURE, p.parseBlockCapture)
 	p.registerPrefix(token.LAMBDAROCKET, p.parseLambdaLiteral)
 	p.registerPrefix(token.ASTERISK, p.parseSplat)
 
@@ -211,7 +208,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerInfix(token.INT, p.parseCallArgument)
 	p.registerInfix(token.STRING, p.parseCallArgument)
 	p.registerInfix(token.SYMBEG, p.parseCallArgument)
-	p.registerInfix(token.CAPTURE, p.parseCallArgument)
 	p.registerInfix(token.LBRACE, p.parseCallBlock)
 	p.registerInfix(token.DO, p.parseCallBlock)
 	p.registerInfix(token.DOT, p.parseMethodCall)
@@ -574,18 +570,6 @@ func (p *parser) parseExpressions(left ast.Expression) ast.Expression {
 		elements = append(elements, next)
 	}
 	return ast.ExpressionList(elements)
-}
-
-func (p *parser) parseBlockCapture() ast.Expression {
-	if p.trace {
-		defer un(trace(p, "parseBlockCapture"))
-	}
-	capture := &ast.BlockCapture{}
-	if !p.accept(token.IDENT) {
-		return nil
-	}
-	capture.Name = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
-	return capture
 }
 
 func (p *parser) parseAssignmentOperator(left ast.Expression) ast.Expression {
@@ -1121,17 +1105,6 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 
 	lit.Parameters = p.parseFunctionParameters(token.LPAREN, token.RPAREN)
 
-	if p.currentTokenOneOf(token.CAPTURE, token.AND) {
-		capture := p.parseBlockCapture()
-		if capture == nil {
-			return nil
-		}
-		lit.CapturedBlock = capture.(*ast.BlockCapture)
-		if p.peekTokenIs(token.RPAREN) {
-			p.acceptOneOf(token.RPAREN)
-		}
-	}
-
 	if !p.acceptOneOf(token.NEWLINE, token.SEMICOLON) {
 		return nil
 	}
@@ -1199,10 +1172,6 @@ func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast
 		got_splat = true
 		p.accept(token.ASTERISK)
 	}
-	if p.peekTokenOneOf(token.CAPTURE, token.AND) {
-		p.acceptOneOf(token.CAPTURE, token.AND)
-		return identifiers
-	}
 	p.accept(token.IDENT)
 
 	ident := &ast.FunctionParameter{Name: &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}}
@@ -1221,10 +1190,6 @@ func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast
 		if p.peekTokenIs(token.ASTERISK) {
 			got_splat = true
 			p.accept(token.ASTERISK)
-		}
-		if p.peekTokenOneOf(token.CAPTURE, token.AND) {
-			p.acceptOneOf(token.CAPTURE, token.AND)
-			return identifiers
 		}
 		p.accept(token.IDENT)
 		ident := &ast.FunctionParameter{Name: &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}}

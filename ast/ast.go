@@ -515,10 +515,9 @@ var (
 
 // A FunctionLiteral represents a function definition in the AST
 type FunctionLiteral struct {
-	Name          *Identifier
-	Parameters    []*FunctionParameter
-	CapturedBlock *BlockCapture
-	Body          *BlockStatement
+	Name       *Identifier
+	Parameters []*FunctionParameter
+	Body       *BlockStatement
 }
 
 func (fl *FunctionLiteral) node()           {}

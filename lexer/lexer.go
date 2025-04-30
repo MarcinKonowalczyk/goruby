@@ -299,10 +299,6 @@ func startLexer(l *Lexer) StateFn {
 			l.emit(token.LOGICALAND)
 			return startLexer
 		}
-		if p := l.peek(); isLetter(p) {
-			l.emit(token.CAPTURE)
-			return startLexer
-		}
 		l.emit(token.AND)
 		return startLexer
 	case '<':

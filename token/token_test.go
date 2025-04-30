@@ -81,7 +81,6 @@ func TestTypeSting(t *testing.T) {
 		{tk: COMMENT, str: "COMMENT", repr: "# ..."},
 		{tk: CLASS, str: "CLASS", repr: "class"},
 		//
-		{tk: CAPTURE, str: "CAPTURE", repr: "&"},
 		{tk: DOT, str: "DOT", repr: "."},
 		{tk: DDOT, str: "DDOT", repr: ".."},
 		{tk: DDDOT, str: "DDDOT", repr: "..."},

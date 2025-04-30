@@ -67,7 +67,6 @@ const (
 	COMMENT   // # ...
 	CLASS     // class # NOTE: treated as a comment. classes are not supported
 
-	CAPTURE   // &
 	DOT       // .
 	DDOT      // ..
 	DDDOT     // ...
@@ -164,7 +163,6 @@ var type_strings = [...]string{
 	SLASH:      "SLASH",
 	MODULO:     "MODULO",
 	AND:        "AND",
-	CAPTURE:    "CAPTURE",
 	LOGICALAND: "LOGICALAND",
 	LOGICALOR:  "LOGICALOR",
 
@@ -247,7 +245,6 @@ var type_reprs = [...]string{
 	SLASH:      "/",
 	MODULO:     "%",
 	AND:        "&",
-	CAPTURE:    "&",
 	LOGICALAND: "&&",
 	LOGICALOR:  "||",
 

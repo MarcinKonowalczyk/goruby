@@ -2289,16 +2289,6 @@ func TestFunctionParameterParsing(t *testing.T) {
 			input:          "def fn(*x); end",
 			expectedParams: []funcParam{{name: "x"}},
 		},
-		{
-			desc:           "multiple params last block capture with parens",
-			input:          "def fn(x, y, &z); end",
-			expectedParams: []funcParam{{name: "x"}, {name: "y"}},
-		},
-		{
-			desc:           "one param block capture with parens",
-			input:          "def fn(&x); end",
-			expectedParams: []funcParam{},
-		},
 	}
 
 	for _, tt := range tests {

@@ -161,7 +161,7 @@ func TestLex(t *testing.T) {
 				&&
 			`,
 			exp: []expected{
-				expect("CAPTURE", "&"),
+				expect("AND", "&"),
 				expect("IDENT", "foo"),
 				NL,
 				expect("AND", "&"),

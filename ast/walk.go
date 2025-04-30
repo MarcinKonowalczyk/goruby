@@ -167,9 +167,6 @@ func Walk(v Visitor, node Node) {
 	case *FunctionLiteral:
 		Walk(v, n.Name)
 		walkParameterList(v, n.Parameters)
-		if n.CapturedBlock != nil {
-			Walk(v, n.CapturedBlock)
-		}
 		Walk(v, n.Body)
 
 	case *FunctionParameter:
