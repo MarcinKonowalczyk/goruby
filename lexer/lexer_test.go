@@ -413,9 +413,9 @@ func TestLex(t *testing.T) {
 				end
 			`,
 			exp: []expected{
-				expect(t)("IDENT", "begin"),
+				expect(t)("IDENT", "begin"), // NOTE: ident, not keyword
 				NL,
-				expect(t)("IDENT", "rescue"),
+				expect(t)("IDENT", "rescue"), // NOTE: ident, not keyword
 				NL,
 				expect(t)("END", "end"),
 				NL,

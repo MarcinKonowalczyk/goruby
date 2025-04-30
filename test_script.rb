@@ -248,19 +248,19 @@
 # puts foo 'a'
 # puts bar('a')
 # puts bar 'a'
-puts 'a'
-puts [1,2,3]
+# puts 'a'
+# puts [1,2,3]
 
-if true || false 
-    puts("true")
-else
-    puts("false")
-end
+# if true || false 
+#     puts("true")
+# else
+#     puts("false")
+# end
 
-a = (b = 99)
+# a = (b = 99)
 
-puts("a:", a)
-puts("b:", b)
+# puts("a:", a)
+# puts("b:", b)
 
 
 # $ops = {
@@ -289,9 +289,12 @@ puts("b:", b)
 # puts
 # print [1, 2, 3].find_all { |e| e < 2 }
 
-x = []
-x.tap {|z|z.push(true)}
-print x
+# x = []
+# x.tap {|z|z.push(true)}
+# print x
 
-a = :hello
-print(a)
+# a = :hello
+# print(a)
+
+res = false ? 1 : 2
+puts("res:", res)

@@ -493,10 +493,8 @@ func (fl *FunctionLiteral) String() string {
 		out.WriteString("|")
 		out.WriteString(strings.Join(args, ", "))
 		out.WriteString("|")
-		out.WriteString("\n")
 	}
 	out.WriteString(fl.Body.String())
-	out.WriteString("\n")
 	out.WriteString("}")
 	return out.String()
 }

@@ -650,18 +650,48 @@ func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
 		assign.Right = expr
 		return assign
 	}
-	expStmt, ok := right.Consequence.Statements[0].(*ast.ExpressionStatement)
+	// rewrite to conditional assignment
+	con, ok := right.Consequence.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
-		p.errors = append(p.errors, fmt.Errorf("malformed AST in assignment"))
+		p.errors = append(p.errors, fmt.Errorf("malformed AST in assignment of the consequence"))
 		return nil
 	}
-	assign.Right = expStmt.Expression
+
+	var alt *ast.ExpressionStatement
+	if right.Alternative != nil {
+		alt, ok = right.Alternative.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			p.errors = append(p.errors, fmt.Errorf("malformed AST in assignment of the alternative"))
+			return nil
+		}
+	} else {
+		// alt = &ast.SymbolLiteral{Value: "nil"}
+		alt = &ast.ExpressionStatement{
+			Expression: &ast.SymbolLiteral{Value: "nil"},
+		}
+	}
+
 	cond := &ast.ConditionalExpression{
 		Unless:    right.Unless,
 		Condition: right.Condition,
 		Consequence: &ast.BlockStatement{
 			Statements: []ast.Statement{
-				&ast.ExpressionStatement{Expression: assign},
+				&ast.ExpressionStatement{
+					Expression: &ast.Assignment{
+						Left:  left,
+						Right: con.Expression,
+					},
+				},
+			},
+		},
+		Alternative: &ast.BlockStatement{
+			Statements: []ast.Statement{
+				&ast.ExpressionStatement{
+					Expression: &ast.Assignment{
+						Left:  left,
+						Right: alt.Expression,
+					},
+				},
 			},
 		},
 	}
@@ -835,11 +865,11 @@ func (p *parser) parseHash() ast.Expression {
 	return hash
 }
 
-// func (p *parser) debugPrintState() {
-// 	if p.trace {
-// 		fmt.Println("DBG:", p.curToken, p.peekToken, p.errors)
-// 	}
-// }
+func (p *parser) debugPrintState() {
+	if p.trace {
+		fmt.Println("DBG:", p.curToken, p.peekToken, p.errors)
+	}
+}
 
 func (p *parser) parseKeyValue() (ast.Expression, ast.Expression, bool) {
 	if p.trace {
@@ -1033,7 +1063,7 @@ func (p *parser) parseTernaryIfExpression(condition ast.Expression) ast.Expressi
 	expression.Alternative = &ast.BlockStatement{
 		Statements: []ast.Statement{
 			&ast.ExpressionStatement{
-				Expression: p.parseExpression(precLowest),
+				Expression: p.parseExpression(precTernary),
 			},
 		},
 	}
