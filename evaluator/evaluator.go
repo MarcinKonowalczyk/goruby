@@ -136,55 +136,31 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			}
 			params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def, Splat: param.Splat}
 		}
-		body := node.Body
 		function := &object.Function{
 			Parameters: params,
 			Env:        env,
-			Body:       body,
+			Body:       node.Body,
 		}
 		object.AddMethod(context, node.Name.Value, function)
+		// fmt.Println("function", node.Name.Value)
 		return &object.Symbol{Value: node.Name.Value}, nil
 
-	case *ast.ProcedureLiteral:
-		// context, _ := env.Get("self")
-		// _, inClassOrModule := context.(*object.Self).RubyObject.(object.Environment)
-		// if node.Receiver != nil {
-		// 	rec, err := Eval(node.Receiver, env)
-		// 	if err != nil {
-		// 		return nil, errors.WithMessage(err, "eval function receiver")
-		// 	}
-		// 	context = rec
-		// 	_, recIsEnv := context.(object.Environment)
-		// 	if recIsEnv || inClassOrModule {
-		// 		inClassOrModule = true
-		// 		context = context.Class().(object.RubyClassObject)
-		// 	}
-		// }
-		params := make([]*object.FunctionParameter, len(node.Parameters))
-		for i, param := range node.Parameters {
-			def, err := Eval(param.Default, env)
-			if err != nil {
-				return nil, errors.WithMessage(err, "eval function literal param")
-			}
-			params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def, Splat: param.Splat}
-		}
-		body := node.Body
-		// function := &object.Function{
-		// 	Parameters: params,
-		// 	Env:        env,
-		// 	Body:       body,
-		// }
-		// extended := object.AddMethod(context, node.Name.Value, function)
-		// if node.Receiver != nil && !inClassOrModule {
-		// 	envInfo, _ := object.EnvStat(env, context)
-		// 	envInfo.Env().Set(node.Receiver.Value, extended)
-		// }
-		return &object.Proc{
-			Parameters:             params,
-			Body:                   body,
-			Env:                    env,
-			ArgumentCountMandatory: true,
-		}, nil
+	// case *ast.ProcedureLiteral:
+	// 	params := make([]*object.FunctionParameter, len(node.Parameters))
+	// 	for i, param := range node.Parameters {
+	// 		def, err := Eval(param.Default, env)
+	// 		if err != nil {
+	// 			return nil, errors.WithMessage(err, "eval function literal param")
+	// 		}
+	// 		params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def, Splat: param.Splat}
+	// 	}
+	// 	body := node.Body
+	// 	return &object.Proc{
+	// 		Parameters:             params,
+	// 		Body:                   body,
+	// 		Env:                    env,
+	// 		ArgumentCountMandatory: true,
+	// 	}, nil
 
 	case *ast.BlockExpression:
 		node_params := node.Parameters
@@ -332,10 +308,12 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			return nil, errors.WithMessage(err, "eval IndexExpression left side")
 		}
 		switch left := left.(type) {
-		case *object.Proc:
-			// special case for procs
+		case *object.Symbol:
+			// functions evaluate to symbols with the name of the function
+			// anonymous functions evaluate to a functions with a random name
+			// indexing them should call them
 			// NOTE: we pass unevaluated index to proc
-			return evalProcIndexExpression(env, left, node.Index)
+			return evalSymbolIndexExpression(env, left, node.Index)
 		default:
 			index, err := Eval(node.Index, env)
 			if err != nil {
@@ -764,7 +742,7 @@ func evalIndexExpression(left, index object.RubyObject) (object.RubyObject, erro
 	}
 }
 
-func evalProcIndexExpression(env object.Environment, target *object.Proc, index ast.Expression) (object.RubyObject, error) {
+func evalSymbolIndexExpression(env object.Environment, target *object.Symbol, index ast.Expression) (object.RubyObject, error) {
 	switch index.(type) {
 	case *ast.Splat:
 		// evaluate the splat literal
@@ -807,8 +785,20 @@ func evalProcIndexExpression(env object.Environment, target *object.Proc, index 
 				printable_args[i] = e.Inspect()
 			}
 		}
-		callContext := &callContext{object.NewCallContext(env, nil)}
-		value, err := target.Call(callContext, args...)
+		self, _ := env.Get("self")
+		callContext := &callContext{object.NewCallContext(env, self)}
+		// value, err := target.Call(callContext, args...)
+
+		// get the method from the env
+		// method, ok := env.Get(target.Value)
+		// if !ok {
+		// 	return nil, errors.WithStack(
+		// 		object.NewException("method not found: %s", target.Value),
+		// 	)
+		// }
+		// call the method
+		// fmt.Println(target.Value, "(", strings.Join(printable_args, ", "), ")")
+		value, err := object.Send(callContext, target.Value, args...)
 		return value, err
 	default:
 		// not implemented yet

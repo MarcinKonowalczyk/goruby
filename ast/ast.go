@@ -574,36 +574,6 @@ var (
 	_ Expression = &FunctionParameter{}
 )
 
-// A ProcedureLiteral represents a procedure definition in the AST
-type ProcedureLiteral struct {
-	Parameters []*FunctionParameter
-	Body       *BlockStatement
-}
-
-func (pl *ProcedureLiteral) node()           {}
-func (pl *ProcedureLiteral) expressionNode() {}
-
-// String returns the string representation of the procedure
-func (pl *ProcedureLiteral) String() string {
-	var out strings.Builder
-	params := []string{}
-	for _, p := range pl.Parameters {
-		params = append(params, p.String())
-	}
-	out.WriteString("-> (")
-	out.WriteString(strings.Join(params, ", "))
-	out.WriteString(")")
-	if pl.Body != nil {
-		out.WriteString(pl.Body.String())
-	}
-	return out.String()
-}
-
-var (
-	_ Node       = &ProcedureLiteral{}
-	_ Expression = &ProcedureLiteral{}
-)
-
 // A Splat represents a splat operator in the AST
 type Splat struct {
 	Value Expression

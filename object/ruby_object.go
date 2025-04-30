@@ -216,23 +216,41 @@ func (f *Function) String() string {
 
 // Call implements the RubyMethod interface. It evaluates f.Body and returns its result
 func (f *Function) Call(context CallContext, args ...RubyObject) (RubyObject, error) {
-	block, arguments, _ := extractBlockFromArgs(args)
-	defaultParams := functionParameters(f.Parameters).defaultParamCount()
-	if len(arguments) < len(f.Parameters)-defaultParams || len(arguments) > len(f.Parameters) {
-		return nil, NewWrongNumberOfArgumentsError(len(f.Parameters), len(arguments))
+	// TODO: Handle tail splats
+	if len(f.Parameters) == 1 && f.Parameters[0].Splat {
+		// Only one splat parameter.
+		args_arr := NewArray(args...)
+		extendedEnv := NewEnclosedEnvironment(f.Env)
+		extendedEnv.Set(f.Parameters[0].Name, args_arr)
+		contextSelf, _ := context.Env().Get("self")
+		contextSelfObject := contextSelf.(*Self)
+		extendedEnv.Set("self", contextSelfObject)
+
+		evaluated, err := context.Eval(f.Body, extendedEnv)
+		if err != nil {
+			return nil, err
+		}
+		return f.unwrapReturnValue(evaluated), nil
+
+	} else {
+		// normal evaluation
+		defaultParams := functionParameters(f.Parameters).defaultParamCount()
+		if len(args) < len(f.Parameters)-defaultParams || len(args) > len(f.Parameters) {
+			return nil, NewWrongNumberOfArgumentsError(len(f.Parameters), len(args))
+		}
+		params, err := f.populateParameters(args)
+		if err != nil {
+			return nil, err
+		}
+		contextSelf, _ := context.Env().Get("self")
+		contextSelfObject := contextSelf.(*Self)
+		extendedEnv := f.extendFunctionEnv(contextSelfObject, params, nil)
+		evaluated, err := context.Eval(f.Body, extendedEnv)
+		if err != nil {
+			return nil, err
+		}
+		return f.unwrapReturnValue(evaluated), nil
 	}
-	params, err := f.populateParameters(arguments)
-	if err != nil {
-		return nil, err
-	}
-	contextSelf, _ := context.Env().Get("self")
-	contextSelfObject := contextSelf.(*Self)
-	extendedEnv := f.extendFunctionEnv(contextSelfObject, params, block)
-	evaluated, err := context.Eval(f.Body, extendedEnv)
-	if err != nil {
-		return nil, err
-	}
-	return f.unwrapReturnValue(evaluated), nil
 }
 
 // Visibility implements the RubyMethod interface. It returns f.MethodVisibility

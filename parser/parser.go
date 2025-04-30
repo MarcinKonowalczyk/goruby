@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"math/rand"
+
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/ast/infix"
 	"github.com/MarcinKonowalczyk/goruby/lexer"
@@ -512,11 +514,27 @@ func (p *parser) parseComment() ast.Statement {
 // LAMBDA          : "->" "(" CALL_ARGS ")" "{" COMPSTMT "}"
 //                 | "->" "{" COMPSTMT "}";
 
+const _LAMBDA_NAME_PREFIX = "__lambda_"
+const _LAMBDA_NAME_CHARSET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+var _LAMBDA_NAME_RAND = rand.New(rand.NewSource(42))
+
+func random_lambdaName() string {
+	const length = 8
+	charset := []byte(_LAMBDA_NAME_CHARSET)
+	_LAMBDA_NAME_RAND.Shuffle(len(charset), func(i, j int) {
+		charset[i], charset[j] = charset[j], charset[i]
+	})
+	return _LAMBDA_NAME_PREFIX + string(charset[:length])
+}
+
 func (p *parser) parseLambdaLiteral() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseLambdaLiteral"))
 	}
-	proc := &ast.ProcedureLiteral{}
+	proc := &ast.FunctionLiteral{
+		Name: &ast.Identifier{Constant: false, Value: random_lambdaName()},
+	}
 	if p.peekTokenIs(token.LPAREN) {
 		proc.Parameters = p.parseFunctionParameters(token.LPAREN, token.RPAREN)
 	}
@@ -1108,10 +1126,13 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 	if !p.acceptOneOf(token.NEWLINE, token.SEMICOLON) {
 		return nil
 	}
+
 	lit.Body = p.parseBlockStatement(token.END)
 	if !p.accept(token.END) {
 		return nil
 	}
+
+	// Check for dynamic constant assignment
 	inspect := func(n ast.Node) bool {
 		if _, ok := n.(*ast.Splat); ok {
 			// skip walking the splat since we don't want to evaluate it
@@ -1138,6 +1159,7 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 		return true
 	}
 	ast.Inspect(lit.Body, inspect)
+
 	return lit
 }
 
