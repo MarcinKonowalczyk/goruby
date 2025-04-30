@@ -1338,31 +1338,6 @@ func TestBlockExpression(t *testing.T) {
 			[]*ast.Identifier{{Value: "x"}},
 			"x",
 		},
-		{
-			"method do; x; end",
-			nil,
-			"x",
-		},
-		{
-			`
-			method do
-				x
-			end`,
-			nil,
-			"x",
-		},
-		{
-			"method do |x| x; end",
-			[]*ast.Identifier{{Value: "x"}},
-			"x",
-		},
-		{
-			`method do |x|
-				x
-			end`,
-			[]*ast.Identifier{{Value: "x"}},
-			"x",
-		},
 	}
 
 	for _, tt := range tests {
@@ -2096,35 +2071,6 @@ func TestBlockExpressionParsing(t *testing.T) {
 		bodyStatement string
 	}{
 		{
-			`method do |x, y|
-          x + y
-          end`,
-			[]string{"x", "y"},
-			"(x + y)",
-		},
-		{
-			`method do
-          x + y
-          end`,
-			[]string{},
-			"(x + y)",
-		},
-		{
-			"method do ; x + y; end",
-			[]string{},
-			"(x + y)",
-		},
-		{
-			"method do |x, y|; x + y; end",
-			[]string{"x", "y"},
-			"(x + y)",
-		},
-		{
-			"method do |x, y|; x + y; end",
-			[]string{"x", "y"},
-			"(x + y)",
-		},
-		{
 			`method { |x, y|
 			  x + y
 			  }`,
@@ -2346,34 +2292,9 @@ func TestBlockParameterParsing(t *testing.T) {
 			expectedParams: []funcParam{{name: "x"}, {name: "y"}, {name: "z"}},
 		},
 		{
-			desc:           "empty do block",
-			input:          "method do; end",
-			expectedParams: []funcParam{},
-		},
-		{
-			desc:           "empty do block params",
-			input:          "method do ||; end",
-			expectedParams: []funcParam{},
-		},
-		{
-			desc:           "one do block param",
-			input:          "method do |x|; end",
-			expectedParams: []funcParam{{name: "x"}},
-		},
-		{
-			desc:           "multiple do block params",
-			input:          "method do |x, y, z|; end",
-			expectedParams: []funcParam{{name: "x"}, {name: "y"}, {name: "z"}},
-		},
-		{
 			desc:           "multiple brace block params with defaults",
 			input:          "method { |x = 3, y = 2, z| }",
 			expectedParams: []funcParam{{name: "x", defaultValue: 3}, {name: "y", defaultValue: 2}, {name: "z"}},
-		},
-		{
-			desc:           "multiple do block params starting defaults",
-			input:          "method do |x = 1, y = 8, z|; end",
-			expectedParams: []funcParam{{name: "x", defaultValue: 1}, {name: "y", defaultValue: 8}, {name: "z"}},
 		},
 		{
 			desc:           "multiple brace block params with middle default",
@@ -2381,19 +2302,9 @@ func TestBlockParameterParsing(t *testing.T) {
 			expectedParams: []funcParam{{name: "x"}, {name: "y", defaultValue: 2}, {name: "z"}},
 		},
 		{
-			desc:           "multiple do block params with middle default",
-			input:          "method do |x, y = 8, z|; end",
-			expectedParams: []funcParam{{name: "x"}, {name: "y", defaultValue: 8}, {name: "z"}},
-		},
-		{
 			desc:           "multiple brace block params last defaults",
 			input:          "method { |x, y, z = 2| }",
 			expectedParams: []funcParam{{name: "x"}, {name: "y"}, {name: "z", defaultValue: 2}},
-		},
-		{
-			desc:           "multiple do block params last defaults",
-			input:          "method do |x, y, z = 4|; end",
-			expectedParams: []funcParam{{name: "x"}, {name: "y"}, {name: "z", defaultValue: 4}},
 		},
 	}
 
@@ -2464,16 +2375,6 @@ func TestCallExpressionParsing(t *testing.T) {
 		{
 			desc:     "with parens and brace block",
 			input:    "add(1, 2 * 3, 4 + 5) { |x| x };",
-			funcName: "add",
-			arguments: []interface{}{
-				1, testInfix{2, infix.ASTERISK, 3}, testInfix{4, infix.PLUS, 5},
-			},
-			hasBlock:    true,
-			blockParams: []string{"x"},
-		},
-		{
-			desc:     "with parens and do block",
-			input:    "add(1, 2 * 3, 4 + 5) do |x| x; end;",
 			funcName: "add",
 			arguments: []interface{}{
 				1, testInfix{2, infix.ASTERISK, 3}, testInfix{4, infix.PLUS, 5},

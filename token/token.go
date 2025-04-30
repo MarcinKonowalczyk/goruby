@@ -96,7 +96,6 @@ const (
 	FALSE
 	RETURN
 	NIL
-	DO
 	WHILE
 	LOOP
 	BREAK
@@ -212,7 +211,6 @@ var type_strings = [...]string{
 	FALSE:           "FALSE",
 	RETURN:          "RETURN",
 	NIL:             "NIL",
-	DO:              "DO",
 	WHILE:           "WHILE",
 	LOOP:            "LOOP",
 	BREAK:           "BREAK",
@@ -294,7 +292,6 @@ var type_reprs = [...]string{
 	FALSE:           "false",
 	RETURN:          "return",
 	NIL:             "nil",
-	DO:              "do",
 	WHILE:           "while", // to remove?
 	LOOP:            "loop",
 	BREAK:           "break",

@@ -357,7 +357,7 @@ func startLexer(l *Lexer) StateFn {
 	case '#':
 		return commentLexer
 	case '|':
-		if l.lastToken.Type == token.DO || l.lastToken.Type == token.LBRACE {
+		if l.lastToken.Type == token.LBRACE {
 			l.emit(token.PIPE)
 			return startLexer
 		}

@@ -19,7 +19,6 @@ import (
 const (
 	_ int = iota
 	precLowest
-	precBlockDo     // do
 	precBlockBraces // { |x| }
 	precIfUnless    // modifier-if, modifier-unless
 	precAssignment  // x = 5
@@ -82,7 +81,6 @@ var precedences = map[token.Type]int{
 	token.SLBRACKET:  precCallArg,
 	token.LBRACKET:   precIndex,
 	token.LBRACE:     precBlockBraces,
-	token.DO:         precBlockDo,
 	token.SYMBEG:     precSymbol,
 	token.COMMA:      precAssignment,
 	token.THEN:       precHighest,
@@ -166,7 +164,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerPrefix(token.SLBRACKET, p.parseArrayLiteral)
 	p.registerPrefix(token.NIL, p.parseNilLiteral)
 	p.registerPrefix(token.LBRACE, p.parseHash)
-	p.registerPrefix(token.DO, p.parseBlock)
 	p.registerPrefix(token.GLOBAL, p.parseGlobal)
 	p.registerPrefix(token.KEYWORD__FILE__, p.parseKeyword__FILE__)
 	p.registerPrefix(token.LAMBDAROCKET, p.parseLambdaLiteral)
@@ -211,7 +208,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerInfix(token.STRING, p.parseCallArgument)
 	p.registerInfix(token.SYMBEG, p.parseCallArgument)
 	p.registerInfix(token.LBRACE, p.parseCallBlock)
-	p.registerInfix(token.DO, p.parseCallBlock)
 	p.registerInfix(token.DOT, p.parseMethodCall)
 	p.registerInfix(token.COMMA, p.parseExpressions)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
@@ -846,11 +842,10 @@ func (p *parser) parseKeyValue() (ast.Expression, ast.Expression, bool) {
 	return key, val, true
 }
 
-func (p *parser) parseBlock() ast.Expression {
+func (p *parser) parseBlock() *ast.BlockExpression {
 	if p.trace {
 		defer un(trace(p, "parseBlock"))
 	}
-	start_token := p.curToken
 	block := &ast.BlockExpression{}
 	if p.peekTokenIs(token.PIPE) {
 		block.Parameters = p.parseFunctionParameters(token.PIPE, token.PIPE)
@@ -861,9 +856,6 @@ func (p *parser) parseBlock() ast.Expression {
 	}
 
 	endToken := token.RBRACE
-	if start_token.Type == token.DO {
-		endToken = token.END
-	}
 
 	block.Body = p.parseBlockStatement(endToken)
 	p.nextToken()
@@ -1058,20 +1050,12 @@ func (p *parser) parseLoopExpression() ast.Expression {
 	loop := &ast.LoopExpression{}
 	if p.curToken.Type == token.WHILE {
 		p.nextToken()
-		loop.Condition = p.parseExpression(precBlockDo)
-		if p.peekTokenIs(token.DO) {
-			p.accept(token.DO)
-		}
+		loop.Condition = p.parseExpression(precLowest)
 		loop.Block = p.parseBlockStatement(token.END)
 		p.nextToken()
 	} else if p.curToken.Type == token.LOOP {
 		loop.Condition = &ast.Boolean{Value: true}
-		if p.peekTokenIs(token.DO) {
-			// body is a do block
-			p.accept(token.DO)
-			loop.Block = p.parseBlockStatement(token.END)
-			p.nextToken()
-		} else if p.peekTokenIs(token.LBRACE) {
+		if p.peekTokenIs(token.LBRACE) {
 			p.accept(token.LBRACE)
 			loop.Block = p.parseBlockStatement(token.RBRACE)
 			p.nextToken()
@@ -1291,9 +1275,9 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 		p.accept(token.LPAREN)
 		p.nextToken()
 		contextCallExpression.Arguments = p.parseExpressionList(token.RPAREN)
-		if p.peekTokenOneOf(token.LBRACE, token.DO) {
-			p.acceptOneOf(token.LBRACE, token.DO)
-			contextCallExpression.Block = p.parseBlock().(*ast.BlockExpression)
+		if p.peekTokenOneOf(token.LBRACE) {
+			p.acceptOneOf(token.LBRACE)
+			contextCallExpression.Block = p.parseBlock()
 		}
 		return contextCallExpression
 	}
@@ -1304,11 +1288,9 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 
 	p.nextToken()
 
-	contextCallExpression.Arguments = p.parseCallArguments(
-		token.LBRACE, token.DO,
-	)
-	if p.currentTokenOneOf(token.LBRACE, token.DO) {
-		contextCallExpression.Block = p.parseBlock().(*ast.BlockExpression)
+	contextCallExpression.Arguments = p.parseCallArguments(token.LBRACE)
+	if p.currentTokenOneOf(token.LBRACE) {
+		contextCallExpression.Block = p.parseBlock()
 	}
 	return contextCallExpression
 }
@@ -1340,9 +1322,9 @@ func (p *parser) parseContextCallExpression(context ast.Expression) ast.Expressi
 		p.accept(token.LPAREN)
 		p.nextToken()
 		contextCallExpression.Arguments = p.parseExpressionList(token.RPAREN)
-		if p.peekTokenOneOf(token.LBRACE, token.DO) {
-			p.acceptOneOf(token.LBRACE, token.DO)
-			contextCallExpression.Block = p.parseBlock().(*ast.BlockExpression)
+		if p.peekTokenOneOf(token.LBRACE) {
+			p.acceptOneOf(token.LBRACE)
+			contextCallExpression.Block = p.parseBlock()
 		}
 		return contextCallExpression
 	}
@@ -1352,11 +1334,9 @@ func (p *parser) parseContextCallExpression(context ast.Expression) ast.Expressi
 	}
 
 	p.nextToken()
-	contextCallExpression.Arguments = p.parseCallArguments(
-		token.LBRACE, token.DO,
-	)
-	if p.currentTokenOneOf(token.LBRACE, token.DO) {
-		contextCallExpression.Block = p.parseBlock().(*ast.BlockExpression)
+	contextCallExpression.Arguments = p.parseCallArguments(token.LBRACE)
+	if p.currentTokenOneOf(token.LBRACE) {
+		contextCallExpression.Block = p.parseBlock()
 	}
 	return contextCallExpression
 }
@@ -1371,15 +1351,15 @@ func (p *parser) parseCallArgument(function ast.Expression) ast.Expression {
 		return p.parseContextCallExpression(function)
 	}
 	exp := &ast.ContextCallExpression{Function: ident}
-	if p.currentTokenOneOf(token.LBRACE, token.DO) {
-		exp.Block = p.parseBlock().(*ast.BlockExpression)
+	if p.currentTokenOneOf(token.LBRACE) {
+		exp.Block = p.parseBlock()
 		return exp
 	}
 
 	exp.Arguments = p.parseExpressionList(token.SEMICOLON, token.NEWLINE)
-	if p.peekTokenOneOf(token.LBRACE, token.DO) {
-		p.acceptOneOf(token.LBRACE, token.DO)
-		exp.Block = p.parseBlock().(*ast.BlockExpression)
+	if p.peekTokenOneOf(token.LBRACE) {
+		p.acceptOneOf(token.LBRACE)
+		exp.Block = p.parseBlock()
 	}
 	return exp
 }
@@ -1390,7 +1370,7 @@ func (p *parser) parseCallBlock(function ast.Expression) ast.Expression {
 	}
 
 	exp := &ast.ContextCallExpression{}
-	exp.Block = p.parseBlock().(*ast.BlockExpression)
+	exp.Block = p.parseBlock()
 	switch fn := function.(type) {
 	case *ast.Identifier:
 		exp.Function = fn
@@ -1424,9 +1404,9 @@ func (p *parser) parseCallExpressionWithParens(function ast.Expression) ast.Expr
 	exp := &ast.ContextCallExpression{Function: ident}
 	p.nextToken()
 	exp.Arguments = p.parseExpressionList(token.RPAREN)
-	if p.peekTokenOneOf(token.LBRACE, token.DO) {
-		p.acceptOneOf(token.LBRACE, token.DO)
-		exp.Block = p.parseBlock().(*ast.BlockExpression)
+	if p.peekTokenOneOf(token.LBRACE) {
+		p.acceptOneOf(token.LBRACE)
+		exp.Block = p.parseBlock()
 	}
 	return exp
 }
