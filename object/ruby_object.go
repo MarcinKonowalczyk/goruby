@@ -290,7 +290,7 @@ func (f *Function) populateParameters(args []RubyObject) (map[string]RubyObject,
 
 func (f *Function) extendFunctionEnv(context *Self, params map[string]RubyObject, block *Symbol) Environment {
 	// encapsulate the block within a new self, but with the same object
-	funcSelf := &Self{RubyObject: context.RubyObject, Name: context.Name, Block: block}
+	funcSelf := &Self{RubyObject: context.RubyObject, Name: context.Name}
 	env := NewEnclosedEnvironment(f.Env)
 	env.Set("self", funcSelf)
 	for k, v := range params {
@@ -310,9 +310,8 @@ func (f *Function) unwrapReturnValue(obj RubyObject) RubyObject {
 // the RubyObject and is just meant to indicate that the given object is
 // self in the given context.
 type Self struct {
-	RubyObject         // The encapsuled object acting as self
-	Block      *Symbol // the block given to the current execution binding
-	Name       string  // The name of self in this context
+	RubyObject        // The encapsuled object acting as self
+	Name       string // The name of self in this context
 }
 
 // Type returns SELF

@@ -31,7 +31,6 @@ var kernelMethodSet = map[string]RubyMethod{
 	"print":             privateMethod(kernelPrint),
 	"require":           withArity(1, privateMethod(kernelRequire)),
 	"extend":            publicMethod(kernelExtend),
-	"block_given?":      withArity(0, privateMethod(kernelBlockGiven)),
 	"tap":               publicMethod(kernelTap),
 	"raise":             privateMethod(kernelRaise),
 	"==":                withArity(1, publicMethod(kernelEqual)),
@@ -283,14 +282,6 @@ func kernelExtend(context CallContext, args ...RubyObject) (RubyObject, error) {
 	info, _ := EnvStat(context.Env(), context.Receiver())
 	info.Env().Set(info.Name(), extended)
 	return extended, nil
-}
-
-func kernelBlockGiven(context CallContext, args ...RubyObject) (RubyObject, error) {
-	self, _ := context.Receiver().(*Self)
-	if self.Block == nil {
-		return FALSE, nil
-	}
-	return TRUE, nil
 }
 
 func kernelTap(context CallContext, args ...RubyObject) (RubyObject, error) {
