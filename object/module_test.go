@@ -494,7 +494,11 @@ func TestModuleAppendFeatures(t *testing.T) {
 
 		module := NewModule("foo", nil)
 
-		moduleAppendFeatures(context, module)
+		_, err := moduleAppendFeatures(context, module)
+		if err != nil {
+			t.Logf("Expected no error, got %s", err)
+			t.Fail()
+		}
 
 		a, ok := module.Get("A")
 		if !ok {
@@ -520,46 +524,6 @@ func TestModuleAppendFeatures(t *testing.T) {
 
 		checkResult(t, &Symbol{Value: "bar"}, c)
 	})
-	t.Run("add instance variables", func(t *testing.T) {
-		outer := NewEnvironment()
-		outer.Set("@foo", &String{Value: "foo"})
-		outer.Set("@qux", &Symbol{Value: "bar"})
-		env := NewEnclosedEnvironment(outer)
-		env.Set("@foo", &Integer{Value: 4})
-		env.Set("@bar", &Integer{Value: 6})
-		receiver := NewModule("X", env)
-		context := &callContext{
-			receiver: &Self{RubyObject: receiver, Name: "X"},
-		}
-
-		module := NewModule("foo", nil)
-
-		moduleAppendFeatures(context, module)
-
-		a, ok := module.Get("@foo")
-		if !ok {
-			t.Logf("Expected module variable foo to be within module env")
-			t.Fail()
-		}
-
-		checkResult(t, &Integer{Value: 4}, a)
-
-		b, ok := module.Get("@bar")
-		if !ok {
-			t.Logf("Expected module variable bar to be within module env")
-			t.Fail()
-		}
-
-		checkResult(t, &Integer{Value: 6}, b)
-
-		c, ok := module.Get("@qux")
-		if !ok {
-			t.Logf("Expected module variable qux to be within module env")
-			t.Fail()
-		}
-
-		checkResult(t, &Symbol{Value: "bar"}, c)
-	})
 	t.Run("does not add local variables", func(t *testing.T) {
 		outer := NewEnvironment()
 		outer.Set("foo", &String{Value: "foo"})
@@ -574,7 +538,11 @@ func TestModuleAppendFeatures(t *testing.T) {
 
 		module := NewModule("foo", nil)
 
-		moduleAppendFeatures(context, module)
+		_, err := moduleAppendFeatures(context, module)
+		if err != nil {
+			t.Logf("Expected no error, got %s", err)
+			t.Fail()
+		}
 
 		_, ok := module.Get("foo")
 		if ok {
@@ -607,7 +575,11 @@ func TestModuleAppendFeatures(t *testing.T) {
 
 		module := NewModule("foo", nil)
 
-		moduleAppendFeatures(context, module)
+		_, err := moduleAppendFeatures(context, module)
+		if err != nil {
+			t.Logf("Expected no error, got %s", err)
+			t.Fail()
+		}
 
 		moduleMethods := module.class.Methods()
 

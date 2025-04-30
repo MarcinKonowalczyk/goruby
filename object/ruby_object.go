@@ -25,14 +25,9 @@ const (
 	INTEGER_OBJ        Type = "INTEGER"
 	FLOAT_OBJ          Type = "FLOAT"
 	STRING_OBJ         Type = "STRING"
-	REGEX_OBJ          Type = "REGEX"
 	SYMBOL_OBJ         Type = "SYMBOL"
-	BOOLEAN_OBJ        Type = "BOOLEAN"
-	NIL_OBJ            Type = "NIL"
-	NIL_CLASS_OBJ      Type = "NIL_CLASS"
 	EXCEPTION_OBJ      Type = "EXCEPTION"
 	MODULE_OBJ         Type = "MODULE"
-	PROC_OBJ           Type = "PROC"
 	IO_OBJ             Type = "IO"
 	SELF               Type = "SELF"
 )
@@ -139,24 +134,26 @@ func (f functionParameters) defaultParamCount() int {
 	}
 	return count
 }
-func (f functionParameters) mandatoryParams() []*FunctionParameter {
-	params := make([]*FunctionParameter, 0)
-	for _, p := range f {
-		if p.Default == nil {
-			params = append(params, p)
-		}
-	}
-	return params
-}
-func (f functionParameters) optionalParams() []*FunctionParameter {
-	params := make([]*FunctionParameter, 0)
-	for _, p := range f {
-		if p.Default != nil {
-			params = append(params, p)
-		}
-	}
-	return params
-}
+
+//	func (f functionParameters) mandatoryParams() []*FunctionParameter {
+//		params := make([]*FunctionParameter, 0)
+//		for _, p := range f {
+//			if p.Default == nil {
+//				params = append(params, p)
+//			}
+//		}
+//		return params
+//	}
+//
+//	func (f functionParameters) optionalParams() []*FunctionParameter {
+//		params := make([]*FunctionParameter, 0)
+//		for _, p := range f {
+//			if p.Default != nil {
+//				params = append(params, p)
+//			}
+//		}
+//		return params
+//	}
 func (f functionParameters) separateDefaultParams() ([]*FunctionParameter, []*FunctionParameter) {
 	mandatory, defaults := make([]*FunctionParameter, 0), make([]*FunctionParameter, 0)
 	for _, p := range f {
@@ -200,38 +197,59 @@ type Function struct {
 // String returns the function literal
 func (f *Function) String() string {
 	var out strings.Builder
-	params := []string{}
-	for _, p := range f.Parameters {
-		params = append(params, p.String())
+	out.WriteString("{")
+	if len(f.Parameters) != 0 {
+		args := []string{}
+		for _, a := range f.Parameters {
+			args = append(args, a.String())
+		}
+		out.WriteString("|")
+		out.WriteString(strings.Join(args, ", "))
+		out.WriteString("|")
 	}
-	out.WriteString("fn")
-	out.WriteString("(")
-	out.WriteString(strings.Join(params, ", "))
-	out.WriteString(") {\n")
+	out.WriteString("")
 	out.WriteString(f.Body.String())
-	out.WriteString("\n}")
+	out.WriteString("}")
 	return out.String()
 }
 
 // Call implements the RubyMethod interface. It evaluates f.Body and returns its result
 func (f *Function) Call(context CallContext, args ...RubyObject) (RubyObject, error) {
-	block, arguments, _ := extractBlockFromArgs(args)
-	defaultParams := functionParameters(f.Parameters).defaultParamCount()
-	if len(arguments) < len(f.Parameters)-defaultParams || len(arguments) > len(f.Parameters) {
-		return nil, NewWrongNumberOfArgumentsError(len(f.Parameters), len(arguments))
+	// TODO: Handle tail splats
+	if len(f.Parameters) == 1 && f.Parameters[0].Splat {
+		// Only one splat parameter.
+		args_arr := NewArray(args...)
+		extendedEnv := NewEnclosedEnvironment(f.Env)
+		extendedEnv.Set(f.Parameters[0].Name, args_arr)
+		contextSelf, _ := context.Env().Get("self")
+		contextSelfObject := contextSelf.(*Self)
+		extendedEnv.Set("self", contextSelfObject)
+
+		evaluated, err := context.Eval(f.Body, extendedEnv)
+		if err != nil {
+			return nil, err
+		}
+		return f.unwrapReturnValue(evaluated), nil
+
+	} else {
+		// normal evaluation
+		defaultParams := functionParameters(f.Parameters).defaultParamCount()
+		if len(args) < len(f.Parameters)-defaultParams || len(args) > len(f.Parameters) {
+			return nil, NewWrongNumberOfArgumentsError(len(f.Parameters), len(args))
+		}
+		params, err := f.populateParameters(args)
+		if err != nil {
+			return nil, err
+		}
+		contextSelf, _ := context.Env().Get("self")
+		contextSelfObject := contextSelf.(*Self)
+		extendedEnv := f.extendFunctionEnv(contextSelfObject, params, nil)
+		evaluated, err := context.Eval(f.Body, extendedEnv)
+		if err != nil {
+			return nil, err
+		}
+		return f.unwrapReturnValue(evaluated), nil
 	}
-	params, err := f.populateParameters(arguments)
-	if err != nil {
-		return nil, err
-	}
-	contextSelf, _ := context.Env().Get("self")
-	contextSelfObject := contextSelf.(*Self)
-	extendedEnv := f.extendFunctionEnv(contextSelfObject, params, block)
-	evaluated, err := context.Eval(f.Body, extendedEnv)
-	if err != nil {
-		return nil, err
-	}
-	return f.unwrapReturnValue(evaluated), nil
 }
 
 // Visibility implements the RubyMethod interface. It returns f.MethodVisibility
@@ -270,9 +288,9 @@ func (f *Function) populateParameters(args []RubyObject) (map[string]RubyObject,
 	return params, nil
 }
 
-func (f *Function) extendFunctionEnv(context *Self, params map[string]RubyObject, block *Proc) Environment {
+func (f *Function) extendFunctionEnv(context *Self, params map[string]RubyObject, block *Symbol) Environment {
 	// encapsulate the block within a new self, but with the same object
-	funcSelf := &Self{RubyObject: context.RubyObject, Name: context.Name, Block: block}
+	funcSelf := &Self{RubyObject: context.RubyObject, Name: context.Name}
 	env := NewEnclosedEnvironment(f.Env)
 	env.Set("self", funcSelf)
 	for k, v := range params {
@@ -293,7 +311,6 @@ func (f *Function) unwrapReturnValue(obj RubyObject) RubyObject {
 // self in the given context.
 type Self struct {
 	RubyObject        // The encapsuled object acting as self
-	Block      *Proc  // the block given to the current execution binding
 	Name       string // The name of self in this context
 }
 

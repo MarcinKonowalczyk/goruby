@@ -97,14 +97,9 @@ func Test_StringGsub(t *testing.T) {
 		err       error
 	}{
 		{
-			[]RubyObject{&Regex{Value: "o"}, &String{Value: "zz"}},
+			[]RubyObject{&String{Value: "o"}, &String{Value: "zz"}},
 			&String{Value: "fzzzzbar"},
 			nil,
-		},
-		{
-			[]RubyObject{&String{Value: "o"}, &String{Value: "zz"}},
-			nil,
-			NewImplicitConversionTypeError(&Regex{}, &String{}),
 		},
 	}
 

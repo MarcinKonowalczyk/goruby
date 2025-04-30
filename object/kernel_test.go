@@ -250,13 +250,13 @@ func TestKernelIsNil(t *testing.T) {
 
 	checkError(t, err, nil)
 
-	boolean, ok := result.(*Boolean)
+	boolean, ok := SymbolToBool(result)
 	if !ok {
 		t.Logf("Expected Boolean, got %T", result)
 		t.FailNow()
 	}
 
-	if boolean.Value != false {
+	if boolean != false {
 		t.Logf("Expected false, got true")
 		t.Fail()
 	}
@@ -337,13 +337,13 @@ func TestKernelRequire(t *testing.T) {
 			t.Fail()
 		}
 
-		boolean, ok := result.(*Boolean)
+		_, ok := SymbolToBool(result)
 		if !ok {
 			t.Logf("Expected Boolean, got %#v", result)
 			t.FailNow()
 		}
 
-		if boolean != TRUE {
+		if result != TRUE {
 			t.Logf("Expected return to equal TRUE, got FALSE")
 			t.Fail()
 		}
@@ -478,106 +478,6 @@ func TestKernelRequire(t *testing.T) {
 
 		if !reflect.DeepEqual(expected, arr) {
 			t.Logf("Expected $LOADED_FEATURES to equal\n%#v\n\tgot\n%#v\n", expected.Inspect(), arr.Inspect())
-			t.Fail()
-		}
-	})
-	t.Run("env side effects constants", func(t *testing.T) {
-		env := NewMainEnvironment()
-		var eval func(node ast.Node, env Environment) (RubyObject, error)
-		// TODO: a bit messy and error prone to duplicate the code from evaluator.
-		// Move out to integration tests.
-		eval = func(node ast.Node, env Environment) (RubyObject, error) {
-			switch node := node.(type) {
-			case *ast.Program:
-				var result RubyObject
-				var err error
-				for _, statement := range node.Statements {
-					result, err = eval(statement, env)
-
-					if err != nil {
-						return nil, err
-					}
-				}
-				return result, nil
-			case *ast.ModuleExpression:
-				module, ok := env.Get(node.Name.Value)
-				if !ok {
-					module = NewModule(node.Name.Value, env)
-				}
-				moduleEnv := module.(Environment)
-				moduleEnv.Set("self", &Self{RubyObject: module, Name: node.Name.Value})
-				selfObject, _ := moduleEnv.Get("self")
-				self := selfObject.(*Self)
-				env.Set(node.Name.Value, self.RubyObject)
-				return module, nil
-			case *ast.ClassExpression:
-				superClassName := "Object"
-				if node.SuperClass != nil {
-					superClassName = node.SuperClass.Value
-				}
-				superClass, ok := env.Get(superClassName)
-				if !ok {
-					return nil, errors.Wrap(
-						NewUninitializedConstantNameError(superClassName),
-						"eval class superclass",
-					)
-				}
-				class, ok := env.Get(node.Name.Value)
-				if !ok {
-					class = NewClass(node.Name.Value, superClass.(RubyClassObject), env)
-				}
-				classEnv := class.(Environment)
-				classEnv.Set("self", &Self{RubyObject: class, Name: node.Name.Value})
-				selfObject, _ := classEnv.Get("self")
-				self := selfObject.(*Self)
-				env.Set(node.Name.Value, self.RubyObject)
-				return class, nil
-			case *ast.ExpressionStatement:
-				return eval(node.Expression, env)
-			case *ast.Assignment:
-				val, err := eval(node.Right, env)
-				if err != nil {
-					return nil, err
-				}
-				env.Set(node.String(), val)
-				return val, nil
-			}
-			return TRUE, nil
-		}
-
-		context := &callContext{
-			env:      env,
-			eval:     eval,
-			receiver: &Object{},
-		}
-		name := &String{"./fixtures/testfile_constants.rb"}
-
-		_, err := kernelRequire(context, name)
-		if err != nil {
-			panic(err)
-		}
-
-		module, ok := env.Get("A")
-		if !ok {
-			t.Logf("Expected env to contain object for 'A'")
-			t.Fail()
-		}
-
-		m, ok := module.(*Module)
-		if !ok {
-			t.Logf("Expected env value 'A' to be %T, got %T", m, module)
-			t.Fail()
-		}
-
-		cl, ok := env.Get("B")
-		if !ok {
-			t.Logf("Expected env to contain object for 'B'")
-			t.Fail()
-		}
-
-		c, ok := cl.(*class)
-		if !ok {
-			t.Logf("Expected env value 'B' to be %T, got %T", c, cl)
 			t.Fail()
 		}
 	})
@@ -794,13 +694,13 @@ func TestKernelRequire(t *testing.T) {
 			t.Fail()
 		}
 
-		boolean, ok := result.(*Boolean)
+		_, ok := SymbolToBool(result)
 		if !ok {
 			t.Logf("Expected Boolean, got %#v", result)
 			t.FailNow()
 		}
 
-		if boolean != FALSE {
+		if result != FALSE {
 			t.Logf("Expected return to equal FALSE, got TRUE")
 			t.Fail()
 		}
@@ -879,131 +779,6 @@ func TestKernelExtend(t *testing.T) {
 		t.Logf("Expected context receiver to equal\n%+#v\n\tgot\n%+#v\n", extended, actual)
 		t.Fail()
 	}
-}
-
-func TestKernelBlockGiven(t *testing.T) {
-	t.Run("block present", func(t *testing.T) {
-		object := &Object{}
-		env := NewEnvironment()
-		block := &Proc{}
-		context := &callContext{
-			receiver: &Self{RubyObject: object, Block: block, Name: "foo"},
-			env:      env,
-		}
-
-		result, err := kernelBlockGiven(context)
-
-		checkError(t, err, nil)
-
-		checkResult(t, result, TRUE)
-	})
-	t.Run("no block present", func(t *testing.T) {
-		object := &Object{}
-		env := NewEnvironment()
-		context := &callContext{
-			receiver: &Self{RubyObject: object, Name: "foo"},
-			env:      env,
-		}
-
-		result, err := kernelBlockGiven(context)
-
-		checkError(t, err, nil)
-
-		checkResult(t, result, FALSE)
-	})
-}
-
-func TestKernelTap(t *testing.T) {
-	t.Run("with block", func(t *testing.T) {
-		object := &Object{}
-		env := NewEnvironment()
-		eval := func(node ast.Node, env Environment) (RubyObject, error) {
-			return TRUE, nil
-		}
-		context := &callContext{
-			receiver: object,
-			env:      env,
-			eval:     eval,
-		}
-
-		block := &Proc{
-			Parameters: []*FunctionParameter{&FunctionParameter{Name: "o"}},
-			Body:       &ast.BlockStatement{Statements: []ast.Statement{}},
-			Env:        NewEnvironment(),
-		}
-
-		result, err := kernelTap(context, block)
-
-		checkError(t, err, nil)
-
-		checkResult(t, result, object)
-	})
-	t.Run("with args and block", func(t *testing.T) {
-		object := &Object{}
-		env := NewEnvironment()
-		eval := func(node ast.Node, env Environment) (RubyObject, error) {
-			return TRUE, nil
-		}
-		context := &callContext{
-			receiver: object,
-			env:      env,
-			eval:     eval,
-		}
-
-		block := &Proc{
-			Parameters: []*FunctionParameter{&FunctionParameter{Name: "o"}},
-			Body:       &ast.BlockStatement{Statements: []ast.Statement{}},
-			Env:        NewEnvironment(),
-		}
-
-		_, err := kernelTap(context, NIL, block)
-
-		expected := NewWrongNumberOfArgumentsError(0, 1)
-
-		checkError(t, err, expected)
-	})
-	t.Run("without block", func(t *testing.T) {
-		object := &Object{}
-		env := NewEnvironment()
-		eval := func(node ast.Node, env Environment) (RubyObject, error) {
-			return TRUE, nil
-		}
-		context := &callContext{
-			receiver: object,
-			env:      env,
-			eval:     eval,
-		}
-
-		_, err := kernelTap(context)
-
-		expectedError := NewNoBlockGivenLocalJumpError()
-
-		checkError(t, err, expectedError)
-	})
-	t.Run("with block error", func(t *testing.T) {
-		object := &Object{}
-		env := NewEnvironment()
-		eval := func(node ast.Node, env Environment) (RubyObject, error) {
-			return nil, NewException("An error")
-		}
-		context := &callContext{
-			receiver: object,
-			env:      env,
-			eval:     eval,
-		}
-
-		block := &Proc{
-			Parameters: []*FunctionParameter{},
-			Body:       &ast.BlockStatement{Statements: []ast.Statement{}},
-			Env:        NewEnvironment(),
-		}
-
-		_, err := kernelTap(context, block)
-
-		expected := NewException("An error")
-
-		checkError(t, err, expected)
-	})
 }
 
 func TestKernelToS(t *testing.T) {

@@ -34,3 +34,49 @@ func TestSymbolToS(t *testing.T) {
 
 	checkResult(t, result, expected)
 }
+
+func TestSymbolToBool(t *testing.T) {
+	val, ok := SymbolToBool(TRUE)
+	if !ok {
+		t.Errorf("Expected true, got false")
+	}
+	if val != true {
+		t.Errorf("Expected true, got false")
+	}
+	val, ok = SymbolToBool(FALSE)
+	if !ok {
+		t.Errorf("Expected false, got true")
+	}
+	if val != false {
+		t.Errorf("Expected false, got true")
+	}
+	val, ok = SymbolToBool(&Symbol{Value: "foo"})
+	if ok {
+		t.Errorf("Expected false, got true")
+	}
+	if val {
+		t.Errorf("Expected false, got true")
+	}
+	val, ok = SymbolToBool(&String{Value: "foo"})
+	if ok {
+		t.Errorf("Expected false, got true")
+	}
+	if val {
+		t.Errorf("Expected false, got true")
+	}
+	val, ok = SymbolToBool(nil)
+	if ok {
+		t.Errorf("Expected false, got true")
+	}
+	if val {
+		t.Errorf("Expected false, got true")
+	}
+	var b *Symbol = nil
+	val, ok = SymbolToBool(b)
+	if ok {
+		t.Errorf("Expected false, got true")
+	}
+	if val {
+		t.Errorf("Expected false, got true")
+	}
+}

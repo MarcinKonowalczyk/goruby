@@ -1,4 +1,4 @@
-package evaluator
+package evaluator_test
 
 import (
 	"go/token"
@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/evaluator"
 	"github.com/MarcinKonowalczyk/goruby/object"
 	"github.com/MarcinKonowalczyk/goruby/parser"
 	"github.com/pkg/errors"
@@ -172,27 +173,27 @@ func TestErrorHandling(t *testing.T) {
 	}{
 		{
 			"5 + true;",
-			"TypeError: Integer can't be coerced into Boolean",
+			"TypeError: Integer can't be coerced into Symbol",
 		},
 		{
 			"5 + true; 5;",
-			"TypeError: Integer can't be coerced into Boolean",
+			"TypeError: Integer can't be coerced into Symbol",
 		},
 		{
 			"-true",
-			"Exception: unknown operator: -BOOLEAN",
+			"Exception: unknown operator: -SYMBOL",
 		},
 		{
 			"true + false;",
-			"NoMethodError: undefined method `+' for true:TrueClass",
+			"NoMethodError: undefined method `+' for :true:Symbol",
 		},
 		{
 			"true + false + true + false;",
-			"NoMethodError: undefined method `+' for true:TrueClass",
+			"NoMethodError: undefined method `+' for :true:Symbol",
 		},
 		{
 			"5; true + false; 5",
-			"NoMethodError: undefined method `+' for true:TrueClass",
+			"NoMethodError: undefined method `+' for :true:Symbol",
 		},
 		{
 			`"Hello" - "World"`,
@@ -200,11 +201,11 @@ func TestErrorHandling(t *testing.T) {
 		},
 		{
 			"if (10 > 1); true + false; end",
-			"NoMethodError: undefined method `+' for true:TrueClass",
+			"NoMethodError: undefined method `+' for :true:Symbol",
 		},
 		{
 			"if (10 > 1); true + false; end",
-			"NoMethodError: undefined method `+' for true:TrueClass",
+			"NoMethodError: undefined method `+' for :true:Symbol",
 		},
 		{
 			`
@@ -215,7 +216,7 @@ if (10 > 1)
 	return 1;
 end
 `,
-			"NoMethodError: undefined method `+' for true:TrueClass",
+			"NoMethodError: undefined method `+' for :true:Symbol",
 		},
 		{
 			"foobar",
@@ -259,270 +260,12 @@ end
 	}
 }
 
-func mustGet(obj object.RubyObject, ok bool) object.RubyObject {
-	if !ok {
-		panic("object not found")
-	}
-	return obj
-}
-
-func TestExceptionHandlingBlock(t *testing.T) {
-	tests := []struct {
-		input  string
-		err    error
-		output object.RubyObject
-	}{
-		{
-			"begin\n2\nend",
-			nil,
-			&object.Integer{Value: 2},
-		},
-		{
-			`
-begin
-	2
-rescue Exception => e
-	4
-end`,
-			nil,
-			&object.Integer{Value: 2},
-		},
-		{
-			`
-begin
-	raise Exception
-end`,
-			object.NewException("Exception"),
-			nil,
-		},
-		{
-			`
-begin
-	raise Exception
-rescue Exception
-	4
-end`,
-			nil,
-			&object.Integer{Value: 4},
-		},
-		{
-			`
-begin
-	raise Exception.new "foo"
-rescue Exception => e
-	e.to_s
-end`,
-			nil,
-			&object.String{Value: "foo"},
-		},
-		{
-			`
-begin
-	raise StandardError.new "foo"
-rescue
-	5
-end`,
-			nil,
-			&object.Integer{Value: 5},
-		},
-		{
-			`
-begin
-	raise StandardError.new "bar"
-rescue => e
-	e.to_s
-end`,
-			nil,
-			&object.String{Value: "bar"},
-		},
-		{
-			`
-begin
-	raise Exception.new "qux"
-rescue
-	3
-end`,
-			object.NewException("qux"),
-			nil,
-		},
-		{
-			`
-begin
-	raise StandardError.new "qux"
-rescue
-	3
-end`,
-			nil,
-			&object.Integer{Value: 3},
-		},
-	}
-
-	for _, tt := range tests {
-		if tt.err == nil {
-			t.Run("catched exception", func(t *testing.T) {
-				env := object.NewMainEnvironment()
-				evaluated, err := testEval(tt.input, env)
-				checkError(t, err)
-
-				if !reflect.DeepEqual(evaluated, tt.output) {
-					t.Logf("Expected result to equal\n%+#v\n\tgot\n%+#v\n", tt.output, evaluated)
-					t.Fail()
-				}
-			})
-		} else {
-			t.Run("uncaught exception", func(t *testing.T) {
-				env := object.NewMainEnvironment()
-				evaluated, err := testEval(tt.input, env)
-				if evaluated != nil {
-					t.Logf("expected result to be nil")
-					t.Fail()
-				}
-
-				if !reflect.DeepEqual(errors.Cause(err), tt.err) {
-					t.Logf("Expected err to equal\n%+#v\n\tgot\n%+#v\n", tt.err, errors.Cause(err))
-					t.Fail()
-				}
-			})
-		}
-	}
-}
-
-func TestScopedIdentifierExpression(t *testing.T) {
-	objectClassObject, _ := object.NewMainEnvironment().Get("Object")
-	objectClass := objectClassObject.(object.RubyClassObject)
-	tests := []struct {
-		input           string
-		expectedInspect string
-		expectedClass   object.RubyClass
-	}{
-		{
-			`
-			module A
-				module B
-				end
-			end
-			A::B
-			`,
-			object.NewModule("B", nil).Inspect(),
-			object.NewModule("B", nil).Class(),
-		},
-		{
-			`
-			module A
-				class B
-				end
-			end
-			A::B
-			`,
-			object.NewClass("B", objectClass, nil).Inspect(),
-			object.NewClass("B", objectClass, nil).Class(),
-		},
-		{
-			`
-			class A
-				class B
-				end
-			end
-			A::B
-			`,
-			object.NewClass("B", objectClass, nil).Inspect(),
-			object.NewClass("B", objectClass, nil).Class(),
-		},
-		{
-			`
-			class A
-				module B
-				end
-			end
-			A::B
-			`,
-			object.NewModule("B", nil).Inspect(),
-			object.NewModule("B", nil).Class(),
-		},
-		{
-			`
-			module A
-				module B
-					module C
-					end
-				end
-			end
-			A::B::C
-			`,
-			object.NewModule("C", nil).Inspect(),
-			object.NewModule("C", nil).Class(),
-		},
-		{
-			`
-			module A
-				Ten = 10
-			end
-			A::Ten
-			`,
-			object.NewInteger(10).Inspect(),
-			object.NewInteger(10).Class(),
-		},
-		{
-			`
-			class A
-				def bar
-					13
-				end
-			end
-			A.new::bar
-			`,
-			object.NewInteger(13).Inspect(),
-			object.NewInteger(13).Class(),
-		},
-	}
-
-	for _, tt := range tests {
-		env := object.NewMainEnvironment()
-		evaluated, err := testEval(tt.input, env)
-		checkError(t, err)
-
-		actual := evaluated.Inspect()
-
-		if tt.expectedInspect != actual {
-			t.Logf("Expected eval return to equal\n%q\n\tgot\n%q\n", tt.expectedInspect, actual)
-			t.Fail()
-		}
-
-		if !reflect.DeepEqual(tt.expectedClass, evaluated.Class()) {
-			t.Logf("Expected eval return class to equal\n%+#v\n\tgot\n%+#v\n", tt.expectedClass, evaluated.Class())
-			t.Fail()
-		}
-	}
-}
-
-func TestInstanceVariable(t *testing.T) {
-	tests := []struct {
-		input  string
-		output object.RubyObject
-	}{
-		{
-			input: `
-class X
-	@foo
-end`,
-			output: object.NIL,
-		},
-		{
-			input:  "@foo",
-			output: object.NIL,
-		},
-	}
-
-	for _, tt := range tests {
-		evaluated, err := testEval(tt.input, object.NewMainEnvironment())
-		checkError(t, err)
-
-		if evaluated != tt.output {
-			t.Logf("Expected result to equal %v, got %v\n", tt.output, evaluated)
-			t.Fail()
-		}
-	}
-}
+// func mustGet(obj object.RubyObject, ok bool) object.RubyObject {
+// 	if !ok {
+// 		panic("object not found")
+// 	}
+// 	return obj
+// }
 
 func TestAssignment(t *testing.T) {
 	t.Run("assign to hash", func(t *testing.T) {
@@ -594,10 +337,6 @@ func TestAssignment(t *testing.T) {
 				`foo = 5, 4; foo`,
 				[]string{"5", "4"},
 			},
-			{
-				`@foo = 5, 6; @foo`,
-				[]string{"5", "6"},
-			},
 		}
 
 		for _, tt := range tests {
@@ -605,28 +344,6 @@ func TestAssignment(t *testing.T) {
 			checkError(t, err)
 
 			testObject(t, evaluated, tt.expected)
-		}
-	})
-	t.Run("assign to InstanceVariable", func(t *testing.T) {
-		tests := []struct {
-			input    string
-			expected int64
-		}{
-			{
-				`@foo = 5`,
-				5,
-			},
-			{
-				`@foo = 5; x = @foo; x = 3; x`,
-				3,
-			},
-		}
-
-		for _, tt := range tests {
-			evaluated, err := testEval(tt.input, object.NewMainEnvironment())
-			checkError(t, err)
-
-			testIntegerObject(t, evaluated, tt.expected)
 		}
 	})
 	t.Run("assign to array", func(t *testing.T) {
@@ -731,15 +448,6 @@ func TestMultiAssignment(t *testing.T) {
 			}},
 		},
 		{
-			name:  "lhs with array index and instance var",
-			input: "x = []; x[0], y, @z = 1, 2, 3; [x[0], y, @z]",
-			output: &object.Array{Elements: []object.RubyObject{
-				&object.Integer{Value: 1},
-				&object.Integer{Value: 2},
-				&object.Integer{Value: 3},
-			}},
-		},
-		{
 			name:  "lhs with global and const",
 			input: "$x, Y = 1, 2; [$x, Y]",
 			output: &object.Array{Elements: []object.RubyObject{
@@ -802,254 +510,6 @@ func TestGlobalAssignmentExpression(t *testing.T) {
 			t.Fail()
 		}
 	})
-}
-
-func TestModuleObject(t *testing.T) {
-	t.Run("module definition", func(t *testing.T) {
-		tests := []struct {
-			input           string
-			expectedName    string
-			expectedMethods map[string]string
-			expectedReturn  object.RubyObject
-		}{
-			{
-				`module Foo
-				def a
-				"foo"
-				end
-				end`,
-				"Foo",
-				map[string]string{"a": "fn() {\nfoo\n}"},
-				&object.Symbol{Value: "a"},
-			},
-			{
-				`module Foo
-				3
-				end`,
-				"Foo",
-				map[string]string{},
-				&object.Integer{Value: 3},
-			},
-			{
-				`module Foo
-				end`,
-				"Foo",
-				map[string]string{},
-				object.NIL,
-			},
-		}
-
-		for _, tt := range tests {
-			env := object.NewEnvironment()
-			env.Set("self", &object.Self{RubyObject: &object.Object{}, Name: "main"})
-			evaluated, err := testEval(tt.input, env)
-			checkError(t, err)
-
-			if !reflect.DeepEqual(evaluated, tt.expectedReturn) {
-				t.Logf("Expected return object to equal\n%+#v\n\tgot\n%+#v\n", tt.expectedReturn, evaluated)
-				t.Fail()
-			}
-
-			module, ok := env.Get(tt.expectedName)
-			if !ok {
-				t.Logf("Expected module to exist in env")
-				t.Logf("Env: %+#v\n", env)
-				t.FailNow()
-			}
-
-			actualMethods := make(map[string]string)
-
-			methods := module.Class().Methods().GetAll()
-			for name, method := range methods {
-				if function, ok := method.(*object.Function); ok {
-					actualMethods[name] = function.String()
-				}
-			}
-
-			if !reflect.DeepEqual(tt.expectedMethods, actualMethods) {
-				t.Logf(
-					"Expected module methods to equal\n%+#v\n\tgot\n%+#v\n",
-					tt.expectedMethods,
-					actualMethods,
-				)
-				t.Fail()
-			}
-		}
-	})
-	t.Run("self after module definition", func(t *testing.T) {
-		input := `
-		module Foo
-			def a
-				"foo"
-			end
-		end
-		`
-
-		main := &object.Self{RubyObject: &object.Object{}, Name: "main"}
-		env := object.NewEnvironment()
-		env.Set("self", main)
-		_, err := testEval(input, env)
-		checkError(t, err)
-
-		self, ok := env.Get("self")
-		if !ok {
-			t.Logf("Expected self in the env")
-			t.FailNow()
-		}
-
-		if !reflect.DeepEqual(main, self) {
-			t.Logf(
-				"Expected self to equal\n%+#v\n\tgot\n%+#v\n",
-				main,
-				self,
-			)
-			t.Fail()
-		}
-	})
-	t.Run("module as open classes", func(t *testing.T) {
-		input :=
-			`module Foo
-				def a
-					"foo"
-				end
-			end
-			module Foo
-				def b
-					"bar"
-				end
-			end
-			`
-		env := object.NewEnvironment()
-		env.Set("self", &object.Self{RubyObject: &object.Object{}, Name: "main"})
-		_, err := testEval(input, env)
-		checkError(t, err)
-
-		module, ok := env.Get("Foo")
-		if !ok {
-			t.Logf("Expected module to exist in env")
-			t.Logf("Env: %+#v\n", env)
-			t.FailNow()
-		}
-
-		actualMethods := make(map[string]string)
-
-		methods := module.Class().Methods().GetAll()
-		for name, method := range methods {
-			if function, ok := method.(*object.Function); ok {
-				actualMethods[name] = function.String()
-			}
-		}
-
-		expectedMethods := map[string]string{
-			"a": "fn() {\nfoo\n}",
-			"b": "fn() {\nbar\n}",
-		}
-
-		if !reflect.DeepEqual(expectedMethods, actualMethods) {
-			t.Logf(
-				"Expected module methods to equal\n%+#v\n\tgot\n%+#v\n",
-				expectedMethods,
-				actualMethods,
-			)
-			t.Fail()
-		}
-	})
-}
-
-func TestClassObject(t *testing.T) {
-	tests := []struct {
-		input              string
-		expectedName       string
-		expectedSuperclass string
-		expectedMethods    map[string]string
-		expectedReturn     object.RubyObject
-	}{
-		{
-			`class Foo
-				def a
-					"foo"
-				end
-			end`,
-			"Foo",
-			"Object",
-			map[string]string{"a": "fn() {\nfoo\n}"},
-			&object.Symbol{Value: "a"},
-		},
-		{
-			`class Foo
-				3
-			end`,
-			"Foo",
-			"Object",
-			map[string]string{},
-			&object.Integer{Value: 3},
-		},
-		{
-			`class Foo
-			end`,
-			"Foo",
-			"Object",
-			map[string]string{},
-			object.NIL,
-		},
-		{
-			`class Foo < BasicObject
-			end`,
-			"Foo",
-			"BasicObject",
-			map[string]string{},
-			object.NIL,
-		},
-	}
-
-	for _, tt := range tests {
-		env := object.NewMainEnvironment()
-		evaluated, err := testEval(tt.input, env)
-		checkError(t, err)
-
-		if !reflect.DeepEqual(evaluated, tt.expectedReturn) {
-			t.Logf("Expected return object to equal\n%+#v\n\tgot\n%+#v\n", tt.expectedReturn, evaluated)
-			t.Fail()
-		}
-
-		class, ok := env.Get(tt.expectedName)
-		if !ok {
-			t.Logf("Expected class to exist in env")
-			t.Logf("Env: %+#v\n", env)
-			t.FailNow()
-		}
-
-		classClass, ok := class.(object.RubyClassObject)
-		if !ok {
-			t.Logf("Expected class to be a object.RubyClassObject, got %T", classClass)
-			t.FailNow()
-		}
-
-		superClass := classClass.SuperClass().(object.RubyClassObject)
-
-		if superClass.Inspect() != tt.expectedSuperclass {
-			t.Logf("Expected superclass %q, got %q\n", tt.expectedSuperclass, superClass.Inspect())
-			t.Fail()
-		}
-
-		actualMethods := make(map[string]string)
-
-		methods := classClass.Methods().GetAll()
-		for name, method := range methods {
-			if function, ok := method.(*object.Function); ok {
-				actualMethods[name] = function.String()
-			}
-		}
-
-		if !reflect.DeepEqual(tt.expectedMethods, actualMethods) {
-			t.Logf(
-				"Expected class methods to equal\n%+#v\n\tgot\n%+#v\n",
-				tt.expectedMethods,
-				actualMethods,
-			)
-			t.Fail()
-		}
-	}
 }
 
 func TestFunctionObject(t *testing.T) {
@@ -1132,121 +592,6 @@ func TestFunctionObject(t *testing.T) {
 			if fn.Body.String() != tt.expectedBody {
 				t.Fatalf("body is not %q. got=%q", tt.expectedBody, fn.Body.String())
 			}
-		}
-	})
-	t.Run("methods with variable receiver", func(t *testing.T) {
-		env := object.NewEnvironment()
-		env.Set("self", &object.Self{RubyObject: &object.Object{}, Name: "main"})
-		input := `a = "foo"
-def a.truth
-	42
-end
-`
-
-		_, err := testEval(input, env)
-		checkError(t, err)
-
-		a, ok := env.Get("a")
-		if !ok {
-			t.Logf("Expected env to have 'a'")
-			t.FailNow()
-		}
-
-		method, ok := a.Class().Methods().Get("truth")
-		if !ok {
-			t.Logf("Expected function to be added to 'a'")
-			t.Fail()
-		}
-		fn, ok := method.(*object.Function)
-		if !ok {
-			t.Logf("method is not %T, got=%T (%+v)", fn, method, method)
-			t.Fail()
-		}
-	})
-	t.Run("methods with const receiver", func(t *testing.T) {
-		env := object.NewMainEnvironment()
-		env.Set("self", &object.Self{RubyObject: &object.Object{}, Name: "main"})
-		input := `class A
-end
-
-def A.truth
-	42
-end
-`
-
-		_, err := testEval(input, env)
-		checkError(t, err)
-
-		A, ok := env.Get("A")
-		if !ok {
-			t.Logf("Expected env to have 'A'")
-			t.FailNow()
-		}
-
-		method, ok := A.Class().Methods().Get("truth")
-		if !ok {
-			t.Logf("Expected function to be added to 'A'")
-			t.Fail()
-		}
-		fn, ok := method.(*object.Function)
-		if !ok {
-			t.Logf("method is not %T, got=%T (%+v)", fn, method, method)
-			t.Fail()
-		}
-	})
-	t.Run("methods with self in main", func(t *testing.T) {
-		env := object.NewEnvironment()
-		env.Set("self", &object.Self{RubyObject: &object.Object{}, Name: "main"})
-		input := `
-def self.truth
-	42
-end
-`
-
-		_, err := testEval(input, env)
-		checkError(t, err)
-
-		self, _ := env.Get("self")
-
-		method, ok := self.Class().Methods().Get("truth")
-		if !ok {
-			t.Logf("Expected function to be added to 'main'")
-			t.Fail()
-		}
-		fn, ok := method.(*object.Function)
-		if !ok {
-			t.Logf("method is not %T, got=%T (%+v)", fn, method, method)
-			t.Fail()
-		}
-	})
-	t.Run("methods with self in class", func(t *testing.T) {
-		env := object.NewMainEnvironment()
-		input := `
-class A
-	def self.truth
-		42
-	end
-end
-`
-
-		_, err := testEval(input, env)
-		checkError(t, err)
-
-		A, ok := env.Get("A")
-		if !ok {
-			t.Logf("Expected env to have 'A'")
-			t.FailNow()
-		}
-
-		method, ok := A.Class().Methods().Get("truth")
-		if !ok {
-			t.Logf("Expected function to be added to 'A'")
-			t.Fail()
-		}
-		fn, ok := method.(*object.Function)
-		if !ok {
-			t.Logf("method is not %T, got=%T (%+v)", fn, method, method)
-			t.Fail()
 		}
 	})
 }
@@ -1500,11 +845,11 @@ func TestHashLiteral(t *testing.T) {
 	}
 
 	expected := map[string]object.RubyObject{
-		"foo":  &object.Integer{Value: 42},
-		":bar": &object.Integer{Value: 2},
-		"true": object.FALSE,
-		"nil":  object.TRUE,
-		"2":    &object.Integer{Value: 2},
+		"foo":   &object.Integer{Value: 42},
+		":bar":  &object.Integer{Value: 2},
+		":nil":  object.TRUE,
+		":true": object.FALSE,
+		"2":     &object.Integer{Value: 2},
 	}
 
 	actual := make(map[string]object.RubyObject)
@@ -1595,7 +940,7 @@ func TestKeyword__File__(t *testing.T) {
 	env := object.NewEnvironment()
 	program, err := parser.ParseFile(token.NewFileSet(), "some_file.rb", input, 0)
 	checkError(t, err)
-	evaluated, err := Eval(program, env)
+	evaluated, err := evaluator.Eval(program, env)
 	checkError(t, err)
 
 	str, ok := evaluated.(*object.String)
@@ -1614,7 +959,7 @@ func TestKeyword__File__(t *testing.T) {
 
 func testExceptionObject(t *testing.T, obj object.RubyObject, errorMessage string) {
 	t.Helper()
-	if !IsError(obj) {
+	if !evaluator.IsError(obj) {
 		t.Logf("Expected error or exception, got %T", obj)
 		t.Fail()
 	}
@@ -1645,7 +990,7 @@ func testEval(input string, context ...object.Environment) (object.RubyObject, e
 	if err != nil {
 		return nil, object.NewSyntaxError(err)
 	}
-	return Eval(program, env)
+	return evaluator.Eval(program, env)
 }
 
 func checkError(t *testing.T, err error) {
@@ -1683,7 +1028,7 @@ func testObject(t *testing.T, exp object.RubyObject, expected interface{}) bool 
 
 func testBooleanObject(t *testing.T, obj object.RubyObject, expected bool) bool {
 	t.Helper()
-	result, ok := obj.(*object.Boolean)
+	result, ok := object.SymbolToBool(obj)
 	if !ok {
 		t.Errorf(
 			"object is not Boolean. got=%T (%+v)",
@@ -1692,10 +1037,10 @@ func testBooleanObject(t *testing.T, obj object.RubyObject, expected bool) bool 
 		)
 		return false
 	}
-	if result.Value != expected {
+	if result != expected {
 		t.Errorf(
 			"object has wrong value. got=%v, want=%v",
-			result.Value,
+			result,
 			expected,
 		)
 		return false

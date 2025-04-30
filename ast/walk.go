@@ -153,49 +153,14 @@ func Walk(v Visitor, node Node) {
 		*IntegerLiteral,
 		*StringLiteral,
 		*SymbolLiteral,
-		*Boolean,
-		*Nil,
-		*Self,
-		*BlockCapture,
 		*Keyword__FILE__,
-		*RegexLiteral,
 		*Comment:
 		// nothing to do
 
-	case *BlockExpression:
-		walkParameterList(v, n.Parameters)
-		Walk(v, n.Body)
-
-	case *ExceptionHandlingBlock:
-		Walk(v, n.TryBody)
-		for _, r := range n.Rescues {
-			Walk(v, r)
-		}
-
-	case *RescueBlock:
-		if len(n.ExceptionClasses) != 0 {
-			for _, e := range n.ExceptionClasses {
-				Walk(v, e)
-			}
-		}
-		if n.Exception != nil {
-			Walk(v, n.Exception)
-		}
-		Walk(v, n.Body)
-
 	case *FunctionLiteral:
-		if n.Receiver != nil {
-			Walk(v, n.Receiver)
-		}
 		Walk(v, n.Name)
 		walkParameterList(v, n.Parameters)
-		if n.CapturedBlock != nil {
-			Walk(v, n.CapturedBlock)
-		}
 		Walk(v, n.Body)
-		for _, r := range n.Rescues {
-			Walk(v, r)
-		}
 
 	case *FunctionParameter:
 		Walk(v, n.Name)
@@ -211,20 +176,6 @@ func Walk(v Visitor, node Node) {
 		walkExprList(v, n.Arguments)
 		// TODO: examine why it is not working
 		// Walk(v, n.Block)
-
-	case *ModuleExpression:
-		Walk(v, n.Name)
-		Walk(v, n.Body)
-
-	case *ClassExpression:
-		Walk(v, n.Name)
-		if n.SuperClass != nil {
-			Walk(v, n.SuperClass)
-		}
-		Walk(v, n.Body)
-
-	case *YieldExpression:
-		walkExprList(v, n.Arguments)
 
 	case *PrefixExpression:
 		Walk(v, n.Right)
@@ -253,9 +204,6 @@ func Walk(v Visitor, node Node) {
 	case *ExpressionStatement:
 		Walk(v, n.Expression)
 
-	case *InstanceVariable:
-		Walk(v, n.Name)
-
 	case *Assignment:
 		Walk(v, n.Left)
 		Walk(v, n.Right)
@@ -265,10 +213,6 @@ func Walk(v Visitor, node Node) {
 
 	case *BlockStatement:
 		walkStmtList(v, n.Statements)
-
-	case *ScopedIdentifier:
-		Walk(v, n.Outer)
-		Walk(v, n.Inner)
 
 	case *ConditionalExpression:
 		Walk(v, n.Condition)

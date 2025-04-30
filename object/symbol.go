@@ -1,15 +1,23 @@
 package object
 
-import "hash/fnv"
+import (
+	"fmt"
+	"hash/fnv"
+)
 
-var symbolClass RubyClassObject = newClass(
-	"Symbol",
-	objectClass,
-	symbolMethods,
-	symbolClassMethods,
-	func(RubyClassObject, ...RubyObject) (RubyObject, error) {
-		return &Symbol{}, nil
-	},
+var (
+	symbolClass RubyClassObject = newClass(
+		"Symbol",
+		objectClass,
+		symbolMethods,
+		symbolClassMethods,
+		func(RubyClassObject, ...RubyObject) (RubyObject, error) {
+			return &Symbol{}, nil
+		},
+	)
+	TRUE  RubyObject = &Symbol{Value: "true"}
+	FALSE RubyObject = &Symbol{Value: "false"}
+	NIL   RubyObject = &Symbol{Value: "nil"}
 )
 
 func init() {
@@ -40,6 +48,7 @@ var symbolClassMethods = map[string]RubyMethod{}
 
 var symbolMethods = map[string]RubyMethod{
 	"to_s": withArity(0, publicMethod(symbolToS)),
+	"to_i": withArity(0, publicMethod(symbolToI)),
 	"size": withArity(0, publicMethod(symbolSize)),
 }
 
@@ -55,4 +64,53 @@ func symbolSize(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return NewInteger(int64(len(sym.Value))), nil
 	}
 	return nil, nil
+}
+
+func symbolToI(context CallContext, args ...RubyObject) (RubyObject, error) {
+	if boolean, ok := SymbolToBool(context.Receiver()); ok {
+		if boolean {
+			return NewInteger(1), nil
+		}
+		return NewInteger(0), nil
+	} else {
+		return nil, NewTypeError("Symbol to_i: expected boolean")
+	}
+}
+
+// If a symbol is "true" or "false", it returns the corresponding boolean value.
+// Otherwise, it returns false and ok as false.
+func SymbolToBool(o RubyObject) (val bool, ok bool) {
+	if sym, ok := o.(*Symbol); ok {
+		if sym == nil {
+			// nil pointer, not ok
+			return false, false
+		}
+		if sym.Value == "true" {
+			return true, true
+		} else if sym.Value == "false" {
+			return false, true
+		} else {
+			fmt.Println("SymbolToBool: unknown symbol value:", sym.Value)
+			return false, false
+		}
+	}
+	return false, false
+}
+
+// If a symbol is "nil", returns ok as 'true'.
+func SymbolToNil(o RubyObject) (ok bool) {
+	if sym, ok := o.(*Symbol); ok {
+		if sym == nil {
+			// nil pointer, not ok
+			// *must be a ruby object!*
+			return false
+		}
+		if sym.Value == "nil" {
+			return true
+		} else {
+			fmt.Println("SymbolToNil: unknown symbol value:", sym.Value)
+			return false
+		}
+	}
+	return false
 }

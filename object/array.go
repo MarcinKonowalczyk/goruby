@@ -20,9 +20,7 @@ func init() {
 // NewArray returns a new array populated with elements.
 func NewArray(elements ...RubyObject) *Array {
 	arr := &Array{Elements: make([]RubyObject, len(elements))}
-	for i, elem := range elements {
-		arr.Elements[i] = elem
-	}
+	copy(arr.Elements, elements)
 	return arr
 }
 
@@ -105,27 +103,30 @@ func arrayFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewArgumentError("find_all requires a block")
 	}
 	block := args[0]
-	proc, ok := block.(*Proc)
+	proc, ok := block.(*Symbol)
 	if !ok {
 		return nil, NewArgumentError("find_all requires a block")
 	}
+	self, _ := context.Env().Get("self")
+	self_class := self.Class()
+	fn, ok := self_class.GetMethod(proc.Value)
+	if !ok {
+		return nil, NewNoMethodError(self, proc.Value)
+	}
 	result := NewArray()
 	for _, elem := range array.Elements {
-		ret, err := proc.Call(context, elem)
+		ret, err := fn.Call(context, elem)
 		if err != nil {
 			return nil, err
 		}
 		if ret == nil {
-			return nil, NewArgumentError("find_all requires a block to return a boolean")
+			return nil, NewArgumentError("find_all requires a block to return a boolean, not nil")
 		}
-		if ret.Type() != BOOLEAN_OBJ {
-			return nil, NewArgumentError("find_all requires a block to return a boolean")
-		}
-		boolean, ok := ret.(*Boolean)
+		val, ok := SymbolToBool(ret)
 		if !ok {
-			return nil, NewArgumentError("find_all requires a block to return a boolean")
+			return nil, NewArgumentError("find_all requires a block to return a boolean, not %s", ret.Inspect())
 		}
-		if boolean.Value {
+		if val {
 			result.Elements = append(result.Elements, elem)
 		}
 	}
@@ -166,13 +167,19 @@ func arrayMap(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewArgumentError("map requires a block")
 	}
 	block := args[0]
-	proc, ok := block.(*Proc)
+	proc, ok := block.(*Symbol)
 	if !ok {
 		return nil, NewArgumentError("map requires a block")
 	}
+	self, _ := context.Env().Get("self")
+	self_class := self.Class()
+	fn, ok := self_class.GetMethod(proc.Value)
+	if !ok {
+		return nil, NewNoMethodError(self, proc.Value)
+	}
 	result := NewArray()
 	for _, elem := range array.Elements {
-		ret, err := proc.Call(context, elem)
+		ret, err := fn.Call(context, elem)
 		if err != nil {
 			return nil, err
 		}
@@ -187,23 +194,26 @@ func arrayAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewArgumentError("all? requires a block")
 	}
 	block := args[0]
-	proc, ok := block.(*Proc)
+	proc, ok := block.(*Symbol)
 	if !ok {
 		return nil, NewArgumentError("all? requires a block")
 	}
+	self, _ := context.Env().Get("self")
+	self_class := self.Class()
+	fn, ok := self_class.GetMethod(proc.Value)
+	if !ok {
+		return nil, NewNoMethodError(self, proc.Value)
+	}
 	for _, elem := range array.Elements {
-		ret, err := proc.Call(context, elem)
+		ret, err := fn.Call(context, elem)
 		if err != nil {
 			return nil, err
 		}
-		if ret.Type() != BOOLEAN_OBJ {
-			return nil, NewArgumentError("all? requires a block to return a boolean")
-		}
-		boolean, ok := ret.(*Boolean)
+		val, ok := SymbolToBool(ret)
 		if !ok {
 			return nil, NewArgumentError("all? requires a block to return a boolean")
 		}
-		if !boolean.Value {
+		if !val {
 			return FALSE, nil
 		}
 	}
@@ -253,8 +263,11 @@ func arrayInclude(context CallContext, args ...RubyObject) (RubyObject, error) {
 			continue
 			// return nil, err
 		}
-		boolean := ret.(*Boolean)
-		if boolean.Value {
+		val, ok := SymbolToBool(ret)
+		if !ok {
+			return nil, NewArgumentError("include? requires a block to return a boolean")
+		}
+		if val {
 			return TRUE, nil
 		}
 	}
@@ -267,12 +280,18 @@ func arrayEach(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewArgumentError("map requires a block")
 	}
 	block := args[0]
-	proc, ok := block.(*Proc)
+	proc, ok := block.(*Symbol)
 	if !ok {
 		return nil, NewArgumentError("map requires a block")
 	}
+	self, _ := context.Env().Get("self")
+	self_class := self.Class()
+	fn, ok := self_class.GetMethod(proc.Value)
+	if !ok {
+		return nil, NewNoMethodError(self, proc.Value)
+	}
 	for _, elem := range array.Elements {
-		_, err := proc.Call(context, elem)
+		_, err := fn.Call(context, elem)
 		if err != nil {
 			return nil, err
 		}
@@ -286,27 +305,30 @@ func arrayReject(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewArgumentError("map requires a block")
 	}
 	block := args[0]
-	proc, ok := block.(*Proc)
+	proc, ok := block.(*Symbol)
 	if !ok {
 		return nil, NewArgumentError("map requires a block")
 	}
+	self, _ := context.Env().Get("self")
+	self_class := self.Class()
+	fn, ok := self_class.GetMethod(proc.Value)
+	if !ok {
+		return nil, NewNoMethodError(self, proc.Value)
+	}
 	result := NewArray()
 	for _, elem := range array.Elements {
-		ret, err := proc.Call(context, elem)
+		ret, err := fn.Call(context, elem)
 		if err != nil {
 			return nil, err
 		}
 		if ret == nil {
 			return nil, NewArgumentError("map requires a block to return a boolean")
 		}
-		if ret.Type() != BOOLEAN_OBJ {
-			return nil, NewArgumentError("map requires a block to return a boolean")
-		}
-		boolean, ok := ret.(*Boolean)
+		val, ok := SymbolToBool(ret)
 		if !ok {
 			return nil, NewArgumentError("map requires a block to return a boolean")
 		}
-		if !boolean.Value {
+		if !val {
 			result.Elements = append(result.Elements, elem)
 		}
 	}
@@ -341,8 +363,11 @@ func arrayMinus(context CallContext, args ...RubyObject) (RubyObject, error) {
 			if err != nil {
 				return nil, err
 			}
-			boolean := ret.(*Boolean)
-			if boolean.Value {
+			val, ok := SymbolToBool(ret)
+			if !ok {
+				return nil, NewArgumentError("array minus requires a block to return a boolean")
+			}
+			if val {
 				include = true
 				break
 			}

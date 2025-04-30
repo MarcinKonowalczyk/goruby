@@ -276,11 +276,11 @@ To run the command as one off run `go run main.go`.
 	- [ ] ensure
 	- [ ] retry
 - [x] constants
-- [x] scope operator `::`
+- [ ] scope operator `::`
 - [ ] classes
 	- [x] class objects
 	- [x] class Class
-	- [x] instance variables
+	- [ ] instance variables
 	- [ ] class variables
 	- [x] class methods
 	- [x] instance methods
@@ -296,7 +296,7 @@ To run the command as one off run `go run main.go`.
 	- [ ] assigment methods
 	- [x] self defined classes
 	- [x] self defined classes with inheritance
-- [x] modules
+- [ ] modules
 - [x] object main
 - [x] comments '#'
 

@@ -62,7 +62,11 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 	args := flag.Args()
-	interpreter := interpreter.NewInterpreter(args[1:])
+	if len(args) == 0 && len(onelineScripts) == 0 {
+		log.Println("No program files specified")
+		os.Exit(1)
+	}
+	interpreter := interpreter.NewInterpreterEx(args[1:])
 	interpreter.Trace = trace
 	if len(onelineScripts) != 0 {
 		input := strings.Join(onelineScripts, "\n")

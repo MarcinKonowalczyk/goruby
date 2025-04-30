@@ -22,7 +22,7 @@ type CallContext interface {
 func NewCallContext(env Environment, receiver RubyObject) CallContext {
 	return &callContext{
 		env:      env,
-		eval:     func(node ast.Node, env Environment) (RubyObject, error) { return nil, fmt.Errorf("No eval present") },
+		eval:     func(node ast.Node, env Environment) (RubyObject, error) { return nil, fmt.Errorf("no eval present") },
 		receiver: receiver,
 	}
 }

@@ -21,8 +21,6 @@ const (
 	INT
 	FLOAT
 	STRING
-	REGEX
-	REGEX_MODIFIER
 	literal_end
 
 	// Operators
@@ -63,13 +61,12 @@ const (
 
 	// Delimiters
 
-	NEWLINE // \n
-	// WHITESPACE // \s
+	NEWLINE   // \n
 	COMMA     // ,
 	SEMICOLON // ;
-	HASH      // #
+	COMMENT   // # ...
+	CLASS     // class # NOTE: treated as a comment. classes are not supported
 
-	CAPTURE   // &
 	DOT       // .
 	DDOT      // ..
 	DDDOT     // ...
@@ -82,9 +79,6 @@ const (
 	SLBRACKET // _[
 	RBRACKET  // ]
 
-	SCOPE // ::
-	AT    // @
-
 	QMARK  // ?
 	SQMARK // _?
 	SYMBEG // :
@@ -92,7 +86,6 @@ const (
 	// Keywords
 	keyword_beg
 	DEF
-	SELF
 	END
 	IF
 	THEN
@@ -103,12 +96,6 @@ const (
 	FALSE
 	RETURN
 	NIL
-	MODULE
-	CLASS
-	DO
-	YIELD
-	BEGIN
-	RESCUE
 	WHILE
 	LOOP
 	BREAK
@@ -153,14 +140,12 @@ var type_strings = [...]string{
 	ILLEGAL: "ILLEGAL",
 	EOF:     "EOF",
 
-	IDENT:          "IDENT",
-	CONST:          "CONST",
-	GLOBAL:         "GLOBAL",
-	INT:            "INT",
-	FLOAT:          "FLOAT",
-	STRING:         "STRING",
-	REGEX:          "REGEX",
-	REGEX_MODIFIER: "REGEX_MODIFIER",
+	IDENT:  "IDENT",
+	CONST:  "CONST",
+	GLOBAL: "GLOBAL",
+	INT:    "INT",
+	FLOAT:  "FLOAT",
+	STRING: "STRING",
 
 	ASSIGN:    "ASSIGN",
 	ADDASSIGN: "ADDASSIGN",
@@ -177,7 +162,6 @@ var type_strings = [...]string{
 	SLASH:      "SLASH",
 	MODULO:     "MODULO",
 	AND:        "AND",
-	CAPTURE:    "CAPTURE",
 	LOGICALAND: "LOGICALAND",
 	LOGICALOR:  "LOGICALOR",
 
@@ -190,11 +174,12 @@ var type_strings = [...]string{
 	SPACESHIP: "SPACESHIP",
 	LSHIFT:    "LSHIFT",
 
-	NEWLINE: "NEWLINE",
-	// WHITESPACE: "WHITESPACE",
+	NEWLINE:   "NEWLINE",
 	COMMA:     "COMMA",
 	SEMICOLON: "SEMICOLON",
-	HASH:      "HASH",
+	COMMENT:   "COMMENT",
+	CLASS:     "CLASS",
+
 	DOT:       "DOT",
 	DDOT:      "DDOT",
 	DDDOT:     "DDDOT",
@@ -208,17 +193,14 @@ var type_strings = [...]string{
 	RBRACKET:  "RBRACKET",
 	PIPE:      "PIPE",
 
-	SCOPE:        "SCOPE",
 	HASHROCKET:   "HASHROCKET",
 	LAMBDAROCKET: "LAMBDAROCKET",
-	AT:           "AT",
 
 	QMARK:  "QMARK",
 	SQMARK: "SQMARK",
 	SYMBEG: "SYMBEG",
 
 	DEF:             "DEF",
-	SELF:            "SELF",
 	END:             "END",
 	UNLESS:          "UNLESS",
 	IF:              "IF",
@@ -229,12 +211,6 @@ var type_strings = [...]string{
 	FALSE:           "FALSE",
 	RETURN:          "RETURN",
 	NIL:             "NIL",
-	MODULE:          "MODULE",
-	CLASS:           "CLASS",
-	DO:              "DO",
-	YIELD:           "YIELD",
-	BEGIN:           "BEGIN",
-	RESCUE:          "RESCUE",
 	WHILE:           "WHILE",
 	LOOP:            "LOOP",
 	BREAK:           "BREAK",
@@ -245,14 +221,12 @@ var type_reprs = [...]string{
 	ILLEGAL: "ILLEGAL",
 	EOF:     "EOF",
 
-	IDENT:          "IDENT",
-	CONST:          "CONST",
-	GLOBAL:         "GLOBAL",
-	INT:            "INT",
-	FLOAT:          "FLOAT",
-	STRING:         "STRING",
-	REGEX:          "REGEX",
-	REGEX_MODIFIER: "REGEX_MODIFIER",
+	IDENT:  "IDENT",
+	CONST:  "CONST",
+	GLOBAL: "GLOBAL",
+	INT:    "INT",
+	FLOAT:  "FLOAT",
+	STRING: "STRING",
 
 	ASSIGN:    "=",
 	ADDASSIGN: "+=",
@@ -269,7 +243,6 @@ var type_reprs = [...]string{
 	SLASH:      "/",
 	MODULO:     "%",
 	AND:        "&",
-	CAPTURE:    "&",
 	LOGICALAND: "&&",
 	LOGICALOR:  "||",
 
@@ -282,11 +255,11 @@ var type_reprs = [...]string{
 	SPACESHIP: "<=>",
 	LSHIFT:    "<<",
 
-	NEWLINE: "\\n",
-	// WHITESPACE: "WHITESPACE",
+	NEWLINE:   "\\n",
 	COMMA:     ",",
 	SEMICOLON: ";",
-	HASH:      "#",
+	COMMENT:   "# ...",
+	CLASS:     "class",
 
 	DOT:       ".",
 	DDOT:      "..",
@@ -301,17 +274,14 @@ var type_reprs = [...]string{
 	RBRACKET:  "]",
 	PIPE:      "|",
 
-	SCOPE:        "::",
 	HASHROCKET:   "=>",
 	LAMBDAROCKET: "->",
-	AT:           "@",
 
 	QMARK:  "?",
 	SQMARK: "_?",
 	SYMBEG: ":",
 
 	DEF:             "def",
-	SELF:            "self",
 	END:             "end",
 	UNLESS:          "unless",
 	IF:              "if",
@@ -322,13 +292,7 @@ var type_reprs = [...]string{
 	FALSE:           "false",
 	RETURN:          "return",
 	NIL:             "nil",
-	MODULE:          "module",
-	CLASS:           "class",
-	DO:              "do",
-	YIELD:           "yield",
-	BEGIN:           "begin",
-	RESCUE:          "rescue",
-	WHILE:           "while",
+	WHILE:           "while", // to remove?
 	LOOP:            "loop",
 	BREAK:           "break",
 	KEYWORD__FILE__: "__FILE__",
@@ -389,6 +353,9 @@ func init() {
 func LookupIdent(ident string) Type {
 	if tok, ok := keywords[ident]; ok {
 		return tok
+	}
+	if ident == "class" {
+		return COMMENT
 	}
 	if unicode.IsUpper(bytes.Runes([]byte(ident))[0]) {
 		return CONST

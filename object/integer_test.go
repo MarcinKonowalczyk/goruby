@@ -333,7 +333,7 @@ func TestIntegerGte(t *testing.T) {
 		},
 		{
 			[]RubyObject{&String{""}},
-			nil,
+			NIL,
 			NewArgumentError("comparison of Integer with String failed"),
 		},
 	}
@@ -372,7 +372,7 @@ func TestIntegerLte(t *testing.T) {
 		},
 		{
 			[]RubyObject{&String{""}},
-			nil,
+			NIL,
 			NewArgumentError("comparison of Integer with String failed"),
 		},
 	}
@@ -438,7 +438,7 @@ func checkError(t *testing.T, actual, expected error) {
 func checkResult(t *testing.T, actual, expected RubyObject) {
 	t.Helper()
 	if !reflect.DeepEqual(expected, actual) {
-		t.Logf("Expected result to equal %s, got %s\n", toString(expected), toString(actual))
+		t.Logf("Expected result to equal %s (%T), got %s (%T)\n", toString(expected), expected, toString(actual), actual)
 		t.Fail()
 	}
 }

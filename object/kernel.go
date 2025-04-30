@@ -31,7 +31,6 @@ var kernelMethodSet = map[string]RubyMethod{
 	"print":             privateMethod(kernelPrint),
 	"require":           withArity(1, privateMethod(kernelRequire)),
 	"extend":            publicMethod(kernelExtend),
-	"block_given?":      withArity(0, privateMethod(kernelBlockGiven)),
 	"tap":               publicMethod(kernelTap),
 	"raise":             privateMethod(kernelRaise),
 	"==":                withArity(1, publicMethod(kernelEqual)),
@@ -84,8 +83,12 @@ func kernelPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
 			}
 		} else {
 			switch arg := arg.(type) {
-			case *nilObject:
-				//
+			case *Symbol:
+				if arg == NIL {
+					//
+				} else {
+					lines = append(lines, arg.Inspect())
+				}
 			default:
 				lines = append(lines, arg.Inspect())
 			}
@@ -107,8 +110,12 @@ func kernelPrint(context CallContext, args ...RubyObject) (RubyObject, error) {
 			lines = append(lines, arr.Inspect())
 		} else {
 			switch arg := arg.(type) {
-			case *nilObject:
-				//
+			case *Symbol:
+				if arg == NIL {
+					//
+				} else {
+					lines = append(lines, arg.Inspect())
+				}
 			default:
 				lines = append(lines, arg.Inspect())
 			}
@@ -121,11 +128,9 @@ func kernelPrint(context CallContext, args ...RubyObject) (RubyObject, error) {
 func kernelMethods(context CallContext, args ...RubyObject) (RubyObject, error) {
 	showInstanceMethods := true
 	if len(args) == 1 {
-		boolean, ok := args[0].(*Boolean)
-		if !ok {
-			boolean = TRUE.(*Boolean)
+		if val, ok := SymbolToBool(args[0]); ok {
+			showInstanceMethods = val
 		}
-		showInstanceMethods = boolean.Value
 	}
 
 	receiver := context.Receiver()
@@ -149,11 +154,9 @@ func kernelMethods(context CallContext, args ...RubyObject) (RubyObject, error) 
 func kernelPublicMethods(context CallContext, args ...RubyObject) (RubyObject, error) {
 	showSuperClassMethods := true
 	if len(args) == 1 {
-		boolean, ok := args[0].(*Boolean)
-		if !ok {
-			boolean = TRUE.(*Boolean)
+		if val, ok := SymbolToBool(args[0]); ok {
+			showSuperClassMethods = val
 		}
-		showSuperClassMethods = boolean.Value
 	}
 	class := context.Receiver().Class()
 	return getMethods(class, PUBLIC_METHOD, showSuperClassMethods), nil
@@ -162,11 +165,9 @@ func kernelPublicMethods(context CallContext, args ...RubyObject) (RubyObject, e
 func kernelProtectedMethods(context CallContext, args ...RubyObject) (RubyObject, error) {
 	showSuperClassMethods := true
 	if len(args) == 1 {
-		boolean, ok := args[0].(*Boolean)
-		if !ok {
-			boolean = TRUE.(*Boolean)
+		if val, ok := SymbolToBool(args[0]); ok {
+			showSuperClassMethods = val
 		}
-		showSuperClassMethods = boolean.Value
 	}
 	class := context.Receiver().Class()
 	return getMethods(class, PROTECTED_METHOD, showSuperClassMethods), nil
@@ -175,17 +176,19 @@ func kernelProtectedMethods(context CallContext, args ...RubyObject) (RubyObject
 func kernelPrivateMethods(context CallContext, args ...RubyObject) (RubyObject, error) {
 	showSuperClassMethods := true
 	if len(args) == 1 {
-		boolean, ok := args[0].(*Boolean)
-		if !ok {
-			boolean = TRUE.(*Boolean)
+		if val, ok := SymbolToBool(args[0]); ok {
+			showSuperClassMethods = val
 		}
-		showSuperClassMethods = boolean.Value
 	}
 	class := context.Receiver().Class()
 	return getMethods(class, PRIVATE_METHOD, showSuperClassMethods), nil
 }
 
 func kernelIsNil(context CallContext, args ...RubyObject) (RubyObject, error) {
+	receiver := context.Receiver()
+	if receiver == NIL {
+		return TRUE, nil
+	}
 	return FALSE, nil
 }
 
@@ -281,23 +284,19 @@ func kernelExtend(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return extended, nil
 }
 
-func kernelBlockGiven(context CallContext, args ...RubyObject) (RubyObject, error) {
-	self, _ := context.Receiver().(*Self)
-	if self.Block == nil {
-		return FALSE, nil
-	}
-	return TRUE, nil
-}
-
 func kernelTap(context CallContext, args ...RubyObject) (RubyObject, error) {
-	block, remainingArgs, ok := extractBlockFromArgs(args)
+	block := args[0]
+	proc, ok := block.(*Symbol)
 	if !ok {
-		return nil, NewNoBlockGivenLocalJumpError()
+		return nil, NewArgumentError("map requires a block")
 	}
-	if len(remainingArgs) != 0 {
-		return nil, NewWrongNumberOfArgumentsError(0, 1)
+	self, _ := context.Env().Get("self")
+	self_class := self.Class()
+	fn, ok := self_class.GetMethod(proc.Value)
+	if !ok {
+		return nil, NewNoMethodError(self, proc.Value)
 	}
-	_, err := block.Call(context, context.Receiver())
+	_, err := fn.Call(context, context.Receiver())
 	if err != nil {
 		return nil, err
 	}
@@ -325,10 +324,10 @@ func kernelRaise(context CallContext, args ...RubyObject) (RubyObject, error) {
 	}
 }
 
-func swapOr(result bool, left, right RubyObject, swapped bool) bool {
+func swapOrFalse(left, right RubyObject, swapped bool) bool {
 	if swapped {
-		// we've already swapped. just return the result
-		return result
+		// we've already swapped. just return false
+		return false
 	} else {
 		// 1-depth recursive call with swapped arguments
 		return rubyObjectsEqual(right, left, true)
@@ -339,7 +338,7 @@ func rubyObjectsEqual(left, right RubyObject, swapped bool) bool {
 	// leftClass := left.Class()
 	// rightClass := right.Class()
 	// if leftClass != rightClass {
-	// 	return swapOr(false, left, right, swapped)
+	// 	return swapOrFalse(left, right, swapped)
 	// }
 	// if left == nil {
 	// 	return right == nil || right.Class().Name() == "NilClass"
@@ -350,37 +349,29 @@ func rubyObjectsEqual(left, right RubyObject, swapped bool) bool {
 	// fmt.Printf("left: %T right: %T\n", left, right)
 	// fmt.Println("left:", left.Class().Name(), "right:", right.Class().Name())
 	switch left := left.(type) {
-	case *Boolean:
-		if right_t, ok := right.(*Boolean); !ok {
-			// swap. maybe the other thing knows how to compare
-			// itself to a boolean
-			return swapOr(false, left, right, swapped)
-		} else {
-			return left.Value == right_t.Value
-		}
 	case *Integer:
 		right_t, ok := safeObjectToInteger(right)
 		if !ok {
-			return swapOr(false, left, right, swapped)
+			return swapOrFalse(left, right, swapped)
 		} else {
 			return left.Value == right_t
 		}
 	case *Float:
 		right_t, ok := safeObjectToFloat(right)
 		if !ok {
-			return swapOr(false, left, right, swapped)
+			return swapOrFalse(left, right, swapped)
 		} else {
 			return left.Value == right_t
 		}
 	case *String:
 		if right_t, ok := right.(*String); !ok {
-			return swapOr(false, left, right, swapped)
+			return swapOrFalse(left, right, swapped)
 		} else {
 			return left.Value == right_t.Value
 		}
 	case *Array:
 		if right_t, ok := right.(*Array); !ok {
-			return swapOr(false, left, right, swapped)
+			return swapOrFalse(left, right, swapped)
 		} else {
 			if len(left.Elements) != len(right_t.Elements) {
 				return false
@@ -394,7 +385,7 @@ func rubyObjectsEqual(left, right RubyObject, swapped bool) bool {
 		}
 	case *Hash:
 		if right_t, ok := right.(*Hash); !ok {
-			return swapOr(false, left, right, swapped)
+			return swapOrFalse(left, right, swapped)
 		} else {
 			if len(left.Map) != len(right_t.Map) {
 				return false
@@ -413,15 +404,9 @@ func rubyObjectsEqual(left, right RubyObject, swapped bool) bool {
 		}
 	case *Symbol:
 		if right_t, ok := right.(*Symbol); !ok {
-			return swapOr(false, left, right, swapped)
+			return swapOrFalse(left, right, swapped)
 		} else {
 			return left.Value == right_t.Value
-		}
-	case *nilObject:
-		if right_t, ok := right.(*nilObject); !ok {
-			return swapOr(false, left, right, swapped)
-		} else {
-			return left == right_t
 		}
 	default:
 		return false

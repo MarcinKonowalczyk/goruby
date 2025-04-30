@@ -329,21 +329,6 @@ func Test_localVariableGuardSet(t *testing.T) {
 			t.Fail()
 		}
 	})
-	t.Run("instance variables", func(t *testing.T) {
-		env.Set("@foo", TRUE)
-
-		_, ok := env.Environment.Get("@foo")
-		if !ok {
-			t.Logf("Expected embedded env to contain '@foo'")
-			t.Fail()
-		}
-
-		_, ok = env.localVariables.Get("@foo")
-		if ok {
-			t.Logf("Expected localVariables env not to contain '@foo'")
-			t.Fail()
-		}
-	})
 	t.Run("constants", func(t *testing.T) {
 		env.Set("Foo", TRUE)
 
@@ -382,16 +367,6 @@ func Test_localVariableGuardGet(t *testing.T) {
 		val, ok := env.Get("Foo")
 		if !ok {
 			t.Logf("Expected env to contain 'Foo'")
-			t.Fail()
-		}
-
-		checkResult(t, TRUE, val)
-	})
-
-	t.Run("instance variables", func(t *testing.T) {
-		val, ok := env.Get("@foo")
-		if !ok {
-			t.Logf("Expected env to contain '@foo'")
 			t.Fail()
 		}
 

@@ -121,7 +121,7 @@ func stringAdd(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func stringGsub(context CallContext, args ...RubyObject) (RubyObject, error) {
 	s := context.Receiver().(*String)
-	pattern, ok := args[0].(*Regex)
+	pattern, ok := args[0].(*String)
 	if !ok {
 		return nil, NewImplicitConversionTypeError(pattern, args[0])
 	}

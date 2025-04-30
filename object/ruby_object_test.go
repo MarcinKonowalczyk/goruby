@@ -8,11 +8,14 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/ast"
 )
 
-func mustCall(obj RubyObject, err error) RubyObject {
-	if err != nil {
-		panic(err)
+func mustCall(t *testing.T) func(obj RubyObject, err error) RubyObject {
+	return func(obj RubyObject, err error) RubyObject {
+		if err != nil {
+			t.Logf("Expected no error, got %T:%v\n", err, err)
+			t.FailNow()
+		}
+		return obj
 	}
-	return obj
 }
 
 func TestFunctionCall(t *testing.T) {
@@ -38,7 +41,7 @@ func TestFunctionCall(t *testing.T) {
 			},
 		}
 
-		mustCall(function.Call(context))
+		mustCall(t)(function.Call(context))
 
 		var expected ast.Node = functionBody
 		if !reflect.DeepEqual(expected, actualEvalNode) {
@@ -85,7 +88,7 @@ func TestFunctionCall(t *testing.T) {
 			Env:        functionEnv,
 		}
 
-		mustCall(function.Call(context))
+		mustCall(t)(function.Call(context))
 
 		{
 			expected := &Symbol{Value: "bar"}
@@ -136,12 +139,12 @@ func TestFunctionCall(t *testing.T) {
 		t.Run("without default params", func(t *testing.T) {
 			function := &Function{
 				Parameters: []*FunctionParameter{
-					&FunctionParameter{Name: "foo"},
-					&FunctionParameter{Name: "bar"},
+					{Name: "foo"},
+					{Name: "bar"},
 				},
 			}
 
-			mustCall(function.Call(context, &Integer{Value: 300}, &Symbol{Value: "sym"}))
+			mustCall(t)(function.Call(context, &Integer{Value: 300}, &Symbol{Value: "sym"}))
 
 			{
 				expected := &Integer{Value: 300}
@@ -176,13 +179,13 @@ func TestFunctionCall(t *testing.T) {
 			t.Skip()
 			function := &Function{
 				Parameters: []*FunctionParameter{
-					&FunctionParameter{Name: "foo", Default: &Integer{Value: 12}},
-					&FunctionParameter{Name: "bar"},
-					&FunctionParameter{Name: "qux"},
+					{Name: "foo", Default: &Integer{Value: 12}},
+					{Name: "bar"},
+					{Name: "qux"},
 				},
 			}
 
-			mustCall(function.Call(context, &Integer{Value: 300}, &Symbol{Value: "sym"}))
+			mustCall(t)(function.Call(context, &Integer{Value: 300}, &Symbol{Value: "sym"}))
 
 			{
 				expected := &Integer{Value: 12}
@@ -264,62 +267,6 @@ func TestFunctionCall(t *testing.T) {
 			}
 		})
 	})
-	t.Run("extracts the Call block from the rest of the arguments", func(t *testing.T) {
-		contextEnv := NewEnvironment()
-		contextEnv.Set("self", &Self{RubyObject: &Integer{Value: 42}, Name: "context self"})
-
-		var evalEnv Environment
-		context := &callContext{
-			env: contextEnv,
-			eval: func(node ast.Node, env Environment) (RubyObject, error) {
-				evalEnv = env
-				return nil, nil
-			},
-		}
-
-		function := &Function{
-			Parameters: []*FunctionParameter{
-				&FunctionParameter{Name: "x"},
-			},
-		}
-
-		mustCall(function.Call(context, &String{Value: "the x value"}, &Proc{}))
-
-		actual := len(evalEnv.GetAll())
-		expected := 2 // `self` and `x`
-
-		if !reflect.DeepEqual(expected, actual) {
-			t.Logf("Expected Eval env to have %d items, got %d\n", expected, actual)
-			t.Fail()
-		}
-	})
-	t.Run("propagates the Call block to CallContext#Eval", func(t *testing.T) {
-		contextEnv := NewEnvironment()
-		contextEnv.Set("self", &Self{RubyObject: &Integer{Value: 42}, Name: "context self"})
-
-		var evalEnv Environment
-		context := &callContext{
-			env: contextEnv,
-			eval: func(node ast.Node, env Environment) (RubyObject, error) {
-				evalEnv = env
-				return nil, nil
-			},
-		}
-
-		function := &Function{
-			Parameters: []*FunctionParameter{},
-		}
-
-		mustCall(function.Call(context, &Proc{ArgumentCountMandatory: true}))
-
-		expected := &Proc{ArgumentCountMandatory: true}
-		envSelf, _ := evalEnv.Get("self")
-		actual := envSelf.(*Self).Block
-		if !reflect.DeepEqual(expected, actual) {
-			t.Logf("Expected block to equal\n%+v\n\tgot\n%+v\n", expected, actual)
-			t.Fail()
-		}
-	})
 	t.Run("validates that the arguments match the function parameters", func(t *testing.T) {
 		context := &callContext{
 			env:  NewMainEnvironment(),
@@ -341,19 +288,10 @@ func TestFunctionCall(t *testing.T) {
 			}
 		})
 
-		t.Run("with block argument", func(t *testing.T) {
-			_, err := function.Call(context, &Proc{})
-
-			if err != nil {
-				t.Logf("Expected no error, got %T:%v\n", err, err)
-				t.Fail()
-			}
-		})
-
 		t.Run("with default arguments", func(t *testing.T) {
 			function.Parameters = []*FunctionParameter{
-				&FunctionParameter{Name: "x", Default: TRUE},
-				&FunctionParameter{Name: "y"},
+				{Name: "x", Default: TRUE},
+				{Name: "y"},
 			}
 
 			_, err := function.Call(context, &Integer{Value: 8})

@@ -3,12 +3,11 @@ package evaluator
 import (
 	"fmt"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/ast/infix"
 	"github.com/MarcinKonowalczyk/goruby/object"
-	"github.com/MarcinKonowalczyk/goruby/token"
 	"github.com/pkg/errors"
 )
 
@@ -38,6 +37,11 @@ func expandToArrayIfNeeded(obj object.RubyObject) object.RubyObject {
 		return obj
 	}
 	return object.NewArray(arr...)
+}
+
+func my_debug_panic_(msg string) {
+	// fmt.Println("my_debug_panic", msg)
+	// panic(msg)
 }
 
 // Eval evaluates the given node and traverses recursive over its children
@@ -78,32 +82,11 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		return object.NewInteger(node.Value), nil
 	case (*ast.FloatLiteral):
 		return object.NewFloat(node.Value), nil
-	case (*ast.Boolean):
-		return nativeBoolToBooleanObject(node.Value), nil
-	case (*ast.Nil):
-		return object.NIL, nil
-	case (*ast.Self):
-		self, _ := env.Get("self")
-		return self, nil
+	// case (*ast.Boolean):
+	// 	return nativeBoolToBooleanObject(node.Value), nil
 	case (*ast.Keyword__FILE__):
+		my_debug_panic_("case (*ast.Keyword__FILE__):")
 		return &object.String{Value: node.Filename}, nil
-	case (*ast.InstanceVariable):
-		self, _ := env.Get("self")
-		selfObj := self.(*object.Self)
-		selfAsEnv, ok := selfObj.RubyObject.(object.Environment)
-		if !ok {
-			return nil, errors.WithStack(
-				object.NewSyntaxError(
-					fmt.Errorf("instance variable not allowed for %s", selfObj.Name),
-				),
-			)
-		}
-
-		val, ok := selfAsEnv.Get(node.String())
-		if !ok {
-			return object.NIL, nil
-		}
-		return val, nil
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
 	case *ast.Global:
@@ -120,121 +103,34 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		}
 		return &object.String{Value: value}, nil
 	case *ast.SymbolLiteral:
-		switch value := node.Value.(type) {
-		case *ast.Identifier:
-			return &object.Symbol{Value: value.Value}, nil
-		case *ast.StringLiteral:
-			str, err := Eval(value, env)
-			if err != nil {
-				return nil, errors.WithMessage(err, "eval symbol literal string")
-			}
-			if str, ok := str.(*object.String); ok {
-				return &object.Symbol{Value: str.Value}, nil
-			}
-			panic(errors.WithStack(
-				fmt.Errorf("error while parsing SymbolLiteral: expected *object.String, got %T", str),
-			))
+		switch node.Value {
+		case "true":
+			return object.TRUE, nil
+		case "false":
+			return object.FALSE, nil
+		case "nil":
+			return object.NIL, nil
 		default:
-			return nil, errors.WithStack(
-				object.NewSyntaxError(fmt.Errorf("malformed symbol AST: %T", value)),
-			)
+			return &object.Symbol{Value: node.Value}, nil
 		}
 	case *ast.FunctionLiteral:
 		context, _ := env.Get("self")
-		_, inClassOrModule := context.(*object.Self).RubyObject.(object.Environment)
-		if node.Receiver != nil {
-			rec, err := Eval(node.Receiver, env)
-			if err != nil {
-				return nil, errors.WithMessage(err, "eval function receiver")
-			}
-			context = rec
-			_, recIsEnv := context.(object.Environment)
-			if recIsEnv || inClassOrModule {
-				inClassOrModule = true
-				context = context.Class().(object.RubyClassObject)
-			}
-		}
 		params := make([]*object.FunctionParameter, len(node.Parameters))
 		for i, param := range node.Parameters {
 			def, err := Eval(param.Default, env)
 			if err != nil {
 				return nil, errors.WithMessage(err, "eval function literal param")
 			}
-			// params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def}
-			// fmt.Println("param.Name.Value", param.Name.Value, "param.Splat", param.Splat)
 			params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def, Splat: param.Splat}
 		}
-		body := node.Body
 		function := &object.Function{
 			Parameters: params,
 			Env:        env,
-			Body:       body,
+			Body:       node.Body,
 		}
-		extended := object.AddMethod(context, node.Name.Value, function)
-		if node.Receiver != nil && !inClassOrModule {
-			envInfo, _ := object.EnvStat(env, context)
-			envInfo.Env().Set(node.Receiver.Value, extended)
-		}
+		object.AddMethod(context, node.Name.Value, function)
 		return &object.Symbol{Value: node.Name.Value}, nil
 
-	case *ast.ProcedureLiteral:
-		// context, _ := env.Get("self")
-		// _, inClassOrModule := context.(*object.Self).RubyObject.(object.Environment)
-		// if node.Receiver != nil {
-		// 	rec, err := Eval(node.Receiver, env)
-		// 	if err != nil {
-		// 		return nil, errors.WithMessage(err, "eval function receiver")
-		// 	}
-		// 	context = rec
-		// 	_, recIsEnv := context.(object.Environment)
-		// 	if recIsEnv || inClassOrModule {
-		// 		inClassOrModule = true
-		// 		context = context.Class().(object.RubyClassObject)
-		// 	}
-		// }
-		params := make([]*object.FunctionParameter, len(node.Parameters))
-		for i, param := range node.Parameters {
-			def, err := Eval(param.Default, env)
-			if err != nil {
-				return nil, errors.WithMessage(err, "eval function literal param")
-			}
-			params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def, Splat: param.Splat}
-		}
-		body := node.Body
-		// function := &object.Function{
-		// 	Parameters: params,
-		// 	Env:        env,
-		// 	Body:       body,
-		// }
-		// extended := object.AddMethod(context, node.Name.Value, function)
-		// if node.Receiver != nil && !inClassOrModule {
-		// 	envInfo, _ := object.EnvStat(env, context)
-		// 	envInfo.Env().Set(node.Receiver.Value, extended)
-		// }
-		return &object.Proc{
-			Parameters:             params,
-			Body:                   body,
-			Env:                    env,
-			ArgumentCountMandatory: true,
-		}, nil
-
-	case *ast.BlockExpression:
-		node_params := node.Parameters
-		body := node.Body
-		params := make([]*object.FunctionParameter, len(node_params))
-		for i, param := range node_params {
-			def, err := Eval(param.Default, env)
-			if err != nil {
-				return nil, errors.WithMessage(err, "eval function literal param")
-			}
-			params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def}
-		}
-		block := &object.Proc{
-			Parameters: params,
-			Body:       body,
-			Env:        env,
-		}
-		return block, nil
 	case *ast.ArrayLiteral:
 		elements, err := evalArrayElements(node.Elements, env)
 		if err != nil {
@@ -257,6 +153,7 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		}
 		return &hash, nil
 	case ast.ExpressionList:
+		my_debug_panic_("case ast.ExpressionList:")
 		var objects []object.RubyObject
 		for _, e := range node {
 			obj, err := Eval(e, env)
@@ -285,20 +182,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 				return nil, errors.WithMessage(err, "eval left hand Assignment side: eval right side of IndexExpression")
 			}
 			return evalIndexExpressionAssignment(indexLeft, index, expandToArrayIfNeeded(right))
-		case *ast.InstanceVariable:
-			self, _ := env.Get("self")
-			selfObj := self.(*object.Self)
-			selfAsEnv, ok := selfObj.RubyObject.(object.Environment)
-			if !ok {
-				return nil, errors.Wrap(
-					object.NewSyntaxError(fmt.Errorf("instance variable not allowed for %s", selfObj.Name)),
-					"eval left hand Assignment side",
-				)
-			}
-
-			right = expandToArrayIfNeeded(right)
-			selfAsEnv.Set(left.String(), right)
-			return right, nil
 		case *ast.Identifier:
 			right = expandToArrayIfNeeded(right)
 			env.Set(left.Value, right)
@@ -311,10 +194,12 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			var values rubyObjects
 			switch right := right.(type) {
 			case rubyObjects:
+				my_debug_panic_("case rubyObjects:")
 				values = right
 			case *object.Array:
 				values = right.Elements
 			default:
+				my_debug_panic_("case default: (2)")
 				values = []object.RubyObject{right}
 			}
 			if len(left) > len(values) {
@@ -324,20 +209,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 				}
 			}
 			for i, exp := range left {
-				if _, ok := exp.(*ast.InstanceVariable); ok {
-					self, _ := env.Get("self")
-					selfObj := self.(*object.Self)
-					selfAsEnv, ok := selfObj.RubyObject.(object.Environment)
-					if !ok {
-						return nil, errors.Wrap(
-							object.NewSyntaxError(fmt.Errorf("instance variable not allowed for %s", selfObj.Name)),
-							"eval left hand Assignment side",
-						)
-					}
-
-					selfAsEnv.Set(exp.String(), values[i])
-					continue
-				}
 				if indexExp, ok := exp.(*ast.IndexExpression); ok {
 					indexLeft, err := Eval(indexExp.Left, env)
 					if err != nil {
@@ -347,58 +218,21 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 					if err != nil {
 						return nil, errors.WithMessage(err, "eval left hand Assignment side: eval right side of IndexExpression")
 					}
-					evalIndexExpressionAssignment(indexLeft, index, values[i])
+					_, err = evalIndexExpressionAssignment(indexLeft, index, values[i])
+					if err != nil {
+						return nil, errors.WithMessage(err, "eval left hand Assignment side: eval right side of IndexExpression")
+					}
 					continue
 				}
 				env.Set(exp.String(), values[i])
 			}
 			return expandToArrayIfNeeded(right), nil
 		default:
+			my_debug_panic_("case default: (3)")
 			return nil, errors.WithStack(
 				object.NewSyntaxError(fmt.Errorf("assignment not supported to %T", node.Left)),
 			)
 		}
-	case *ast.ModuleExpression:
-		module, ok := env.Get(node.Name.Value)
-		if !ok {
-			module = object.NewModule(node.Name.Value, env)
-		}
-		moduleEnv := module.(object.Environment)
-		moduleEnv.Set("self", &object.Self{RubyObject: module, Name: node.Name.Value})
-		bodyReturn, err := Eval(node.Body, moduleEnv)
-		if err != nil {
-			return nil, errors.WithMessage(err, "eval Module body")
-		}
-		selfObject, _ := moduleEnv.Get("self")
-		self := selfObject.(*object.Self)
-		env.Set(node.Name.Value, self.RubyObject)
-		return bodyReturn, nil
-	case *ast.ClassExpression:
-		superClassName := "Object"
-		if node.SuperClass != nil {
-			superClassName = node.SuperClass.Value
-		}
-		superClass, ok := env.Get(superClassName)
-		if !ok {
-			return nil, errors.Wrap(
-				object.NewUninitializedConstantNameError(superClassName),
-				"eval class superclass",
-			)
-		}
-		class, ok := env.Get(node.Name.Value)
-		if !ok {
-			class = object.NewClass(node.Name.Value, superClass.(object.RubyClassObject), env)
-		}
-		classEnv := class.(object.Environment)
-		classEnv.Set("self", &object.Self{RubyObject: class, Name: node.Name.Value})
-		bodyReturn, err := Eval(node.Body, classEnv)
-		if err != nil {
-			return nil, errors.WithMessage(err, "eval class body")
-		}
-		selfObject, _ := classEnv.Get("self")
-		self := selfObject.(*object.Self)
-		env.Set(node.Name.Value, self.RubyObject)
-		return bodyReturn, nil
 	case *ast.ContextCallExpression:
 		context, err := Eval(node.Context, env)
 		if err != nil {
@@ -420,28 +254,18 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		}
 		callContext := &callContext{object.NewCallContext(env, context)}
 		return object.Send(callContext, node.Function.Value, args...)
-	case *ast.YieldExpression:
-		selfObject, _ := env.Get("self")
-		self := selfObject.(*object.Self)
-		if self.Block == nil {
-			return nil, errors.WithStack(object.NewNoBlockGivenLocalJumpError())
-		}
-		args, err := evalExpressions(node.Arguments, env)
-		if err != nil {
-			return nil, errors.WithMessage(err, "eval yield arguments")
-		}
-		callContext := &callContext{object.NewCallContext(env, self)}
-		return self.Block.Call(callContext, args...)
 	case *ast.IndexExpression:
 		left, err := Eval(node.Left, env)
 		if err != nil {
 			return nil, errors.WithMessage(err, "eval IndexExpression left side")
 		}
 		switch left := left.(type) {
-		case *object.Proc:
-			// special case for procs
+		case *object.Symbol:
+			// functions evaluate to symbols with the name of the function
+			// anonymous functions evaluate to a functions with a random name
+			// indexing them should call them
 			// NOTE: we pass unevaluated index to proc
-			return evalProcIndexExpression(env, left, node.Index)
+			return evalSymbolIndexExpression(env, left, node.Index)
 		default:
 			index, err := Eval(node.Index, env)
 			if err != nil {
@@ -461,68 +285,37 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			return nil, errors.WithMessage(err, "eval operator left side")
 		}
 
-		if node.Token.Type == token.LOGICALOR {
+		if node.Operator == infix.LOGICALOR {
 			if isTruthy(left) {
 				// left is altready truthy. don't evaluate right side
 				return left, nil
 			}
-		} else if node.Token.Type == token.LOGICALAND {
+		} else if node.Operator == infix.LOGICALAND {
 			if !isTruthy(left) {
 				// left is altready falsy. don't evaluate right side
 				return left, nil
 			}
 		}
 
-		// 	if !node.MustEvaluateRight() && isTruthy(left) {
-		// 		return left, nil
-		// 	}
-		// }
-
 		right, err := Eval(node.Right, env)
 		if err != nil {
 			return nil, errors.WithMessage(err, "eval operator right side")
 		}
 
-		if node.Token.Type == token.LOGICALOR {
+		if node.Operator == infix.LOGICALOR {
 			// left is not truthy, since we're here
 			// result is right
 			return right, nil
-		} else if node.Token.Type == token.LOGICALAND {
+		} else if node.Operator == infix.LOGICALAND {
 			// left is not falsy, since we're here
 			// result is right
 			return right, nil
 		}
 		context := &callContext{object.NewCallContext(env, left)}
-		return object.Send(context, node.Operator, right)
+		return object.Send(context, node.Operator.String(), right)
+
 	case *ast.ConditionalExpression:
 		return evalConditionalExpression(node, env)
-	case *ast.ScopedIdentifier:
-		self, _ := env.Get("self")
-		outer, ok := env.Get(node.Outer.Value)
-		if !ok {
-			return nil, errors.Wrap(
-				object.NewUndefinedLocalVariableOrMethodNameError(self, node.Outer.Value),
-				"eval scope outer",
-			)
-		}
-		outerEnv, ok := outer.(object.Environment)
-		if !ok {
-			return nil, errors.Wrap(
-				object.NewUndefinedLocalVariableOrMethodNameError(self, node.Outer.Value),
-				"eval scope outer",
-			)
-		}
-		inner, err := Eval(node.Inner, outerEnv)
-		if err != nil {
-			return nil, errors.WithMessage(err, "eval scope inner")
-		}
-		return inner, nil
-	case *ast.ExceptionHandlingBlock:
-		bodyReturn, err := Eval(node.TryBody, env)
-		if err == nil {
-			return bodyReturn, nil
-		}
-		return handleException(err, node.Rescues, env)
 
 	case *ast.Comment:
 		// ignore comments
@@ -530,9 +323,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 
 	case nil:
 		return nil, nil
-
-	case *ast.RegexLiteral:
-		return &object.Regex{Value: node.Value, Modifiers: node.Modifiers}, nil
 
 	case *ast.RangeLiteral:
 		left, err := Eval(node.Left, env)
@@ -601,6 +391,7 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		}, nil
 
 	case *ast.Splat:
+		my_debug_panic_("case *ast.Splat:")
 
 		val, err := Eval(node.Value, env)
 		if err != nil {
@@ -614,10 +405,12 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 
 		switch val := val.(type) {
 		case *object.Array:
+			my_debug_panic_("case *object.Array:")
 			return &object.Array{
 				Elements: val.Elements,
 			}, nil
 		default:
+			my_debug_panic_("case default: (5)")
 			return &object.Array{
 				Elements: []object.RubyObject{val},
 			}, nil
@@ -628,6 +421,7 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		return evalLoopExpression(node, env)
 
 	default:
+		my_debug_panic_("case default: (6)")
 		err := object.NewException("Unknown AST: %T", node)
 		return nil, errors.WithStack(err)
 	}
@@ -642,11 +436,8 @@ func unescapeStringLiteral(node *ast.StringLiteral) string {
 		"\\b":  "\b",
 		"\\\\": "\\",
 	}
-	if node.Token.Literal == "\"" {
-		rep["\""] = "\""
-	} else {
-		rep["'"] = "'"
-	}
+	// NOTE: we support only double-quoted strings
+	rep["\""] = "\""
 	value := node.Value
 	for k, v := range rep {
 		value = strings.ReplaceAll(value, k, v)
@@ -844,7 +635,7 @@ func evalConditionalExpression(ce *ast.ConditionalExpression, env object.Environ
 		return nil, err
 	}
 	evaluateConsequence := isTruthy(condition)
-	if ce.IsNegated() {
+	if ce.Unless {
 		evaluateConsequence = !evaluateConsequence
 	}
 	if evaluateConsequence {
@@ -903,7 +694,7 @@ func evalIndexExpression(left, index object.RubyObject) (object.RubyObject, erro
 	}
 }
 
-func evalProcIndexExpression(env object.Environment, target *object.Proc, index ast.Expression) (object.RubyObject, error) {
+func evalSymbolIndexExpression(env object.Environment, target *object.Symbol, index ast.Expression) (object.RubyObject, error) {
 	switch index.(type) {
 	case *ast.Splat:
 		// evaluate the splat literal
@@ -946,8 +737,20 @@ func evalProcIndexExpression(env object.Environment, target *object.Proc, index 
 				printable_args[i] = e.Inspect()
 			}
 		}
-		callContext := &callContext{object.NewCallContext(env, nil)}
-		value, err := target.Call(callContext, args...)
+		self, _ := env.Get("self")
+		callContext := &callContext{object.NewCallContext(env, self)}
+		// value, err := target.Call(callContext, args...)
+
+		// get the method from the env
+		// method, ok := env.Get(target.Value)
+		// if !ok {
+		// 	return nil, errors.WithStack(
+		// 		object.NewException("method not found: %s", target.Value),
+		// 	)
+		// }
+		// call the method
+		// fmt.Println(target.Value, "(", strings.Join(printable_args, ", "), ")")
+		value, err := object.Send(callContext, target.Value, args...)
 		return value, err
 	default:
 		// not implemented yet
@@ -1071,28 +874,12 @@ func objectArrayToIndex(index *object.Array, length int64) (int64, int64, bool, 
 	}
 	length_idx := length_index.Value
 
-	// if length_idx < 0 {
-	// 	fmt.Printf("length idx negative: %d\n", length_idx)
-	// 	// index from the end
-	// 	right_idx := length - (-length_idx + 1)
-	// 	length_idx = right_idx - left_idx
-	// 	fmt.Printf("length_idx: %d\n", length_idx)
-	// 	if length_idx < 0 {
-	// 		// slice out of bounds
-	// 		return 0, 0, true, nil
-	// 	}
-	// }
-
 	return left_idx, length_idx, false, nil
 }
 
 func objectRangeToIndex(index *object.Range, length int64) (int64, int64, bool, error) {
 	left := index.Left
 	right := index.Right
-
-	// if index.Inclusive {
-	// 	right = &object.Integer{Value: right.Value + 1}
-	// }
 
 	left_idx, out_of_bounds := objectIntegerToIndex(left, length)
 	if out_of_bounds {
@@ -1106,8 +893,6 @@ func objectRangeToIndex(index *object.Range, length int64) (int64, int64, bool, 
 	if index.Inclusive {
 		right_idx++
 	}
-
-	// fmt.Printf("left_idx: %d right_idx: %d\n", left_idx, right_idx)
 
 	return left_idx, right_idx, false, nil
 }
@@ -1170,6 +955,7 @@ func evalBlockStatement(block *ast.BlockStatement, env object.Environment) (obje
 				if isTruthy(result.(*object.BreakValue).Value) {
 					return result, nil
 				} else {
+					//
 				}
 			}
 		}
@@ -1186,7 +972,7 @@ func evalIdentifier(node *ast.Identifier, env object.Environment) (object.RubyOb
 		return val, nil
 	}
 
-	if node.IsConstant() {
+	if node.Constant {
 		return nil, errors.Wrap(
 			object.NewUninitializedConstantNameError(node.Value),
 			"eval identifier",
@@ -1205,74 +991,12 @@ func evalIdentifier(node *ast.Identifier, env object.Environment) (object.RubyOb
 	return val, nil
 }
 
-func unwrapReturnValue(obj object.RubyObject) object.RubyObject {
-	if returnValue, ok := obj.(*object.ReturnValue); ok {
-		return returnValue.Value
-	}
-	return obj
-}
-
-func handleException(err error, rescues []*ast.RescueBlock, env object.Environment) (object.RubyObject, error) {
-	if err != nil && len(rescues) == 0 {
-		return nil, err
-	}
-	errorObject, ok := err.(object.RubyObject)
-	if !ok {
-		errorObject = object.NewException(err.Error())
-	}
-	errClass := errorObject.Class().Name()
-	rescueEnv := object.WithScopedLocalVariables(env)
-
-	var catchAll *ast.RescueBlock
-	for _, r := range rescues {
-		if len(r.ExceptionClasses) == 0 {
-			catchAll = r
-			continue
-		}
-		if r.Exception != nil {
-			rescueEnv.Set(r.Exception.Value, errorObject)
-		}
-		for _, cl := range r.ExceptionClasses {
-			if cl.Value == errClass {
-				rescueRet, err := Eval(r.Body, rescueEnv)
-				return rescueRet, err
-			}
-		}
-	}
-
-	if catchAll != nil {
-		ancestors := getAncestors(errorObject)
-		sort.Strings(ancestors)
-		if sort.SearchStrings(ancestors, "StandardError") >= len(ancestors) {
-			return nil, err
-		}
-
-		if catchAll.Exception != nil {
-			rescueEnv.Set(catchAll.Exception.Value, errorObject)
-		}
-		rescueRet, err := Eval(catchAll.Body, rescueEnv)
-		return rescueRet, err
-	}
-
-	return nil, err
-}
-
-func getAncestors(obj object.RubyObject) []string {
-	class := obj.Class()
-	if c, ok := obj.(object.RubyClass); ok {
-		class = c
-	}
-	var ancestors []string
-	ancestors = append(ancestors, class.Name())
-
-	superClass := class.SuperClass()
-	if superClass != nil {
-		superAncestors := getAncestors(superClass.(object.RubyClassObject))
-		ancestors = append(ancestors, superAncestors...)
-	}
-	return ancestors
-}
-
+//	func unwrapReturnValue(obj object.RubyObject) object.RubyObject {
+//		if returnValue, ok := obj.(*object.ReturnValue); ok {
+//			return returnValue.Value
+//		}
+//		return obj
+//	}
 func isTruthy(obj object.RubyObject) bool {
 	switch obj {
 	case object.NIL:
@@ -1283,8 +1007,15 @@ func isTruthy(obj object.RubyObject) bool {
 		return false
 	default:
 		switch obj := obj.(type) {
-		case *object.Boolean:
-			return obj.Value
+		case *object.Symbol:
+			val, ok := object.SymbolToBool(obj)
+			if ok {
+				// Special boolean symbols are their respective values
+				return val
+			} else {
+				// Other symbols are truthy
+				return true
+			}
 		case *object.Integer:
 			return obj.Value != 0
 		case *object.Float:
@@ -1308,11 +1039,4 @@ func IsError(obj object.RubyObject) bool {
 		return obj.Type() == object.EXCEPTION_OBJ
 	}
 	return false
-}
-
-func nativeBoolToBooleanObject(input bool) object.RubyObject {
-	if input {
-		return object.TRUE
-	}
-	return object.FALSE
 }

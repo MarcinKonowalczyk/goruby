@@ -185,14 +185,9 @@ func startLexer(l *Lexer) StateFn {
 	case '\'':
 		return lexSingleQuoteString
 	case '"':
-		return lexString
+		return lexString('"')
 	case ':':
 		p := l.peek()
-		if p == ':' {
-			l.next()
-			l.emit(token.SCOPE)
-			return startLexer
-		}
 		if isWhitespace(p) {
 			l.emit(token.COLON)
 			return startLexer
@@ -276,7 +271,7 @@ func startLexer(l *Lexer) StateFn {
 			l.emit(token.SLASH)
 			return startLexer
 		} else {
-			return lexRegex
+			return lexString('/')
 		}
 	case '*':
 		if l.peek() == '=' {
@@ -302,10 +297,6 @@ func startLexer(l *Lexer) StateFn {
 		if p := l.peek(); p == '&' {
 			l.next()
 			l.emit(token.LOGICALAND)
-			return startLexer
-		}
-		if p := l.peek(); isLetter(p) {
-			l.emit(token.CAPTURE)
 			return startLexer
 		}
 		l.emit(token.AND)
@@ -366,7 +357,7 @@ func startLexer(l *Lexer) StateFn {
 	case '#':
 		return commentLexer
 	case '|':
-		if l.lastToken.Type == token.DO || l.lastToken.Type == token.LBRACE {
+		if l.lastToken.Type == token.LBRACE {
 			l.emit(token.PIPE)
 			return startLexer
 		}
@@ -376,9 +367,6 @@ func startLexer(l *Lexer) StateFn {
 			return startLexer
 		}
 		l.emit(token.PIPE)
-		return startLexer
-	case '@':
-		l.emit(token.AT)
 		return startLexer
 
 	default:
@@ -407,7 +395,16 @@ func lexIdentifier(l *Lexer) StateFn {
 	}
 	l.backup()
 	literal := l.input[l.start:l.pos]
-	l.emit(token.LookupIdent(literal))
+	t := token.LookupIdent(literal)
+	if t == token.COMMENT {
+		for r != '\n' && r != eof {
+			r = l.next()
+		}
+		l.backup()
+		l.emit(token.COMMENT)
+	} else {
+		l.emit(t)
+	}
 	return startLexer
 }
 
@@ -474,7 +471,7 @@ func lexCharacterLiteral(l *Lexer) StateFn {
 		return l.errorf("invalid character syntax; use ?\\s")
 	}
 	if r == '\\' {
-		r = l.next()
+		l.next()
 	}
 	if p := l.peek(); !isWhitespace(p) && !isExpressionDelimiter(p) {
 		return l.errorf("unexpected '?'")
@@ -483,21 +480,23 @@ func lexCharacterLiteral(l *Lexer) StateFn {
 	return startLexer
 }
 
-func lexString(l *Lexer) StateFn {
-	l.ignore()
-	r := l.next()
+func lexString(end rune) StateFn {
+	return func(l *Lexer) StateFn {
+		l.ignore()
+		r := l.next()
 
-	for r != '"' {
-		if r == '\\' {
+		for r != end {
+			if r == '\\' {
+				l.next()
+			}
 			r = l.next()
 		}
-		r = l.next()
+		l.backup()
+		l.emit(token.STRING)
+		l.next()
+		l.ignore()
+		return startLexer
 	}
-	l.backup()
-	l.emit(token.STRING)
-	l.next()
-	l.ignore()
-	return startLexer
 }
 
 func lexGlobal(l *Lexer) StateFn {
@@ -515,7 +514,7 @@ func lexGlobal(l *Lexer) StateFn {
 		return l.errorf("Illegal character: '%c'", r)
 	}
 
-	for !isWhitespace(r) && !isExpressionDelimiter(r) && r != '.' && r != ',' && r != '=' && r != '>' && r != '<' && r != '(' && r != ')' && r != '{' && r != '}' && r != '[' && r != ']' && r != ';' && r != ':' {
+	for !isWhitespace(r) && !isExpressionDelimiter(r) && r != '.' && r != ',' && r != '=' && r != '>' && r != '<' && r != '(' && r != ')' && r != '{' && r != '}' && r != '[' && r != ']' && r != ';' {
 		r = l.next()
 	}
 	l.backup()
@@ -523,39 +522,14 @@ func lexGlobal(l *Lexer) StateFn {
 	return startLexer
 }
 
-func lexRegex(l *Lexer) StateFn {
-	l.ignore()
-	r := l.next()
-
-	for r != '/' {
-		if r == '\\' {
-			r = l.next()
-		}
-		r = l.next()
-	}
-	l.backup()
-	l.emit(token.REGEX)
-	l.next()
-	l.ignore()
-
-	// parse modifiers
-	p := l.peek()
-	if p == 'i' || p == 'm' || p == 'x' || p == 'o' || p == 'e' || p == 's' || p == 'u' || p == 'n' {
-		l.next()
-		l.emit(token.REGEX_MODIFIER)
-	}
-	return startLexer
-}
-
 func commentLexer(l *Lexer) StateFn {
-	l.emit(token.HASH)
-	r := l.next()
+	r := l.next() // consume the '#'
 
 	for r != '\n' && r != eof {
 		r = l.next()
 	}
 	l.backup()
-	l.emit(token.STRING)
+	l.emit(token.COMMENT)
 	return startLexer
 }
 
