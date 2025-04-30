@@ -28,10 +28,8 @@ const (
 	SYMBOL_OBJ         Type = "SYMBOL"
 	BOOLEAN_OBJ        Type = "BOOLEAN"
 	NIL_OBJ            Type = "NIL"
-	NIL_CLASS_OBJ      Type = "NIL_CLASS"
 	EXCEPTION_OBJ      Type = "EXCEPTION"
 	MODULE_OBJ         Type = "MODULE"
-	PROC_OBJ           Type = "PROC"
 	IO_OBJ             Type = "IO"
 	SELF               Type = "SELF"
 )

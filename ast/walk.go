@@ -155,14 +155,9 @@ func Walk(v Visitor, node Node) {
 		*SymbolLiteral,
 		*Boolean,
 		*Nil,
-		*BlockCapture,
 		*Keyword__FILE__,
 		*Comment:
 		// nothing to do
-
-	// case *BlockExpression:
-	// 	walkParameterList(v, n.Parameters)
-	// 	Walk(v, n.Body)
 
 	case *FunctionLiteral:
 		Walk(v, n.Name)

@@ -144,40 +144,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		object.AddMethod(context, node.Name.Value, function)
 		return &object.Symbol{Value: node.Name.Value}, nil
 
-	// case *ast.ProcedureLiteral:
-	// 	params := make([]*object.FunctionParameter, len(node.Parameters))
-	// 	for i, param := range node.Parameters {
-	// 		def, err := Eval(param.Default, env)
-	// 		if err != nil {
-	// 			return nil, errors.WithMessage(err, "eval function literal param")
-	// 		}
-	// 		params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def, Splat: param.Splat}
-	// 	}
-	// 	body := node.Body
-	// 	return &object.Proc{
-	// 		Parameters:             params,
-	// 		Body:                   body,
-	// 		Env:                    env,
-	// 		ArgumentCountMandatory: true,
-	// 	}, nil
-
-	// case *ast.BlockExpression:
-	// 	node_params := node.Parameters
-	// 	body := node.Body
-	// 	params := make([]*object.FunctionParameter, len(node_params))
-	// 	for i, param := range node_params {
-	// 		def, err := Eval(param.Default, env)
-	// 		if err != nil {
-	// 			return nil, errors.WithMessage(err, "eval function literal param")
-	// 		}
-	// 		params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def}
-	// 	}
-	// 	block := &object.Proc{
-	// 		Parameters: params,
-	// 		Body:       body,
-	// 		Env:        env,
-	// 	}
-	// 	return block, nil
 	case *ast.ArrayLiteral:
 		elements, err := evalArrayElements(node.Elements, env)
 		if err != nil {
