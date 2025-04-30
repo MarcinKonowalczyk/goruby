@@ -4036,33 +4036,6 @@ func parseExpression(src string, modes ...p.Mode) (ast.Expression, *p.Errors) {
 	return expr, parserErrors
 }
 
-func compareFirstParserError(t *testing.T, expected, actual error) {
-	t.Helper()
-	if expected == nil && actual == nil {
-		return
-	}
-	parserErrors, ok := actual.(*p.Errors)
-	if parserErrors == nil && expected == nil {
-		return
-	}
-	if !ok {
-		t.Logf("Unexpected parser error: %T:%v\n", actual, actual)
-		t.FailNow()
-	}
-	if expected == nil && parserErrors != nil {
-		t.Logf("Expected no error, got %T:%v", actual, actual)
-		t.FailNow()
-	}
-	firstErr := parserErrors.Errors[0]
-	err := firstErr.Error()
-	firstSpace := strings.Index(err, " ")
-	err = err[firstSpace+1:]
-	if err != expected.Error() {
-		t.Logf("Expected first parser error to equal %v, got %v", expected, firstErr)
-		t.FailNow()
-	}
-}
-
 func checkParserErrors(t *testing.T, err error, withStack ...bool) {
 	t.Helper()
 	if err == nil {

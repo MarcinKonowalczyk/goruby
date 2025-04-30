@@ -973,6 +973,7 @@ func evalBlockStatement(block *ast.BlockStatement, env object.Environment) (obje
 				if isTruthy(result.(*object.BreakValue).Value) {
 					return result, nil
 				} else {
+					//
 				}
 			}
 		}
@@ -1056,11 +1057,4 @@ func IsError(obj object.RubyObject) bool {
 		return obj.Type() == object.EXCEPTION_OBJ
 	}
 	return false
-}
-
-func nativeBoolToBooleanObject(input bool) object.RubyObject {
-	if input {
-		return object.TRUE
-	}
-	return object.FALSE
 }

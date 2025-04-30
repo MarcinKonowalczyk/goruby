@@ -865,11 +865,11 @@ func (p *parser) parseHash() ast.Expression {
 	return hash
 }
 
-func (p *parser) debugPrintState() {
-	if p.trace {
-		fmt.Println("DBG:", p.curToken, p.peekToken, p.errors)
-	}
-}
+// func (p *parser) debugPrintState() {
+// 	if p.trace {
+// 		fmt.Println("DBG:", p.curToken, p.peekToken, p.errors)
+// 	}
+// }
 
 func (p *parser) parseKeyValue() (ast.Expression, ast.Expression, bool) {
 	if p.trace {
