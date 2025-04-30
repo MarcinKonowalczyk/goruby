@@ -202,7 +202,7 @@ func TestClassSuperclass(t *testing.T) {
 			t.Fail()
 		}
 
-		_, ok := result.(*nilObject)
+		ok := SymbolToNil(result)
 		if !ok {
 			t.Logf("Expected Nil object, got %T\n", result)
 			t.Fail()

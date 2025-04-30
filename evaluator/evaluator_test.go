@@ -846,9 +846,9 @@ func TestHashLiteral(t *testing.T) {
 
 	expected := map[string]object.RubyObject{
 		"foo":   &object.Integer{Value: 42},
-		":true": object.FALSE,
 		":bar":  &object.Integer{Value: 2},
-		"nil":   object.TRUE,
+		":nil":  object.TRUE,
+		":true": object.FALSE,
 		"2":     &object.Integer{Value: 2},
 	}
 

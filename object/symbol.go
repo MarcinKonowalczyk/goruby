@@ -17,6 +17,7 @@ var (
 	)
 	TRUE  RubyObject = &Symbol{Value: "true"}
 	FALSE RubyObject = &Symbol{Value: "false"}
+	NIL   RubyObject = &Symbol{Value: "nil"}
 )
 
 func init() {
@@ -81,7 +82,7 @@ func symbolToI(context CallContext, args ...RubyObject) (RubyObject, error) {
 func SymbolToBool(o RubyObject) (val bool, ok bool) {
 	if sym, ok := o.(*Symbol); ok {
 		if sym == nil {
-			// nil pointer
+			// nil pointer, not ok
 			return false, false
 		}
 		if sym.Value == "true" {
@@ -94,4 +95,22 @@ func SymbolToBool(o RubyObject) (val bool, ok bool) {
 		}
 	}
 	return false, false
+}
+
+// If a symbol is "nil", returns ok as 'true'.
+func SymbolToNil(o RubyObject) (ok bool) {
+	if sym, ok := o.(*Symbol); ok {
+		if sym == nil {
+			// nil pointer, not ok
+			// *must be a ruby object!*
+			return false
+		}
+		if sym.Value == "nil" {
+			return true
+		} else {
+			fmt.Println("SymbolToNil: unknown symbol value:", sym.Value)
+			return false
+		}
+	}
+	return false
 }

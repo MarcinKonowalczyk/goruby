@@ -264,19 +264,6 @@ var (
 	_ Expression = &FloatLiteral{}
 )
 
-// Nil represents the 'nil' keyword
-type Nil struct{}
-
-func (n *Nil) node()           {}
-func (n *Nil) expressionNode() {}
-
-func (n *Nil) String() string { return "nil" }
-
-var (
-	_ Node       = &Nil{}
-	_ Expression = &Nil{}
-)
-
 // StringLiteral represents a double quoted string in the AST
 type StringLiteral struct {
 	Value string

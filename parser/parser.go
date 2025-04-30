@@ -673,7 +673,7 @@ func (p *parser) parseNilLiteral() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseNilLiteral"))
 	}
-	return &ast.Nil{}
+	return &ast.SymbolLiteral{Value: "nil"}
 }
 
 func (p *parser) parseGlobal() ast.Expression {

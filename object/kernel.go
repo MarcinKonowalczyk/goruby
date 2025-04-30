@@ -84,8 +84,12 @@ func kernelPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
 			}
 		} else {
 			switch arg := arg.(type) {
-			case *nilObject:
-				//
+			case *Symbol:
+				if arg == NIL {
+					//
+				} else {
+					lines = append(lines, arg.Inspect())
+				}
 			default:
 				lines = append(lines, arg.Inspect())
 			}
@@ -107,8 +111,12 @@ func kernelPrint(context CallContext, args ...RubyObject) (RubyObject, error) {
 			lines = append(lines, arr.Inspect())
 		} else {
 			switch arg := arg.(type) {
-			case *nilObject:
-				//
+			case *Symbol:
+				if arg == NIL {
+					//
+				} else {
+					lines = append(lines, arg.Inspect())
+				}
 			default:
 				lines = append(lines, arg.Inspect())
 			}
@@ -178,6 +186,10 @@ func kernelPrivateMethods(context CallContext, args ...RubyObject) (RubyObject, 
 }
 
 func kernelIsNil(context CallContext, args ...RubyObject) (RubyObject, error) {
+	receiver := context.Receiver()
+	if receiver == NIL {
+		return TRUE, nil
+	}
 	return FALSE, nil
 }
 
@@ -404,12 +416,6 @@ func rubyObjectsEqual(left, right RubyObject, swapped bool) bool {
 			return swapOrFalse(left, right, swapped)
 		} else {
 			return left.Value == right_t.Value
-		}
-	case *nilObject:
-		if right_t, ok := right.(*nilObject); !ok {
-			return swapOrFalse(left, right, swapped)
-		} else {
-			return left == right_t
 		}
 	default:
 		return false

@@ -153,7 +153,6 @@ func Walk(v Visitor, node Node) {
 		*IntegerLiteral,
 		*StringLiteral,
 		*SymbolLiteral,
-		*Nil,
 		*Keyword__FILE__,
 		*Comment:
 		// nothing to do

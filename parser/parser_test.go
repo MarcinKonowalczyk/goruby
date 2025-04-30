@@ -1461,9 +1461,12 @@ func TestNilExpression(t *testing.T) {
 			program.Statements[0],
 		)
 	}
-
-	if _, ok := stmt.Expression.(*ast.Nil); !ok {
+	nil_node, ok := stmt.Expression.(*ast.SymbolLiteral)
+	if !ok {
 		t.Fatalf("exp not *ast.Nil. got=%T", stmt.Expression)
+	}
+	if nil_node.String() != ":nil" {
+		t.Errorf("nil.Value not %s. got=%s", ":nil", nil_node.Value)
 	}
 }
 
