@@ -135,68 +135,6 @@ var (
 	_ Statement = &BreakStatement{}
 )
 
-// ExceptionHandlingBlock represents a begin/end block where exceptions are rescued
-type ExceptionHandlingBlock struct {
-	TryBody *BlockStatement
-	Rescues []*RescueBlock
-}
-
-func (eh *ExceptionHandlingBlock) node()           {}
-func (eh *ExceptionHandlingBlock) expressionNode() {}
-
-func (eh *ExceptionHandlingBlock) String() string {
-	var out strings.Builder
-	out.WriteString("begin")
-	out.WriteString("\n")
-	out.WriteString(eh.TryBody.String())
-	out.WriteString("\n")
-	for _, r := range eh.Rescues {
-		out.WriteString(r.String())
-	}
-	out.WriteString("end")
-	return out.String()
-}
-
-var (
-	_ Node       = &ExceptionHandlingBlock{}
-	_ Expression = &ExceptionHandlingBlock{}
-)
-
-// A RescueBlock represents a rescue block
-type RescueBlock struct {
-	ExceptionClasses []*Identifier
-	Exception        *Identifier
-	Body             *BlockStatement
-}
-
-func (rb *RescueBlock) node()           {}
-func (rb *RescueBlock) expressionNode() {}
-
-func (rb *RescueBlock) String() string {
-	var out strings.Builder
-	out.WriteString("rescue")
-	if len(rb.ExceptionClasses) != 0 {
-		classes := make([]string, len(rb.ExceptionClasses))
-		for i, c := range rb.ExceptionClasses {
-			classes[i] = c.String()
-		}
-		out.WriteString(strings.Join(classes, ", "))
-	}
-	if rb.Exception != nil {
-		out.WriteString(" => ")
-		out.WriteString(rb.Exception.String())
-	}
-	out.WriteString("\n")
-	out.WriteString(rb.Body.String())
-	out.WriteString("\n")
-	return out.String()
-}
-
-var (
-	_ Node       = &RescueBlock{}
-	_ Expression = &RescueBlock{}
-)
-
 // Assignment represents a generic assignment
 type Assignment struct {
 	Left  Expression
@@ -582,7 +520,6 @@ type FunctionLiteral struct {
 	Parameters    []*FunctionParameter
 	CapturedBlock *BlockCapture
 	Body          *BlockStatement
-	Rescues       []*RescueBlock
 }
 
 func (fl *FunctionLiteral) node()           {}
@@ -608,9 +545,6 @@ func (fl *FunctionLiteral) String() string {
 	out.WriteString(") ")
 	if fl.Body != nil {
 		out.WriteString(fl.Body.String())
-	}
-	for _, r := range fl.Rescues {
-		out.WriteString(r.String())
 	}
 	out.WriteString(" end")
 	return out.String()

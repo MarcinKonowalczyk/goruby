@@ -3,7 +3,6 @@ package evaluator
 import (
 	"fmt"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
@@ -38,6 +37,11 @@ func expandToArrayIfNeeded(obj object.RubyObject) object.RubyObject {
 		return obj
 	}
 	return object.NewArray(arr...)
+}
+
+func my_debug_panic_(msg string) {
+	// fmt.Println("my_debug_panic", msg)
+	// panic(msg)
 }
 
 // Eval evaluates the given node and traverses recursive over its children
@@ -83,6 +87,7 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 	case (*ast.Nil):
 		return object.NIL, nil
 	case (*ast.Keyword__FILE__):
+		my_debug_panic_("case (*ast.Keyword__FILE__):")
 		return &object.String{Value: node.Filename}, nil
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
@@ -104,6 +109,7 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		case *ast.Identifier:
 			return &object.Symbol{Value: value.Value}, nil
 		case *ast.StringLiteral:
+			my_debug_panic_("case *ast.StringLiteral:")
 			str, err := Eval(value, env)
 			if err != nil {
 				return nil, errors.WithMessage(err, "eval symbol literal string")
@@ -115,6 +121,7 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 				fmt.Errorf("error while parsing SymbolLiteral: expected *object.String, got %T", str),
 			))
 		default:
+			my_debug_panic_("case default: (1)")
 			return nil, errors.WithStack(
 				object.NewSyntaxError(fmt.Errorf("malformed symbol AST: %T", value)),
 			)
@@ -237,6 +244,7 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		}
 		return &hash, nil
 	case ast.ExpressionList:
+		my_debug_panic_("case ast.ExpressionList:")
 		var objects []object.RubyObject
 		for _, e := range node {
 			obj, err := Eval(e, env)
@@ -277,10 +285,12 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			var values rubyObjects
 			switch right := right.(type) {
 			case rubyObjects:
+				my_debug_panic_("case rubyObjects:")
 				values = right
 			case *object.Array:
 				values = right.Elements
 			default:
+				my_debug_panic_("case default: (2)")
 				values = []object.RubyObject{right}
 			}
 			if len(left) > len(values) {
@@ -309,6 +319,7 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			}
 			return expandToArrayIfNeeded(right), nil
 		default:
+			my_debug_panic_("case default: (3)")
 			return nil, errors.WithStack(
 				object.NewSyntaxError(fmt.Errorf("assignment not supported to %T", node.Left)),
 			)
@@ -394,12 +405,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 
 	case *ast.ConditionalExpression:
 		return evalConditionalExpression(node, env)
-	case *ast.ExceptionHandlingBlock:
-		bodyReturn, err := Eval(node.TryBody, env)
-		if err == nil {
-			return bodyReturn, nil
-		}
-		return handleException(err, node.Rescues, env)
 
 	case *ast.Comment:
 		// ignore comments
@@ -475,6 +480,7 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		}, nil
 
 	case *ast.Splat:
+		my_debug_panic_("case *ast.Splat:")
 
 		val, err := Eval(node.Value, env)
 		if err != nil {
@@ -488,10 +494,12 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 
 		switch val := val.(type) {
 		case *object.Array:
+			my_debug_panic_("case *object.Array:")
 			return &object.Array{
 				Elements: val.Elements,
 			}, nil
 		default:
+			my_debug_panic_("case default: (5)")
 			return &object.Array{
 				Elements: []object.RubyObject{val},
 			}, nil
@@ -502,6 +510,7 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		return evalLoopExpression(node, env)
 
 	default:
+		my_debug_panic_("case default: (6)")
 		err := object.NewException("Unknown AST: %T", node)
 		return nil, errors.WithStack(err)
 	}
@@ -1076,74 +1085,12 @@ func evalIdentifier(node *ast.Identifier, env object.Environment) (object.RubyOb
 	return val, nil
 }
 
-// func unwrapReturnValue(obj object.RubyObject) object.RubyObject {
-// 	if returnValue, ok := obj.(*object.ReturnValue); ok {
-// 		return returnValue.Value
-// 	}
-// 	return obj
-// }
-
-func handleException(err error, rescues []*ast.RescueBlock, env object.Environment) (object.RubyObject, error) {
-	if err != nil && len(rescues) == 0 {
-		return nil, err
-	}
-	errorObject, ok := err.(object.RubyObject)
-	if !ok {
-		errorObject = object.NewException("%s", err.Error())
-	}
-	errClass := errorObject.Class().Name()
-	rescueEnv := object.WithScopedLocalVariables(env)
-
-	var catchAll *ast.RescueBlock
-	for _, r := range rescues {
-		if len(r.ExceptionClasses) == 0 {
-			catchAll = r
-			continue
-		}
-		if r.Exception != nil {
-			rescueEnv.Set(r.Exception.Value, errorObject)
-		}
-		for _, cl := range r.ExceptionClasses {
-			if cl.Value == errClass {
-				rescueRet, err := Eval(r.Body, rescueEnv)
-				return rescueRet, err
-			}
-		}
-	}
-
-	if catchAll != nil {
-		ancestors := getAncestors(errorObject)
-		sort.Strings(ancestors)
-		if sort.SearchStrings(ancestors, "StandardError") >= len(ancestors) {
-			return nil, err
-		}
-
-		if catchAll.Exception != nil {
-			rescueEnv.Set(catchAll.Exception.Value, errorObject)
-		}
-		rescueRet, err := Eval(catchAll.Body, rescueEnv)
-		return rescueRet, err
-	}
-
-	return nil, err
-}
-
-func getAncestors(obj object.RubyObject) []string {
-	class := obj.Class()
-	if c, ok := obj.(object.RubyClass); ok {
-		class = c
-	}
-	var ancestors []string
-	ancestors = append(ancestors, class.Name())
-
-	superClass := class.SuperClass()
-	if superClass != nil {
-		superAncestors := getAncestors(superClass.(object.RubyClassObject))
-		ancestors = append(ancestors, superAncestors...)
-	}
-	return ancestors
-}
-
+//	func unwrapReturnValue(obj object.RubyObject) object.RubyObject {
+//		if returnValue, ok := obj.(*object.ReturnValue); ok {
+//			return returnValue.Value
+//		}
+//		return obj
+//	}
 func isTruthy(obj object.RubyObject) bool {
 	switch obj {
 	case object.NIL:

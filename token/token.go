@@ -98,8 +98,6 @@ const (
 	RETURN
 	NIL
 	DO
-	BEGIN
-	RESCUE
 	WHILE
 	LOOP
 	BREAK
@@ -217,8 +215,6 @@ var type_strings = [...]string{
 	RETURN:          "RETURN",
 	NIL:             "NIL",
 	DO:              "DO",
-	BEGIN:           "BEGIN",
-	RESCUE:          "RESCUE",
 	WHILE:           "WHILE",
 	LOOP:            "LOOP",
 	BREAK:           "BREAK",
@@ -302,9 +298,7 @@ var type_reprs = [...]string{
 	RETURN:          "return",
 	NIL:             "nil",
 	DO:              "do",
-	BEGIN:           "begin",  // to remove?
-	RESCUE:          "rescue", // to remove?
-	WHILE:           "while",  // to remove?
+	WHILE:           "while", // to remove?
 	LOOP:            "loop",
 	BREAK:           "break",
 	KEYWORD__FILE__: "__FILE__",

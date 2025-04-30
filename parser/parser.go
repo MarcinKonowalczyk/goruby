@@ -169,7 +169,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerPrefix(token.DO, p.parseBlock)
 	p.registerPrefix(token.GLOBAL, p.parseGlobal)
 	p.registerPrefix(token.KEYWORD__FILE__, p.parseKeyword__FILE__)
-	p.registerPrefix(token.BEGIN, p.parseExceptionHandlingBlock)
 	p.registerPrefix(token.CAPTURE, p.parseBlockCapture)
 	p.registerPrefix(token.LAMBDAROCKET, p.parseLambdaLiteral)
 	p.registerPrefix(token.ASTERISK, p.parseSplat)
@@ -514,27 +513,6 @@ func (p *parser) parseComment() ast.Statement {
 	return comment
 }
 
-func (p *parser) parseExceptionHandlingBlock() ast.Expression {
-	if p.trace {
-		defer un(trace(p, "parseExceptionHandlingBlock"))
-	}
-	block := &ast.ExceptionHandlingBlock{}
-	if !p.accept(token.NEWLINE) {
-		return nil
-	}
-	block.TryBody = p.parseBlockStatement(token.END, token.RESCUE)
-	block.Rescues = []*ast.RescueBlock{}
-	for p.peekTokenIs(token.RESCUE) {
-		p.accept(token.RESCUE)
-		rescue := p.parseRescueBlock()
-		block.Rescues = append(block.Rescues, rescue)
-	}
-	if !p.accept(token.END) {
-		return nil
-	}
-	return block
-}
-
 // LAMBDA          : "->" "(" CALL_ARGS ")" "{" COMPSTMT "}"
 //                 | "->" "{" COMPSTMT "}";
 
@@ -580,36 +558,6 @@ func (p *parser) parseSplat() ast.Expression {
 	}
 	splat.Value = expr
 	return splat
-}
-
-func (p *parser) parseRescueBlock() *ast.RescueBlock {
-	if p.trace {
-		defer un(trace(p, "parseRescueBlock"))
-	}
-	block := &ast.RescueBlock{}
-	classes := []*ast.Identifier{}
-	for p.peekTokenIs(token.CONST) {
-		p.accept(token.CONST)
-		class := &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
-		classes = append(classes, class)
-		if p.peekTokenIs(token.COMMA) {
-			p.accept(token.COMMA)
-		}
-	}
-	block.ExceptionClasses = classes
-
-	if p.peekTokenIs(token.HASHROCKET) {
-		p.accept(token.HASHROCKET)
-		if !p.accept(token.IDENT) {
-			return nil
-		}
-		block.Exception = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
-	}
-	if !p.accept(token.NEWLINE) {
-		return nil
-	}
-	block.Body = p.parseBlockStatement(token.END)
-	return block
 }
 
 func (p *parser) parseExpressions(left ast.Expression) ast.Expression {
@@ -1198,13 +1146,7 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 	if !p.acceptOneOf(token.NEWLINE, token.SEMICOLON) {
 		return nil
 	}
-	lit.Body = p.parseBlockStatement(token.END, token.RESCUE)
-	lit.Rescues = []*ast.RescueBlock{}
-	for p.peekTokenIs(token.RESCUE) {
-		p.accept(token.RESCUE)
-		rescue := p.parseRescueBlock()
-		lit.Rescues = append(lit.Rescues, rescue)
-	}
+	lit.Body = p.parseBlockStatement(token.END)
 	if !p.accept(token.END) {
 		return nil
 	}

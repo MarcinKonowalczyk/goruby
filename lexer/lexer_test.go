@@ -412,9 +412,9 @@ func TestLex(t *testing.T) {
 				end
 			`,
 			exp: []expected{
-				expect("BEGIN", "begin"),
+				expect("IDENT", "begin"),
 				NL,
-				expect("RESCUE", "rescue"),
+				expect("IDENT", "rescue"),
 				NL,
 				expect("END", "end"),
 				NL,
