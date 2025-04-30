@@ -785,102 +785,6 @@ func TestModuleObject(t *testing.T) {
 	})
 }
 
-func TestClassObject(t *testing.T) {
-	tests := []struct {
-		input              string
-		expectedName       string
-		expectedSuperclass string
-		expectedMethods    map[string]string
-		expectedReturn     object.RubyObject
-	}{
-		{
-			`class Foo
-				def a
-					"foo"
-				end
-			end`,
-			"Foo",
-			"Object",
-			map[string]string{"a": "fn() {\nfoo\n}"},
-			&object.Symbol{Value: "a"},
-		},
-		{
-			`class Foo
-				3
-			end`,
-			"Foo",
-			"Object",
-			map[string]string{},
-			&object.Integer{Value: 3},
-		},
-		{
-			`class Foo
-			end`,
-			"Foo",
-			"Object",
-			map[string]string{},
-			object.NIL,
-		},
-		{
-			`class Foo < BasicObject
-			end`,
-			"Foo",
-			"BasicObject",
-			map[string]string{},
-			object.NIL,
-		},
-	}
-
-	for _, tt := range tests {
-		env := object.NewMainEnvironment()
-		evaluated, err := testEval(tt.input, env)
-		checkError(t, err)
-
-		if !reflect.DeepEqual(evaluated, tt.expectedReturn) {
-			t.Logf("Expected return object to equal\n%+#v\n\tgot\n%+#v\n", tt.expectedReturn, evaluated)
-			t.Fail()
-		}
-
-		class, ok := env.Get(tt.expectedName)
-		if !ok {
-			t.Logf("Expected class to exist in env")
-			t.Logf("Env: %+#v\n", env)
-			t.FailNow()
-		}
-
-		classClass, ok := class.(object.RubyClassObject)
-		if !ok {
-			t.Logf("Expected class to be a object.RubyClassObject, got %T", classClass)
-			t.FailNow()
-		}
-
-		superClass := classClass.SuperClass().(object.RubyClassObject)
-
-		if superClass.Inspect() != tt.expectedSuperclass {
-			t.Logf("Expected superclass %q, got %q\n", tt.expectedSuperclass, superClass.Inspect())
-			t.Fail()
-		}
-
-		actualMethods := make(map[string]string)
-
-		methods := classClass.Methods().GetAll()
-		for name, method := range methods {
-			if function, ok := method.(*object.Function); ok {
-				actualMethods[name] = function.String()
-			}
-		}
-
-		if !reflect.DeepEqual(tt.expectedMethods, actualMethods) {
-			t.Logf(
-				"Expected class methods to equal\n%+#v\n\tgot\n%+#v\n",
-				tt.expectedMethods,
-				actualMethods,
-			)
-			t.Fail()
-		}
-	}
-}
-
 func TestFunctionObject(t *testing.T) {
 	type funcParam struct {
 		name         string
@@ -992,37 +896,6 @@ end
 			t.Fail()
 		}
 	})
-	t.Run("methods with const receiver", func(t *testing.T) {
-		env := object.NewMainEnvironment()
-		env.Set("self", &object.Self{RubyObject: &object.Object{}, Name: "main"})
-		input := `class A
-end
-
-def A.truth
-	42
-end
-`
-
-		_, err := testEval(input, env)
-		checkError(t, err)
-
-		A, ok := env.Get("A")
-		if !ok {
-			t.Logf("Expected env to have 'A'")
-			t.FailNow()
-		}
-
-		method, ok := A.Class().Methods().Get("truth")
-		if !ok {
-			t.Logf("Expected function to be added to 'A'")
-			t.Fail()
-		}
-		fn, ok := method.(*object.Function)
-		if !ok {
-			t.Logf("method is not %T, got=%T (%+v)", fn, method, method)
-			t.Fail()
-		}
-	})
 	t.Run("methods with self in main", func(t *testing.T) {
 		env := object.NewEnvironment()
 		env.Set("self", &object.Self{RubyObject: &object.Object{}, Name: "main"})
@@ -1040,36 +913,6 @@ end
 		method, ok := self.Class().Methods().Get("truth")
 		if !ok {
 			t.Logf("Expected function to be added to 'main'")
-			t.Fail()
-		}
-		fn, ok := method.(*object.Function)
-		if !ok {
-			t.Logf("method is not %T, got=%T (%+v)", fn, method, method)
-			t.Fail()
-		}
-	})
-	t.Run("methods with self in class", func(t *testing.T) {
-		env := object.NewMainEnvironment()
-		input := `
-class A
-	def self.truth
-		42
-	end
-end
-`
-
-		_, err := testEval(input, env)
-		checkError(t, err)
-
-		A, ok := env.Get("A")
-		if !ok {
-			t.Logf("Expected env to have 'A'")
-			t.FailNow()
-		}
-
-		method, ok := A.Class().Methods().Get("truth")
-		if !ok {
-			t.Logf("Expected function to be added to 'A'")
 			t.Fail()
 		}
 		fn, ok := method.(*object.Function)

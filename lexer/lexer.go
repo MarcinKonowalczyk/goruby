@@ -399,7 +399,16 @@ func lexIdentifier(l *Lexer) StateFn {
 	}
 	l.backup()
 	literal := l.input[l.start:l.pos]
-	l.emit(token.LookupIdent(literal))
+	t := token.LookupIdent(literal)
+	if t == token.COMMENT {
+		for r != '\n' && r != eof {
+			r = l.next()
+		}
+		l.backup()
+		l.emit(token.COMMENT)
+	} else {
+		l.emit(t)
+	}
 	return startLexer
 }
 

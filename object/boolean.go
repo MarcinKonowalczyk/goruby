@@ -50,11 +50,13 @@ var (
 )
 
 var booleanTrueMethods = map[string]RubyMethod{
+	"to_i": withArity(0, publicMethod(booleanToI)),
 	// "==": withArity(1, publicMethod(booleanEq)),
 	// "!=": withArity(1, publicMethod(booleanNeq)),
 }
 
 var booleanFalseMethods = map[string]RubyMethod{
+	"to_i": withArity(0, publicMethod(booleanToI)),
 	// "==": withArity(1, publicMethod(booleanEq)),
 	// "!=": withArity(1, publicMethod(booleanNeq)),
 }
@@ -82,3 +84,11 @@ var booleanFalseMethods = map[string]RubyMethod{
 // 	}
 // 	return FALSE, nil
 // }
+
+func booleanToI(context CallContext, args ...RubyObject) (RubyObject, error) {
+	b := context.Receiver().(*Boolean)
+	if b.Value {
+		return NewInteger(1), nil
+	}
+	return NewInteger(0), nil
+}

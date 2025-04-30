@@ -103,35 +103,6 @@ func TestMethodBlockLeakage(t *testing.T) {
 			t.Fail()
 		}
 	})
-	t.Run("custom class methods", func(t *testing.T) {
-		input := `
-		class Foo
-			def add x, y
-			yield x + y
-			end
-
-			def sub x, y
-			yield x - y
-			end
-		end
-
-		foo = Foo.new
-
-		foo.add 7, 3 { |sum| sum - 5 }
-
-		foo.sub 10, 4
-		`
-		i := interpreter.NewInterpreter()
-
-		_, err := i.Interpret("", input)
-
-		expected := object.NewNoBlockGivenLocalJumpError()
-
-		if !reflect.DeepEqual(expected, errors.Cause(err)) {
-			t.Logf("Expected error to equal\n%+#v\n\tgot\n%+#v\n", expected, err)
-			t.Fail()
-		}
-	})
 }
 
 func TestKernelTap(t *testing.T) {

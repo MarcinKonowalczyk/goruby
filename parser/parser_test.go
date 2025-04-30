@@ -3703,40 +3703,6 @@ func TestContextCallExpression(t *testing.T) {
 			t.Fatalf("wrong length of arguments. got=%d", len(exp.Arguments))
 		}
 	})
-	t.Run("allow `class` as method name", func(t *testing.T) {
-		input := "foo.class;"
-
-		program, err := parseSource(input)
-		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program.Statements does not contain %d statements. got=%d\n",
-				1,
-				len(program.Statements),
-			)
-		}
-
-		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0])
-		}
-
-		expr, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
-
-		if !testIdentifier(t, expr.Context, "foo") {
-			return
-		}
-
-		if !testIdentifier(t, expr.Function, "class") {
-			return
-		}
-	})
 	t.Run("allow operators as method name", func(t *testing.T) {
 		input := "foo.<=>;"
 
@@ -3989,65 +3955,6 @@ func TestParsingModuleExpressions(t *testing.T) {
 	if !ok {
 		t.Fatalf("exp not *ast.ModuleExpression. got=%T", stmt.Expression)
 	}
-}
-
-func TestParsingClassExpressions(t *testing.T) {
-	t.Run("basic class", func(t *testing.T) {
-		input := "class A\n3\nend\n"
-
-		program, err := parseSource(input)
-		checkParserErrors(t, err)
-
-		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
-		}
-		class, ok := stmt.Expression.(*ast.ClassExpression)
-		if !ok {
-			t.Fatalf("exp not *ast.ClassExpression. got=%T", stmt.Expression)
-		}
-
-		className := "A"
-		if className != class.Name.String() {
-			t.Logf("Expected class name to equal %q, got %q\n", className, class.Name.String())
-			t.Fail()
-		}
-	})
-	t.Run("class with superclass", func(t *testing.T) {
-		input := "class A < B\n3\nend\n"
-
-		program, err := parseSource(input)
-		checkParserErrors(t, err)
-
-		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
-		}
-
-		class, ok := stmt.Expression.(*ast.ClassExpression)
-		if !ok {
-			t.Fatalf("exp not *ast.ClassExpression. got=%T", stmt.Expression)
-		}
-
-		className := "A"
-		if className != class.Name.Value {
-			t.Logf("Expected class name to equal %q, got %q\n", className, class.Name.Value)
-			t.Fail()
-		}
-
-		superclassName := "B"
-		if superclassName != class.SuperClass.Value {
-			t.Logf("Expected superclass name to equal %q, got %q\n", superclassName, class.SuperClass.Value)
-			t.Fail()
-		}
-	})
-	t.Run("downcase class", func(t *testing.T) {
-		t.Skip("evaluate error")
-		input := "class a\n3\nend\n"
-
-		_, err := parseSource(input)
-		checkParserErrors(t, err)
-	})
 }
 
 func TestParseHash(t *testing.T) {

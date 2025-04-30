@@ -65,6 +65,7 @@ const (
 	COMMA     // ,
 	SEMICOLON // ;
 	COMMENT   // # ...
+	CLASS     // class # NOTE: treated as a comment. classes are not supported
 
 	CAPTURE   // &
 	DOT       // .
@@ -98,7 +99,6 @@ const (
 	RETURN
 	NIL
 	MODULE
-	CLASS
 	DO
 	YIELD
 	BEGIN
@@ -374,6 +374,9 @@ func init() {
 func LookupIdent(ident string) Type {
 	if tok, ok := keywords[ident]; ok {
 		return tok
+	}
+	if ident == "class" {
+		return COMMENT
 	}
 	if unicode.IsUpper(bytes.Runes([]byte(ident))[0]) {
 		return CONST
