@@ -515,7 +515,6 @@ var (
 
 // A FunctionLiteral represents a function definition in the AST
 type FunctionLiteral struct {
-	Receiver      *Identifier
 	Name          *Identifier
 	Parameters    []*FunctionParameter
 	CapturedBlock *BlockCapture
@@ -531,14 +530,7 @@ func (fl *FunctionLiteral) String() string {
 	for _, p := range fl.Parameters {
 		params = append(params, p.String())
 	}
-	if fl.CapturedBlock != nil {
-		params = append(params, fl.CapturedBlock.String())
-	}
 	out.WriteString("def ")
-	if fl.Receiver != nil {
-		out.WriteString(fl.Receiver.String())
-		out.WriteString(".")
-	}
 	out.WriteString(fl.Name.String())
 	out.WriteString("(")
 	out.WriteString(strings.Join(params, ", "))

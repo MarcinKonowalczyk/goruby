@@ -1113,18 +1113,7 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 
 	if p.peekTokenOneOf(token.IDENT, token.CONST) {
 		p.acceptOneOf(token.IDENT, token.CONST)
-		if p.peekTokenIs(token.DOT) {
-			lit.Receiver = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
-			p.accept(token.DOT)
-			if !p.peekTokenOneOf(token.IDENT, token.CONST) && !p.peekToken.Type.IsOperator() {
-				p.Error(p.peekToken.Type, "", token.IDENT, token.CONST)
-				return nil
-			}
-			p.nextToken()
-			lit.Name = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
-		} else {
-			lit.Name = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
-		}
+		lit.Name = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
 	} else {
 		p.nextToken()
 		lit.Name = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}

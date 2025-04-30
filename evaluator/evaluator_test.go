@@ -594,60 +594,6 @@ func TestFunctionObject(t *testing.T) {
 			}
 		}
 	})
-	t.Run("methods with variable receiver", func(t *testing.T) {
-		env := object.NewEnvironment()
-		env.Set("self", &object.Self{RubyObject: &object.Object{}, Name: "main"})
-		input := `a = "foo"
-def a.truth
-	42
-end
-`
-
-		_, err := testEval(input, env)
-		checkError(t, err)
-
-		a, ok := env.Get("a")
-		if !ok {
-			t.Logf("Expected env to have 'a'")
-			t.FailNow()
-		}
-
-		method, ok := a.Class().Methods().Get("truth")
-		if !ok {
-			t.Logf("Expected function to be added to 'a'")
-			t.Fail()
-		}
-		fn, ok := method.(*object.Function)
-		if !ok {
-			t.Logf("method is not %T, got=%T (%+v)", fn, method, method)
-			t.Fail()
-		}
-	})
-	t.Run("methods with self in main", func(t *testing.T) {
-		env := object.NewEnvironment()
-		env.Set("self", &object.Self{RubyObject: &object.Object{}, Name: "main"})
-		input := `
-def self.truth
-	42
-end
-`
-
-		_, err := testEval(input, env)
-		checkError(t, err)
-
-		self, _ := env.Get("self")
-
-		method, ok := self.Class().Methods().Get("truth")
-		if !ok {
-			t.Logf("Expected function to be added to 'main'")
-			t.Fail()
-		}
-		fn, ok := method.(*object.Function)
-		if !ok {
-			t.Logf("method is not %T, got=%T (%+v)", fn, method, method)
-			t.Fail()
-		}
-	})
 }
 
 func TestFunctionApplication(t *testing.T) {
