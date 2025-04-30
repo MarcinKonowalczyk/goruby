@@ -510,18 +510,23 @@ func (p *parser) parseComment() ast.Statement {
 // LAMBDA          : "->" "(" CALL_ARGS ")" "{" COMPSTMT "}"
 //                 | "->" "{" COMPSTMT "}";
 
-const _LAMBDA_NAME_PREFIX = "__lambda_"
 const _LAMBDA_NAME_CHARSET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 var _LAMBDA_NAME_RAND = rand.New(rand.NewSource(42))
 
-func random_lambdaName() string {
+func newAnonymousName(prefix string) string {
 	const length = 8
 	charset := []byte(_LAMBDA_NAME_CHARSET)
 	_LAMBDA_NAME_RAND.Shuffle(len(charset), func(i, j int) {
 		charset[i], charset[j] = charset[j], charset[i]
 	})
-	return _LAMBDA_NAME_PREFIX + string(charset[:length])
+	if !strings.HasPrefix(prefix, "__") {
+		prefix = "__" + prefix
+	}
+	if !strings.HasSuffix(prefix, "_") {
+		prefix = prefix + "_"
+	}
+	return prefix + string(charset[:length])
 }
 
 func (p *parser) parseLambdaLiteral() ast.Expression {
@@ -529,7 +534,7 @@ func (p *parser) parseLambdaLiteral() ast.Expression {
 		defer un(trace(p, "parseLambdaLiteral"))
 	}
 	proc := &ast.FunctionLiteral{
-		Name: &ast.Identifier{Constant: false, Value: random_lambdaName()},
+		Name: &ast.Identifier{Constant: false, Value: newAnonymousName("lambda")},
 	}
 	if p.peekTokenIs(token.LPAREN) {
 		proc.Parameters = p.parseFunctionParameters(token.LPAREN, token.RPAREN)
@@ -842,11 +847,13 @@ func (p *parser) parseKeyValue() (ast.Expression, ast.Expression, bool) {
 	return key, val, true
 }
 
-func (p *parser) parseBlock() *ast.BlockExpression {
+func (p *parser) parseBlock() *ast.FunctionLiteral {
 	if p.trace {
 		defer un(trace(p, "parseBlock"))
 	}
-	block := &ast.BlockExpression{}
+	block := &ast.FunctionLiteral{
+		Name: &ast.Identifier{Constant: false, Value: newAnonymousName("block")},
+	}
 	if p.peekTokenIs(token.PIPE) {
 		block.Parameters = p.parseFunctionParameters(token.PIPE, token.PIPE)
 	}

@@ -103,13 +103,19 @@ func arrayFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewArgumentError("find_all requires a block")
 	}
 	block := args[0]
-	proc, ok := block.(*Proc)
+	proc, ok := block.(*Symbol)
 	if !ok {
 		return nil, NewArgumentError("find_all requires a block")
 	}
+	self, _ := context.Env().Get("self")
+	self_class := self.Class()
+	fn, ok := self_class.GetMethod(proc.Value)
+	if !ok {
+		return nil, NewNoMethodError(self, proc.Value)
+	}
 	result := NewArray()
 	for _, elem := range array.Elements {
-		ret, err := proc.Call(context, elem)
+		ret, err := fn.Call(context, elem)
 		if err != nil {
 			return nil, err
 		}
@@ -164,13 +170,19 @@ func arrayMap(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewArgumentError("map requires a block")
 	}
 	block := args[0]
-	proc, ok := block.(*Proc)
+	proc, ok := block.(*Symbol)
 	if !ok {
 		return nil, NewArgumentError("map requires a block")
 	}
+	self, _ := context.Env().Get("self")
+	self_class := self.Class()
+	fn, ok := self_class.GetMethod(proc.Value)
+	if !ok {
+		return nil, NewNoMethodError(self, proc.Value)
+	}
 	result := NewArray()
 	for _, elem := range array.Elements {
-		ret, err := proc.Call(context, elem)
+		ret, err := fn.Call(context, elem)
 		if err != nil {
 			return nil, err
 		}
@@ -185,12 +197,18 @@ func arrayAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewArgumentError("all? requires a block")
 	}
 	block := args[0]
-	proc, ok := block.(*Proc)
+	proc, ok := block.(*Symbol)
 	if !ok {
 		return nil, NewArgumentError("all? requires a block")
 	}
+	self, _ := context.Env().Get("self")
+	self_class := self.Class()
+	fn, ok := self_class.GetMethod(proc.Value)
+	if !ok {
+		return nil, NewNoMethodError(self, proc.Value)
+	}
 	for _, elem := range array.Elements {
-		ret, err := proc.Call(context, elem)
+		ret, err := fn.Call(context, elem)
 		if err != nil {
 			return nil, err
 		}
@@ -265,12 +283,18 @@ func arrayEach(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewArgumentError("map requires a block")
 	}
 	block := args[0]
-	proc, ok := block.(*Proc)
+	proc, ok := block.(*Symbol)
 	if !ok {
 		return nil, NewArgumentError("map requires a block")
 	}
+	self, _ := context.Env().Get("self")
+	self_class := self.Class()
+	fn, ok := self_class.GetMethod(proc.Value)
+	if !ok {
+		return nil, NewNoMethodError(self, proc.Value)
+	}
 	for _, elem := range array.Elements {
-		_, err := proc.Call(context, elem)
+		_, err := fn.Call(context, elem)
 		if err != nil {
 			return nil, err
 		}
@@ -284,13 +308,19 @@ func arrayReject(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewArgumentError("map requires a block")
 	}
 	block := args[0]
-	proc, ok := block.(*Proc)
+	proc, ok := block.(*Symbol)
 	if !ok {
 		return nil, NewArgumentError("map requires a block")
 	}
+	self, _ := context.Env().Get("self")
+	self_class := self.Class()
+	fn, ok := self_class.GetMethod(proc.Value)
+	if !ok {
+		return nil, NewNoMethodError(self, proc.Value)
+	}
 	result := NewArray()
 	for _, elem := range array.Elements {
-		ret, err := proc.Call(context, elem)
+		ret, err := fn.Call(context, elem)
 		if err != nil {
 			return nil, err
 		}

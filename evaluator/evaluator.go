@@ -142,7 +142,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			Body:       node.Body,
 		}
 		object.AddMethod(context, node.Name.Value, function)
-		// fmt.Println("function", node.Name.Value)
 		return &object.Symbol{Value: node.Name.Value}, nil
 
 	// case *ast.ProcedureLiteral:
@@ -162,23 +161,23 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 	// 		ArgumentCountMandatory: true,
 	// 	}, nil
 
-	case *ast.BlockExpression:
-		node_params := node.Parameters
-		body := node.Body
-		params := make([]*object.FunctionParameter, len(node_params))
-		for i, param := range node_params {
-			def, err := Eval(param.Default, env)
-			if err != nil {
-				return nil, errors.WithMessage(err, "eval function literal param")
-			}
-			params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def}
-		}
-		block := &object.Proc{
-			Parameters: params,
-			Body:       body,
-			Env:        env,
-		}
-		return block, nil
+	// case *ast.BlockExpression:
+	// 	node_params := node.Parameters
+	// 	body := node.Body
+	// 	params := make([]*object.FunctionParameter, len(node_params))
+	// 	for i, param := range node_params {
+	// 		def, err := Eval(param.Default, env)
+	// 		if err != nil {
+	// 			return nil, errors.WithMessage(err, "eval function literal param")
+	// 		}
+	// 		params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def}
+	// 	}
+	// 	block := &object.Proc{
+	// 		Parameters: params,
+	// 		Body:       body,
+	// 		Env:        env,
+	// 	}
+	// 	return block, nil
 	case *ast.ArrayLiteral:
 		elements, err := evalArrayElements(node.Elements, env)
 		if err != nil {

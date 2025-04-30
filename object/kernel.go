@@ -290,14 +290,18 @@ func kernelBlockGiven(context CallContext, args ...RubyObject) (RubyObject, erro
 }
 
 func kernelTap(context CallContext, args ...RubyObject) (RubyObject, error) {
-	block, remainingArgs, ok := extractBlockFromArgs(args)
+	block := args[0]
+	proc, ok := block.(*Symbol)
 	if !ok {
-		return nil, NewNoBlockGivenLocalJumpError()
+		return nil, NewArgumentError("map requires a block")
 	}
-	if len(remainingArgs) != 0 {
-		return nil, NewWrongNumberOfArgumentsError(0, 1)
+	self, _ := context.Env().Get("self")
+	self_class := self.Class()
+	fn, ok := self_class.GetMethod(proc.Value)
+	if !ok {
+		return nil, NewNoMethodError(self, proc.Value)
 	}
-	_, err := block.Call(context, context.Receiver())
+	_, err := fn.Call(context, context.Receiver())
 	if err != nil {
 		return nil, err
 	}

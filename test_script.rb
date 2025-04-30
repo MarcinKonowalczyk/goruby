@@ -263,25 +263,32 @@ puts("a:", a)
 puts("b:", b)
 
 
-$ops = {
-    "+" => -> (a, b) { a + b },
-    "*" => -> (a, b) { a * b },
-    "-" => -> (a, b) { a - b },
-    "/" => -> (a, b) { 1.0 * a / b },
-    "^" => -> (a, b) { a ** b },
-    "=" => -> (a, b) { (a == b).to_i },
-    "<=>" => -> (a, b) { a <=> b },
-    "out" => -> (*a) { $outted = true; a.each { |e| print e }; },
-    "chr" => -> (a) { a.to_i.chr },
-    "arg" => -> (*a) { a.size == 1 ? ARGV[a[0]] : a[0][a[1]] },
-    "#" => -> (a) { str_to_val a },
-    "\"" => -> (a) { val_to_str a },
-    "" => -> (*a) { unwrap a },
-    "!" => -> (a) { falsey(a).to_i },
-    "[" => -> (a, b) { a },
-    "]" => -> (a, b) { b },
-}
+# $ops = {
+#     "+" => -> (a, b) { a + b },
+#     "*" => -> (a, b) { a * b },
+#     "-" => -> (a, b) { a - b },
+#     "/" => -> (a, b) { 1.0 * a / b },
+#     "^" => -> (a, b) { a ** b },
+#     "=" => -> (a, b) { (a == b).to_i },
+#     "<=>" => -> (a, b) { a <=> b },
+#     "out" => -> (*a) { $outted = true; a.each { |e| print e }; },
+#     "chr" => -> (a) { a.to_i.chr },
+#     "arg" => -> (*a) { a.size == 1 ? ARGV[a[0]] : a[0][a[1]] },
+#     "#" => -> (a) { str_to_val a },
+#     "\"" => -> (a) { val_to_str a },
+#     "" => -> (*a) { unwrap a },
+#     "!" => -> (a) { falsey(a).to_i },
+#     "[" => -> (a, b) { a },
+#     "]" => -> (a, b) { b },
+# }
 
-args = [1, 2]
-print $ops["+"][*args]
-print $ops["out"][*args]
+# args = [1, 2]
+# print $ops["+"][*args]
+# print $ops["out"][*args]
+
+# puts
+# print [1, 2, 3].find_all { |e| e < 2 }
+
+x = []
+x.tap {|z|z.push(true)}
+print x

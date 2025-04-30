@@ -201,16 +201,19 @@ type Function struct {
 // String returns the function literal
 func (f *Function) String() string {
 	var out strings.Builder
-	params := []string{}
-	for _, p := range f.Parameters {
-		params = append(params, p.String())
+	out.WriteString("{")
+	if len(f.Parameters) != 0 {
+		args := []string{}
+		for _, a := range f.Parameters {
+			args = append(args, a.String())
+		}
+		out.WriteString("|")
+		out.WriteString(strings.Join(args, ", "))
+		out.WriteString("|")
 	}
-	out.WriteString("fn")
-	out.WriteString("(")
-	out.WriteString(strings.Join(params, ", "))
-	out.WriteString(") {\n")
+	out.WriteString("")
 	out.WriteString(f.Body.String())
-	out.WriteString("\n}")
+	out.WriteString("}")
 	return out.String()
 }
 
@@ -289,7 +292,7 @@ func (f *Function) populateParameters(args []RubyObject) (map[string]RubyObject,
 	return params, nil
 }
 
-func (f *Function) extendFunctionEnv(context *Self, params map[string]RubyObject, block *Proc) Environment {
+func (f *Function) extendFunctionEnv(context *Self, params map[string]RubyObject, block *Symbol) Environment {
 	// encapsulate the block within a new self, but with the same object
 	funcSelf := &Self{RubyObject: context.RubyObject, Name: context.Name, Block: block}
 	env := NewEnclosedEnvironment(f.Env)
@@ -311,9 +314,9 @@ func (f *Function) unwrapReturnValue(obj RubyObject) RubyObject {
 // the RubyObject and is just meant to indicate that the given object is
 // self in the given context.
 type Self struct {
-	RubyObject        // The encapsuled object acting as self
-	Block      *Proc  // the block given to the current execution binding
-	Name       string // The name of self in this context
+	RubyObject         // The encapsuled object acting as self
+	Block      *Symbol // the block given to the current execution binding
+	Name       string  // The name of self in this context
 }
 
 // Type returns SELF

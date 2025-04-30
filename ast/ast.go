@@ -525,20 +525,36 @@ func (fl *FunctionLiteral) expressionNode() {}
 
 func (fl *FunctionLiteral) String() string {
 	var out strings.Builder
-	params := []string{}
-	for _, p := range fl.Parameters {
-		params = append(params, p.String())
+	out.WriteString("{")
+	if len(fl.Parameters) != 0 {
+		args := []string{}
+		for _, a := range fl.Parameters {
+			args = append(args, a.String())
+		}
+		out.WriteString("|")
+		out.WriteString(strings.Join(args, ", "))
+		out.WriteString("|")
+		out.WriteString("\n")
 	}
-	out.WriteString("def ")
-	out.WriteString(fl.Name.String())
-	out.WriteString("(")
-	out.WriteString(strings.Join(params, ", "))
-	out.WriteString(") ")
-	if fl.Body != nil {
-		out.WriteString(fl.Body.String())
-	}
-	out.WriteString(" end")
+	out.WriteString(fl.Body.String())
+	out.WriteString("\n")
+	out.WriteString("}")
 	return out.String()
+	// var out strings.Builder
+	// params := []string{}
+	// for _, p := range fl.Parameters {
+	// 	params = append(params, p.String())
+	// }
+	// out.WriteString("def ")
+	// out.WriteString(fl.Name.String())
+	// out.WriteString("(")
+	// out.WriteString(strings.Join(params, ", "))
+	// out.WriteString(") ")
+	// if fl.Body != nil {
+	// 	out.WriteString(fl.Body.String())
+	// }
+	// out.WriteString(" end")
+	// return out.String()
 }
 
 var (
@@ -623,7 +639,7 @@ type ContextCallExpression struct {
 	Context   Expression       // The lefthandside expression
 	Function  *Identifier      // The function to call
 	Arguments []Expression     // The function arguments
-	Block     *BlockExpression // The function block
+	Block     *FunctionLiteral // The function block
 }
 
 func (ce *ContextCallExpression) node()           {}
@@ -656,38 +672,38 @@ var (
 )
 
 // A BlockExpression represents a Ruby block
-type BlockExpression struct {
-	Parameters []*FunctionParameter // the block parameters
-	Body       *BlockStatement      // the block body
-}
+// type BlockExpression struct {
+// 	Parameters []*FunctionParameter // the block parameters
+// 	Body       *BlockStatement      // the block body
+// }
 
-func (b *BlockExpression) node()           {}
-func (b *BlockExpression) expressionNode() {}
+// func (b *BlockExpression) node()           {}
+// func (b *BlockExpression) expressionNode() {}
 
-// String returns a string representation of the block statement
-func (b *BlockExpression) String() string {
-	var out strings.Builder
-	out.WriteString("{")
-	if len(b.Parameters) != 0 {
-		args := []string{}
-		for _, a := range b.Parameters {
-			args = append(args, a.String())
-		}
-		out.WriteString("|")
-		out.WriteString(strings.Join(args, ", "))
-		out.WriteString("|")
-		out.WriteString("\n")
-	}
-	out.WriteString(b.Body.String())
-	out.WriteString("\n")
-	out.WriteString("}")
-	return out.String()
-}
+// // String returns a string representation of the block statement
+// func (b *BlockExpression) String() string {
+// 	var out strings.Builder
+// 	out.WriteString("{")
+// 	if len(b.Parameters) != 0 {
+// 		args := []string{}
+// 		for _, a := range b.Parameters {
+// 			args = append(args, a.String())
+// 		}
+// 		out.WriteString("|")
+// 		out.WriteString(strings.Join(args, ", "))
+// 		out.WriteString("|")
+// 		out.WriteString("\n")
+// 	}
+// 	out.WriteString(b.Body.String())
+// 	out.WriteString("\n")
+// 	out.WriteString("}")
+// 	return out.String()
+// }
 
-var (
-	_ Node       = &BlockExpression{}
-	_ Expression = &BlockExpression{}
-)
+// var (
+// 	_ Node       = &BlockExpression{}
+// 	_ Expression = &BlockExpression{}
+// )
 
 // PrefixExpression represents a prefix operator
 type PrefixExpression struct {

@@ -785,7 +785,7 @@ func TestKernelBlockGiven(t *testing.T) {
 	t.Run("block present", func(t *testing.T) {
 		object := &Object{}
 		env := NewEnvironment()
-		block := &Proc{}
+		block := &Symbol{}
 		context := &callContext{
 			receiver: &Self{RubyObject: object, Block: block, Name: "foo"},
 			env:      env,
@@ -810,99 +810,6 @@ func TestKernelBlockGiven(t *testing.T) {
 		checkError(t, err, nil)
 
 		checkResult(t, result, FALSE)
-	})
-}
-
-func TestKernelTap(t *testing.T) {
-	t.Run("with block", func(t *testing.T) {
-		object := &Object{}
-		env := NewEnvironment()
-		eval := func(node ast.Node, env Environment) (RubyObject, error) {
-			return TRUE, nil
-		}
-		context := &callContext{
-			receiver: object,
-			env:      env,
-			eval:     eval,
-		}
-
-		block := &Proc{
-			Parameters: []*FunctionParameter{&FunctionParameter{Name: "o"}},
-			Body:       &ast.BlockStatement{Statements: []ast.Statement{}},
-			Env:        NewEnvironment(),
-		}
-
-		result, err := kernelTap(context, block)
-
-		checkError(t, err, nil)
-
-		checkResult(t, result, object)
-	})
-	t.Run("with args and block", func(t *testing.T) {
-		object := &Object{}
-		env := NewEnvironment()
-		eval := func(node ast.Node, env Environment) (RubyObject, error) {
-			return TRUE, nil
-		}
-		context := &callContext{
-			receiver: object,
-			env:      env,
-			eval:     eval,
-		}
-
-		block := &Proc{
-			Parameters: []*FunctionParameter{&FunctionParameter{Name: "o"}},
-			Body:       &ast.BlockStatement{Statements: []ast.Statement{}},
-			Env:        NewEnvironment(),
-		}
-
-		_, err := kernelTap(context, NIL, block)
-
-		expected := NewWrongNumberOfArgumentsError(0, 1)
-
-		checkError(t, err, expected)
-	})
-	t.Run("without block", func(t *testing.T) {
-		object := &Object{}
-		env := NewEnvironment()
-		eval := func(node ast.Node, env Environment) (RubyObject, error) {
-			return TRUE, nil
-		}
-		context := &callContext{
-			receiver: object,
-			env:      env,
-			eval:     eval,
-		}
-
-		_, err := kernelTap(context)
-
-		expectedError := NewNoBlockGivenLocalJumpError()
-
-		checkError(t, err, expectedError)
-	})
-	t.Run("with block error", func(t *testing.T) {
-		object := &Object{}
-		env := NewEnvironment()
-		eval := func(node ast.Node, env Environment) (RubyObject, error) {
-			return nil, NewException("An error")
-		}
-		context := &callContext{
-			receiver: object,
-			env:      env,
-			eval:     eval,
-		}
-
-		block := &Proc{
-			Parameters: []*FunctionParameter{},
-			Body:       &ast.BlockStatement{Statements: []ast.Statement{}},
-			Env:        NewEnvironment(),
-		}
-
-		_, err := kernelTap(context, block)
-
-		expected := NewException("An error")
-
-		checkError(t, err, expected)
 	})
 }
 

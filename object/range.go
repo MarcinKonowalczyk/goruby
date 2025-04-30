@@ -103,14 +103,20 @@ func rangeFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewArgumentError("find_all requires a block")
 	}
 	block := args[0]
-	proc, ok := block.(*Proc)
+	proc, ok := block.(*Symbol)
 	if !ok {
 		return nil, NewArgumentError("find_all requires a block")
+	}
+	self, _ := context.Env().Get("self")
+	self_class := self.Class()
+	fn, ok := self_class.GetMethod(proc.Value)
+	if !ok {
+		return nil, NewNoMethodError(self, proc.Value)
 	}
 	// evaluate the range
 	result := NewArray()
 	for _, elem := range rng.ToArray().Elements {
-		ret, err := proc.Call(context, elem)
+		ret, err := fn.Call(context, elem)
 		if err != nil {
 			return nil, err
 		}
@@ -137,12 +143,18 @@ func rangeAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewArgumentError("all? requires a block")
 	}
 	block := args[0]
-	proc, ok := block.(*Proc)
+	proc, ok := block.(*Symbol)
 	if !ok {
 		return nil, NewArgumentError("all? requires a block")
 	}
+	self, _ := context.Env().Get("self")
+	self_class := self.Class()
+	fn, ok := self_class.GetMethod(proc.Value)
+	if !ok {
+		return nil, NewNoMethodError(self, proc.Value)
+	}
 	for _, elem := range rng.ToArray().Elements {
-		ret, err := proc.Call(context, elem)
+		ret, err := fn.Call(context, elem)
 		if err != nil {
 			return nil, err
 		}
