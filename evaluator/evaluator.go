@@ -874,28 +874,12 @@ func objectArrayToIndex(index *object.Array, length int64) (int64, int64, bool, 
 	}
 	length_idx := length_index.Value
 
-	// if length_idx < 0 {
-	// 	fmt.Printf("length idx negative: %d\n", length_idx)
-	// 	// index from the end
-	// 	right_idx := length - (-length_idx + 1)
-	// 	length_idx = right_idx - left_idx
-	// 	fmt.Printf("length_idx: %d\n", length_idx)
-	// 	if length_idx < 0 {
-	// 		// slice out of bounds
-	// 		return 0, 0, true, nil
-	// 	}
-	// }
-
 	return left_idx, length_idx, false, nil
 }
 
 func objectRangeToIndex(index *object.Range, length int64) (int64, int64, bool, error) {
 	left := index.Left
 	right := index.Right
-
-	// if index.Inclusive {
-	// 	right = &object.Integer{Value: right.Value + 1}
-	// }
 
 	left_idx, out_of_bounds := objectIntegerToIndex(left, length)
 	if out_of_bounds {
@@ -909,8 +893,6 @@ func objectRangeToIndex(index *object.Range, length int64) (int64, int64, bool, 
 	if index.Inclusive {
 		right_idx++
 	}
-
-	// fmt.Printf("left_idx: %d right_idx: %d\n", left_idx, right_idx)
 
 	return left_idx, right_idx, false, nil
 }
