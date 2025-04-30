@@ -98,7 +98,6 @@ const (
 	RETURN
 	NIL
 	DO
-	YIELD
 	BEGIN
 	RESCUE
 	WHILE
@@ -218,7 +217,6 @@ var type_strings = [...]string{
 	RETURN:          "RETURN",
 	NIL:             "NIL",
 	DO:              "DO",
-	YIELD:           "YIELD",
 	BEGIN:           "BEGIN",
 	RESCUE:          "RESCUE",
 	WHILE:           "WHILE",
@@ -304,7 +302,6 @@ var type_reprs = [...]string{
 	RETURN:          "return",
 	NIL:             "nil",
 	DO:              "do",
-	YIELD:           "yield",  // to remove?
 	BEGIN:           "begin",  // to remove?
 	RESCUE:          "rescue", // to remove?
 	WHILE:           "while",  // to remove?

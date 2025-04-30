@@ -167,7 +167,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerPrefix(token.NIL, p.parseNilLiteral)
 	p.registerPrefix(token.LBRACE, p.parseHash)
 	p.registerPrefix(token.DO, p.parseBlock)
-	p.registerPrefix(token.YIELD, p.parseYield)
 	p.registerPrefix(token.GLOBAL, p.parseGlobal)
 	p.registerPrefix(token.KEYWORD__FILE__, p.parseKeyword__FILE__)
 	p.registerPrefix(token.BEGIN, p.parseExceptionHandlingBlock)
@@ -741,22 +740,6 @@ func (p *parser) parseKeyword__FILE__() ast.Expression {
 		Filename: p.file.Name(),
 	}
 	return file
-}
-
-func (p *parser) parseYield() ast.Expression {
-	if p.trace {
-		defer un(trace(p, "parseYield"))
-	}
-	yield := &ast.YieldExpression{}
-	p.nextToken()
-	if p.currentTokenIs(token.LPAREN) {
-		p.nextToken()
-		yield.Arguments = p.parseCallArguments(token.RPAREN)
-		p.nextToken()
-		return yield
-	}
-	yield.Arguments = p.parseCallArguments(token.SEMICOLON, token.NEWLINE)
-	return yield
 }
 
 var integerLiteralReplacer = strings.NewReplacer("_", "")

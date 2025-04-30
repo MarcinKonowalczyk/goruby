@@ -334,18 +334,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		}
 		callContext := &callContext{object.NewCallContext(env, context)}
 		return object.Send(callContext, node.Function.Value, args...)
-	case *ast.YieldExpression:
-		selfObject, _ := env.Get("self")
-		self := selfObject.(*object.Self)
-		if self.Block == nil {
-			return nil, errors.WithStack(object.NewNoBlockGivenLocalJumpError())
-		}
-		args, err := evalExpressions(node.Arguments, env)
-		if err != nil {
-			return nil, errors.WithMessage(err, "eval yield arguments")
-		}
-		callContext := &callContext{object.NewCallContext(env, self)}
-		return self.Block.Call(callContext, args...)
 	case *ast.IndexExpression:
 		left, err := Eval(node.Left, env)
 		if err != nil {

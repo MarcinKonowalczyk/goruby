@@ -249,33 +249,6 @@ var (
 	_ Expression = &MultiAssignment{}
 )
 
-// YieldExpression represents self in the current context in the program
-type YieldExpression struct {
-	Arguments []Expression // The arguments to yield
-}
-
-func (y *YieldExpression) node()           {}
-func (y *YieldExpression) expressionNode() {}
-
-func (y *YieldExpression) String() string {
-	var out strings.Builder
-	out.WriteString("yield")
-	if len(y.Arguments) != 0 {
-		args := []string{}
-		for _, a := range y.Arguments {
-			args = append(args, a.String())
-		}
-		out.WriteString(" ")
-		out.WriteString(strings.Join(args, ", "))
-	}
-	return out.String()
-}
-
-var (
-	_ Node       = &YieldExpression{}
-	_ Expression = &YieldExpression{}
-)
-
 // Keyword__FILE__ represents __FILE__ in the AST
 type Keyword__FILE__ struct {
 	Filename string

@@ -111,7 +111,6 @@ func TestTypeSting(t *testing.T) {
 		{tk: RETURN, str: "RETURN", repr: "return"},
 		{tk: NIL, str: "NIL", repr: "nil"},
 		{tk: DO, str: "DO", repr: "do"},
-		{tk: YIELD, str: "YIELD", repr: "yield"},
 		{tk: BEGIN, str: "BEGIN", repr: "begin"},
 		{tk: RESCUE, str: "RESCUE", repr: "rescue"},
 		{tk: WHILE, str: "WHILE", repr: "while"},

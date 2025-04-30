@@ -1006,66 +1006,6 @@ func TestKeyword__FILE__(t *testing.T) {
 	})
 }
 
-func TestYieldExpression(t *testing.T) {
-	tests := []struct {
-		input         string
-		expectedIdent string
-		expectedArgs  []string
-	}{
-		{
-			input:        "yield;",
-			expectedArgs: []string{},
-		},
-		{
-			input:        "yield 1, 2 + 3;",
-			expectedArgs: []string{"1", "(2 + 3)"},
-		},
-		{
-			input:        "yield(1, 2 + 3);",
-			expectedArgs: []string{"1", "(2 + 3)"},
-		},
-	}
-
-	for _, tt := range tests {
-		program, err := parseSource(tt.input)
-		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program has not enough statements. got=%d",
-				len(program.Statements),
-			)
-		}
-		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf(
-				"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-				program.Statements[0],
-			)
-		}
-
-		yield, ok := stmt.Expression.(*ast.YieldExpression)
-		if !ok {
-			t.Fatalf("expression not *ast.YieldExpression. got=%T", stmt.Expression)
-		}
-
-		if len(yield.Arguments) != len(tt.expectedArgs) {
-			t.Logf("Expected %d arguments, got %d", len(tt.expectedArgs), len(yield.Arguments))
-			t.Fail()
-		}
-
-		actualArgs := make([]string, len(yield.Arguments))
-		for i, arg := range yield.Arguments {
-			actualArgs[i] = arg.String()
-		}
-
-		if !reflect.DeepEqual(tt.expectedArgs, actualArgs) {
-			t.Logf("Expected arguments to equal\n%v\n\tgot\n%v\n", tt.expectedArgs, actualArgs)
-			t.Fail()
-		}
-	}
-}
-
 func TestIntegerLiteralExpression(t *testing.T) {
 	input := "5;"
 
@@ -1716,8 +1656,6 @@ func TestConditionalExpression(t *testing.T) {
 			end`, "x", infix.LT, "y", "x = Object(x)"},
 			{"x 3 if x < y", "x", infix.LT, "y", "x(3)"},
 			{"x.add 3 if x < y", "x", infix.LT, "y", "x.add(3)"},
-			{"yield 3 if x < y", "x", infix.LT, "y", "yield 3"},
-			{"yield self if x < y", "x", infix.LT, "y", "yield self"},
 			{`unless x < y
 			x
 			end`, "x", infix.LT, "y", "x"},
@@ -1739,8 +1677,6 @@ func TestConditionalExpression(t *testing.T) {
 			{"x = 3 unless x < y", "x", infix.LT, "y", "x = 3"},
 			{"x 3 unless x < y", "x", infix.LT, "y", "x(3)"},
 			{"x.add 3 unless x < y", "x", infix.LT, "y", "x.add(3)"},
-			{"yield 3 unless x < y", "x", infix.LT, "y", "yield 3"},
-			{"yield self unless x < y", "x", infix.LT, "y", "yield self"},
 		}
 
 		for _, tt := range tests {

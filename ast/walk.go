@@ -210,9 +210,6 @@ func Walk(v Visitor, node Node) {
 		// TODO: examine why it is not working
 		// Walk(v, n.Block)
 
-	case *YieldExpression:
-		walkExprList(v, n.Arguments)
-
 	case *PrefixExpression:
 		Walk(v, n.Right)
 

@@ -506,7 +506,7 @@ func TestLex(t *testing.T) {
 				NL,
 				expect("NIL", "nil"),
 				NL,
-				expect("YIELD", "yield"),
+				expect("IDENT", "yield"),
 			},
 		},
 		{
