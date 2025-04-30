@@ -277,21 +277,6 @@ var (
 	_ Expression = &Nil{}
 )
 
-// Boolean represents a boolean in the AST
-type Boolean struct {
-	Value bool
-}
-
-func (b *Boolean) node()           {}
-func (b *Boolean) expressionNode() {}
-
-func (b *Boolean) String() string { return fmt.Sprintf("%t", b.Value) }
-
-var (
-	_ Node       = &Boolean{}
-	_ Expression = &Boolean{}
-)
-
 // StringLiteral represents a double quoted string in the AST
 type StringLiteral struct {
 	Value string
@@ -324,13 +309,13 @@ var (
 
 // SymbolLiteral represents a symbol within the AST
 type SymbolLiteral struct {
-	Value Expression
+	Value string
 }
 
 func (s *SymbolLiteral) node()           {}
 func (s *SymbolLiteral) expressionNode() {}
 
-func (s *SymbolLiteral) String() string { return ":" + s.Value.String() }
+func (s *SymbolLiteral) String() string { return ":" + s.Value }
 
 var (
 	_ Node       = &SymbolLiteral{}

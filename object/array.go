@@ -120,16 +120,13 @@ func arrayFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 			return nil, err
 		}
 		if ret == nil {
-			return nil, NewArgumentError("find_all requires a block to return a boolean")
+			return nil, NewArgumentError("find_all requires a block to return a boolean, not nil")
 		}
-		if ret.Type() != BOOLEAN_OBJ {
-			return nil, NewArgumentError("find_all requires a block to return a boolean")
-		}
-		boolean, ok := ret.(*Boolean)
+		val, ok := SymbolToBool(ret)
 		if !ok {
-			return nil, NewArgumentError("find_all requires a block to return a boolean")
+			return nil, NewArgumentError("find_all requires a block to return a boolean, not %s", ret.Inspect())
 		}
-		if boolean.Value {
+		if val {
 			result.Elements = append(result.Elements, elem)
 		}
 	}
@@ -212,14 +209,11 @@ func arrayAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 		if err != nil {
 			return nil, err
 		}
-		if ret.Type() != BOOLEAN_OBJ {
-			return nil, NewArgumentError("all? requires a block to return a boolean")
-		}
-		boolean, ok := ret.(*Boolean)
+		val, ok := SymbolToBool(ret)
 		if !ok {
 			return nil, NewArgumentError("all? requires a block to return a boolean")
 		}
-		if !boolean.Value {
+		if !val {
 			return FALSE, nil
 		}
 	}
@@ -269,8 +263,11 @@ func arrayInclude(context CallContext, args ...RubyObject) (RubyObject, error) {
 			continue
 			// return nil, err
 		}
-		boolean := ret.(*Boolean)
-		if boolean.Value {
+		val, ok := SymbolToBool(ret)
+		if !ok {
+			return nil, NewArgumentError("include? requires a block to return a boolean")
+		}
+		if val {
 			return TRUE, nil
 		}
 	}
@@ -327,14 +324,11 @@ func arrayReject(context CallContext, args ...RubyObject) (RubyObject, error) {
 		if ret == nil {
 			return nil, NewArgumentError("map requires a block to return a boolean")
 		}
-		if ret.Type() != BOOLEAN_OBJ {
-			return nil, NewArgumentError("map requires a block to return a boolean")
-		}
-		boolean, ok := ret.(*Boolean)
+		val, ok := SymbolToBool(ret)
 		if !ok {
 			return nil, NewArgumentError("map requires a block to return a boolean")
 		}
-		if !boolean.Value {
+		if !val {
 			result.Elements = append(result.Elements, elem)
 		}
 	}
@@ -369,8 +363,11 @@ func arrayMinus(context CallContext, args ...RubyObject) (RubyObject, error) {
 			if err != nil {
 				return nil, err
 			}
-			boolean := ret.(*Boolean)
-			if boolean.Value {
+			val, ok := SymbolToBool(ret)
+			if !ok {
+				return nil, NewArgumentError("array minus requires a block to return a boolean")
+			}
+			if val {
 				include = true
 				break
 			}

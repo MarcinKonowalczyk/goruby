@@ -173,27 +173,27 @@ func TestErrorHandling(t *testing.T) {
 	}{
 		{
 			"5 + true;",
-			"TypeError: Integer can't be coerced into Boolean",
+			"TypeError: Integer can't be coerced into Symbol",
 		},
 		{
 			"5 + true; 5;",
-			"TypeError: Integer can't be coerced into Boolean",
+			"TypeError: Integer can't be coerced into Symbol",
 		},
 		{
 			"-true",
-			"Exception: unknown operator: -BOOLEAN",
+			"Exception: unknown operator: -SYMBOL",
 		},
 		{
 			"true + false;",
-			"NoMethodError: undefined method `+' for true:TrueClass",
+			"NoMethodError: undefined method `+' for :true:Symbol",
 		},
 		{
 			"true + false + true + false;",
-			"NoMethodError: undefined method `+' for true:TrueClass",
+			"NoMethodError: undefined method `+' for :true:Symbol",
 		},
 		{
 			"5; true + false; 5",
-			"NoMethodError: undefined method `+' for true:TrueClass",
+			"NoMethodError: undefined method `+' for :true:Symbol",
 		},
 		{
 			`"Hello" - "World"`,
@@ -201,11 +201,11 @@ func TestErrorHandling(t *testing.T) {
 		},
 		{
 			"if (10 > 1); true + false; end",
-			"NoMethodError: undefined method `+' for true:TrueClass",
+			"NoMethodError: undefined method `+' for :true:Symbol",
 		},
 		{
 			"if (10 > 1); true + false; end",
-			"NoMethodError: undefined method `+' for true:TrueClass",
+			"NoMethodError: undefined method `+' for :true:Symbol",
 		},
 		{
 			`
@@ -216,7 +216,7 @@ if (10 > 1)
 	return 1;
 end
 `,
-			"NoMethodError: undefined method `+' for true:TrueClass",
+			"NoMethodError: undefined method `+' for :true:Symbol",
 		},
 		{
 			"foobar",
@@ -845,11 +845,11 @@ func TestHashLiteral(t *testing.T) {
 	}
 
 	expected := map[string]object.RubyObject{
-		"foo":  &object.Integer{Value: 42},
-		":bar": &object.Integer{Value: 2},
-		"true": object.FALSE,
-		"nil":  object.TRUE,
-		"2":    &object.Integer{Value: 2},
+		"foo":   &object.Integer{Value: 42},
+		":true": object.FALSE,
+		":bar":  &object.Integer{Value: 2},
+		"nil":   object.TRUE,
+		"2":     &object.Integer{Value: 2},
 	}
 
 	actual := make(map[string]object.RubyObject)
@@ -1028,7 +1028,7 @@ func testObject(t *testing.T, exp object.RubyObject, expected interface{}) bool 
 
 func testBooleanObject(t *testing.T, obj object.RubyObject, expected bool) bool {
 	t.Helper()
-	result, ok := obj.(*object.Boolean)
+	result, ok := object.SymbolToBool(obj)
 	if !ok {
 		t.Errorf(
 			"object is not Boolean. got=%T (%+v)",
@@ -1037,10 +1037,10 @@ func testBooleanObject(t *testing.T, obj object.RubyObject, expected bool) bool 
 		)
 		return false
 	}
-	if result.Value != expected {
+	if result != expected {
 		t.Errorf(
 			"object has wrong value. got=%v, want=%v",
-			result.Value,
+			result,
 			expected,
 		)
 		return false

@@ -9,13 +9,13 @@ func TestNilIsNil(t *testing.T) {
 
 	checkError(t, err, nil)
 
-	boolean, ok := result.(*Boolean)
+	boolean, ok := SymbolToBool(result)
 	if !ok {
 		t.Logf("Expected Boolean, got %T", result)
 		t.FailNow()
 	}
 
-	if boolean.Value != true {
+	if boolean != true {
 		t.Logf("Expected true, got false")
 		t.Fail()
 	}

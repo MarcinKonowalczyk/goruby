@@ -82,8 +82,8 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		return object.NewInteger(node.Value), nil
 	case (*ast.FloatLiteral):
 		return object.NewFloat(node.Value), nil
-	case (*ast.Boolean):
-		return nativeBoolToBooleanObject(node.Value), nil
+	// case (*ast.Boolean):
+	// 	return nativeBoolToBooleanObject(node.Value), nil
 	case (*ast.Nil):
 		return object.NIL, nil
 	case (*ast.Keyword__FILE__):
@@ -105,26 +105,12 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		}
 		return &object.String{Value: value}, nil
 	case *ast.SymbolLiteral:
-		switch value := node.Value.(type) {
-		case *ast.Identifier:
-			return &object.Symbol{Value: value.Value}, nil
-		case *ast.StringLiteral:
-			my_debug_panic_("case *ast.StringLiteral:")
-			str, err := Eval(value, env)
-			if err != nil {
-				return nil, errors.WithMessage(err, "eval symbol literal string")
-			}
-			if str, ok := str.(*object.String); ok {
-				return &object.Symbol{Value: str.Value}, nil
-			}
-			panic(errors.WithStack(
-				fmt.Errorf("error while parsing SymbolLiteral: expected *object.String, got %T", str),
-			))
-		default:
-			my_debug_panic_("case default: (1)")
-			return nil, errors.WithStack(
-				object.NewSyntaxError(fmt.Errorf("malformed symbol AST: %T", value)),
-			)
+		if node.Value == "true" {
+			return object.TRUE, nil
+		} else if node.Value == "false" {
+			return object.FALSE, nil
+		} else {
+			return &object.Symbol{Value: node.Value}, nil
 		}
 	case *ast.FunctionLiteral:
 		context, _ := env.Get("self")
@@ -1037,8 +1023,15 @@ func isTruthy(obj object.RubyObject) bool {
 		return false
 	default:
 		switch obj := obj.(type) {
-		case *object.Boolean:
-			return obj.Value
+		case *object.Symbol:
+			val, ok := object.SymbolToBool(obj)
+			if ok {
+				// Special boolean symbols are their respective values
+				return val
+			} else {
+				// Other symbols are truthy
+				return true
+			}
 		case *object.Integer:
 			return obj.Value != 0
 		case *object.Float:

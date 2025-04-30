@@ -737,13 +737,12 @@ func (p *parser) parseSymbolLiteral() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseSymbolLiteral"))
 	}
-	symbol := &ast.SymbolLiteral{}
 	if !p.acceptOneOf(token.IDENT, token.STRING, token.CONST) {
 		return nil
 	}
-	val := p.parseExpression(precHighest)
-	symbol.Value = val
-	return symbol
+	return &ast.SymbolLiteral{
+		Value: p.curToken.Literal,
+	}
 }
 
 func (p *parser) parseArrayLiteral() ast.Expression {
@@ -761,7 +760,14 @@ func (p *parser) parseBoolean() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseBoolean"))
 	}
-	return &ast.Boolean{Value: p.currentTokenIs(token.TRUE)}
+	if p.currentTokenIs(token.FALSE) {
+		return &ast.SymbolLiteral{Value: "false"}
+	} else if p.currentTokenIs(token.TRUE) {
+		return &ast.SymbolLiteral{Value: "true"}
+	} else {
+		p.Error(p.curToken.Type, "", token.TRUE, token.FALSE)
+		return nil
+	}
 }
 
 func (p *parser) consumeNewlineOrComment() {
@@ -1061,7 +1067,7 @@ func (p *parser) parseLoopExpression() ast.Expression {
 		loop.Block = p.parseBlockStatement(token.END)
 		p.nextToken()
 	} else if p.curToken.Type == token.LOOP {
-		loop.Condition = &ast.Boolean{Value: true}
+		loop.Condition = &ast.SymbolLiteral{Value: "true"}
 		if p.peekTokenIs(token.LBRACE) {
 			p.accept(token.LBRACE)
 			loop.Block = p.parseBlockStatement(token.RBRACE)

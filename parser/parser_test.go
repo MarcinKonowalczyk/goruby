@@ -305,7 +305,7 @@ func TestVariableExpression(t *testing.T) {
 		}{
 			{"x = 5;", "x", "5"},
 			{"x = 5_0;", "x", "50"},
-			{"y = true;", "y", "true"},
+			{"y = true;", "y", ":true"},
 			{"foobar = y;", "foobar", "y"},
 			{"foobar = (12 + 2 * bar) - x;", "foobar", "((12 + (2 * bar)) - x)"},
 		}
@@ -1225,19 +1225,19 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		},
 		{
 			"true | true",
-			"(true || true)",
+			"(:true || :true)",
 		},
 		{
 			"true & true",
-			"(true && true)",
+			"(:true && :true)",
 		},
 		{
 			"3 > 5 == false",
-			"((3 > 5) == false)",
+			"((3 > 5) == :false)",
 		},
 		{
 			"3 < 5 == true",
-			"((3 < 5) == true)",
+			"((3 < 5) == :true)",
 		},
 		{
 			"1 + (2 + 3) + 4",
@@ -1261,7 +1261,7 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		},
 		{
 			"!(true == true)",
-			"(!(true == true))",
+			"(!(:true == :true))",
 		},
 		{
 			"a + add(b * c) + d",
@@ -1403,10 +1403,10 @@ func TestBlockExpression(t *testing.T) {
 func TestBooleanExpression(t *testing.T) {
 	tests := []struct {
 		input           string
-		expectedBoolean bool
+		expectedBoolean string
 	}{
-		{"true;", true},
-		{"false;", false},
+		{"true;", ":true"},
+		{"false;", ":false"},
 	}
 
 	for _, tt := range tests {
@@ -1428,13 +1428,13 @@ func TestBooleanExpression(t *testing.T) {
 			)
 		}
 
-		boolean, ok := stmt.Expression.(*ast.Boolean)
+		boolean, ok := stmt.Expression.(*ast.SymbolLiteral)
 		if !ok {
 			t.Fatalf("exp not *ast.Boolean. got=%T", stmt.Expression)
 		}
-		if boolean.Value != tt.expectedBoolean {
+		if boolean.String() != tt.expectedBoolean {
 			t.Errorf(
-				"boolean.Value not %t. got=%t",
+				"boolean.Value not %s. got=%s",
 				tt.expectedBoolean,
 				boolean.Value)
 		}
@@ -3284,7 +3284,7 @@ func TestSymbolExpression(t *testing.T) {
 			t.Fatalf("exp not *ast.SymbolLiteral. got=%T", stmt.Expression)
 		}
 
-		if literal.Value.String() != tt.value {
+		if literal.Value != tt.value {
 			t.Errorf("literal.Value not %q. got=%q", tt.value, literal.Value)
 		}
 	}
@@ -3907,7 +3907,7 @@ func testSymbol(t *testing.T, exp ast.Expression, value string) bool {
 		return false
 	}
 
-	if symbol.Value.String() != value {
+	if symbol.Value != value {
 		t.Errorf("symbol.Value not %s. got=%s", value, symbol.Value)
 		return false
 	}
@@ -3945,14 +3945,20 @@ func testSplat(t *testing.T, exp ast.Expression, value ast.Expression) bool {
 
 func testBooleanLiteral(t *testing.T, exp ast.Expression, value bool) bool {
 	t.Helper()
-	bo, ok := exp.(*ast.Boolean)
+	bo, ok := exp.(*ast.SymbolLiteral)
 	if !ok {
-		t.Errorf("exp not *ast.Boolean. got=%T", exp)
+		t.Errorf("exp not *ast.SymbolLiteral. got=%T", exp)
 		return false
 	}
 
-	if bo.Value != value {
-		t.Errorf("bo.Value not %t. got=%t", value, bo.Value)
+	var expected string
+	if value {
+		expected = "true"
+	} else {
+		expected = "false"
+	}
+	if bo.Value != expected {
+		t.Errorf("bo.Value not %s. got=%s", expected, bo.Value)
 		return false
 	}
 

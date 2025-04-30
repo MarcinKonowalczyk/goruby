@@ -250,13 +250,13 @@ func TestKernelIsNil(t *testing.T) {
 
 	checkError(t, err, nil)
 
-	boolean, ok := result.(*Boolean)
+	boolean, ok := SymbolToBool(result)
 	if !ok {
 		t.Logf("Expected Boolean, got %T", result)
 		t.FailNow()
 	}
 
-	if boolean.Value != false {
+	if boolean != false {
 		t.Logf("Expected false, got true")
 		t.Fail()
 	}
@@ -337,13 +337,13 @@ func TestKernelRequire(t *testing.T) {
 			t.Fail()
 		}
 
-		boolean, ok := result.(*Boolean)
+		_, ok := SymbolToBool(result)
 		if !ok {
 			t.Logf("Expected Boolean, got %#v", result)
 			t.FailNow()
 		}
 
-		if boolean != TRUE {
+		if result != TRUE {
 			t.Logf("Expected return to equal TRUE, got FALSE")
 			t.Fail()
 		}
@@ -694,13 +694,13 @@ func TestKernelRequire(t *testing.T) {
 			t.Fail()
 		}
 
-		boolean, ok := result.(*Boolean)
+		_, ok := SymbolToBool(result)
 		if !ok {
 			t.Logf("Expected Boolean, got %#v", result)
 			t.FailNow()
 		}
 
-		if boolean != FALSE {
+		if result != FALSE {
 			t.Logf("Expected return to equal FALSE, got TRUE")
 			t.Fail()
 		}

@@ -26,7 +26,6 @@ const (
 	FLOAT_OBJ          Type = "FLOAT"
 	STRING_OBJ         Type = "STRING"
 	SYMBOL_OBJ         Type = "SYMBOL"
-	BOOLEAN_OBJ        Type = "BOOLEAN"
 	NIL_OBJ            Type = "NIL"
 	EXCEPTION_OBJ      Type = "EXCEPTION"
 	MODULE_OBJ         Type = "MODULE"

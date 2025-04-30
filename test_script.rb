@@ -292,3 +292,6 @@ puts("b:", b)
 x = []
 x.tap {|z|z.push(true)}
 print x
+
+a = :hello
+print(a)

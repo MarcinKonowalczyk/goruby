@@ -141,11 +141,9 @@ func moduleIncludedModules(context CallContext, args ...RubyObject) (RubyObject,
 func modulePublicInstanceMethods(context CallContext, args ...RubyObject) (RubyObject, error) {
 	showSuperClassInstanceMethods := true
 	if len(args) == 1 {
-		boolean, ok := args[0].(*Boolean)
-		if !ok {
-			boolean = TRUE.(*Boolean)
+		if val, ok := SymbolToBool(args[0]); ok {
+			showSuperClassInstanceMethods = val
 		}
-		showSuperClassInstanceMethods = boolean.Value
 	}
 	class := context.Receiver().(RubyClass)
 
@@ -155,11 +153,9 @@ func modulePublicInstanceMethods(context CallContext, args ...RubyObject) (RubyO
 func moduleProtectedInstanceMethods(context CallContext, args ...RubyObject) (RubyObject, error) {
 	showSuperClassInstanceMethods := true
 	if len(args) == 1 {
-		boolean, ok := args[0].(*Boolean)
-		if !ok {
-			boolean = TRUE.(*Boolean)
+		if val, ok := SymbolToBool(args[0]); ok {
+			showSuperClassInstanceMethods = val
 		}
-		showSuperClassInstanceMethods = boolean.Value
 	}
 	class := context.Receiver().(RubyClass)
 
@@ -169,11 +165,9 @@ func moduleProtectedInstanceMethods(context CallContext, args ...RubyObject) (Ru
 func modulePrivateInstanceMethods(context CallContext, args ...RubyObject) (RubyObject, error) {
 	showSuperClassInstanceMethods := true
 	if len(args) == 1 {
-		boolean, ok := args[0].(*Boolean)
-		if !ok {
-			boolean = TRUE.(*Boolean)
+		if val, ok := SymbolToBool(args[0]); ok {
+			showSuperClassInstanceMethods = val
 		}
-		showSuperClassInstanceMethods = boolean.Value
 	}
 	class := context.Receiver().(RubyClass)
 

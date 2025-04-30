@@ -123,14 +123,11 @@ func rangeFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 		if ret == nil {
 			return nil, NewArgumentError("find_all requires a block to return a boolean")
 		}
-		if ret.Type() != BOOLEAN_OBJ {
-			return nil, NewArgumentError("find_all requires a block to return a boolean")
-		}
-		boolean, ok := ret.(*Boolean)
+		val, ok := SymbolToBool(ret)
 		if !ok {
 			return nil, NewArgumentError("find_all requires a block to return a boolean")
 		}
-		if boolean.Value {
+		if val {
 			result.Elements = append(result.Elements, elem)
 		}
 	}
@@ -158,14 +155,11 @@ func rangeAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 		if err != nil {
 			return nil, err
 		}
-		if ret.Type() != BOOLEAN_OBJ {
-			return nil, NewArgumentError("all? requires a block to return a boolean")
-		}
-		boolean, ok := ret.(*Boolean)
+		val, ok := SymbolToBool(ret)
 		if !ok {
 			return nil, NewArgumentError("all? requires a block to return a boolean")
 		}
-		if !boolean.Value {
+		if !val {
 			return FALSE, nil
 		}
 	}
