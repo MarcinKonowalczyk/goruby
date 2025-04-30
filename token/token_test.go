@@ -79,6 +79,7 @@ func TestTypeSting(t *testing.T) {
 		{tk: COMMA, str: "COMMA", repr: ","},
 		{tk: SEMICOLON, str: "SEMICOLON", repr: ";"},
 		{tk: COMMENT, str: "COMMENT", repr: "# ..."},
+		{tk: CLASS, str: "CLASS", repr: "class"},
 		//
 		{tk: CAPTURE, str: "CAPTURE", repr: "&"},
 		{tk: DOT, str: "DOT", repr: "."},
@@ -99,7 +100,6 @@ func TestTypeSting(t *testing.T) {
 		{tk: POW, str: "POW", repr: "**"},
 		//
 		{tk: DEF, str: "DEF", repr: "def"},
-		{tk: SELF, str: "SELF", repr: "self"},
 		{tk: END, str: "END", repr: "end"},
 		{tk: IF, str: "IF", repr: "if"},
 		{tk: THEN, str: "THEN", repr: "then"},
@@ -110,8 +110,6 @@ func TestTypeSting(t *testing.T) {
 		{tk: FALSE, str: "FALSE", repr: "false"},
 		{tk: RETURN, str: "RETURN", repr: "return"},
 		{tk: NIL, str: "NIL", repr: "nil"},
-		{tk: MODULE, str: "MODULE", repr: "module"},
-		{tk: CLASS, str: "CLASS", repr: "class"},
 		{tk: DO, str: "DO", repr: "do"},
 		{tk: YIELD, str: "YIELD", repr: "yield"},
 		{tk: BEGIN, str: "BEGIN", repr: "begin"},

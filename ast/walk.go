@@ -155,7 +155,6 @@ func Walk(v Visitor, node Node) {
 		*SymbolLiteral,
 		*Boolean,
 		*Nil,
-		*Self,
 		*BlockCapture,
 		*Keyword__FILE__,
 		*Comment:
@@ -210,10 +209,6 @@ func Walk(v Visitor, node Node) {
 		walkExprList(v, n.Arguments)
 		// TODO: examine why it is not working
 		// Walk(v, n.Block)
-
-	case *ModuleExpression:
-		Walk(v, n.Name)
-		Walk(v, n.Body)
 
 	case *YieldExpression:
 		walkExprList(v, n.Arguments)

@@ -87,7 +87,6 @@ const (
 	// Keywords
 	keyword_beg
 	DEF
-	SELF
 	END
 	IF
 	THEN
@@ -98,7 +97,6 @@ const (
 	FALSE
 	RETURN
 	NIL
-	MODULE
 	DO
 	YIELD
 	BEGIN
@@ -186,6 +184,7 @@ var type_strings = [...]string{
 	COMMA:     "COMMA",
 	SEMICOLON: "SEMICOLON",
 	COMMENT:   "COMMENT",
+	CLASS:     "CLASS",
 
 	DOT:       "DOT",
 	DDOT:      "DDOT",
@@ -208,7 +207,6 @@ var type_strings = [...]string{
 	SYMBEG: "SYMBEG",
 
 	DEF:             "DEF",
-	SELF:            "SELF",
 	END:             "END",
 	UNLESS:          "UNLESS",
 	IF:              "IF",
@@ -219,8 +217,6 @@ var type_strings = [...]string{
 	FALSE:           "FALSE",
 	RETURN:          "RETURN",
 	NIL:             "NIL",
-	MODULE:          "MODULE",
-	CLASS:           "CLASS",
 	DO:              "DO",
 	YIELD:           "YIELD",
 	BEGIN:           "BEGIN",
@@ -274,6 +270,7 @@ var type_reprs = [...]string{
 	COMMA:     ",",
 	SEMICOLON: ";",
 	COMMENT:   "# ...",
+	CLASS:     "class",
 
 	DOT:       ".",
 	DDOT:      "..",
@@ -296,7 +293,6 @@ var type_reprs = [...]string{
 	SYMBEG: ":",
 
 	DEF:             "def",
-	SELF:            "self",
 	END:             "end",
 	UNLESS:          "unless",
 	IF:              "if",
@@ -307,13 +303,11 @@ var type_reprs = [...]string{
 	FALSE:           "false",
 	RETURN:          "return",
 	NIL:             "nil",
-	MODULE:          "module",
-	CLASS:           "class",
 	DO:              "do",
-	YIELD:           "yield",
-	BEGIN:           "begin",
-	RESCUE:          "rescue",
-	WHILE:           "while",
+	YIELD:           "yield",  // to remove?
+	BEGIN:           "begin",  // to remove?
+	RESCUE:          "rescue", // to remove?
+	WHILE:           "while",  // to remove?
 	LOOP:            "loop",
 	BREAK:           "break",
 	KEYWORD__FILE__: "__FILE__",

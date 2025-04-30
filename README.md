@@ -296,7 +296,7 @@ To run the command as one off run `go run main.go`.
 	- [ ] assigment methods
 	- [x] self defined classes
 	- [x] self defined classes with inheritance
-- [x] modules
+- [ ] modules
 - [x] object main
 - [x] comments '#'
 

@@ -82,9 +82,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		return nativeBoolToBooleanObject(node.Value), nil
 	case (*ast.Nil):
 		return object.NIL, nil
-	case (*ast.Self):
-		self, _ := env.Get("self")
-		return self, nil
 	case (*ast.Keyword__FILE__):
 		return &object.String{Value: node.Filename}, nil
 	case *ast.Identifier:
@@ -316,21 +313,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 				object.NewSyntaxError(fmt.Errorf("assignment not supported to %T", node.Left)),
 			)
 		}
-	case *ast.ModuleExpression:
-		module, ok := env.Get(node.Name.Value)
-		if !ok {
-			module = object.NewModule(node.Name.Value, env)
-		}
-		moduleEnv := module.(object.Environment)
-		moduleEnv.Set("self", &object.Self{RubyObject: module, Name: node.Name.Value})
-		bodyReturn, err := Eval(node.Body, moduleEnv)
-		if err != nil {
-			return nil, errors.WithMessage(err, "eval Module body")
-		}
-		selfObject, _ := moduleEnv.Get("self")
-		self := selfObject.(*object.Self)
-		env.Set(node.Name.Value, self.RubyObject)
-		return bodyReturn, nil
 	case *ast.ContextCallExpression:
 		context, err := Eval(node.Context, env)
 		if err != nil {

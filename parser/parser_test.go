@@ -13,7 +13,6 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/ast/infix"
 	p "github.com/MarcinKonowalczyk/goruby/parser"
-	"github.com/MarcinKonowalczyk/goruby/token"
 	"github.com/pkg/errors"
 )
 
@@ -949,32 +948,6 @@ func TestGlobalExpressionWithIndex(t *testing.T) {
 	}
 	if !testLiteralExpression(t, index.Index, 1) {
 		return
-	}
-}
-
-func TestSelfExpression(t *testing.T) {
-	input := "self;"
-
-	program, err := parseSource(input)
-	checkParserErrors(t, err)
-
-	if len(program.Statements) != 1 {
-		t.Fatalf(
-			"program has not enough statements. got=%d",
-			len(program.Statements),
-		)
-	}
-	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf(
-			"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-			program.Statements[0],
-		)
-	}
-
-	_, ok = stmt.Expression.(*ast.Self)
-	if !ok {
-		t.Fatalf("expression not *ast.Self. got=%T", stmt.Expression)
 	}
 }
 
@@ -3240,79 +3213,6 @@ func TestContextCallExpression(t *testing.T) {
 			t.Fatalf("wrong length of arguments. got=%d", len(exp.Arguments))
 		}
 	})
-	t.Run("context call on self with no args", func(t *testing.T) {
-		input := "self.add;"
-
-		program, err := parseSource(input)
-		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-				1, len(program.Statements))
-		}
-
-		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0])
-		}
-
-		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
-
-		if _, ok := exp.Context.(*ast.Self); !ok {
-			t.Logf("exp.Context is not ast.Self, got=%T", exp.Context)
-			t.Fail()
-		}
-
-		if !testIdentifier(t, exp.Function, "add") {
-			return
-		}
-
-		if len(exp.Arguments) != 0 {
-			t.Fatalf("wrong length of arguments. got=%d", len(exp.Arguments))
-		}
-	})
-	t.Run("context call on self with no dot", func(t *testing.T) {
-		input := "self add;"
-
-		_, err := parseSource(input)
-
-		if err == nil {
-			t.Logf("Expected parser error, got nil")
-			t.FailNow()
-		}
-
-		errs := err.Errors
-		cause := errors.Cause(errs[0])
-
-		unexpectErr, ok := cause.(*p.UnexpectedTokenError)
-		if !ok {
-			t.Logf("Expected err to be %T, got %T\n", unexpectErr, cause)
-			t.FailNow()
-		}
-
-		{
-			expected := []token.Type{token.NEWLINE, token.SEMICOLON, token.DOT, token.EOF}
-			actual := unexpectErr.ExpectedTokens
-			if !reflect.DeepEqual(expected, actual) {
-				t.Logf("Expected error to equal\n%+#v\n\tgot\n%+#v\n", expected, actual)
-				t.Fail()
-			}
-		}
-
-		{
-			expected := token.IDENT
-			actual := unexpectErr.ActualToken
-			if !reflect.DeepEqual(expected, actual) {
-				t.Logf("Expected error to equal\n%+#v\n\tgot\n%+#v\n", expected, actual)
-				t.Fail()
-			}
-		}
-	})
 	t.Run("context call on nonident with no dot", func(t *testing.T) {
 		input := "1 add;"
 
@@ -3939,22 +3839,6 @@ func TestParsingIndexExpressions(t *testing.T) {
 			}
 		})
 	})
-}
-
-func TestParsingModuleExpressions(t *testing.T) {
-	input := "module A\n3\nend\n"
-
-	program, err := parseSource(input)
-	checkParserErrors(t, err)
-
-	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf("stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
-	}
-	_, ok = stmt.Expression.(*ast.ModuleExpression)
-	if !ok {
-		t.Fatalf("exp not *ast.ModuleExpression. got=%T", stmt.Expression)
-	}
 }
 
 func TestParseHash(t *testing.T) {

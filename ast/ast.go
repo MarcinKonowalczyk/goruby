@@ -249,19 +249,6 @@ var (
 	_ Expression = &MultiAssignment{}
 )
 
-// Self represents self in the current context in the program
-type Self struct{}
-
-func (s *Self) node()           {}
-func (s *Self) expressionNode() {}
-
-func (s *Self) String() string { return "self" }
-
-var (
-	_ Node       = &Self{}
-	_ Expression = &Self{}
-)
-
 // YieldExpression represents self in the current context in the program
 type YieldExpression struct {
 	Arguments []Expression // The arguments to yield
@@ -832,32 +819,6 @@ func (b *BlockExpression) String() string {
 var (
 	_ Node       = &BlockExpression{}
 	_ Expression = &BlockExpression{}
-)
-
-// ModuleExpression represents a module definition
-type ModuleExpression struct {
-	Name *Identifier // The module name, will always be a const
-	Body *BlockStatement
-}
-
-func (m *ModuleExpression) node()           {}
-func (m *ModuleExpression) expressionNode() {}
-
-func (m *ModuleExpression) String() string {
-	var out strings.Builder
-	out.WriteString("module")
-	out.WriteString(" ")
-	out.WriteString(m.Name.String())
-	out.WriteString("\n")
-	out.WriteString(m.Body.String())
-	out.WriteString("\n")
-	out.WriteString("end")
-	return out.String()
-}
-
-var (
-	_ Node       = &ModuleExpression{}
-	_ Expression = &ModuleExpression{}
 )
 
 // PrefixExpression represents a prefix operator

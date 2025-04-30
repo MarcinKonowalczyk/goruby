@@ -78,7 +78,6 @@ var precedences = map[token.Type]int{
 	token.GLOBAL:     precCallArg,
 	token.INT:        precCallArg,
 	token.STRING:     precCallArg,
-	token.SELF:       precCallArg,
 	token.SLBRACKET:  precCallArg,
 	token.LBRACKET:   precIndex,
 	token.LBRACE:     precBlockBraces,
@@ -166,8 +165,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
 	p.registerPrefix(token.SLBRACKET, p.parseArrayLiteral)
 	p.registerPrefix(token.NIL, p.parseNilLiteral)
-	p.registerPrefix(token.SELF, p.parseSelf)
-	p.registerPrefix(token.MODULE, p.parseModule)
 	p.registerPrefix(token.LBRACE, p.parseHash)
 	p.registerPrefix(token.DO, p.parseBlock)
 	p.registerPrefix(token.YIELD, p.parseYield)
@@ -217,7 +214,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerInfix(token.STRING, p.parseCallArgument)
 	p.registerInfix(token.SYMBEG, p.parseCallArgument)
 	p.registerInfix(token.CAPTURE, p.parseCallArgument)
-	p.registerInfix(token.SELF, p.parseCallArgument)
 	p.registerInfix(token.LBRACE, p.parseCallBlock)
 	p.registerInfix(token.DO, p.parseCallBlock)
 	p.registerInfix(token.DOT, p.parseMethodCall)
@@ -737,21 +733,6 @@ func (p *parser) parseGlobal() ast.Expression {
 	return &ast.Global{Value: p.curToken.Literal}
 }
 
-func (p *parser) parseSelf() ast.Expression {
-	if p.trace {
-		defer un(trace(p, "parseSelf"))
-	}
-	self := &ast.Self{}
-	if p.peekTokenOneOf(token.IF, token.UNLESS) {
-		return self
-	}
-	if !p.peekTokenOneOf(token.NEWLINE, token.SEMICOLON, token.DOT, token.EOF) {
-		p.Error(p.peekToken.Type, "", token.NEWLINE, token.SEMICOLON, token.DOT, token.EOF)
-		return nil
-	}
-	return self
-}
-
 func (p *parser) parseKeyword__FILE__() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseKeyword__FILE__"))
@@ -1188,45 +1169,23 @@ func (p *parser) parseBreakStatement() *ast.BreakStatement {
 	return stmt
 }
 
-func (p *parser) parseModule() ast.Expression {
-	if p.trace {
-		defer un(trace(p, "parseModule"))
-	}
-	expr := &ast.ModuleExpression{}
-	if !p.accept(token.CONST) {
-		return nil
-	}
-	expr.Name = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
-
-	if !p.acceptOneOf(token.NEWLINE, token.SEMICOLON) {
-		return nil
-	}
-
-	expr.Body = p.parseBlockStatement()
-
-	if !p.accept(token.END) {
-		return nil
-	}
-	return expr
-}
-
 func (p *parser) parseFunctionLiteral() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseFunctionLiteral"))
 	}
 	lit := &ast.FunctionLiteral{}
 
-	if !p.peekTokenOneOf(token.IDENT, token.SELF, token.CONST) && !p.peekToken.Type.IsOperator() {
+	if !p.peekTokenOneOf(token.IDENT, token.CONST) && !p.peekToken.Type.IsOperator() {
 		p.Error(p.peekToken.Type, "", token.IDENT, token.CONST)
 		return nil
 	}
 
-	if p.peekTokenOneOf(token.IDENT, token.SELF, token.CONST) {
-		p.acceptOneOf(token.IDENT, token.SELF, token.CONST)
+	if p.peekTokenOneOf(token.IDENT, token.CONST) {
+		p.acceptOneOf(token.IDENT, token.CONST)
 		if p.peekTokenIs(token.DOT) {
 			lit.Receiver = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
 			p.accept(token.DOT)
-			if !p.peekTokenOneOf(token.IDENT, token.SELF, token.CONST) && !p.peekToken.Type.IsOperator() {
+			if !p.peekTokenOneOf(token.IDENT, token.CONST) && !p.peekToken.Type.IsOperator() {
 				p.Error(p.peekToken.Type, "", token.IDENT, token.CONST)
 				return nil
 			}
@@ -1458,10 +1417,6 @@ func (p *parser) parseContextCallExpression(context ast.Expression) ast.Expressi
 		defer un(trace(p, "parseContextCallExpression"))
 	}
 	contextCallExpression := &ast.ContextCallExpression{Context: context}
-	if _, ok := context.(*ast.Self); ok && !p.currentTokenOneOf(token.DOT) {
-		p.Error(p.curToken.Type, "", token.DOT)
-		return nil
-	}
 	if p.currentTokenOneOf(token.DOT) {
 		p.nextToken()
 	}
