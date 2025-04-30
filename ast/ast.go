@@ -860,39 +860,6 @@ var (
 	_ Expression = &ModuleExpression{}
 )
 
-// ClassExpression represents a module definition
-type ClassExpression struct {
-	Name       *Identifier // The class name, will always be a const
-	SuperClass *Identifier // The superclass, if any
-	Body       *BlockStatement
-}
-
-func (m *ClassExpression) node()           {}
-func (m *ClassExpression) expressionNode() {}
-
-func (m *ClassExpression) String() string {
-	var out strings.Builder
-	out.WriteString("class")
-	out.WriteString(" ")
-	out.WriteString(m.Name.String())
-	if m.SuperClass != nil {
-		out.WriteString(" ")
-		out.WriteString("<")
-		out.WriteString(" ")
-		out.WriteString(m.SuperClass.String())
-	}
-	out.WriteString("\n")
-	out.WriteString(m.Body.String())
-	out.WriteString("\n")
-	out.WriteString(" end")
-	return out.String()
-}
-
-var (
-	_ Node       = &ClassExpression{}
-	_ Expression = &ClassExpression{}
-)
-
 // PrefixExpression represents a prefix operator
 type PrefixExpression struct {
 	Operator string

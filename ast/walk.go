@@ -215,13 +215,6 @@ func Walk(v Visitor, node Node) {
 		Walk(v, n.Name)
 		Walk(v, n.Body)
 
-	case *ClassExpression:
-		Walk(v, n.Name)
-		if n.SuperClass != nil {
-			Walk(v, n.SuperClass)
-		}
-		Walk(v, n.Body)
-
 	case *YieldExpression:
 		walkExprList(v, n.Arguments)
 

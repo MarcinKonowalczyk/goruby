@@ -168,7 +168,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerPrefix(token.NIL, p.parseNilLiteral)
 	p.registerPrefix(token.SELF, p.parseSelf)
 	p.registerPrefix(token.MODULE, p.parseModule)
-	p.registerPrefix(token.CLASS, p.parseClass)
 	p.registerPrefix(token.LBRACE, p.parseHash)
 	p.registerPrefix(token.DO, p.parseBlock)
 	p.registerPrefix(token.YIELD, p.parseYield)
@@ -1198,33 +1197,6 @@ func (p *parser) parseModule() ast.Expression {
 		return nil
 	}
 	expr.Name = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
-
-	if !p.acceptOneOf(token.NEWLINE, token.SEMICOLON) {
-		return nil
-	}
-
-	expr.Body = p.parseBlockStatement()
-
-	if !p.accept(token.END) {
-		return nil
-	}
-	return expr
-}
-
-func (p *parser) parseClass() ast.Expression {
-	if p.trace {
-		defer un(trace(p, "parseClass"))
-	}
-	expr := &ast.ClassExpression{}
-	if !p.accept(token.CONST) {
-		return nil
-	}
-	expr.Name = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
-
-	if p.peekTokenIs(token.LT) {
-		p.consume(token.LT)
-		expr.SuperClass = p.parseIdentifier().(*ast.Identifier)
-	}
 
 	if !p.acceptOneOf(token.NEWLINE, token.SEMICOLON) {
 		return nil

@@ -331,32 +331,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		self := selfObject.(*object.Self)
 		env.Set(node.Name.Value, self.RubyObject)
 		return bodyReturn, nil
-	case *ast.ClassExpression:
-		superClassName := "Object"
-		if node.SuperClass != nil {
-			superClassName = node.SuperClass.Value
-		}
-		superClass, ok := env.Get(superClassName)
-		if !ok {
-			return nil, errors.Wrap(
-				object.NewUninitializedConstantNameError(superClassName),
-				"eval class superclass",
-			)
-		}
-		class, ok := env.Get(node.Name.Value)
-		if !ok {
-			class = object.NewClass(node.Name.Value, superClass.(object.RubyClassObject), env)
-		}
-		classEnv := class.(object.Environment)
-		classEnv.Set("self", &object.Self{RubyObject: class, Name: node.Name.Value})
-		bodyReturn, err := Eval(node.Body, classEnv)
-		if err != nil {
-			return nil, errors.WithMessage(err, "eval class body")
-		}
-		selfObject, _ := classEnv.Get("self")
-		self := selfObject.(*object.Self)
-		env.Set(node.Name.Value, self.RubyObject)
-		return bodyReturn, nil
 	case *ast.ContextCallExpression:
 		context, err := Eval(node.Context, env)
 		if err != nil {
