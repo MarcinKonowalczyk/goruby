@@ -81,7 +81,7 @@ var precedences = map[token.Type]int{
 	token.SLBRACKET:  precCallArg,
 	token.LBRACKET:   precIndex,
 	token.LBRACE:     precBlockBraces,
-	token.SYMBEG:     precSymbol,
+	token.SYMBOL:     precSymbol,
 	token.COMMA:      precAssignment,
 	token.THEN:       precHighest,
 	token.NEWLINE:    precHighest,
@@ -159,7 +159,7 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerPrefix(token.WHILE, p.parseLoopExpression)
 	p.registerPrefix(token.LOOP, p.parseLoopExpression)
 	p.registerPrefix(token.DEF, p.parseFunctionLiteral)
-	p.registerPrefix(token.SYMBEG, p.parseSymbolLiteral)
+	p.registerPrefix(token.SYMBOL, p.parseSymbolLiteral)
 	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
 	p.registerPrefix(token.SLBRACKET, p.parseArrayLiteral)
 	p.registerPrefix(token.NIL, p.parseNilLiteral)
@@ -206,7 +206,7 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerInfix(token.GLOBAL, p.parseCallArgument)
 	p.registerInfix(token.INT, p.parseCallArgument)
 	p.registerInfix(token.STRING, p.parseCallArgument)
-	p.registerInfix(token.SYMBEG, p.parseCallArgument)
+	p.registerInfix(token.SYMBOL, p.parseCallArgument)
 	p.registerInfix(token.LBRACE, p.parseCallBlock)
 	p.registerInfix(token.DOT, p.parseMethodCall)
 	p.registerInfix(token.COMMA, p.parseExpressions)
@@ -767,11 +767,8 @@ func (p *parser) parseSymbolLiteral() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseSymbolLiteral"))
 	}
-	if !p.acceptOneOf(token.IDENT, token.STRING, token.CONST) {
-		return nil
-	}
 	return &ast.SymbolLiteral{
-		Value: p.curToken.Literal,
+		Value: strings.TrimPrefix(p.curToken.Literal, ":"),
 	}
 }
 

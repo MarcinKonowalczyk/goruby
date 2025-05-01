@@ -135,23 +135,23 @@ func TestLex(t *testing.T) {
 			desc: "symbols",
 			lines: `
 				:sym
-				:"sym"
-				:'sym'
 				:dotAfter.
+				:special?
+				:special!
+				:notSpecial*
 			`,
 			exp: []expected{
-				expect(t)("SYMBEG", ":"),
-				expect(t)("IDENT", "sym"),
+				expect(t)("SYMBOL", ":sym"),
 				NL,
-				expect(t)("SYMBEG", ":"),
-				expect(t)("STRING", "sym"),
-				NL,
-				expect(t)("SYMBEG", ":"),
-				expect(t)("STRING", "sym"),
-				NL,
-				expect(t)("SYMBEG", ":"),
-				expect(t)("IDENT", "dotAfter"),
+				expect(t)("SYMBOL", ":dotAfter"),
 				expect(t)("DOT", "."),
+				NL,
+				expect(t)("SYMBOL", ":special?"),
+				NL,
+				expect(t)("SYMBOL", ":special!"),
+				NL,
+				expect(t)("SYMBOL", ":notSpecial"),
+				expect(t)("ASTERISK", "*"),
 			},
 		},
 		{

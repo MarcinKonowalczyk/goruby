@@ -12,41 +12,57 @@ import (
 	"github.com/pkg/errors"
 )
 
-var kernelModule = newModule("Kernel", kernelMethodSet, nil)
+var bottomClass = &class{
+	name: "Bottom",
+	// instanceMethods: NewMethodSet(bottomMethodSet),
+	class: newEigenclass(nil, objectClassMethods),
+	builder: func(RubyClassObject, ...RubyObject) (RubyObject, error) {
+		return &Bottom{}, nil
+	},
+	Environment: NewEnvironment(),
+}
 
 func init() {
-	classes.Set("Kernel", kernelModule)
+	bottomClass.instanceMethods = NewMethodSet(bottomMethodSet)
+	CLASSES.Set("Bottom", bottomClass)
 }
 
-var kernelMethodSet = map[string]RubyMethod{
-	"to_s":              withArity(0, publicMethod(kernelToS)),
-	"is_a?":             withArity(1, publicMethod(kernelIsA)),
-	"nil?":              withArity(0, publicMethod(kernelIsNil)),
-	"methods":           publicMethod(kernelMethods),
-	"public_methods":    publicMethod(kernelPublicMethods),
-	"protected_methods": publicMethod(kernelProtectedMethods),
-	"private_methods":   publicMethod(kernelPrivateMethods),
-	"class":             withArity(0, publicMethod(kernelClass)),
-	"puts":              privateMethod(kernelPuts),
-	"print":             privateMethod(kernelPrint),
-	"require":           withArity(1, privateMethod(kernelRequire)),
-	"extend":            publicMethod(kernelExtend),
-	"tap":               publicMethod(kernelTap),
-	"raise":             privateMethod(kernelRaise),
-	"==":                withArity(1, publicMethod(kernelEqual)),
-	"!=":                withArity(1, publicMethod(kernelNotEqual)),
+// Bottom represents a bottom class -- the root of all classes
+type Bottom struct{}
+
+// Inspect return ""
+func (o *Bottom) Inspect() string { return "" }
+
+// Type returns OBJECT_OBJ
+func (o *Bottom) Type() Type { return BOTTOM_OBJ }
+
+// Class returns objectClass
+func (o *Bottom) Class() RubyClass { return bottomClass }
+
+var objectClassMethods = map[string]RubyMethod{}
+
+var bottomMethodSet = map[string]RubyMethod{
+	"to_s":    withArity(0, publicMethod(bottomToS)),
+	"is_a?":   withArity(1, publicMethod(bottomIsA)),
+	"nil?":    withArity(0, publicMethod(bottomIsNil)),
+	"methods": publicMethod(bottomMethods),
+	"class":   withArity(0, publicMethod(bottomClassMethod)),
+	"puts":    publicMethod(bottomPuts),
+	"print":   publicMethod(bottomPrint),
+	"require": withArity(1, publicMethod(bottomRequire)),
+	"tap":     publicMethod(bottomTap),
+	"raise":   publicMethod(bottomRaise),
+	"==":      withArity(1, publicMethod(bottomEqual)),
+	"!=":      withArity(1, publicMethod(bottomNotEqual)),
 }
 
-func kernelToS(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 	receiver := context.Receiver()
-	if self, ok := receiver.(*Self); ok {
-		receiver = self.RubyObject
-	}
 	val := fmt.Sprintf("#<%s:%p>", receiver.Class().Name(), receiver)
 	return &String{Value: val}, nil
 }
 
-func kernelIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
 	receiver_class := context.Receiver().Class()
 	switch arg := args[0].(type) {
 	case RubyClassObject:
@@ -72,7 +88,7 @@ func print(lines []string, delimiter string) {
 	fmt.Print(out.String())
 }
 
-func kernelPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
 	var lines []string
 	for _, arg := range args {
 		if arr, ok := arg.(*Array); ok {
@@ -98,7 +114,7 @@ func kernelPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return NIL, nil
 }
 
-func kernelPrint(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomPrint(context CallContext, args ...RubyObject) (RubyObject, error) {
 	var lines []string
 	for _, arg := range args {
 		if arr, ok := arg.(*Array); ok {
@@ -125,11 +141,11 @@ func kernelPrint(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return NIL, nil
 }
 
-func kernelMethods(context CallContext, args ...RubyObject) (RubyObject, error) {
-	showInstanceMethods := true
+func bottomMethods(context CallContext, args ...RubyObject) (RubyObject, error) {
+	showSuperMethods := true
 	if len(args) == 1 {
 		if val, ok := SymbolToBool(args[0]); ok {
-			showInstanceMethods = val
+			showSuperMethods = val
 		}
 	}
 
@@ -138,53 +154,18 @@ func kernelMethods(context CallContext, args ...RubyObject) (RubyObject, error) 
 
 	extended, ok := receiver.(*extendedObject)
 
-	if !showInstanceMethods && !ok {
+	if !showSuperMethods && !ok {
 		return &Array{}, nil
 	}
 
-	if !showInstanceMethods && ok {
-		class = extended.class
+	if !showSuperMethods && ok {
+		class = extended.eigenclass
 	}
 
-	publicMethods := getMethods(class, PUBLIC_METHOD, showInstanceMethods)
-	protectedMethods := getMethods(class, PROTECTED_METHOD, showInstanceMethods)
-	return &Array{Elements: append(publicMethods.Elements, protectedMethods.Elements...)}, nil
+	return getMethods(class, showSuperMethods), nil
 }
 
-func kernelPublicMethods(context CallContext, args ...RubyObject) (RubyObject, error) {
-	showSuperClassMethods := true
-	if len(args) == 1 {
-		if val, ok := SymbolToBool(args[0]); ok {
-			showSuperClassMethods = val
-		}
-	}
-	class := context.Receiver().Class()
-	return getMethods(class, PUBLIC_METHOD, showSuperClassMethods), nil
-}
-
-func kernelProtectedMethods(context CallContext, args ...RubyObject) (RubyObject, error) {
-	showSuperClassMethods := true
-	if len(args) == 1 {
-		if val, ok := SymbolToBool(args[0]); ok {
-			showSuperClassMethods = val
-		}
-	}
-	class := context.Receiver().Class()
-	return getMethods(class, PROTECTED_METHOD, showSuperClassMethods), nil
-}
-
-func kernelPrivateMethods(context CallContext, args ...RubyObject) (RubyObject, error) {
-	showSuperClassMethods := true
-	if len(args) == 1 {
-		if val, ok := SymbolToBool(args[0]); ok {
-			showSuperClassMethods = val
-		}
-	}
-	class := context.Receiver().Class()
-	return getMethods(class, PRIVATE_METHOD, showSuperClassMethods), nil
-}
-
-func kernelIsNil(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomIsNil(context CallContext, args ...RubyObject) (RubyObject, error) {
 	receiver := context.Receiver()
 	if receiver == NIL {
 		return TRUE, nil
@@ -192,15 +173,15 @@ func kernelIsNil(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-func kernelClass(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomClassMethod(context CallContext, args ...RubyObject) (RubyObject, error) {
 	receiver := context.Receiver()
 	if _, ok := receiver.(RubyClassObject); ok {
-		return classClass, nil
+		return nil, nil
 	}
 	return receiver.Class().(RubyClassObject), nil
 }
 
-func kernelRequire(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomRequire(context CallContext, args ...RubyObject) (RubyObject, error) {
 	name, ok := args[0].(*String)
 	if !ok {
 		return nil, NewImplicitConversionTypeError(name, args[0])
@@ -260,31 +241,7 @@ func kernelRequire(context CallContext, args ...RubyObject) (RubyObject, error) 
 	return TRUE, nil
 }
 
-func kernelExtend(context CallContext, args ...RubyObject) (RubyObject, error) {
-	if len(args) == 0 {
-		return nil, NewWrongNumberOfArgumentsError(1, 0)
-	}
-	modules := make([]*Module, len(args))
-	for i, arg := range args {
-		module, ok := arg.(*Module)
-		if !ok {
-			return nil, NewWrongArgumentTypeError(module, arg)
-		}
-		modules[i] = module
-	}
-	extended := &extendedObject{
-		RubyObject: context.Receiver(),
-		class: newEigenclass(
-			newMixin(context.Receiver().Class().(RubyClassObject), modules...),
-			map[string]RubyMethod{},
-		),
-	}
-	info, _ := EnvStat(context.Env(), context.Receiver())
-	info.Env().Set(info.Name(), extended)
-	return extended, nil
-}
-
-func kernelTap(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomTap(context CallContext, args ...RubyObject) (RubyObject, error) {
 	block := args[0]
 	proc, ok := block.(*Symbol)
 	if !ok {
@@ -303,21 +260,23 @@ func kernelTap(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return context.Receiver(), nil
 }
 
-func kernelRaise(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomRaise(context CallContext, args ...RubyObject) (RubyObject, error) {
 	switch len(args) {
 	case 1:
 		switch arg := args[0].(type) {
 		case *String:
 			return nil, NewRuntimeError("%s", arg.Value)
 		default:
-			exc, err := Send(NewCallContext(context.Env(), arg), "exception")
-			if err != nil {
-				return nil, NewTypeError("exception class/object expected")
-			}
-			if excAsErr, ok := exc.(error); ok {
-				return nil, excAsErr
-			}
-			return nil, nil
+			return nil, NewRuntimeError("%s", arg.Inspect())
+			// default:
+			// 	exc, err := Send(NewCallContext(context.Env(), arg), "exception")
+			// 	if err != nil {
+			// 		return nil, NewTypeError("exception class/object expected")
+			// 	}
+			// 	if excAsErr, ok := exc.(error); ok {
+			// 		return nil, excAsErr
+			// 	}
+			// 	return nil, nil
 		}
 	default:
 		return nil, NewRuntimeError("")
@@ -417,14 +376,14 @@ func RubyObjectsEqual(left, right RubyObject) bool {
 	return rubyObjectsEqual(left, right, false)
 }
 
-func kernelEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
 	if RubyObjectsEqual(context.Receiver(), args[0]) {
 		return TRUE, nil
 	}
 	return FALSE, nil
 }
 
-func kernelNotEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomNotEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
 	if RubyObjectsEqual(context.Receiver(), args[0]) {
 		return FALSE, nil
 	}

@@ -39,8 +39,8 @@ func Test_stringify(t *testing.T) {
 			return &Integer{Value: 42}, nil
 		}
 		obj := &extendedObject{
-			RubyObject: &Object{},
-			class: newEigenclass(objectClass, map[string]RubyMethod{
+			RubyObject: &Bottom{},
+			eigenclass: newEigenclass(bottomClass, map[string]RubyMethod{
 				"to_s": publicMethod(toS),
 			}),
 			Environment: NewEnvironment(),
@@ -49,15 +49,13 @@ func Test_stringify(t *testing.T) {
 		_, err := stringify(obj)
 
 		checkError(t, err, NewTypeError(
-			"can't convert Object to String (Object#to_s gives Integer)",
+			"can't convert Bottom to String (Bottom#to_s gives Integer)",
 		))
 	})
 	t.Run("object without `to_s`", func(t *testing.T) {
-		obj := &basicObject{}
+		_, err := stringify(nil)
 
-		_, err := stringify(obj)
-
-		checkError(t, err, NewTypeError("can't convert BasicObject into String"))
+		checkError(t, err, NewTypeError("can't convert nil into String"))
 	})
 }
 

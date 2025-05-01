@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"reflect"
-	"sort"
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
@@ -12,241 +11,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-func TestKernelMethods(t *testing.T) {
-	superClassMethods := map[string]RubyMethod{
-		"super_foo":           publicMethod(nil),
-		"super_bar":           publicMethod(nil),
-		"protected_super_foo": protectedMethod(nil),
-		"private_super_foo":   privateMethod(nil),
-	}
-	contextMethods := map[string]RubyMethod{
-		"foo":           publicMethod(nil),
-		"bar":           publicMethod(nil),
-		"protected_foo": protectedMethod(nil),
-		"private_foo":   privateMethod(nil),
-	}
-	t.Run("without superclass", func(t *testing.T) {
-		context := &callContext{
-			receiver: &testRubyObject{
-				class: &class{
-					instanceMethods: NewMethodSet(contextMethods),
-					superClass:      nil,
-				},
-			},
-		}
-
-		result, err := kernelPublicMethods(context)
-
-		checkError(t, err, nil)
-
-		array, ok := result.(*Array)
-		if !ok {
-			t.Logf("Expected array, got %T", result)
-			t.FailNow()
-		}
-
-		var methods []string
-		for i, elem := range array.Elements {
-			sym, ok := elem.(*Symbol)
-			if !ok {
-				t.Logf("Expected all elements to be symbols, got %T at index %d", elem, i)
-				t.Fail()
-			} else {
-				methods = append(methods, sym.Inspect())
-			}
-		}
-
-		var expectedMethods = []string{
-			":foo", ":bar",
-		}
-
-		expectedLen := len(expectedMethods)
-
-		if len(array.Elements) != expectedLen {
-			t.Logf("Expected %d items, got %d", expectedLen, len(array.Elements))
-			t.Fail()
-		}
-
-		sort.Strings(expectedMethods)
-		sort.Strings(methods)
-
-		if !reflect.DeepEqual(expectedMethods, methods) {
-			t.Logf("Expected methods to equal\n%s\n\tgot\n%s\n", expectedMethods, methods)
-			t.Fail()
-		}
-	})
-	t.Run("with superclass", func(t *testing.T) {
-		context := &callContext{
-			receiver: &testRubyObject{
-				class: &class{
-					instanceMethods: NewMethodSet(contextMethods),
-					superClass: &class{
-						instanceMethods: NewMethodSet(superClassMethods),
-						superClass:      nil,
-					},
-				},
-			},
-		}
-
-		result, err := kernelMethods(context)
-
-		checkError(t, err, nil)
-
-		array, ok := result.(*Array)
-		if !ok {
-			t.Logf("Expected array, got %T", result)
-			t.FailNow()
-		}
-
-		var methods []string
-		for i, elem := range array.Elements {
-			sym, ok := elem.(*Symbol)
-			if !ok {
-				t.Logf("Expected all elements to be symbols, got %T at index %d", elem, i)
-				t.Fail()
-			} else {
-				methods = append(methods, sym.Inspect())
-			}
-		}
-
-		var expectedMethods = []string{
-			":foo", ":bar", ":super_foo", ":super_bar", ":protected_foo", ":protected_super_foo",
-		}
-
-		expectedLen := len(expectedMethods)
-
-		if len(array.Elements) != expectedLen {
-			t.Logf("Expected %d items, got %d", expectedLen, len(array.Elements))
-			t.Fail()
-		}
-
-		sort.Strings(expectedMethods)
-		sort.Strings(methods)
-
-		if !reflect.DeepEqual(expectedMethods, methods) {
-			t.Logf("Expected methods to equal\n%s\n\tgot\n%s\n", expectedMethods, methods)
-			t.Fail()
-		}
-	})
-	t.Run("with superclass but show singleton methods", func(t *testing.T) {
-		class := &class{
-			instanceMethods: NewMethodSet(contextMethods),
-			superClass: &class{
-				instanceMethods: NewMethodSet(superClassMethods),
-				superClass:      nil,
-			},
-		}
-		context := &callContext{
-			receiver: &extendedObject{
-				RubyObject: &testRubyObject{
-					class: class,
-				},
-				class: newEigenclass(class, map[string]RubyMethod{
-					"public_singleton_method":    publicMethod(nil),
-					"protected_singleton_method": protectedMethod(nil),
-					"private_singleton_method":   privateMethod(nil),
-				}),
-			},
-		}
-
-		result, err := kernelMethods(context, FALSE)
-
-		checkError(t, err, nil)
-
-		array, ok := result.(*Array)
-		if !ok {
-			t.Logf("Expected array, got %T", result)
-			t.FailNow()
-		}
-
-		var methods []string
-		for i, elem := range array.Elements {
-			sym, ok := elem.(*Symbol)
-			if !ok {
-				t.Logf("Expected all elements to be symbols, got %T at index %d", elem, i)
-				t.Fail()
-			} else {
-				methods = append(methods, sym.Inspect())
-			}
-		}
-
-		var expectedMethods = []string{
-			":public_singleton_method", ":protected_singleton_method",
-		}
-
-		expectedLen := len(expectedMethods)
-
-		if len(array.Elements) != expectedLen {
-			t.Logf("Expected %d items, got %d", expectedLen, len(array.Elements))
-			t.Fail()
-		}
-
-		sort.Strings(expectedMethods)
-		sort.Strings(methods)
-
-		if !reflect.DeepEqual(expectedMethods, methods) {
-			t.Logf("Expected methods to equal\n%s\n\tgot\n%s\n", expectedMethods, methods)
-			t.Fail()
-		}
-	})
-	t.Run("with superclass and show regular methods", func(t *testing.T) {
-		context := &callContext{
-			receiver: &testRubyObject{
-				class: &class{
-					instanceMethods: NewMethodSet(contextMethods),
-					superClass: &class{
-						instanceMethods: NewMethodSet(superClassMethods),
-						superClass:      nil,
-					},
-				},
-			},
-		}
-
-		result, err := kernelMethods(context, TRUE)
-
-		checkError(t, err, nil)
-
-		array, ok := result.(*Array)
-		if !ok {
-			t.Logf("Expected array, got %T", result)
-			t.FailNow()
-		}
-
-		var methods []string
-		for i, elem := range array.Elements {
-			sym, ok := elem.(*Symbol)
-			if !ok {
-				t.Logf("Expected all elements to be symbols, got %T at index %d", elem, i)
-				t.Fail()
-			} else {
-				methods = append(methods, sym.Inspect())
-			}
-		}
-
-		var expectedMethods = []string{
-			":foo", ":bar", ":protected_foo", ":super_foo", ":super_bar", ":protected_super_foo",
-		}
-
-		expectedLen := len(expectedMethods)
-
-		if len(array.Elements) != expectedLen {
-			t.Logf("Expected %d items, got %d", expectedLen, len(array.Elements))
-			t.Fail()
-		}
-
-		sort.Strings(expectedMethods)
-		sort.Strings(methods)
-
-		if !reflect.DeepEqual(expectedMethods, methods) {
-			t.Logf("Expected methods to equal\n%s\n\tgot\n%s\n", expectedMethods, methods)
-			t.Fail()
-		}
-	})
-}
-
-func TestKernelIsNil(t *testing.T) {
+func TestBottomIsNil(t *testing.T) {
 	context := &callContext{receiver: TRUE}
-	result, err := kernelIsNil(context)
+	result, err := bottomIsNil(context)
 
 	checkError(t, err, nil)
 
@@ -262,58 +29,7 @@ func TestKernelIsNil(t *testing.T) {
 	}
 }
 
-func TestKernelClass(t *testing.T) {
-	t.Run("regular object", func(t *testing.T) {
-		context := &callContext{receiver: &Integer{1}}
-
-		result, err := kernelClass(context)
-
-		checkError(t, err, nil)
-
-		cl, ok := result.(*class)
-		if !ok {
-			t.Logf("Expected Class, got %T", result)
-			t.Fail()
-		}
-
-		expected := integerClass
-
-		if !reflect.DeepEqual(expected, cl) {
-			t.Logf("Expected class to equal %+#v, got %+#v", expected, cl)
-			t.Fail()
-		}
-	})
-	t.Run("class object", func(t *testing.T) {
-		context := &callContext{receiver: stringClass}
-
-		result, err := kernelClass(context)
-
-		checkError(t, err, nil)
-
-		expected := classClass
-
-		if !reflect.DeepEqual(expected, result) {
-			t.Logf("Expected class to equal\n%+#v\n\tgot\n%+#v\n", expected, result)
-			t.Fail()
-		}
-	})
-	t.Run("class class", func(t *testing.T) {
-		context := &callContext{receiver: classClass}
-
-		result, err := kernelClass(context)
-
-		checkError(t, err, nil)
-
-		expected := classClass
-
-		if !reflect.DeepEqual(expected, result) {
-			t.Logf("Expected class to equal %+#v, got %+#v", expected, result)
-			t.Fail()
-		}
-	})
-}
-
-func TestKernelRequire(t *testing.T) {
+func TestBottomRequire(t *testing.T) {
 	t.Run("wiring together", func(t *testing.T) {
 		evalCallCount := 0
 		var evalCallASTNode ast.Node
@@ -326,11 +42,11 @@ func TestKernelRequire(t *testing.T) {
 		context := &callContext{
 			env:      NewEnvironment(),
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"./fixtures/testfile.rb"}
 
-		result, err := kernelRequire(context, name)
+		result, err := bottomRequire(context, name)
 
 		if err != nil {
 			t.Logf("expected no error, got %T:%v\n", err, err)
@@ -369,11 +85,11 @@ func TestKernelRequire(t *testing.T) {
 		context := &callContext{
 			env:      env,
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"./fixtures/testfile.rb"}
 
-		_, err := kernelRequire(context, name)
+		_, err := bottomRequire(context, name)
 		if err != nil {
 			panic(err)
 		}
@@ -409,11 +125,11 @@ func TestKernelRequire(t *testing.T) {
 		context := &callContext{
 			env:      env,
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"./fixtures/testfile"}
 
-		_, err := kernelRequire(context, name)
+		_, err := bottomRequire(context, name)
 		if err != nil {
 			panic(err)
 		}
@@ -450,11 +166,11 @@ func TestKernelRequire(t *testing.T) {
 		context := &callContext{
 			env:      env,
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"./fixtures/testfile"}
 
-		_, err := kernelRequire(context, name)
+		_, err := bottomRequire(context, name)
 		if err != nil {
 			panic(err)
 		}
@@ -513,11 +229,11 @@ func TestKernelRequire(t *testing.T) {
 		context := &callContext{
 			env:      env,
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"./fixtures/testfile"}
 
-		_, err := kernelRequire(context, name)
+		_, err := bottomRequire(context, name)
 		if err != nil {
 			panic(err)
 		}
@@ -539,11 +255,11 @@ func TestKernelRequire(t *testing.T) {
 		context := &callContext{
 			env:      env,
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"file/not/exist"}
 
-		_, err := kernelRequire(context, name)
+		_, err := bottomRequire(context, name)
 		if err == nil {
 			t.Logf("Expected error not to be nil")
 			t.Fail()
@@ -585,11 +301,11 @@ func TestKernelRequire(t *testing.T) {
 		context := &callContext{
 			env:      env,
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"./fixtures/testfile_syntax_error.rb"}
 
-		_, err := kernelRequire(context, name)
+		_, err := bottomRequire(context, name)
 		if err == nil {
 			t.Logf("Expected error not to be nil")
 			t.Fail()
@@ -636,11 +352,11 @@ func TestKernelRequire(t *testing.T) {
 		context := &callContext{
 			env:      env,
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"./fixtures/testfile_name_error.rb"}
 
-		_, err := kernelRequire(context, name)
+		_, err := bottomRequire(context, name)
 		if err == nil {
 			t.Logf("Expected error not to be nil")
 			t.Fail()
@@ -684,11 +400,11 @@ func TestKernelRequire(t *testing.T) {
 		context := &callContext{
 			env:      env,
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"./fixtures/testfile.rb"}
 
-		result, err := kernelRequire(context, name)
+		result, err := bottomRequire(context, name)
 		if err != nil {
 			t.Logf("Expected no error, got %T:%v", err, err)
 			t.Fail()
@@ -728,91 +444,38 @@ func TestKernelRequire(t *testing.T) {
 	})
 }
 
-func TestKernelExtend(t *testing.T) {
-	objectToExtend := &Object{}
-	env := NewEnvironment()
-	env.Set("foo", objectToExtend)
-	context := &callContext{
-		receiver: objectToExtend,
-		env:      env,
-	}
-
-	module := newModule("Ext", map[string]RubyMethod{
-		"foo": publicMethod(nil),
-	}, nil)
-
-	result, err := kernelExtend(context, module)
-
-	checkError(t, err, nil)
-
-	extended, ok := result.(*extendedObject)
-	if !ok {
-		t.Logf("Expected result to be an extendedObject, got %T", result)
-		t.Fail()
-	}
-
-	if !reflect.DeepEqual(objectToExtend, extended.RubyObject) {
-		t.Logf("Expected result to equal %+#v, got %+#v\n", objectToExtend, extended.RubyObject)
-		t.Fail()
-	}
-
-	expectedClass := &eigenclass{
-		&methodSet{map[string]RubyMethod{}},
-		&mixin{
-			objectToExtend.Class().(RubyClassObject),
-			[]*Module{module},
-		},
-		NewEnvironment(),
-	}
-
-	if !reflect.DeepEqual(expectedClass, extended.Class()) {
-		t.Logf("Expected wrapped class to equal\n%+#v\n\tgot\n%+#v\n", expectedClass, extended.Class())
-		t.Fail()
-	}
-
-	actual, ok := env.Get("foo")
-	if !ok {
-		panic("Not found in env")
-	}
-
-	if !reflect.DeepEqual(extended, actual) {
-		t.Logf("Expected context receiver to equal\n%+#v\n\tgot\n%+#v\n", extended, actual)
-		t.Fail()
-	}
-}
-
-func TestKernelToS(t *testing.T) {
+func TestBottomToS(t *testing.T) {
 	t.Run("object as receiver", func(t *testing.T) {
 		context := &callContext{
-			receiver: &Module{},
+			receiver: &Bottom{},
 		}
 
-		result, err := kernelToS(context)
+		result, err := bottomToS(context)
 
 		checkError(t, err, nil)
 
-		expected := &String{Value: fmt.Sprintf("#<Module:%p>", context.receiver)}
+		expected := &String{Value: fmt.Sprintf("#<Bottom:%p>", context.receiver)}
 
 		checkResult(t, result, expected)
 	})
 	t.Run("self object as receiver", func(t *testing.T) {
-		self := &Self{RubyObject: &Module{}, Name: "foo"}
+		self := &Bottom{}
 		context := &callContext{
 			receiver: self,
 		}
 
-		result, err := kernelToS(context)
+		result, err := bottomToS(context)
 
 		checkError(t, err, nil)
 
-		expected := &String{Value: fmt.Sprintf("#<Module:%p>", self.RubyObject)}
+		expected := &String{Value: fmt.Sprintf("#<Bottom:%p>", self)}
 
 		checkResult(t, result, expected)
 	})
 }
 
-func TestKernelRaise(t *testing.T) {
-	object := &Self{RubyObject: &Object{}, Name: "x"}
+func TestBottomRaise(t *testing.T) {
+	object := &Bottom{}
 	env := NewMainEnvironment()
 	context := &callContext{
 		receiver: object,
@@ -820,7 +483,7 @@ func TestKernelRaise(t *testing.T) {
 	}
 
 	t.Run("without args", func(t *testing.T) {
-		result, err := kernelRaise(context)
+		result, err := bottomRaise(context)
 
 		checkResult(t, result, nil)
 
@@ -829,45 +492,17 @@ func TestKernelRaise(t *testing.T) {
 
 	t.Run("with 1 arg", func(t *testing.T) {
 		t.Run("string argument", func(t *testing.T) {
-			result, err := kernelRaise(context, &String{Value: "ouch"})
+			result, err := bottomRaise(context, &String{Value: "ouch"})
 
 			checkResult(t, result, nil)
 
 			checkError(t, err, NewRuntimeError("ouch"))
 		})
-		t.Run("class argument", func(t *testing.T) {
-			t.Run("exception class", func(t *testing.T) {
-				result, err := kernelRaise(context, standardErrorClass)
-
-				checkResult(t, result, nil)
-
-				checkError(t, err, &StandardError{message: "StandardError"})
-			})
-			t.Run("other class", func(t *testing.T) {
-				result, err := kernelRaise(context, stringClass)
-
-				checkResult(t, result, nil)
-
-				checkError(t, err, &TypeError{Message: "exception class/object expected"})
-			})
-			t.Run("object with #exception returning exception", func(t *testing.T) {
-				exceptionFn := func(CallContext, ...RubyObject) (RubyObject, error) {
-					return &StandardError{message: "err"}, nil
-				}
-				obj := &extendedObject{
-					RubyObject: &Object{},
-					class: newEigenclass(objectClass, map[string]RubyMethod{
-						"exception": publicMethod(exceptionFn),
-					}),
-					Environment: NewEnvironment(),
-				}
-
-				result, err := kernelRaise(context, obj)
-
-				checkResult(t, result, nil)
-
-				checkError(t, err, &StandardError{message: "err"})
-			})
+		t.Run("integer argument", func(t *testing.T) {
+			obj := &Integer{Value: 5}
+			result, err := bottomRaise(context, obj)
+			checkResult(t, result, nil)
+			checkError(t, err, NewRuntimeError("%s", obj.Inspect()))
 		})
 	})
 }

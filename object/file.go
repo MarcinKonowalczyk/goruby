@@ -7,7 +7,6 @@ import (
 
 var fileClass RubyClassObject = newClass(
 	"File",
-	objectClass,
 	fileMethods,
 	fileClassMethods,
 	func(RubyClassObject, ...RubyObject) (RubyObject, error) {
@@ -16,7 +15,7 @@ var fileClass RubyClassObject = newClass(
 )
 
 func init() {
-	classes.Set("File", fileClass)
+	CLASSES.Set("File", fileClass)
 }
 
 // A File represents the Ruby class File

@@ -8,11 +8,11 @@ import (
 )
 
 var integerClass RubyClassObject = newClass(
-	"Integer", objectClass, integerMethods, integerClassMethods, notInstantiatable,
+	"Integer", integerMethods, integerClassMethods, notInstantiatable,
 )
 
 func init() {
-	classes.Set("Integer", integerClass)
+	CLASSES.Set("Integer", integerClass)
 }
 
 // NewInteger returns a new Integer with the given value

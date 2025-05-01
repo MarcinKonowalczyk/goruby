@@ -1,7 +1,6 @@
 package lexer
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 	"unicode"
@@ -10,9 +9,7 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/token"
 )
 
-const (
-	eof = -1
-)
+const eof = -1
 
 // LexStartFn represents the entrypoint the Lexer uses to start processing the
 // input.
@@ -25,8 +22,6 @@ var LexStartFn = startLexer
 // return LexStartFn to go back to the decision loop. It also could return
 // another non start state function if the partial input to parse is abiguous.
 type StateFn func(*Lexer) StateFn
-
-const operatorCharacters = "+-!*/%&<>=,;#.:(){}[]|@?$"
 
 // New returns a Lexer instance ready to process the given input.
 func New(input string) *Lexer {
@@ -192,8 +187,7 @@ func startLexer(l *Lexer) StateFn {
 			l.emit(token.COLON)
 			return startLexer
 		}
-		l.emit(token.SYMBEG)
-		return startLexer
+		return lexSymbol
 	case '.':
 		p := l.next()
 		if p == '.' {
@@ -373,30 +367,44 @@ func startLexer(l *Lexer) StateFn {
 		if isDigit(r) {
 			return lexNumber
 		} else if isLetter(r) {
-			return lexIdentifier
+			return lexIdentifierOrKeyword
 		} else {
 			return l.errorf("Illegal character: '%c'", r)
 		}
 	}
 }
 
-func lexIdentifier(l *Lexer) StateFn {
-	legalIdentifierCharacters := []byte{'?', '!'}
+// NOTE: Overlap of `?` and `!`
+const OPERATOR_CHARS = "+-*/%&<>=,;#.:(){}[]|@$?!"
+const IDENT_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_?!"
+const LEGAL_IDENT_CHARS = "?!"
+
+func lexIdentifierOrKeywordCore(l *Lexer) rune {
 	r := l.next()
 	for {
-		if unicode.IsSpace(r) || strings.ContainsRune(operatorCharacters, r) || r == eof {
-			if bytes.ContainsRune(legalIdentifierCharacters, r) {
-				l.next()
-				break
-			}
+		// if unicode.IsSpace(r) || strings.ContainsRune(OPERATOR_CHARS, r) || r == eof {
+		// 	if bytes.ContainsRune([]byte(LEGAL_IDENT_CHARS), r) {
+		// 		l.next()
+		// 		break
+		// 	}
+		// 	break
+		// }
+		if strings.ContainsRune(IDENT_CHARS, r) {
+			r = l.next()
+		} else {
 			break
 		}
-		r = l.next()
 	}
 	l.backup()
+	return r
+}
+
+func lexIdentifierOrKeyword(l *Lexer) StateFn {
+	r := lexIdentifierOrKeywordCore(l)
 	literal := l.input[l.start:l.pos]
 	t := token.LookupIdent(literal)
 	if t == token.COMMENT {
+		// TODO: i think this branch can be removed?
 		for r != '\n' && r != eof {
 			r = l.next()
 		}
@@ -407,16 +415,6 @@ func lexIdentifier(l *Lexer) StateFn {
 	}
 	return startLexer
 }
-
-// func lexDigit(l *Lexer) StateFn {
-// 	r := l.next()
-// 	for isDigitOrUnderscore(r) {
-// 		r = l.next()
-// 	}
-// 	l.backup()
-// 	l.emit(token.INT)
-// 	return startLexer
-// }
 
 func lexNumber(l *Lexer) StateFn {
 	// walk until we find a non digit
@@ -480,6 +478,12 @@ func lexCharacterLiteral(l *Lexer) StateFn {
 	return startLexer
 }
 
+func lexSymbol(l *Lexer) StateFn {
+	_ = lexIdentifierOrKeywordCore(l)
+	l.emit(token.SYMBOL)
+	return startLexer
+}
+
 func lexString(end rune) StateFn {
 	return func(l *Lexer) StateFn {
 		l.ignore()
@@ -500,7 +504,7 @@ func lexString(end rune) StateFn {
 }
 
 func lexGlobal(l *Lexer) StateFn {
-	r := l.next()
+	r := l.next() // consume the '$'
 
 	if r == '.' {
 		return l.errorf("Illegal character: '%c'", r)

@@ -1,19 +1,19 @@
 package object
 
-func getMethods(class RubyClass, visibility MethodVisibility, addSuperMethods bool) *Array {
+func getMethods(class RubyClass, addSuperMethods bool) *Array {
 	var methodSymbols []RubyObject
-	for class != nil {
-		methods := class.Methods().GetAll()
-		for meth, fn := range methods {
-			if fn.Visibility() == visibility {
-				methodSymbols = append(methodSymbols, &Symbol{meth})
-			}
-		}
-		if !addSuperMethods {
-			break
-		}
-		class = class.SuperClass()
+	methods := class.Methods().GetAll()
+	for meth := range methods {
+		methodSymbols = append(methodSymbols, &Symbol{meth})
 	}
-
+	if class == bottomClass {
+		return &Array{Elements: methodSymbols}
+	}
+	if addSuperMethods {
+		methods := bottomClass.Methods().GetAll()
+		for meth := range methods {
+			methodSymbols = append(methodSymbols, &Symbol{meth})
+		}
+	}
 	return &Array{Elements: methodSymbols}
 }

@@ -18,26 +18,16 @@ func (t *testRubyObject) Class() RubyClass {
 	if t.class != nil {
 		return t.class
 	}
-	return objectClass
+	return bottomClass
 }
 
 func TestSend(t *testing.T) {
-	superMethods := map[string]RubyMethod{
-		"a_super_method": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
-			return TRUE, nil
-		}),
-		"a_private_super_method": privateMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
-			return FALSE, nil
-		}),
-	}
+	// }
 	methods := map[string]RubyMethod{
 		"a_method": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 			return TRUE, nil
 		}),
 		"another_method": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
-			return FALSE, nil
-		}),
-		"a_private_method": privateMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 			return FALSE, nil
 		}),
 	}
@@ -47,11 +37,6 @@ func TestSend(t *testing.T) {
 				class: &class{
 					name:            "base class",
 					instanceMethods: NewMethodSet(methods),
-					superClass: &class{
-						name:            "super class",
-						instanceMethods: NewMethodSet(superMethods),
-						superClass:      basicObjectClass,
-					},
 				},
 			},
 		}
@@ -70,21 +55,6 @@ func TestSend(t *testing.T) {
 				"another_method",
 				FALSE,
 				nil,
-			},
-			{
-				"a_super_method",
-				TRUE,
-				nil,
-			},
-			{
-				"a_private_method",
-				nil,
-				NewPrivateNoMethodError(context.receiver, "a_private_method"),
-			},
-			{
-				"a_private_super_method",
-				nil,
-				NewPrivateNoMethodError(context.receiver, "a_private_super_method"),
 			},
 			{
 				"unknown_method",
@@ -101,75 +71,6 @@ func TestSend(t *testing.T) {
 			checkResult(t, result, testCase.expectedResult)
 		}
 	})
-	t.Run("self as context", func(t *testing.T) {
-		context := &callContext{
-			receiver: &Self{
-				RubyObject: &testRubyObject{
-					class: &class{
-						name:            "base class",
-						instanceMethods: NewMethodSet(methods),
-						superClass: &class{
-							name:            "super class",
-							instanceMethods: NewMethodSet(superMethods),
-							superClass:      basicObjectClass,
-						},
-					},
-				},
-				Name: "main",
-			},
-		}
-
-		tests := []struct {
-			method         string
-			expectedResult RubyObject
-			expectedError  error
-		}{
-			{
-				"a_method",
-				TRUE,
-				nil,
-			},
-			{
-				"another_method",
-				FALSE,
-				nil,
-			},
-			{
-				"a_super_method",
-				TRUE,
-				nil,
-			},
-			{
-				"a_private_method",
-				FALSE,
-				nil,
-			},
-			{
-				"a_private_super_method",
-				FALSE,
-				nil,
-			},
-			{
-				"unknown_method",
-				nil,
-				NewNoMethodError(context.receiver, "unknown_method"),
-			},
-		}
-
-		for _, testCase := range tests {
-			result, err := Send(context, testCase.method)
-
-			if !reflect.DeepEqual(err, testCase.expectedError) {
-				t.Logf("Expected err to equal\n%+#v\n\tgot\n%+#v\n", testCase.expectedError, err)
-				t.Fail()
-			}
-
-			if !reflect.DeepEqual(result, testCase.expectedResult) {
-				t.Logf("Expected result to equal\n%+#v\n\tgot\n%+#v\n", testCase.expectedResult, result)
-				t.Fail()
-			}
-		}
-	})
 }
 
 func TestAddMethod(t *testing.T) {
@@ -178,49 +79,20 @@ func TestAddMethod(t *testing.T) {
 			class: &class{
 				name:            "base class",
 				instanceMethods: NewMethodSet(map[string]RubyMethod{}),
-				superClass:      objectClass,
 			},
 		}
 
 		fn := &Function{
 			Parameters: []*FunctionParameter{
-				&FunctionParameter{Name: "x"},
+				{Name: "x"},
 			},
 			Env:  &environment{store: map[string]RubyObject{}},
 			Body: nil,
 		}
 
-		newContext := AddMethod(context, "foo", fn)
+		newContext, _ := AddMethod(context, "foo", fn)
 
 		_, ok := newContext.Class().Methods().Get("foo")
-		if !ok {
-			t.Logf("Expected object to have method foo")
-			t.Fail()
-		}
-	})
-	t.Run("module object", func(t *testing.T) {
-		context := &Module{
-			name:  "A",
-			class: newEigenclass(moduleClass, map[string]RubyMethod{}),
-		}
-
-		fn := &Function{
-			Parameters: []*FunctionParameter{
-				&FunctionParameter{Name: "x"},
-			},
-			Env:  &environment{store: map[string]RubyObject{}},
-			Body: nil,
-		}
-
-		newContext := AddMethod(context, "foo", fn)
-
-		module, ok := newContext.(*Module)
-		if !ok {
-			t.Logf("Expected returned object to be a Module, got %T", newContext)
-			t.Fail()
-		}
-
-		_, ok = module.Class().Methods().Get("foo")
 		if !ok {
 			t.Logf("Expected object to have method foo")
 			t.Fail()
@@ -234,13 +106,13 @@ func TestAddMethod(t *testing.T) {
 
 		fn := &Function{
 			Parameters: []*FunctionParameter{
-				&FunctionParameter{Name: "x"},
+				{Name: "x"},
 			},
 			Env:  &environment{store: map[string]RubyObject{}},
 			Body: nil,
 		}
 
-		newContext := AddMethod(context, "foo", fn)
+		newContext, _ := AddMethod(context, "foo", fn)
 
 		class, ok := newContext.(*class)
 		if !ok {
@@ -260,10 +132,9 @@ func TestAddMethod(t *testing.T) {
 				class: &class{
 					name:            "base class",
 					instanceMethods: NewMethodSet(map[string]RubyMethod{}),
-					superClass:      objectClass,
 				},
 			},
-			class: newEigenclass(objectClass, map[string]RubyMethod{
+			eigenclass: newEigenclass(bottomClass, map[string]RubyMethod{
 				"bar": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 					return NIL, nil
 				}),
@@ -272,13 +143,13 @@ func TestAddMethod(t *testing.T) {
 
 		fn := &Function{
 			Parameters: []*FunctionParameter{
-				&FunctionParameter{Name: "x"},
+				{Name: "x"},
 			},
 			Env:  &environment{store: map[string]RubyObject{}},
 			Body: nil,
 		}
 
-		newContext := AddMethod(context, "foo", fn)
+		newContext, _ := AddMethod(context, "foo", fn)
 
 		_, ok := newContext.Class().Methods().Get("foo")
 		if !ok {
@@ -297,23 +168,20 @@ func TestAddMethod(t *testing.T) {
 			class: &class{
 				name:            "base class",
 				instanceMethods: NewMethodSet(map[string]RubyMethod{}),
-				superClass:      objectClass,
 			},
 			Name: "main",
 		}
-		context := &Self{
-			RubyObject: vanillaObject,
-		}
+		context := vanillaObject
 
 		fn := &Function{
 			Parameters: []*FunctionParameter{
-				&FunctionParameter{Name: "x"},
+				{Name: "x"},
 			},
 			Env:  &environment{store: map[string]RubyObject{}},
 			Body: nil,
 		}
 
-		newContext := AddMethod(context, "foo", fn)
+		newContext, extended := AddMethod(context, "foo", fn)
 
 		_, ok := newContext.Class().Methods().Get("foo")
 		if !ok {
@@ -321,21 +189,20 @@ func TestAddMethod(t *testing.T) {
 			t.Fail()
 		}
 
-		returnedSelf, ok := newContext.(*Self)
-		if !ok {
-			t.Logf("Expected returned object to be self, got %T", newContext)
-			t.Fail()
-		}
-
-		returnPointer := reflect.ValueOf(returnedSelf).Pointer()
+		returnPointer := reflect.ValueOf(newContext).Pointer()
 		contextPointer := reflect.ValueOf(context).Pointer()
 
-		if returnPointer != contextPointer {
-			t.Logf("Expected input and return context to be the same")
+		if !extended {
+			t.Logf("Expected object to be extended")
 			t.Fail()
 		}
 
-		extendedRubyObject := returnedSelf.RubyObject.(*extendedObject).RubyObject
+		if returnPointer == contextPointer {
+			t.Logf("Expected input and return context to be different")
+			t.Fail()
+		}
+
+		extendedRubyObject := newContext.(*extendedObject).RubyObject
 
 		if !reflect.DeepEqual(vanillaObject, extendedRubyObject) {
 			t.Logf(
@@ -347,33 +214,29 @@ func TestAddMethod(t *testing.T) {
 		}
 	})
 	t.Run("extended self object", func(t *testing.T) {
-		context := &Self{
-			RubyObject: &extendedObject{
-				RubyObject: &testRubyObject{
-					class: &class{
-						name:            "base class",
-						instanceMethods: NewMethodSet(map[string]RubyMethod{}),
-						superClass:      objectClass,
-					},
+		context := &extendedObject{
+			RubyObject: &testRubyObject{
+				class: &class{
+					name:            "base class",
+					instanceMethods: NewMethodSet(map[string]RubyMethod{}),
 				},
-				class: newEigenclass(objectClass, map[string]RubyMethod{
-					"bar": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
-						return NIL, nil
-					}),
-				}),
 			},
-			Name: "main",
+			eigenclass: newEigenclass(bottomClass, map[string]RubyMethod{
+				"bar": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+					return NIL, nil
+				}),
+			}),
 		}
 
 		fn := &Function{
 			Parameters: []*FunctionParameter{
-				&FunctionParameter{Name: "x"},
+				{Name: "x"},
 			},
 			Env:  &environment{store: map[string]RubyObject{}},
 			Body: nil,
 		}
 
-		newContext := AddMethod(context, "foo", fn)
+		newContext, extended := AddMethod(context, "foo", fn)
 
 		_, ok := newContext.Class().Methods().Get("foo")
 		if !ok {
@@ -387,14 +250,13 @@ func TestAddMethod(t *testing.T) {
 			t.Fail()
 		}
 
-		returnedSelf, ok := newContext.(*Self)
-		if !ok {
-			t.Logf("Expected returned object to be self, got %T", newContext)
+		returnPointer := reflect.ValueOf(newContext).Pointer()
+		contextPointer := reflect.ValueOf(context).Pointer()
+
+		if extended {
+			t.Logf("Expected object not to be extended")
 			t.Fail()
 		}
-
-		returnPointer := reflect.ValueOf(returnedSelf).Pointer()
-		contextPointer := reflect.ValueOf(context).Pointer()
 
 		if returnPointer != contextPointer {
 			t.Logf("Expected input and return context to be the same")

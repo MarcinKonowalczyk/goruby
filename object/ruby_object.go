@@ -1,7 +1,6 @@
 package object
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
@@ -11,6 +10,7 @@ import (
 type Type string
 
 const (
+	BOTTOM_OBJ         Type = "BOTTOM" // The bottom class
 	EIGENCLASS_OBJ     Type = "EIGENCLASS"
 	FUNCTION_OBJ       Type = "FUNCTION"
 	RETURN_VALUE_OBJ   Type = "RETURN_VALUE"
@@ -47,7 +47,6 @@ type RubyObject interface {
 type RubyClass interface {
 	Methods() MethodSet
 	GetMethod(name string) (RubyMethod, bool)
-	SuperClass() RubyClass
 	New(args ...RubyObject) (RubyObject, error)
 	Name() string
 }
@@ -60,25 +59,6 @@ type RubyClassObject interface {
 
 type hashable interface {
 	hashKey() hashKey
-}
-
-type extendable interface {
-	addMethod(name string, method RubyMethod)
-}
-
-type extendableRubyObject interface {
-	RubyObject
-	extendable
-}
-
-type objects []RubyObject
-
-func (o objects) String() string {
-	out := []string{}
-	for _, v := range o {
-		out = append(out, v.Inspect())
-	}
-	return fmt.Sprintf("%s", out)
 }
 
 // ReturnValue represents a wrapper object for a return statement. It is no
@@ -188,10 +168,9 @@ func (f *FunctionParameter) String() string {
 
 // A Function represents a user defined function. It is no real Ruby object.
 type Function struct {
-	Parameters       []*FunctionParameter
-	Body             *ast.BlockStatement
-	Env              Environment
-	MethodVisibility MethodVisibility
+	Parameters []*FunctionParameter
+	Body       *ast.BlockStatement
+	Env        Environment
 }
 
 // String returns the function literal
@@ -221,10 +200,6 @@ func (f *Function) Call(context CallContext, args ...RubyObject) (RubyObject, er
 		args_arr := NewArray(args...)
 		extendedEnv := NewEnclosedEnvironment(f.Env)
 		extendedEnv.Set(f.Parameters[0].Name, args_arr)
-		contextSelf, _ := context.Env().Get("self")
-		contextSelfObject := contextSelf.(*Self)
-		extendedEnv.Set("self", contextSelfObject)
-
 		evaluated, err := context.Eval(f.Body, extendedEnv)
 		if err != nil {
 			return nil, err
@@ -241,20 +216,16 @@ func (f *Function) Call(context CallContext, args ...RubyObject) (RubyObject, er
 		if err != nil {
 			return nil, err
 		}
-		contextSelf, _ := context.Env().Get("self")
-		contextSelfObject := contextSelf.(*Self)
-		extendedEnv := f.extendFunctionEnv(contextSelfObject, params, nil)
+		extendedEnv := NewEnclosedEnvironment(f.Env)
+		for k, v := range params {
+			extendedEnv.Set(k, v)
+		}
 		evaluated, err := context.Eval(f.Body, extendedEnv)
 		if err != nil {
 			return nil, err
 		}
 		return f.unwrapReturnValue(evaluated), nil
 	}
-}
-
-// Visibility implements the RubyMethod interface. It returns f.MethodVisibility
-func (f *Function) Visibility() MethodVisibility {
-	return f.MethodVisibility
 }
 
 func (f *Function) populateParameters(args []RubyObject) (map[string]RubyObject, error) {
@@ -288,46 +259,9 @@ func (f *Function) populateParameters(args []RubyObject) (map[string]RubyObject,
 	return params, nil
 }
 
-func (f *Function) extendFunctionEnv(context *Self, params map[string]RubyObject, block *Symbol) Environment {
-	// encapsulate the block within a new self, but with the same object
-	funcSelf := &Self{RubyObject: context.RubyObject, Name: context.Name}
-	env := NewEnclosedEnvironment(f.Env)
-	env.Set("self", funcSelf)
-	for k, v := range params {
-		env.Set(k, v)
-	}
-	return env
-}
-
 func (f *Function) unwrapReturnValue(obj RubyObject) RubyObject {
 	if returnValue, ok := obj.(*ReturnValue); ok {
 		return returnValue.Value
 	}
 	return obj
-}
-
-// Self represents the value associated to `self`. It acts as a wrapper around
-// the RubyObject and is just meant to indicate that the given object is
-// self in the given context.
-type Self struct {
-	RubyObject        // The encapsuled object acting as self
-	Name       string // The name of self in this context
-}
-
-// Type returns SELF
-func (s *Self) Type() Type { return SELF }
-
-// Inspect returns the name of Self
-func (s *Self) Inspect() string { return s.Name }
-
-// extendedObject is a wrapper object for an object extended by methods.
-type extendedObject struct {
-	RubyObject
-	class *eigenclass
-	Environment
-}
-
-func (e *extendedObject) Class() RubyClass { return e.class }
-func (e *extendedObject) addMethod(name string, method RubyMethod) {
-	e.class.addMethod(name, method)
 }

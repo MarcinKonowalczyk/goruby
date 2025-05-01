@@ -4,7 +4,7 @@ import "testing"
 
 func TestExceptionInitialize(t *testing.T) {
 	context := &callContext{
-		receiver: &Self{RubyObject: &Exception{}},
+		receiver: &Exception{},
 		env:      NewMainEnvironment(),
 	}
 	t.Run("without args", func(t *testing.T) {

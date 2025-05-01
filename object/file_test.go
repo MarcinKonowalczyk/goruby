@@ -9,7 +9,7 @@ func TestFileExpandPath(t *testing.T) {
 	t.Run("one arg flavour", func(t *testing.T) {
 		env := NewEnvironment()
 		context := &callContext{
-			receiver: &Self{RubyObject: fileClass, Name: "File"},
+			receiver: fileClass,
 			env:      env,
 		}
 		filename := &String{Value: "./fixtures/testfile.rb"}
@@ -29,7 +29,7 @@ func TestFileExpandPath(t *testing.T) {
 	t.Run("two arg flavour", func(t *testing.T) {
 		env := NewEnvironment()
 		context := &callContext{
-			receiver: &Self{RubyObject: fileClass, Name: "File"},
+			receiver: fileClass,
 			env:      env,
 		}
 		filename := &String{Value: "../../main.go"}
@@ -51,7 +51,7 @@ func TestFileExpandPath(t *testing.T) {
 
 func TestFileDirname(t *testing.T) {
 	context := &callContext{
-		receiver: &Self{RubyObject: fileClass, Name: "File"},
+		receiver: fileClass,
 		env:      NewEnvironment(),
 	}
 	filename := &String{Value: "/var/log/foo.log"}

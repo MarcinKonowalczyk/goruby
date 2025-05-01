@@ -25,7 +25,7 @@ func (e *eigenclass) Class() RubyClass {
 	if e.wrappedClass != nil {
 		return e.wrappedClass
 	}
-	return classClass
+	return nil
 }
 func (e *eigenclass) Methods() MethodSet { return e.methods }
 func (e *eigenclass) GetMethod(name string) (RubyMethod, bool) {
@@ -39,7 +39,7 @@ func (e *eigenclass) SuperClass() RubyClass {
 	if e.wrappedClass != nil {
 		return e.wrappedClass
 	}
-	return objectClass
+	return bottomClass
 }
 func (e *eigenclass) New(args ...RubyObject) (RubyObject, error) {
 	return e.wrappedClass.New(args...)

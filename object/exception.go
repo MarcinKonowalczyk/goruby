@@ -9,126 +9,16 @@ import (
 var (
 	exceptionClass RubyClassObject = newClass(
 		"Exception",
-		objectClass,
 		exceptionMethods,
 		exceptionClassMethods,
 		func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
 			return &Exception{message: c.Name()}, nil
 		},
 	)
-	standardErrorClass RubyClassObject = newClass(
-		"StandardError",
-		exceptionClass,
-		nil,
-		nil,
-		func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
-			return &StandardError{message: c.Name()}, nil
-		},
-	)
-	runtimeErrorClass RubyClassObject = newClass(
-		"RuntimeError",
-		standardErrorClass,
-		nil,
-		nil,
-		func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
-			return &RuntimeError{message: c.Name()}, nil
-		},
-	)
-	zeroDivisionErrorClass RubyClassObject = newClass(
-		"ZeroDivisionError",
-		standardErrorClass,
-		nil,
-		nil,
-		func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
-			return &ZeroDivisionError{message: c.Name()}, nil
-		},
-	)
-	argumentErrorClass RubyClassObject = newClass(
-		"ArgumentError",
-		standardErrorClass,
-		nil,
-		nil,
-		func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
-			return &ArgumentError{message: c.Name()}, nil
-		},
-	)
-	nameErrorClass RubyClassObject = newClass(
-		"NameError",
-		standardErrorClass,
-		nil,
-		nil,
-		func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
-			return &NameError{message: c.Name()}, nil
-		},
-	)
-	noMethodErrorClass RubyClassObject = newClass(
-		"NoMethodError",
-		nameErrorClass,
-		nil,
-		nil,
-		func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
-			return &NoMethodError{message: c.Name()}, nil
-		},
-	)
-	typeErrorClass RubyClassObject = newClass(
-		"TypeError",
-		standardErrorClass,
-		nil,
-		nil,
-		func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
-			return &TypeError{Message: c.Name()}, nil
-		},
-	)
-	scriptErrorClass RubyClassObject = newClass(
-		"ScriptError",
-		exceptionClass,
-		nil,
-		nil,
-		func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
-			return &ScriptError{message: c.Name()}, nil
-		},
-	)
-	loadErrorClass RubyClassObject = newClass(
-		"LoadError",
-		scriptErrorClass,
-		nil,
-		nil,
-		func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
-			return &LoadError{message: c.Name()}, nil
-		},
-	)
-	syntaxErrorClass RubyClassObject = newClass(
-		"SyntaxError",
-		scriptErrorClass,
-		nil,
-		nil,
-		func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
-			return &SyntaxError{message: c.Name()}, nil
-		},
-	)
-	notImplementedErrorClass RubyClassObject = newClass(
-		"NotImplementedError",
-		scriptErrorClass,
-		nil,
-		nil,
-		func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
-			return &NotImplementedError{message: c.Name()}, nil
-		},
-	)
 )
 
 func init() {
-	classes.Set("Exception", exceptionClass)
-	classes.Set("StandardError", standardErrorClass)
-	classes.Set("ZeroDivisionError", zeroDivisionErrorClass)
-	classes.Set("ArgumentError", argumentErrorClass)
-	classes.Set("NameError", nameErrorClass)
-	classes.Set("NoMethodError", noMethodErrorClass)
-	classes.Set("TypeError", typeErrorClass)
-	classes.Set("ScriptError", scriptErrorClass)
-	classes.Set("LoadError", loadErrorClass)
-	classes.Set("SyntaxError", syntaxErrorClass)
-	classes.Set("NotImplementedError", notImplementedErrorClass)
+	CLASSES.Set("Exception", exceptionClass)
 }
 
 func formatException(exception RubyObject, message string) string {
@@ -170,16 +60,13 @@ var exceptionClassMethods = map[string]RubyMethod{
 }
 
 var exceptionMethods = map[string]RubyMethod{
-	"initialize": privateMethod(exceptionInitialize),
+	"initialize": publicMethod(exceptionInitialize),
 	"exception":  publicMethod(exceptionException),
 	"to_s":       withArity(0, publicMethod(exceptionToS)),
 }
 
 func exceptionInitialize(context CallContext, args ...RubyObject) (RubyObject, error) {
 	receiver := context.Receiver()
-	if self, ok := receiver.(*Self); ok {
-		receiver = self.RubyObject
-	}
 	var message string
 	message = receiver.Class().Name()
 	if len(args) == 1 {
@@ -280,7 +167,7 @@ func (e *StandardError) setErrorMessage(msg string) {
 }
 
 // Class returns standardErrorClass
-func (e *StandardError) Class() RubyClass { return standardErrorClass }
+func (e *StandardError) Class() RubyClass { return exceptionClass }
 
 // NewRuntimeError returns a new RuntimeError with the formatted message
 func NewRuntimeError(format string, args ...interface{}) *RuntimeError {
@@ -306,7 +193,7 @@ func (e *RuntimeError) setErrorMessage(msg string) {
 }
 
 // Class returns runtimeErrorClass
-func (e *RuntimeError) Class() RubyClass { return runtimeErrorClass }
+func (e *RuntimeError) Class() RubyClass { return exceptionClass }
 
 // NewZeroDivisionError returns a new ZeroDivisionError with the default message
 func NewZeroDivisionError() *ZeroDivisionError {
@@ -332,7 +219,7 @@ func (e *ZeroDivisionError) setErrorMessage(msg string) {
 }
 
 // Class returns zeroDivisionErrorClass
-func (e *ZeroDivisionError) Class() RubyClass { return zeroDivisionErrorClass }
+func (e *ZeroDivisionError) Class() RubyClass { return exceptionClass }
 
 // NewWrongNumberOfArgumentsError returns an ArgumentError populated with the default message
 func NewWrongNumberOfArgumentsError(expected, actual int) *ArgumentError {
@@ -369,7 +256,7 @@ func (e *ArgumentError) setErrorMessage(msg string) {
 }
 
 // Class returns argumentErrorClass
-func (e *ArgumentError) Class() RubyClass { return argumentErrorClass }
+func (e *ArgumentError) Class() RubyClass { return exceptionClass }
 
 // NewUninitializedConstantNameError returns a NameError with the default message for uninitialized constants
 func NewUninitializedConstantNameError(name string) *NameError {
@@ -410,25 +297,13 @@ func (e *NameError) setErrorMessage(msg string) {
 }
 
 // Class returns nameErrorClass
-func (e *NameError) Class() RubyClass { return nameErrorClass }
+func (e *NameError) Class() RubyClass { return exceptionClass }
 
 // NewNoMethodError returns a NoMethodError with the default message for undefined methods
 func NewNoMethodError(context RubyObject, method string) *NoMethodError {
 	return &NoMethodError{
 		message: fmt.Sprintf(
 			"undefined method `%s' for %s:%s",
-			method,
-			context.Inspect(),
-			context.Class().(RubyObject).Inspect(),
-		),
-	}
-}
-
-// NewPrivateNoMethodError returns a NoMethodError with the default message for private methods
-func NewPrivateNoMethodError(context RubyObject, method string) *NoMethodError {
-	return &NoMethodError{
-		message: fmt.Sprintf(
-			"private method `%s' called for %s:%s",
 			method,
 			context.Inspect(),
 			context.Class().(RubyObject).Inspect(),
@@ -453,7 +328,7 @@ func (e *NoMethodError) setErrorMessage(msg string) {
 }
 
 // Class returns noMethodErrorClass
-func (e *NoMethodError) Class() RubyClass { return noMethodErrorClass }
+func (e *NoMethodError) Class() RubyClass { return exceptionClass }
 
 // NewWrongArgumentTypeError returns a TypeError with the default message for wrong arugument type errors
 func NewWrongArgumentTypeError(expected, actual RubyObject) *TypeError {
@@ -531,7 +406,7 @@ func (e *TypeError) setErrorMessage(msg string) {
 }
 
 // Class returns typeErrorClass
-func (e *TypeError) Class() RubyClass { return typeErrorClass }
+func (e *TypeError) Class() RubyClass { return exceptionClass }
 
 // NewScriptError returns a new script error with the provided message
 func NewScriptError(format string, args ...interface{}) *ScriptError {
@@ -555,7 +430,7 @@ func (e *ScriptError) setErrorMessage(msg string) {
 }
 
 // Class returns scriptErrorClass
-func (e *ScriptError) Class() RubyClass { return scriptErrorClass }
+func (e *ScriptError) Class() RubyClass { return exceptionClass }
 
 // NewNoSuchFileLoadError returns a new LoadError with the default message
 func NewNoSuchFileLoadError(filepath string) *LoadError {
@@ -584,7 +459,7 @@ func (e *LoadError) setErrorMessage(msg string) {
 }
 
 // Class returns loadErrorClass
-func (e *LoadError) Class() RubyClass { return loadErrorClass }
+func (e *LoadError) Class() RubyClass { return exceptionClass }
 
 // NewSyntaxError returns a new SyntaxError with the default message
 func NewSyntaxError(syntaxError error) *SyntaxError {
@@ -615,7 +490,7 @@ func (e *SyntaxError) setErrorMessage(msg string) {
 }
 
 // Class returns syntaxErrorClass
-func (e *SyntaxError) Class() RubyClass { return syntaxErrorClass }
+func (e *SyntaxError) Class() RubyClass { return exceptionClass }
 
 // UnderlyingError returns the parser error wrapped by SyntaxError
 func (e *SyntaxError) UnderlyingError() error { return e.err }
@@ -642,7 +517,7 @@ func (e *NotImplementedError) setErrorMessage(msg string) {
 }
 
 // Class returns notImplementedErrorClass
-func (e *NotImplementedError) Class() RubyClass { return notImplementedErrorClass }
+func (e *NotImplementedError) Class() RubyClass { return exceptionClass }
 
 // NewNoBlockGivenLocalJumpError returns a LocalJumpError with the default message for missing blocks
 func NewNoBlockGivenLocalJumpError() *LocalJumpError {
@@ -666,4 +541,4 @@ func (e *LocalJumpError) setErrorMessage(msg string) {
 }
 
 // Class returns notImplementedErrorClass
-func (e *LocalJumpError) Class() RubyClass { return notImplementedErrorClass }
+func (e *LocalJumpError) Class() RubyClass { return exceptionClass }

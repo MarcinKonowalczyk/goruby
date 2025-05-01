@@ -8,7 +8,6 @@ import (
 
 var hashClass RubyClassObject = newClass(
 	"Hash",
-	objectClass,
 	hashMethods,
 	hashClassMethods,
 	func(RubyClassObject, ...RubyObject) (RubyObject, error) {
@@ -17,7 +16,7 @@ var hashClass RubyClassObject = newClass(
 )
 
 func init() {
-	classes.Set("Hash", hashClass)
+	CLASSES.Set("Hash", hashClass)
 }
 
 // Map returns a map of RubyObject to RubyObject
