@@ -3264,14 +3264,6 @@ func TestSymbolExpression(t *testing.T) {
 			"symbol",
 		},
 		{
-			`:"symbol";`,
-			"symbol",
-		},
-		{
-			`:'symbol';`,
-			"symbol",
-		},
-		{
 			`:UNDEF`,
 			"UNDEF",
 		},

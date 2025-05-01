@@ -81,7 +81,7 @@ const (
 
 	QMARK  // ?
 	SQMARK // _?
-	SYMBEG // :
+	SYMBOL // : ...
 
 	// Keywords
 	keyword_beg
@@ -198,7 +198,7 @@ var type_strings = [...]string{
 
 	QMARK:  "QMARK",
 	SQMARK: "SQMARK",
-	SYMBEG: "SYMBEG",
+	SYMBOL: "SYMBOL",
 
 	DEF:             "DEF",
 	END:             "END",
@@ -279,7 +279,7 @@ var type_reprs = [...]string{
 
 	QMARK:  "?",
 	SQMARK: "_?",
-	SYMBEG: ":",
+	SYMBOL: ":",
 
 	DEF:             "def",
 	END:             "end",
