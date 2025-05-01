@@ -79,35 +79,34 @@ func stringify(obj RubyObject) (string, error) {
 var stringClassMethods = map[string]RubyMethod{}
 
 var stringMethods = map[string]RubyMethod{
-	"initialize": publicMethod(stringInitialize),
-	"to_s":       withArity(0, publicMethod(stringToS)),
-	"+":          withArity(1, publicMethod(stringAdd)),
-	"gsub":       withArity(2, publicMethod(stringGsub)),
-	"length":     withArity(0, publicMethod(stringLength)),
-	"size":       withArity(0, publicMethod(stringLength)),
+	// "initialize": publicMethod(stringInitialize),
+	"to_s":   withArity(0, publicMethod(stringToS)),
+	"+":      withArity(1, publicMethod(stringAdd)),
+	"gsub":   withArity(2, publicMethod(stringGsub)),
+	"length": withArity(0, publicMethod(stringLength)),
+	"size":   withArity(0, publicMethod(stringLength)),
 	// "==":         withArity(1, publicMethod(stringEqual)),
 	// "!=":         withArity(1, publicMethod(stringNotEqual)),
 	"lines": withArity(0, publicMethod(stringLines)),
 	"to_f":  withArity(0, publicMethod(stringToF)),
 }
 
-func stringInitialize(context CallContext, args ...RubyObject) (RubyObject, error) {
-	self, _ := context.Receiver().(*Self)
-	switch len(args) {
-	case 0:
-		self.RubyObject = &String{}
-		return self, nil
-	case 1:
-		str, ok := args[0].(*String)
-		if !ok {
-			return nil, NewImplicitConversionTypeError(str, args[0])
-		}
-		self.RubyObject = &String{Value: str.Value}
-		return self, nil
-	default:
-		return nil, NewWrongNumberOfArgumentsError(len(args), 1)
-	}
-}
+// func stringInitialize(context CallContext, args ...RubyObject) (RubyObject, error) {
+// 	switch len(args) {
+// 	case 0:
+// 		self.RubyObject = &String{}
+// 		return self, nil
+// 	case 1:
+// 		str, ok := args[0].(*String)
+// 		if !ok {
+// 			return nil, NewImplicitConversionTypeError(str, args[0])
+// 		}
+// 		self.RubyObject = &String{Value: str.Value}
+// 		return self, nil
+// 	default:
+// 		return nil, NewWrongNumberOfArgumentsError(len(args), 1)
+// 	}
+// }
 
 func stringToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 	str := context.Receiver().(*String)

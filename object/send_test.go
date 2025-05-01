@@ -90,7 +90,7 @@ func TestAddMethod(t *testing.T) {
 			Body: nil,
 		}
 
-		newContext := AddMethod(context, "foo", fn)
+		newContext, _ := AddMethod(context, "foo", fn)
 
 		_, ok := newContext.Class().Methods().Get("foo")
 		if !ok {
@@ -112,7 +112,7 @@ func TestAddMethod(t *testing.T) {
 			Body: nil,
 		}
 
-		newContext := AddMethod(context, "foo", fn)
+		newContext, _ := AddMethod(context, "foo", fn)
 
 		class, ok := newContext.(*class)
 		if !ok {
@@ -134,7 +134,7 @@ func TestAddMethod(t *testing.T) {
 					instanceMethods: NewMethodSet(map[string]RubyMethod{}),
 				},
 			},
-			class: newEigenclass(bottomClass, map[string]RubyMethod{
+			eigenclass: newEigenclass(bottomClass, map[string]RubyMethod{
 				"bar": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 					return NIL, nil
 				}),
@@ -149,7 +149,7 @@ func TestAddMethod(t *testing.T) {
 			Body: nil,
 		}
 
-		newContext := AddMethod(context, "foo", fn)
+		newContext, _ := AddMethod(context, "foo", fn)
 
 		_, ok := newContext.Class().Methods().Get("foo")
 		if !ok {
@@ -171,9 +171,7 @@ func TestAddMethod(t *testing.T) {
 			},
 			Name: "main",
 		}
-		context := &Self{
-			RubyObject: vanillaObject,
-		}
+		context := vanillaObject
 
 		fn := &Function{
 			Parameters: []*FunctionParameter{
@@ -183,7 +181,7 @@ func TestAddMethod(t *testing.T) {
 			Body: nil,
 		}
 
-		newContext := AddMethod(context, "foo", fn)
+		newContext, extended := AddMethod(context, "foo", fn)
 
 		_, ok := newContext.Class().Methods().Get("foo")
 		if !ok {
@@ -191,21 +189,20 @@ func TestAddMethod(t *testing.T) {
 			t.Fail()
 		}
 
-		returnedSelf, ok := newContext.(*Self)
-		if !ok {
-			t.Logf("Expected returned object to be self, got %T", newContext)
-			t.Fail()
-		}
-
-		returnPointer := reflect.ValueOf(returnedSelf).Pointer()
+		returnPointer := reflect.ValueOf(newContext).Pointer()
 		contextPointer := reflect.ValueOf(context).Pointer()
 
-		if returnPointer != contextPointer {
-			t.Logf("Expected input and return context to be the same")
+		if !extended {
+			t.Logf("Expected object to be extended")
 			t.Fail()
 		}
 
-		extendedRubyObject := returnedSelf.RubyObject.(*extendedObject).RubyObject
+		if returnPointer == contextPointer {
+			t.Logf("Expected input and return context to be different")
+			t.Fail()
+		}
+
+		extendedRubyObject := newContext.(*extendedObject).RubyObject
 
 		if !reflect.DeepEqual(vanillaObject, extendedRubyObject) {
 			t.Logf(
@@ -217,21 +214,18 @@ func TestAddMethod(t *testing.T) {
 		}
 	})
 	t.Run("extended self object", func(t *testing.T) {
-		context := &Self{
-			RubyObject: &extendedObject{
-				RubyObject: &testRubyObject{
-					class: &class{
-						name:            "base class",
-						instanceMethods: NewMethodSet(map[string]RubyMethod{}),
-					},
+		context := &extendedObject{
+			RubyObject: &testRubyObject{
+				class: &class{
+					name:            "base class",
+					instanceMethods: NewMethodSet(map[string]RubyMethod{}),
 				},
-				class: newEigenclass(bottomClass, map[string]RubyMethod{
-					"bar": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
-						return NIL, nil
-					}),
-				}),
 			},
-			Name: "main",
+			eigenclass: newEigenclass(bottomClass, map[string]RubyMethod{
+				"bar": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+					return NIL, nil
+				}),
+			}),
 		}
 
 		fn := &Function{
@@ -242,7 +236,7 @@ func TestAddMethod(t *testing.T) {
 			Body: nil,
 		}
 
-		newContext := AddMethod(context, "foo", fn)
+		newContext, extended := AddMethod(context, "foo", fn)
 
 		_, ok := newContext.Class().Methods().Get("foo")
 		if !ok {
@@ -256,14 +250,13 @@ func TestAddMethod(t *testing.T) {
 			t.Fail()
 		}
 
-		returnedSelf, ok := newContext.(*Self)
-		if !ok {
-			t.Logf("Expected returned object to be self, got %T", newContext)
+		returnPointer := reflect.ValueOf(newContext).Pointer()
+		contextPointer := reflect.ValueOf(context).Pointer()
+
+		if extended {
+			t.Logf("Expected object not to be extended")
 			t.Fail()
 		}
-
-		returnPointer := reflect.ValueOf(returnedSelf).Pointer()
-		contextPointer := reflect.ValueOf(context).Pointer()
 
 		if returnPointer != contextPointer {
 			t.Logf("Expected input and return context to be the same")

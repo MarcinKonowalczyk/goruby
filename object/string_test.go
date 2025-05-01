@@ -40,7 +40,7 @@ func Test_stringify(t *testing.T) {
 		}
 		obj := &extendedObject{
 			RubyObject: &Bottom{},
-			class: newEigenclass(bottomClass, map[string]RubyMethod{
+			eigenclass: newEigenclass(bottomClass, map[string]RubyMethod{
 				"to_s": publicMethod(toS),
 			}),
 			Environment: NewEnvironment(),

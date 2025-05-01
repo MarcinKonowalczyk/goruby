@@ -8,11 +8,11 @@ import (
 )
 
 var (
-	CLASSES    = NewEnvironment()
-	BOTTOM     = &Bottom{}
-	mainObject = &extendedObject{
-		RubyObject:  BOTTOM,
-		class:       newEigenclass(BOTTOM.Class().(RubyClassObject), map[string]RubyMethod{}),
+	CLASSES = NewEnvironment()
+	_BOTTOM = &Bottom{}
+	BOTTOM  = &extendedObject{
+		RubyObject:  _BOTTOM,
+		eigenclass:  newEigenclass(_BOTTOM.Class().(RubyClassObject), map[string]RubyMethod{}),
 		Environment: NewEnvironment(),
 	}
 )
@@ -22,7 +22,7 @@ var (
 func NewMainEnvironment() Environment {
 	loadPath := NewArray()
 	env := CLASSES.Clone()
-	env.Set("self", &Self{RubyObject: mainObject, Name: "main"})
+	env.Set("self", BOTTOM)
 	env.SetGlobal("$LOADED_FEATURES", NewArray())
 	env.SetGlobal("$:", loadPath)
 	env.SetGlobal("$LOAD_PATH", loadPath)

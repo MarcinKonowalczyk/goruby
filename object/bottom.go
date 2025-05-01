@@ -58,9 +58,6 @@ var bottomMethodSet = map[string]RubyMethod{
 
 func bottomToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 	receiver := context.Receiver()
-	if self, ok := receiver.(*Self); ok {
-		receiver = self.RubyObject
-	}
 	val := fmt.Sprintf("#<%s:%p>", receiver.Class().Name(), receiver)
 	return &String{Value: val}, nil
 }
@@ -162,7 +159,7 @@ func bottomMethods(context CallContext, args ...RubyObject) (RubyObject, error) 
 	}
 
 	if !showSuperMethods && ok {
-		class = extended.class
+		class = extended.eigenclass
 	}
 
 	return getMethods(class, showSuperMethods), nil

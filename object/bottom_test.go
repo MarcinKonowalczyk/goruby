@@ -459,7 +459,7 @@ func TestBottomToS(t *testing.T) {
 		checkResult(t, result, expected)
 	})
 	t.Run("self object as receiver", func(t *testing.T) {
-		self := &Self{RubyObject: &Bottom{}, Name: "foo"}
+		self := &Bottom{}
 		context := &callContext{
 			receiver: self,
 		}
@@ -468,14 +468,14 @@ func TestBottomToS(t *testing.T) {
 
 		checkError(t, err, nil)
 
-		expected := &String{Value: fmt.Sprintf("#<Bottom:%p>", self.RubyObject)}
+		expected := &String{Value: fmt.Sprintf("#<Bottom:%p>", self)}
 
 		checkResult(t, result, expected)
 	})
 }
 
 func TestBottomRaise(t *testing.T) {
-	object := &Self{RubyObject: &Bottom{}, Name: "x"}
+	object := &Bottom{}
 	env := NewMainEnvironment()
 	context := &callContext{
 		receiver: object,
@@ -504,32 +504,5 @@ func TestBottomRaise(t *testing.T) {
 			checkResult(t, result, nil)
 			checkError(t, err, NewRuntimeError("%s", obj.Inspect()))
 		})
-		// t.Run("class argument", func(t *testing.T) {
-		// 	// t.Run("exception class", func(t *testing.T) {
-		// 	// 	result, err := bottomRaise(context, exceptionClass)
-		// 	// 	checkResult(t, result, nil)
-		// 	// 	checkError(t, err, &StandardError{message: "StandardError"})
-		// 	// })
-		// 	// t.Run("other class", func(t *testing.T) {
-		// 	// 	result, err := bottomRaise(context, stringClass)
-		// 	// 	checkResult(t, result, nil)
-		// 	// 	checkError(t, err, &TypeError{Message: "exception class/object expected"})
-		// 	// })
-		// 	t.Run("object with #exception returning exception", func(t *testing.T) {
-		// 		exceptionFn := func(CallContext, ...RubyObject) (RubyObject, error) {
-		// 			return &StandardError{message: "err"}, nil
-		// 		}
-		// 		obj := &extendedObject{
-		// 			RubyObject: &Bottom{},
-		// 			class: newEigenclass(bottomClass, map[string]RubyMethod{
-		// 				"exception": publicMethod(exceptionFn),
-		// 			}),
-		// 			Environment: NewEnvironment(),
-		// 		}
-		// 		result, err := bottomRaise(context, obj)
-		// 		checkResult(t, result, nil)
-		// 		checkError(t, err, &StandardError{message: "err"})
-		// 	})
-		// })
 	})
 }

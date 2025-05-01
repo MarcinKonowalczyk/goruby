@@ -220,7 +220,7 @@ end
 		},
 		{
 			"foobar",
-			"NameError: undefined local variable or method `foobar' for main:Bottom",
+			"NameError: undefined local variable or method `foobar' for :Bottom",
 		},
 		{
 			"Foobar",
@@ -239,7 +239,8 @@ end
 
 	for _, tt := range tests {
 		env := object.NewEnvironment()
-		env.Set("self", &object.Self{RubyObject: &object.Bottom{}, Name: "main"})
+		obj := &object.Bottom{}
+		env.Set("self", obj)
 		evaluated, err := testEval(tt.input, env)
 
 		if err == nil {
@@ -259,13 +260,6 @@ end
 		testExceptionObject(t, actual, tt.expectedMessage)
 	}
 }
-
-// func mustGet(obj object.RubyObject, ok bool) object.RubyObject {
-// 	if !ok {
-// 		panic("object not found")
-// 	}
-// 	return obj
-// }
 
 func TestAssignment(t *testing.T) {
 	t.Run("assign to hash", func(t *testing.T) {
@@ -549,7 +543,7 @@ func TestFunctionObject(t *testing.T) {
 
 		for _, tt := range tests {
 			env := object.NewEnvironment()
-			env.Set("self", &object.Self{RubyObject: &object.Bottom{}, Name: "main"})
+			env.Set("self", &object.Bottom{})
 			evaluated, err := testEval(tt.input, env)
 			checkError(t, err)
 			sym, ok := evaluated.(*object.Symbol)
@@ -613,7 +607,7 @@ func TestFunctionApplication(t *testing.T) {
 
 	for _, tt := range tests {
 		env := object.NewEnvironment()
-		env.Set("self", &object.Self{RubyObject: &object.Bottom{}, Name: "main"})
+		env.Set("self", &object.Bottom{})
 		evaluated, err := testEval(tt.input, env)
 		checkError(t, err)
 		testIntegerObject(t, evaluated, tt.expected)
@@ -812,23 +806,6 @@ func TestNilExpression(t *testing.T) {
 	evaluated, err := testEval(input)
 	checkError(t, err)
 	testNilObject(t, evaluated)
-}
-
-func TestSelfExpression(t *testing.T) {
-	input := "self"
-
-	env := object.NewMainEnvironment()
-	env.Set("self", &object.Self{RubyObject: &object.Integer{Value: 3}, Name: "3"})
-	evaluated, err := testEval(input, env)
-	checkError(t, err)
-
-	self, ok := evaluated.(*object.Self)
-	if !ok {
-		t.Logf("Expected evaluated object to be object.Self, got=%T", evaluated)
-		t.Fail()
-	}
-
-	testIntegerObject(t, self.RubyObject, 3)
 }
 
 func TestHashLiteral(t *testing.T) {

@@ -61,15 +61,6 @@ type hashable interface {
 	hashKey() hashKey
 }
 
-type extendable interface {
-	addMethod(name string, method RubyMethod)
-}
-
-type extendableRubyObject interface {
-	RubyObject
-	extendable
-}
-
 // ReturnValue represents a wrapper object for a return statement. It is no
 // real Ruby object and only used within the interpreter evaluation
 type ReturnValue struct {
@@ -209,10 +200,6 @@ func (f *Function) Call(context CallContext, args ...RubyObject) (RubyObject, er
 		args_arr := NewArray(args...)
 		extendedEnv := NewEnclosedEnvironment(f.Env)
 		extendedEnv.Set(f.Parameters[0].Name, args_arr)
-		contextSelf, _ := context.Env().Get("self")
-		contextSelfObject := contextSelf.(*Self)
-		extendedEnv.Set("self", contextSelfObject)
-
 		evaluated, err := context.Eval(f.Body, extendedEnv)
 		if err != nil {
 			return nil, err
@@ -229,9 +216,10 @@ func (f *Function) Call(context CallContext, args ...RubyObject) (RubyObject, er
 		if err != nil {
 			return nil, err
 		}
-		contextSelf, _ := context.Env().Get("self")
-		contextSelfObject := contextSelf.(*Self)
-		extendedEnv := f.extendFunctionEnv(contextSelfObject, params, nil)
+		extendedEnv := NewEnclosedEnvironment(f.Env)
+		for k, v := range params {
+			extendedEnv.Set(k, v)
+		}
 		evaluated, err := context.Eval(f.Body, extendedEnv)
 		if err != nil {
 			return nil, err
@@ -271,46 +259,9 @@ func (f *Function) populateParameters(args []RubyObject) (map[string]RubyObject,
 	return params, nil
 }
 
-func (f *Function) extendFunctionEnv(context *Self, params map[string]RubyObject, block *Symbol) Environment {
-	// encapsulate the block within a new self, but with the same object
-	funcSelf := &Self{RubyObject: context.RubyObject, Name: context.Name}
-	env := NewEnclosedEnvironment(f.Env)
-	env.Set("self", funcSelf)
-	for k, v := range params {
-		env.Set(k, v)
-	}
-	return env
-}
-
 func (f *Function) unwrapReturnValue(obj RubyObject) RubyObject {
 	if returnValue, ok := obj.(*ReturnValue); ok {
 		return returnValue.Value
 	}
 	return obj
-}
-
-// Self represents the value associated to `self`. It acts as a wrapper around
-// the RubyObject and is just meant to indicate that the given object is
-// self in the given context.
-type Self struct {
-	RubyObject        // The encapsuled object acting as self
-	Name       string // The name of self in this context
-}
-
-// Type returns SELF
-func (s *Self) Type() Type { return SELF }
-
-// Inspect returns the name of Self
-func (s *Self) Inspect() string { return s.Name }
-
-// extendedObject is a wrapper object for an object extended by methods.
-type extendedObject struct {
-	RubyObject
-	class *eigenclass
-	Environment
-}
-
-func (e *extendedObject) Class() RubyClass { return e.class }
-func (e *extendedObject) addMethod(name string, method RubyMethod) {
-	e.class.addMethod(name, method)
 }

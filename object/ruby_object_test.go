@@ -70,7 +70,7 @@ func TestFunctionCall(t *testing.T) {
 	})
 	t.Run("uses the function env as env for CallContext#Eval", func(t *testing.T) {
 		contextEnv := NewEnvironment()
-		contextEnv.Set("self", &Self{RubyObject: &Integer{Value: 42}, Name: "context self"})
+		contextEnv.Set("self", &Integer{Value: 42})
 		contextEnv.Set("bar", &String{Value: "not reachable in Eval"})
 		var evalEnv Environment
 		context := &callContext{
@@ -100,7 +100,7 @@ func TestFunctionCall(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(expected, actual) {
-				t.Logf("Expected 'foo' to equal\n%v\n\tgot\n%v\n", expected, actual)
+				t.Logf("Expected 'foo' to equal\n%v(%T)\n\tgot\n%v(%T)\n", expected, expected, actual, actual)
 				t.Fail()
 			}
 		}
@@ -111,22 +111,10 @@ func TestFunctionCall(t *testing.T) {
 			t.Fail()
 		}
 
-		{
-			expected := &Self{RubyObject: &Integer{Value: 42}, Name: "context self"}
-			actual, _ := evalEnv.Get("self")
-			if !reflect.DeepEqual(expected, actual) {
-				t.Logf("Expected Eval env self to equal\n%+v\n\tgot\n%+v\n", expected, actual)
-				t.Fail()
-			}
-			if expected == actual {
-				t.Logf("Expected Eval env self to be a new Self object\n")
-				t.Fail()
-			}
-		}
 	})
 	t.Run("puts the Call args into the env for CallContext#Eval", func(t *testing.T) {
 		contextEnv := NewEnvironment()
-		contextEnv.Set("self", &Self{RubyObject: &Integer{Value: 42}, Name: "context self"})
+		contextEnv.Set("self", &Integer{Value: 42})
 		var evalEnv Environment
 		context := &callContext{
 			env: contextEnv,

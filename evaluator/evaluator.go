@@ -115,6 +115,7 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		}
 	case *ast.FunctionLiteral:
 		context, _ := env.Get("self")
+		// construct a function object and stick it onto self
 		params := make([]*object.FunctionParameter, len(node.Parameters))
 		for i, param := range node.Parameters {
 			def, err := Eval(param.Default, env)
@@ -128,7 +129,11 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			Env:        env,
 			Body:       node.Body,
 		}
-		object.AddMethod(context, node.Name.Value, function)
+		newContext, extended := object.AddMethod(context, node.Name.Value, function)
+		if extended {
+			// we've just extended the context. set it in the env. this should not normally fire
+			env.Set("self", newContext)
+		}
 		return &object.Symbol{Value: node.Name.Value}, nil
 
 	case *ast.ArrayLiteral:

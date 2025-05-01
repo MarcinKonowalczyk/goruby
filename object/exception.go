@@ -67,9 +67,6 @@ var exceptionMethods = map[string]RubyMethod{
 
 func exceptionInitialize(context CallContext, args ...RubyObject) (RubyObject, error) {
 	receiver := context.Receiver()
-	if self, ok := receiver.(*Self); ok {
-		receiver = self.RubyObject
-	}
 	var message string
 	message = receiver.Class().Name()
 	if len(args) == 1 {
