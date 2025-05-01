@@ -188,10 +188,9 @@ func (f *FunctionParameter) String() string {
 
 // A Function represents a user defined function. It is no real Ruby object.
 type Function struct {
-	Parameters       []*FunctionParameter
-	Body             *ast.BlockStatement
-	Env              Environment
-	MethodVisibility MethodVisibility
+	Parameters []*FunctionParameter
+	Body       *ast.BlockStatement
+	Env        Environment
 }
 
 // String returns the function literal
@@ -250,11 +249,6 @@ func (f *Function) Call(context CallContext, args ...RubyObject) (RubyObject, er
 		}
 		return f.unwrapReturnValue(evaluated), nil
 	}
-}
-
-// Visibility implements the RubyMethod interface. It returns f.MethodVisibility
-func (f *Function) Visibility() MethodVisibility {
-	return f.MethodVisibility
 }
 
 func (f *Function) populateParameters(args []RubyObject) (map[string]RubyObject, error) {

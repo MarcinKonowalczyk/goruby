@@ -8,16 +8,12 @@ import (
 
 func TestGetMethods(t *testing.T) {
 	superClassMethods := map[string]RubyMethod{
-		"super_foo":           publicMethod(nil),
-		"super_bar":           publicMethod(nil),
-		"protected_super_foo": protectedMethod(nil),
-		"private_super_foo":   privateMethod(nil),
+		"super_foo": publicMethod(nil),
+		"super_bar": publicMethod(nil),
 	}
 	contextMethods := map[string]RubyMethod{
-		"foo":           publicMethod(nil),
-		"bar":           publicMethod(nil),
-		"protected_foo": protectedMethod(nil),
-		"private_foo":   privateMethod(nil),
+		"foo": publicMethod(nil),
+		"bar": publicMethod(nil),
 	}
 	classWithoutSuperclass := &class{
 		instanceMethods: NewMethodSet(contextMethods),
@@ -34,99 +30,38 @@ func TestGetMethods(t *testing.T) {
 	tests := []struct {
 		name                 string
 		class                RubyClass
-		visibility           MethodVisibility
 		addSuperclassMethods bool
 		expectedMethods      []string
 	}{
 		{
-			"no superclass public methods add super methods",
+			"no superclass methods add super methods",
 			classWithoutSuperclass,
-			PUBLIC_METHOD,
 			true,
 			[]string{":foo", ":bar"},
 		},
 		{
-			"no superclass public methods add no super methods",
+			"no superclass methods add no super methods",
 			classWithoutSuperclass,
-			PUBLIC_METHOD,
 			false,
 			[]string{":foo", ":bar"},
 		},
 		{
-			"no superclass protected methods add super methods",
-			classWithoutSuperclass,
-			PROTECTED_METHOD,
-			true,
-			[]string{":protected_foo"},
-		},
-		{
-			"no superclass protected methods add no super methods",
-			classWithoutSuperclass,
-			PROTECTED_METHOD,
-			false,
-			[]string{":protected_foo"},
-		},
-		{
-			"no superclass private methods add super methods",
-			classWithoutSuperclass,
-			PRIVATE_METHOD,
-			true,
-			[]string{":private_foo"},
-		},
-		{
-			"no superclass private methods add no super methods",
-			classWithoutSuperclass,
-			PRIVATE_METHOD,
-			false,
-			[]string{":private_foo"},
-		},
-		{
-			"with superclass public methods add super methods",
+			"with superclass methods add super methods",
 			classWithSuperclass,
-			PUBLIC_METHOD,
 			true,
 			[]string{":foo", ":bar", ":super_foo", ":super_bar"},
 		},
 		{
-			"with superclass public methods add with super methods",
+			"with superclass methods dont add super methods",
 			classWithSuperclass,
-			PUBLIC_METHOD,
 			false,
 			[]string{":foo", ":bar"},
-		},
-		{
-			"with superclass protected methods add super methods",
-			classWithSuperclass,
-			PROTECTED_METHOD,
-			true,
-			[]string{":protected_foo", ":protected_super_foo"},
-		},
-		{
-			"with superclass protected methods add with super methods",
-			classWithSuperclass,
-			PROTECTED_METHOD,
-			false,
-			[]string{":protected_foo"},
-		},
-		{
-			"with superclass private methods add super methods",
-			classWithSuperclass,
-			PRIVATE_METHOD,
-			true,
-			[]string{":private_foo", ":private_super_foo"},
-		},
-		{
-			"with superclass private methods add with super methods",
-			classWithSuperclass,
-			PRIVATE_METHOD,
-			false,
-			[]string{":private_foo"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := getMethods(tt.class, tt.visibility, tt.addSuperclassMethods)
+			result := getMethods(tt.class, tt.addSuperclassMethods)
 
 			var methods []string
 			for i, elem := range result.Elements {

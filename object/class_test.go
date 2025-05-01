@@ -238,7 +238,7 @@ func TestClassNew(t *testing.T) {
 	fooClass := newClass(
 		"Foo",
 		objectClass,
-		map[string]RubyMethod{"initialize": privateMethod(initializeStub)},
+		map[string]RubyMethod{"initialize": publicMethod(initializeStub)},
 		nil,
 		defaultBuilder,
 	)

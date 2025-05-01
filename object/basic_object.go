@@ -36,8 +36,8 @@ func (b *basicObject) Class() RubyClass { return basicObjectClass }
 var basicObjectClassMethods = map[string]RubyMethod{}
 
 var basicObjectMethods = map[string]RubyMethod{
-	"initialize":     privateMethod(basicObjectInitialize),
-	"method_missing": privateMethod(basicObjectMethodMissing),
+	"initialize":     publicMethod(basicObjectInitialize),
+	"method_missing": publicMethod(basicObjectMethodMissing),
 }
 
 func basicObjectMethodMissing(context CallContext, args ...RubyObject) (RubyObject, error) {

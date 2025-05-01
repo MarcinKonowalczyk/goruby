@@ -170,7 +170,7 @@ var exceptionClassMethods = map[string]RubyMethod{
 }
 
 var exceptionMethods = map[string]RubyMethod{
-	"initialize": privateMethod(exceptionInitialize),
+	"initialize": publicMethod(exceptionInitialize),
 	"exception":  publicMethod(exceptionException),
 	"to_s":       withArity(0, publicMethod(exceptionToS)),
 }
@@ -417,18 +417,6 @@ func NewNoMethodError(context RubyObject, method string) *NoMethodError {
 	return &NoMethodError{
 		message: fmt.Sprintf(
 			"undefined method `%s' for %s:%s",
-			method,
-			context.Inspect(),
-			context.Class().(RubyObject).Inspect(),
-		),
-	}
-}
-
-// NewPrivateNoMethodError returns a NoMethodError with the default message for private methods
-func NewPrivateNoMethodError(context RubyObject, method string) *NoMethodError {
-	return &NoMethodError{
-		message: fmt.Sprintf(
-			"private method `%s' called for %s:%s",
 			method,
 			context.Inspect(),
 			context.Class().(RubyObject).Inspect(),

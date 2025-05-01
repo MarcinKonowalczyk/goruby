@@ -75,7 +75,7 @@ func stringify(obj RubyObject) (string, error) {
 var stringClassMethods = map[string]RubyMethod{}
 
 var stringMethods = map[string]RubyMethod{
-	"initialize": privateMethod(stringInitialize),
+	"initialize": publicMethod(stringInitialize),
 	"to_s":       withArity(0, publicMethod(stringToS)),
 	"+":          withArity(1, publicMethod(stringAdd)),
 	"gsub":       withArity(2, publicMethod(stringGsub)),

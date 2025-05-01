@@ -7,7 +7,7 @@ import (
 
 var classClass RubyClassObject = &class{
 	name:            "Class",
-	superClass:      moduleClass,
+	superClass:      nil,
 	instanceMethods: NewMethodSet(classInstanceMethods),
 	builder:         defaultBuilder,
 }
@@ -20,7 +20,7 @@ var defaultBuilder = func(c RubyClassObject, args ...RubyObject) (RubyObject, er
 }
 
 func init() {
-	classClass.(*class).class = newEigenclass(moduleClass.Class(), classClassMethods)
+	classClass.(*class).class = newEigenclass(nil, classClassMethods)
 	classes.Set("Class", classClass)
 }
 
@@ -130,7 +130,7 @@ var classClassMethods = map[string]RubyMethod{}
 var classInstanceMethods = map[string]RubyMethod{
 	"superclass": withArity(0, publicMethod(classSuperclass)),
 	"new":        publicMethod(classNew),
-	"initialize": privateMethod(classInitialize),
+	"initialize": publicMethod(classInitialize),
 }
 
 type classInstance struct {
@@ -147,9 +147,9 @@ func classSuperclass(context CallContext, args ...RubyObject) (RubyObject, error
 	if superclass == nil {
 		return NIL, nil
 	}
-	if mixin, ok := superclass.(*mixin); ok {
-		return mixin.RubyClassObject, nil
-	}
+	// if mixin, ok := superclass.(*mixin); ok {
+	// 	return mixin.RubyClassObject, nil
+	// }
 	return superclass.(RubyObject), nil
 }
 

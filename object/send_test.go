@@ -26,7 +26,7 @@ func TestSend(t *testing.T) {
 		"a_super_method": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 			return TRUE, nil
 		}),
-		"a_private_super_method": privateMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+		"a_private_super_method": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 			return FALSE, nil
 		}),
 	}
@@ -37,7 +37,7 @@ func TestSend(t *testing.T) {
 		"another_method": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 			return FALSE, nil
 		}),
-		"a_private_method": privateMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+		"a_private_method": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 			return FALSE, nil
 		}),
 	}
@@ -75,16 +75,6 @@ func TestSend(t *testing.T) {
 				"a_super_method",
 				TRUE,
 				nil,
-			},
-			{
-				"a_private_method",
-				nil,
-				NewPrivateNoMethodError(context.receiver, "a_private_method"),
-			},
-			{
-				"a_private_super_method",
-				nil,
-				NewPrivateNoMethodError(context.receiver, "a_private_super_method"),
 			},
 			{
 				"unknown_method",
@@ -184,7 +174,7 @@ func TestAddMethod(t *testing.T) {
 
 		fn := &Function{
 			Parameters: []*FunctionParameter{
-				&FunctionParameter{Name: "x"},
+				{Name: "x"},
 			},
 			Env:  &environment{store: map[string]RubyObject{}},
 			Body: nil,
@@ -198,34 +188,6 @@ func TestAddMethod(t *testing.T) {
 			t.Fail()
 		}
 	})
-	t.Run("module object", func(t *testing.T) {
-		context := &Module{
-			name:  "A",
-			class: newEigenclass(moduleClass, map[string]RubyMethod{}),
-		}
-
-		fn := &Function{
-			Parameters: []*FunctionParameter{
-				&FunctionParameter{Name: "x"},
-			},
-			Env:  &environment{store: map[string]RubyObject{}},
-			Body: nil,
-		}
-
-		newContext := AddMethod(context, "foo", fn)
-
-		module, ok := newContext.(*Module)
-		if !ok {
-			t.Logf("Expected returned object to be a Module, got %T", newContext)
-			t.Fail()
-		}
-
-		_, ok = module.Class().Methods().Get("foo")
-		if !ok {
-			t.Logf("Expected object to have method foo")
-			t.Fail()
-		}
-	})
 	t.Run("class object", func(t *testing.T) {
 		context := &class{
 			name:            "A",
@@ -234,7 +196,7 @@ func TestAddMethod(t *testing.T) {
 
 		fn := &Function{
 			Parameters: []*FunctionParameter{
-				&FunctionParameter{Name: "x"},
+				{Name: "x"},
 			},
 			Env:  &environment{store: map[string]RubyObject{}},
 			Body: nil,
@@ -272,7 +234,7 @@ func TestAddMethod(t *testing.T) {
 
 		fn := &Function{
 			Parameters: []*FunctionParameter{
-				&FunctionParameter{Name: "x"},
+				{Name: "x"},
 			},
 			Env:  &environment{store: map[string]RubyObject{}},
 			Body: nil,
@@ -307,7 +269,7 @@ func TestAddMethod(t *testing.T) {
 
 		fn := &Function{
 			Parameters: []*FunctionParameter{
-				&FunctionParameter{Name: "x"},
+				{Name: "x"},
 			},
 			Env:  &environment{store: map[string]RubyObject{}},
 			Body: nil,
@@ -367,7 +329,7 @@ func TestAddMethod(t *testing.T) {
 
 		fn := &Function{
 			Parameters: []*FunctionParameter{
-				&FunctionParameter{Name: "x"},
+				{Name: "x"},
 			},
 			Env:  &environment{store: map[string]RubyObject{}},
 			Body: nil,
