@@ -10,11 +10,11 @@ import (
 )
 
 var floatClass RubyClassObject = newClass(
-	"Float", objectClass, floatMethods, floatClassMethods, notInstantiatable,
+	"Float", floatMethods, floatClassMethods, notInstantiatable,
 )
 
 func init() {
-	classes.Set("Float", floatClass)
+	CLASSES.Set("Float", floatClass)
 }
 
 // NewFloat returns a new Float with the given value

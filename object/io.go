@@ -7,7 +7,6 @@ import (
 
 var ioClass RubyClassObject = newClass(
 	"IO",
-	objectClass,
 	ioMethods,
 	ioClassMethods,
 	func(RubyClassObject, ...RubyObject) (RubyObject, error) {
@@ -20,7 +19,7 @@ func NewIo() *Io {
 }
 
 func init() {
-	classes.Set("Io", ioClass)
+	CLASSES.Set("Io", ioClass)
 }
 
 // Io represents a io in Ruby

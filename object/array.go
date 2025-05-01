@@ -7,14 +7,13 @@ import (
 
 var arrayClass RubyClassObject = newClass(
 	"Array",
-	objectClass,
 	arrayMethods,
 	arrayClassMethods,
 	func(c RubyClassObject, args ...RubyObject) (RubyObject, error) { return NewArray(args...), nil },
 )
 
 func init() {
-	classes.Set("Array", arrayClass)
+	CLASSES.Set("Array", arrayClass)
 }
 
 // NewArray returns a new array populated with elements.

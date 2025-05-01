@@ -1,7 +1,6 @@
 package object
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
@@ -11,6 +10,7 @@ import (
 type Type string
 
 const (
+	BOTTOM_OBJ         Type = "BOTTOM" // The bottom class
 	EIGENCLASS_OBJ     Type = "EIGENCLASS"
 	FUNCTION_OBJ       Type = "FUNCTION"
 	RETURN_VALUE_OBJ   Type = "RETURN_VALUE"
@@ -47,7 +47,6 @@ type RubyObject interface {
 type RubyClass interface {
 	Methods() MethodSet
 	GetMethod(name string) (RubyMethod, bool)
-	SuperClass() RubyClass
 	New(args ...RubyObject) (RubyObject, error)
 	Name() string
 }
@@ -69,16 +68,6 @@ type extendable interface {
 type extendableRubyObject interface {
 	RubyObject
 	extendable
-}
-
-type objects []RubyObject
-
-func (o objects) String() string {
-	out := []string{}
-	for _, v := range o {
-		out = append(out, v.Inspect())
-	}
-	return fmt.Sprintf("%s", out)
 }
 
 // ReturnValue represents a wrapper object for a return statement. It is no

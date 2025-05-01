@@ -8,7 +8,6 @@ import (
 var (
 	symbolClass RubyClassObject = newClass(
 		"Symbol",
-		objectClass,
 		symbolMethods,
 		symbolClassMethods,
 		func(RubyClassObject, ...RubyObject) (RubyObject, error) {
@@ -21,7 +20,7 @@ var (
 )
 
 func init() {
-	classes.Set("Symbol", symbolClass)
+	CLASSES.Set("Symbol", symbolClass)
 }
 
 // A Symbol represents a symbol in Ruby

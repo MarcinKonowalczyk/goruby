@@ -18,26 +18,16 @@ func (t *testRubyObject) Class() RubyClass {
 	if t.class != nil {
 		return t.class
 	}
-	return objectClass
+	return bottomClass
 }
 
 func TestSend(t *testing.T) {
-	superMethods := map[string]RubyMethod{
-		"a_super_method": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
-			return TRUE, nil
-		}),
-		"a_private_super_method": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
-			return FALSE, nil
-		}),
-	}
+	// }
 	methods := map[string]RubyMethod{
 		"a_method": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 			return TRUE, nil
 		}),
 		"another_method": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
-			return FALSE, nil
-		}),
-		"a_private_method": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 			return FALSE, nil
 		}),
 	}
@@ -47,11 +37,6 @@ func TestSend(t *testing.T) {
 				class: &class{
 					name:            "base class",
 					instanceMethods: NewMethodSet(methods),
-					superClass: &class{
-						name:            "super class",
-						instanceMethods: NewMethodSet(superMethods),
-						superClass:      nil,
-					},
 				},
 			},
 		}
@@ -69,11 +54,6 @@ func TestSend(t *testing.T) {
 			{
 				"another_method",
 				FALSE,
-				nil,
-			},
-			{
-				"a_super_method",
-				TRUE,
 				nil,
 			},
 			{
@@ -91,75 +71,6 @@ func TestSend(t *testing.T) {
 			checkResult(t, result, testCase.expectedResult)
 		}
 	})
-	t.Run("self as context", func(t *testing.T) {
-		context := &callContext{
-			receiver: &Self{
-				RubyObject: &testRubyObject{
-					class: &class{
-						name:            "base class",
-						instanceMethods: NewMethodSet(methods),
-						superClass: &class{
-							name:            "super class",
-							instanceMethods: NewMethodSet(superMethods),
-							superClass:      nil,
-						},
-					},
-				},
-				Name: "main",
-			},
-		}
-
-		tests := []struct {
-			method         string
-			expectedResult RubyObject
-			expectedError  error
-		}{
-			{
-				"a_method",
-				TRUE,
-				nil,
-			},
-			{
-				"another_method",
-				FALSE,
-				nil,
-			},
-			{
-				"a_super_method",
-				TRUE,
-				nil,
-			},
-			{
-				"a_private_method",
-				FALSE,
-				nil,
-			},
-			{
-				"a_private_super_method",
-				FALSE,
-				nil,
-			},
-			{
-				"unknown_method",
-				nil,
-				NewNoMethodError(context.receiver, "unknown_method"),
-			},
-		}
-
-		for _, testCase := range tests {
-			result, err := Send(context, testCase.method)
-
-			if !reflect.DeepEqual(err, testCase.expectedError) {
-				t.Logf("Expected err to equal\n%+#v\n\tgot\n%+#v\n", testCase.expectedError, err)
-				t.Fail()
-			}
-
-			if !reflect.DeepEqual(result, testCase.expectedResult) {
-				t.Logf("Expected result to equal\n%+#v\n\tgot\n%+#v\n", testCase.expectedResult, result)
-				t.Fail()
-			}
-		}
-	})
 }
 
 func TestAddMethod(t *testing.T) {
@@ -168,7 +79,6 @@ func TestAddMethod(t *testing.T) {
 			class: &class{
 				name:            "base class",
 				instanceMethods: NewMethodSet(map[string]RubyMethod{}),
-				superClass:      objectClass,
 			},
 		}
 
@@ -222,10 +132,9 @@ func TestAddMethod(t *testing.T) {
 				class: &class{
 					name:            "base class",
 					instanceMethods: NewMethodSet(map[string]RubyMethod{}),
-					superClass:      objectClass,
 				},
 			},
-			class: newEigenclass(objectClass, map[string]RubyMethod{
+			class: newEigenclass(bottomClass, map[string]RubyMethod{
 				"bar": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 					return NIL, nil
 				}),
@@ -259,7 +168,6 @@ func TestAddMethod(t *testing.T) {
 			class: &class{
 				name:            "base class",
 				instanceMethods: NewMethodSet(map[string]RubyMethod{}),
-				superClass:      objectClass,
 			},
 			Name: "main",
 		}
@@ -315,10 +223,9 @@ func TestAddMethod(t *testing.T) {
 					class: &class{
 						name:            "base class",
 						instanceMethods: NewMethodSet(map[string]RubyMethod{}),
-						superClass:      objectClass,
 					},
 				},
-				class: newEigenclass(objectClass, map[string]RubyMethod{
+				class: newEigenclass(bottomClass, map[string]RubyMethod{
 					"bar": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 						return NIL, nil
 					}),

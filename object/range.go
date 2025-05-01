@@ -7,14 +7,13 @@ import (
 
 var rangeClass RubyClassObject = newClass(
 	"Range",
-	objectClass,
 	rangeMethods,
 	rangeClassMethods,
 	notInstantiatable,
 )
 
 func init() {
-	classes.Set("Range", rangeClass)
+	CLASSES.Set("Range", rangeClass)
 }
 
 // An Range represents a Ruby Range

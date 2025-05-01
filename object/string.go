@@ -10,7 +10,6 @@ import (
 
 var stringClass RubyClassObject = newClass(
 	"String",
-	objectClass,
 	stringMethods,
 	stringClassMethods,
 	func(RubyClassObject, ...RubyObject) (RubyObject, error) {
@@ -19,7 +18,7 @@ var stringClass RubyClassObject = newClass(
 )
 
 func init() {
-	classes.Set("String", stringClass)
+	CLASSES.Set("String", stringClass)
 }
 
 // String represents a string in Ruby

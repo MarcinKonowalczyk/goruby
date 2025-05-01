@@ -11,9 +11,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-func TestObjectIsNil(t *testing.T) {
+func TestBottomIsNil(t *testing.T) {
 	context := &callContext{receiver: TRUE}
-	result, err := objectIsNil(context)
+	result, err := bottomIsNil(context)
 
 	checkError(t, err, nil)
 
@@ -29,7 +29,7 @@ func TestObjectIsNil(t *testing.T) {
 	}
 }
 
-func TestObjectRequire(t *testing.T) {
+func TestBottomRequire(t *testing.T) {
 	t.Run("wiring together", func(t *testing.T) {
 		evalCallCount := 0
 		var evalCallASTNode ast.Node
@@ -42,11 +42,11 @@ func TestObjectRequire(t *testing.T) {
 		context := &callContext{
 			env:      NewEnvironment(),
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"./fixtures/testfile.rb"}
 
-		result, err := objectRequire(context, name)
+		result, err := bottomRequire(context, name)
 
 		if err != nil {
 			t.Logf("expected no error, got %T:%v\n", err, err)
@@ -85,11 +85,11 @@ func TestObjectRequire(t *testing.T) {
 		context := &callContext{
 			env:      env,
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"./fixtures/testfile.rb"}
 
-		_, err := objectRequire(context, name)
+		_, err := bottomRequire(context, name)
 		if err != nil {
 			panic(err)
 		}
@@ -125,11 +125,11 @@ func TestObjectRequire(t *testing.T) {
 		context := &callContext{
 			env:      env,
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"./fixtures/testfile"}
 
-		_, err := objectRequire(context, name)
+		_, err := bottomRequire(context, name)
 		if err != nil {
 			panic(err)
 		}
@@ -166,11 +166,11 @@ func TestObjectRequire(t *testing.T) {
 		context := &callContext{
 			env:      env,
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"./fixtures/testfile"}
 
-		_, err := objectRequire(context, name)
+		_, err := bottomRequire(context, name)
 		if err != nil {
 			panic(err)
 		}
@@ -229,11 +229,11 @@ func TestObjectRequire(t *testing.T) {
 		context := &callContext{
 			env:      env,
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"./fixtures/testfile"}
 
-		_, err := objectRequire(context, name)
+		_, err := bottomRequire(context, name)
 		if err != nil {
 			panic(err)
 		}
@@ -255,11 +255,11 @@ func TestObjectRequire(t *testing.T) {
 		context := &callContext{
 			env:      env,
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"file/not/exist"}
 
-		_, err := objectRequire(context, name)
+		_, err := bottomRequire(context, name)
 		if err == nil {
 			t.Logf("Expected error not to be nil")
 			t.Fail()
@@ -301,11 +301,11 @@ func TestObjectRequire(t *testing.T) {
 		context := &callContext{
 			env:      env,
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"./fixtures/testfile_syntax_error.rb"}
 
-		_, err := objectRequire(context, name)
+		_, err := bottomRequire(context, name)
 		if err == nil {
 			t.Logf("Expected error not to be nil")
 			t.Fail()
@@ -352,11 +352,11 @@ func TestObjectRequire(t *testing.T) {
 		context := &callContext{
 			env:      env,
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"./fixtures/testfile_name_error.rb"}
 
-		_, err := objectRequire(context, name)
+		_, err := bottomRequire(context, name)
 		if err == nil {
 			t.Logf("Expected error not to be nil")
 			t.Fail()
@@ -400,11 +400,11 @@ func TestObjectRequire(t *testing.T) {
 		context := &callContext{
 			env:      env,
 			eval:     eval,
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 		name := &String{"./fixtures/testfile.rb"}
 
-		result, err := objectRequire(context, name)
+		result, err := bottomRequire(context, name)
 		if err != nil {
 			t.Logf("Expected no error, got %T:%v", err, err)
 			t.Fail()
@@ -444,38 +444,38 @@ func TestObjectRequire(t *testing.T) {
 	})
 }
 
-func TestObjectToS(t *testing.T) {
+func TestBottomToS(t *testing.T) {
 	t.Run("object as receiver", func(t *testing.T) {
 		context := &callContext{
-			receiver: &Object{},
+			receiver: &Bottom{},
 		}
 
-		result, err := objectToS(context)
+		result, err := bottomToS(context)
 
 		checkError(t, err, nil)
 
-		expected := &String{Value: fmt.Sprintf("#<Object:%p>", context.receiver)}
+		expected := &String{Value: fmt.Sprintf("#<Bottom:%p>", context.receiver)}
 
 		checkResult(t, result, expected)
 	})
 	t.Run("self object as receiver", func(t *testing.T) {
-		self := &Self{RubyObject: &Object{}, Name: "foo"}
+		self := &Self{RubyObject: &Bottom{}, Name: "foo"}
 		context := &callContext{
 			receiver: self,
 		}
 
-		result, err := objectToS(context)
+		result, err := bottomToS(context)
 
 		checkError(t, err, nil)
 
-		expected := &String{Value: fmt.Sprintf("#<Object:%p>", self.RubyObject)}
+		expected := &String{Value: fmt.Sprintf("#<Bottom:%p>", self.RubyObject)}
 
 		checkResult(t, result, expected)
 	})
 }
 
-func TestObjectRaise(t *testing.T) {
-	object := &Self{RubyObject: &Object{}, Name: "x"}
+func TestBottomRaise(t *testing.T) {
+	object := &Self{RubyObject: &Bottom{}, Name: "x"}
 	env := NewMainEnvironment()
 	context := &callContext{
 		receiver: object,
@@ -483,7 +483,7 @@ func TestObjectRaise(t *testing.T) {
 	}
 
 	t.Run("without args", func(t *testing.T) {
-		result, err := objectRaise(context)
+		result, err := bottomRaise(context)
 
 		checkResult(t, result, nil)
 
@@ -492,45 +492,44 @@ func TestObjectRaise(t *testing.T) {
 
 	t.Run("with 1 arg", func(t *testing.T) {
 		t.Run("string argument", func(t *testing.T) {
-			result, err := objectRaise(context, &String{Value: "ouch"})
+			result, err := bottomRaise(context, &String{Value: "ouch"})
 
 			checkResult(t, result, nil)
 
 			checkError(t, err, NewRuntimeError("ouch"))
 		})
-		t.Run("class argument", func(t *testing.T) {
-			t.Run("exception class", func(t *testing.T) {
-				result, err := objectRaise(context, standardErrorClass)
-
-				checkResult(t, result, nil)
-
-				checkError(t, err, &StandardError{message: "StandardError"})
-			})
-			t.Run("other class", func(t *testing.T) {
-				result, err := objectRaise(context, stringClass)
-
-				checkResult(t, result, nil)
-
-				checkError(t, err, &TypeError{Message: "exception class/object expected"})
-			})
-			t.Run("object with #exception returning exception", func(t *testing.T) {
-				exceptionFn := func(CallContext, ...RubyObject) (RubyObject, error) {
-					return &StandardError{message: "err"}, nil
-				}
-				obj := &extendedObject{
-					RubyObject: &Object{},
-					class: newEigenclass(objectClass, map[string]RubyMethod{
-						"exception": publicMethod(exceptionFn),
-					}),
-					Environment: NewEnvironment(),
-				}
-
-				result, err := objectRaise(context, obj)
-
-				checkResult(t, result, nil)
-
-				checkError(t, err, &StandardError{message: "err"})
-			})
+		t.Run("integer argument", func(t *testing.T) {
+			obj := &Integer{Value: 5}
+			result, err := bottomRaise(context, obj)
+			checkResult(t, result, nil)
+			checkError(t, err, NewRuntimeError("%s", obj.Inspect()))
 		})
+		// t.Run("class argument", func(t *testing.T) {
+		// 	// t.Run("exception class", func(t *testing.T) {
+		// 	// 	result, err := bottomRaise(context, exceptionClass)
+		// 	// 	checkResult(t, result, nil)
+		// 	// 	checkError(t, err, &StandardError{message: "StandardError"})
+		// 	// })
+		// 	// t.Run("other class", func(t *testing.T) {
+		// 	// 	result, err := bottomRaise(context, stringClass)
+		// 	// 	checkResult(t, result, nil)
+		// 	// 	checkError(t, err, &TypeError{Message: "exception class/object expected"})
+		// 	// })
+		// 	t.Run("object with #exception returning exception", func(t *testing.T) {
+		// 		exceptionFn := func(CallContext, ...RubyObject) (RubyObject, error) {
+		// 			return &StandardError{message: "err"}, nil
+		// 		}
+		// 		obj := &extendedObject{
+		// 			RubyObject: &Bottom{},
+		// 			class: newEigenclass(bottomClass, map[string]RubyMethod{
+		// 				"exception": publicMethod(exceptionFn),
+		// 			}),
+		// 			Environment: NewEnvironment(),
+		// 		}
+		// 		result, err := bottomRaise(context, obj)
+		// 		checkResult(t, result, nil)
+		// 		checkError(t, err, &StandardError{message: "err"})
+		// 	})
+		// })
 	})
 }

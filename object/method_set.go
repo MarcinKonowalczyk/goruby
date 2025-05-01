@@ -1,7 +1,5 @@
 package object
 
-type visibility int
-
 // RubyMethod defines a Ruby method
 type RubyMethod interface {
 	Call(context CallContext, args ...RubyObject) (RubyObject, error)

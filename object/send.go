@@ -9,20 +9,23 @@ func Send(context CallContext, method string, args ...RubyObject) (RubyObject, e
 	for class != nil {
 		fn, ok := class.GetMethod(method)
 		if !ok {
-			class = class.SuperClass()
+			if class == bottomClass {
+				// no method and we are at the top of the ancestry tree
+				break
+			}
+			class = bottomClass
 			continue
 		}
 
 		return fn.Call(context, args...)
 	}
 
-	methodMissingArgs := append(
-		[]RubyObject{&Symbol{method}},
-		args...,
-	)
-
-	return methodMissing(context, methodMissingArgs...)
+	return nil, NewNoMethodError(receiver, method)
 }
+
+// func methodMissing(context CallContext, args ...RubyObject) (RubyObject, error) {
+// 	return nil, NewNoMethodError(context.Receiver(), args[0].(*Symbol).Value)
+// }
 
 // AddMethod adds a method to a given object. It returns the object with the modified method set
 func AddMethod(context RubyObject, methodName string, method *Function) RubyObject {
@@ -45,19 +48,4 @@ func AddMethod(context RubyObject, methodName string, method *Function) RubyObje
 		return self
 	}
 	return extended
-}
-
-func methodMissing(context CallContext, args ...RubyObject) (RubyObject, error) {
-	class := context.Receiver().Class()
-
-	// search for method_missing in the ancestry tree
-	for class != nil {
-		fn, ok := class.Methods().Get("method_missing")
-		if !ok {
-			class = class.SuperClass()
-			continue
-		}
-		return fn.Call(context, args...)
-	}
-	return nil, NewNoMethodError(context.Receiver(), args[0].(*Symbol).Value)
 }

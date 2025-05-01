@@ -220,7 +220,7 @@ end
 		},
 		{
 			"foobar",
-			"NameError: undefined local variable or method `foobar' for main:Object",
+			"NameError: undefined local variable or method `foobar' for main:Bottom",
 		},
 		{
 			"Foobar",
@@ -239,7 +239,7 @@ end
 
 	for _, tt := range tests {
 		env := object.NewEnvironment()
-		env.Set("self", &object.Self{RubyObject: &object.Object{}, Name: "main"})
+		env.Set("self", &object.Self{RubyObject: &object.Bottom{}, Name: "main"})
 		evaluated, err := testEval(tt.input, env)
 
 		if err == nil {
@@ -549,7 +549,7 @@ func TestFunctionObject(t *testing.T) {
 
 		for _, tt := range tests {
 			env := object.NewEnvironment()
-			env.Set("self", &object.Self{RubyObject: &object.Object{}, Name: "main"})
+			env.Set("self", &object.Self{RubyObject: &object.Bottom{}, Name: "main"})
 			evaluated, err := testEval(tt.input, env)
 			checkError(t, err)
 			sym, ok := evaluated.(*object.Symbol)
@@ -613,7 +613,7 @@ func TestFunctionApplication(t *testing.T) {
 
 	for _, tt := range tests {
 		env := object.NewEnvironment()
-		env.Set("self", &object.Self{RubyObject: &object.Object{}, Name: "main"})
+		env.Set("self", &object.Self{RubyObject: &object.Bottom{}, Name: "main"})
 		evaluated, err := testEval(tt.input, env)
 		checkError(t, err)
 		testIntegerObject(t, evaluated, tt.expected)
