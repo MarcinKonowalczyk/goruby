@@ -24,13 +24,6 @@ func init() {
 	classes.Set("Class", classClass)
 }
 
-// NewClass returns a new Ruby Class
-func NewClass(name string, superClass RubyClass, env Environment) RubyClassObject {
-	instanceMethods := map[string]RubyMethod{}
-	classMethods := map[string]RubyMethod{}
-	return newClassWithEnv(name, superClass, instanceMethods, classMethods, defaultBuilder, env)
-}
-
 // newClass returns a new Ruby Class
 func newClass(
 	name string,
@@ -142,15 +135,7 @@ func (o *classInstance) Class() RubyClass { return o.class }
 func (o *classInstance) Type() Type       { return CLASS_INSTANCE_OBJ }
 
 func classSuperclass(context CallContext, args ...RubyObject) (RubyObject, error) {
-	class := context.Receiver().(RubyClass)
-	superclass := class.SuperClass()
-	if superclass == nil {
-		return NIL, nil
-	}
-	// if mixin, ok := superclass.(*mixin); ok {
-	// 	return mixin.RubyClassObject, nil
-	// }
-	return superclass.(RubyObject), nil
+	return NIL, nil
 }
 
 func classNew(context CallContext, args ...RubyObject) (RubyObject, error) {

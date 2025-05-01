@@ -14,7 +14,7 @@ import (
 
 var objectClass = newClass(
 	"Object",
-	basicObjectClass,
+	nil,
 	objectMethodSet,
 	objectClassMethods,
 	func(RubyClassObject, ...RubyObject) (RubyObject, error) {

@@ -49,6 +49,11 @@ var (
 )
 
 func stringify(obj RubyObject) (string, error) {
+	if obj == nil {
+		return "", NewTypeError(
+			"can't convert nil into String",
+		)
+	}
 	stringObj, err := Send(NewCallContext(nil, obj), "to_s")
 	if err != nil {
 		return "", NewTypeError(

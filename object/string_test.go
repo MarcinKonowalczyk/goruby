@@ -53,11 +53,9 @@ func Test_stringify(t *testing.T) {
 		))
 	})
 	t.Run("object without `to_s`", func(t *testing.T) {
-		obj := &basicObject{}
+		_, err := stringify(nil)
 
-		_, err := stringify(obj)
-
-		checkError(t, err, NewTypeError("can't convert BasicObject into String"))
+		checkError(t, err, NewTypeError("can't convert nil into String"))
 	})
 }
 

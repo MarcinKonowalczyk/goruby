@@ -50,7 +50,7 @@ func TestSend(t *testing.T) {
 					superClass: &class{
 						name:            "super class",
 						instanceMethods: NewMethodSet(superMethods),
-						superClass:      basicObjectClass,
+						superClass:      nil,
 					},
 				},
 			},
@@ -101,7 +101,7 @@ func TestSend(t *testing.T) {
 						superClass: &class{
 							name:            "super class",
 							instanceMethods: NewMethodSet(superMethods),
-							superClass:      basicObjectClass,
+							superClass:      nil,
 						},
 					},
 				},

@@ -182,27 +182,4 @@ func Test_hash(t *testing.T) {
 			t.Fail()
 		}
 	})
-	t.Run("object which is not hashable", func(t *testing.T) {
-		obj := &basicObject{}
-
-		key := hash(obj)
-
-		expectedKeyType := obj.Type()
-
-		if key.Type != expectedKeyType {
-			t.Logf("Expected to get the same hashKey Type as the object Type, got %v", key.Type)
-			t.Fail()
-		}
-
-		obj2 := &basicObject{}
-
-		key2 := hash(obj2)
-		t.Logf("pointer obj1: %p, pointer obj2: %p\n", obj, obj2)
-
-		if key == key2 {
-			t.Logf("Expected different keys for different object instances")
-			t.Logf("obj == obj2: %t\n", obj == obj2)
-			t.Fail()
-		}
-	})
 }

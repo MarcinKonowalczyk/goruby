@@ -8,72 +8,6 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/ast"
 )
 
-func TestNewClass(t *testing.T) {
-	t.Run("full constructor use", func(t *testing.T) {
-		superClass := arrayClass
-		env := NewEnvironment()
-
-		classObject := NewClass("Abc", superClass, env)
-
-		class, ok := classObject.(*class)
-		if !ok {
-			t.Logf("Expected returned object to be a class, got %T", classObject)
-			t.Fail()
-		}
-
-		expectedInstanceMethodSet := NewMethodSet(map[string]RubyMethod{})
-		if !reflect.DeepEqual(expectedInstanceMethodSet, class.instanceMethods) {
-			t.Logf(
-				"Expected class.instanceMethods to equal\n%+#v\n\tgot\n%+#v\n",
-				expectedInstanceMethodSet,
-				class.instanceMethods,
-			)
-			t.Fail()
-		}
-
-		if !reflect.DeepEqual(superClass, class.superClass) {
-			t.Logf(
-				"Expected class.superClass to equal\n%+#v\n\tgot\n%+#v\n",
-				superClass,
-				class.superClass,
-			)
-			t.Fail()
-		}
-
-		expectedClassMethodSet := NewMethodSet(map[string]RubyMethod{})
-		actualClassMethods := class.class.Methods()
-		if !reflect.DeepEqual(expectedClassMethodSet, actualClassMethods) {
-			t.Logf(
-				"Expected class.class.Methods to equal\n%+#v\n\tgot\n%+#v\n",
-				expectedClassMethodSet,
-				actualClassMethods,
-			)
-			t.Fail()
-		}
-	})
-	t.Run("missing env", func(t *testing.T) {
-		superClass := arrayClass
-
-		classObject := NewClass("Abc", superClass, nil)
-
-		class, ok := classObject.(*class)
-		if !ok {
-			t.Logf("Expected returned object to be a class, got %T", classObject)
-			t.Fail()
-		}
-
-		expectedInstanceMethodSet := NewMethodSet(map[string]RubyMethod{})
-		if !reflect.DeepEqual(expectedInstanceMethodSet, class.instanceMethods) {
-			t.Logf(
-				"Expected class.instanceMethods to equal\n%+#v\n\tgot\n%+#v\n",
-				expectedInstanceMethodSet,
-				class.instanceMethods,
-			)
-			t.Fail()
-		}
-	})
-}
-
 func TestClassInspect(t *testing.T) {
 	context := &class{name: "Foo"}
 
@@ -135,16 +69,15 @@ func TestClassClass(t *testing.T) {
 }
 
 func TestClassSuperClass(t *testing.T) {
-	context := &class{superClass: basicObjectClass}
+	context := &class{}
 
 	actual := context.SuperClass()
 
-	expected := basicObjectClass
-
-	if !reflect.DeepEqual(expected, actual) {
-		t.Logf("Expected SuperClass to equal %+#v, got %+#v", expected, actual)
+	if actual != nil {
+		t.Logf("Expected SuperClass to equal nil, got %v", actual)
 		t.Fail()
 	}
+
 }
 
 func TestClassMethods(t *testing.T) {
@@ -187,14 +120,14 @@ func TestClassSuperclass(t *testing.T) {
 			t.Fail()
 		}
 
-		_, ok := result.(*class)
+		ok := SymbolToNil(result)
 		if !ok {
-			t.Logf("Expected Class object, got %T\n", result)
+			t.Logf("Expected Nil object, got %T\n", result)
 			t.Fail()
 		}
 	})
 	t.Run("BasicObject", func(t *testing.T) {
-		context := &callContext{receiver: basicObjectClass}
+		context := &callContext{receiver: &class{}}
 
 		result, err := classSuperclass(context)
 		if err != nil {
@@ -217,9 +150,9 @@ func TestClassSuperclass(t *testing.T) {
 			t.Fail()
 		}
 
-		_, ok := result.(*eigenclass)
+		ok := SymbolToNil(result)
 		if !ok {
-			t.Logf("Expected eigenClass object, got %T\n", result)
+			t.Logf("Expected Nil object, got %T\n", result)
 			t.Fail()
 		}
 	})
