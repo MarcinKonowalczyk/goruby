@@ -14,7 +14,7 @@ func TestFileExpandPath(t *testing.T) {
 			receiver: fileClass,
 			env:      env,
 		}
-		filename := &String{Value: "./fixtures/testfile.rb"}
+		filename := NewString("./fixtures/testfile.rb")
 
 		result, err := fileExpandPath(context, filename)
 
@@ -24,7 +24,7 @@ func TestFileExpandPath(t *testing.T) {
 		if err != nil {
 			t.Skip("Cannot determine working directory")
 		}
-		expected := &String{Value: cwd + "/fixtures/testfile.rb"}
+		expected := NewString(cwd + "/fixtures/testfile.rb")
 
 		utils.AssertEqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 	})
@@ -34,8 +34,8 @@ func TestFileExpandPath(t *testing.T) {
 			receiver: fileClass,
 			env:      env,
 		}
-		filename := &String{Value: "../../main.go"}
-		dirname := &String{Value: "object/fixtures/"}
+		filename := NewString("../../main.go")
+		dirname := NewString("object/fixtures/")
 
 		result, err := fileExpandPath(context, filename, dirname)
 
@@ -45,7 +45,7 @@ func TestFileExpandPath(t *testing.T) {
 		if err != nil {
 			t.Skip("Cannot determine working directory")
 		}
-		expected := &String{Value: cwd + "/main.go"}
+		expected := NewString(cwd + "/main.go")
 
 		utils.AssertEqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 	})
@@ -56,13 +56,13 @@ func TestFileDirname(t *testing.T) {
 		receiver: fileClass,
 		env:      NewEnvironment(),
 	}
-	filename := &String{Value: "/var/log/foo.log"}
+	filename := NewString("/var/log/foo.log")
 
 	result, err := fileDirname(context, filename)
 
 	utils.AssertNoError(t, err)
 
-	expected := &String{Value: "/var/log"}
+	expected := NewString("/var/log")
 
 	utils.AssertEqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 }

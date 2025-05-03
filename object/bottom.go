@@ -2,15 +2,8 @@ package object
 
 import (
 	"fmt"
-	"go/token"
-	"os"
-	"path"
-	"path/filepath"
 	"reflect"
 	"strings"
-
-	"github.com/MarcinKonowalczyk/goruby/parser"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -44,7 +37,6 @@ var bottomMethodSet = map[string]RubyMethod{
 	"class":   withArity(0, newMethod(bottomClassMethod)),
 	"puts":    newMethod(bottomPuts),
 	"print":   newMethod(bottomPrint),
-	"require": withArity(1, newMethod(bottomRequire)),
 	"tap":     newMethod(bottomTap),
 	"raise":   newMethod(bottomRaise),
 	"==":      withArity(1, newMethod(bottomEqual)),
@@ -174,66 +166,6 @@ func bottomClassMethod(context CallContext, args ...RubyObject) (RubyObject, err
 		return nil, nil
 	}
 	return receiver.Class().(RubyClassObject), nil
-}
-
-func bottomRequire(context CallContext, args ...RubyObject) (RubyObject, error) {
-	name, ok := args[0].(*String)
-	if !ok {
-		return nil, NewImplicitConversionTypeError(name, args[0])
-	}
-	filename := name.Value
-	if !strings.HasSuffix(filename, "rb") {
-		filename += ".rb"
-	}
-	absolutePath, _ := filepath.Abs(filename)
-	loadedFeatures, ok := context.Env().Get("$LOADED_FEATURES")
-	if !ok {
-		loadedFeatures = NewArray()
-		context.Env().SetGlobal("$LOADED_FEATURES", loadedFeatures)
-	}
-	arr, ok := loadedFeatures.(*Array)
-	if !ok {
-		arr = NewArray()
-	}
-	loaded := false
-	for _, feat := range arr.Elements {
-		if feat.Inspect() == absolutePath {
-			loaded = true
-			break
-		}
-	}
-	if loaded {
-		return FALSE, nil
-	}
-
-	file, err := os.ReadFile(filename)
-	if os.IsNotExist(err) {
-		found := false
-		loadPath, _ := context.Env().Get("$:")
-		for _, p := range loadPath.(*Array).Elements {
-			newPath := path.Join(p.(*String).Value, filename)
-			file, err = os.ReadFile(newPath)
-			if !os.IsNotExist(err) {
-				absolutePath = newPath
-				found = true
-				break
-			}
-		}
-		if !found {
-			return nil, NewNoSuchFileLoadError(name.Value)
-		}
-	}
-
-	prog, err := parser.ParseFile(token.NewFileSet(), absolutePath, file, 0)
-	if err != nil {
-		return nil, NewSyntaxError(err)
-	}
-	_, err = context.Eval(prog, WithScopedLocalVariables(context.Env()))
-	if err != nil {
-		return nil, errors.WithMessage(err, "require")
-	}
-	arr.Elements = append(arr.Elements, &String{Value: absolutePath})
-	return TRUE, nil
 }
 
 func bottomTap(context CallContext, args ...RubyObject) (RubyObject, error) {

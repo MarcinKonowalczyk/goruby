@@ -372,31 +372,6 @@ var (
 	_ exception  = &ScriptError{}
 )
 
-func NewNoSuchFileLoadError(filepath string) *LoadError {
-	return &LoadError{
-		message: fmt.Sprintf(
-			"cannot load such file -- %s",
-			filepath,
-		),
-	}
-}
-
-type LoadError struct {
-	message string
-}
-
-func (e *LoadError) Inspect() string            { return formatException(e, e.message) }
-func (e *LoadError) Error() string              { return e.message }
-func (e *LoadError) setErrorMessage(msg string) { e.message = msg }
-func (e *LoadError) Class() RubyClass           { return exceptionClass }
-func (e *LoadError) hashKey() hashKey           { return hashException(e) }
-
-var (
-	_ RubyObject = &LoadError{}
-	_ error      = &LoadError{}
-	_ exception  = &LoadError{}
-)
-
 func NewSyntaxError(syntaxError error) *SyntaxError {
 	return &SyntaxError{
 		message: fmt.Sprintf(

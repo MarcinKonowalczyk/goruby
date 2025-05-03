@@ -2,7 +2,6 @@ package interpreter
 
 import (
 	"go/token"
-	"log"
 	"os"
 
 	"github.com/MarcinKonowalczyk/goruby/evaluator"
@@ -16,15 +15,7 @@ import (
 // }
 
 func NewInterpreterEx(argv []string) Interpreter {
-	cwd, err := os.Getwd()
-	if err != nil {
-		log.Printf("Cannot get working directory: %s\n", err)
-	}
 	env := object.NewMainEnvironment()
-	loadPath, _ := env.Get("$:")
-	loadPathArr := loadPath.(*object.Array)
-	loadPathArr.Elements = append(loadPathArr.Elements, &object.String{Value: cwd})
-	env.SetGlobal("$:", loadPathArr)
 
 	argvArr := object.NewArray()
 	for _, arg := range argv {
