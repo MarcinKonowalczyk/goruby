@@ -19,7 +19,6 @@ func init() {
 	CLASSES.Set("Hash", hashClass)
 }
 
-// Map returns a map of RubyObject to RubyObject
 func (h *Hash) ObjectMap() map[RubyObject]RubyObject {
 	hashmap := make(map[RubyObject]RubyObject)
 	for _, v := range h.Map {
@@ -52,7 +51,6 @@ type hashPair struct {
 	Value RubyObject
 }
 
-// A Hash represents a Ruby Hash
 type Hash struct {
 	Map map[hashKey]hashPair
 }
@@ -63,14 +61,12 @@ func (h *Hash) init() {
 	}
 }
 
-// Set puts the object obj into the Hash
 func (h *Hash) Set(key, value RubyObject) RubyObject {
 	h.init()
 	h.Map[hash(key)] = hashPair{Key: key, Value: value}
 	return value
 }
 
-// Get retrieves the object for key within the hash. If not found, the boolean will be false
 func (h *Hash) Get(key RubyObject) (RubyObject, bool) {
 	v, ok := h.Map[hash(key)]
 	if !ok {
@@ -79,11 +75,8 @@ func (h *Hash) Get(key RubyObject) (RubyObject, bool) {
 	return v.Value, true
 }
 
-// Type returns the ObjectType of the array
 func (h *Hash) Type() Type { return HASH_OBJ }
 
-// Inspect returns all elements within the array, divided by comma and
-// surrounded by brackets
 func (h *Hash) Inspect() string {
 	elems := []string{}
 	for _, v := range h.Map {
@@ -92,7 +85,6 @@ func (h *Hash) Inspect() string {
 	return "{" + strings.Join(elems, ", ") + "}"
 }
 
-// Class returns the class of the Array
 func (h *Hash) Class() RubyClass { return hashClass }
 
 func (h *Hash) hashKey() hashKey {

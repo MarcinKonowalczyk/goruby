@@ -9,31 +9,12 @@ var fileClass RubyClassObject = newClass(
 	"File",
 	nil,
 	fileClassMethods,
-	func(RubyClassObject, ...RubyObject) (RubyObject, error) {
-		return &File{make(map[RubyObject]RubyObject)}, nil
-	},
+	notInstantiatable,
 )
 
 func init() {
 	CLASSES.Set("File", fileClass)
 }
-
-// A File represents the Ruby class File
-type File struct {
-	Map map[RubyObject]RubyObject
-}
-
-// Type returns the ObjectType of the array
-func (f *File) Type() Type { return OBJECT_OBJ }
-
-// Inspect returns all elements within the array, divided by comma and
-// surrounded by brackets
-func (f *File) Inspect() string {
-	return ""
-}
-
-// Class returns the class of the Array
-func (f *File) Class() RubyClass { return fileClass }
 
 var fileClassMethods = map[string]RubyMethod{
 	"expand_path": newMethod(fileExpandPath),

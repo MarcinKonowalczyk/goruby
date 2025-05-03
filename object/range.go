@@ -8,7 +8,7 @@ import (
 var rangeClass RubyClassObject = newClass(
 	"Range",
 	rangeMethods,
-	rangeClassMethods,
+	nil,
 	notInstantiatable,
 )
 
@@ -24,8 +24,6 @@ type Range struct {
 
 func (a *Range) Type() Type { return RANGE_OBJ }
 
-// Inspect returns all elements within the range, divided by comma and
-// surrounded by brackets
 func (a *Range) Inspect() string {
 	var out strings.Builder
 	out.WriteString(a.Left.Inspect())
@@ -38,8 +36,8 @@ func (a *Range) Inspect() string {
 	return out.String()
 }
 
-// Class returns the class of the Range
 func (a *Range) Class() RubyClass { return rangeClass }
+
 func (a *Range) hashKey() hashKey {
 	h := fnv.New64a()
 	h.Write([]byte(a.Left.Inspect()))
@@ -51,8 +49,6 @@ func (a *Range) hashKey() hashKey {
 	}
 	return hashKey{Type: a.Type(), Value: h.Sum64()}
 }
-
-var rangeClassMethods = map[string]RubyMethod{}
 
 var rangeMethods = map[string]RubyMethod{
 	"find_all": newMethod(rangeFindAll),

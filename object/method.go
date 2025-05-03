@@ -1,6 +1,5 @@
 package object
 
-// RubyMethod defines a Ruby method
 type RubyMethod interface {
 	Call(context CallContext, args ...RubyObject) (RubyObject, error)
 }
