@@ -11,6 +11,9 @@ var (
 	BOTTOM             = newExtendedObject(&Bottom{})
 )
 
+// TODO: make sure we don't collide with other hash keys
+const HASH_KEY_BOTTOM HashKey = 0
+
 func init() {
 	// NOTE: create the bottom class in init to avoid circular import
 	bottomClass = newClass(
@@ -26,9 +29,7 @@ type Bottom struct{}
 
 func (o *Bottom) Inspect() string  { return "" }
 func (o *Bottom) Class() RubyClass { return bottomClass }
-func (o *Bottom) HashKey() HashKey {
-	return HashKey(0)
-}
+func (o *Bottom) HashKey() HashKey { return HASH_KEY_BOTTOM }
 
 var bottomMethodSet = map[string]RubyMethod{
 	"to_s":    withArity(0, newMethod(bottomToS)),
