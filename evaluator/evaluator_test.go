@@ -936,7 +936,7 @@ func TestKeyword__File__(t *testing.T) {
 
 func testExceptionObject(t *testing.T, obj object.RubyObject, errorMessage string) {
 	t.Helper()
-	if !evaluator.IsError(obj) {
+	if !object.IsError(obj) {
 		t.Logf("Expected error or exception, got %T", obj)
 		t.Fail()
 	}

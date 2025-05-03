@@ -55,6 +55,11 @@ func (e *Exception) setErrorMessage(msg string) {
 // Class returns exceptionClass
 func (e *Exception) Class() RubyClass { return exceptionClass }
 
+var (
+	_ RubyObject = &Exception{}
+	// _ RubyClass  = &Exception{}
+	_ error = &Exception{}
+)
 var exceptionMethods = map[string]RubyMethod{
 	"initialize": newMethod(exceptionInitialize),
 	"exception":  newMethod(exceptionException),
@@ -138,6 +143,12 @@ func (e *StandardError) setErrorMessage(msg string) {
 // Class returns standardErrorClass
 func (e *StandardError) Class() RubyClass { return exceptionClass }
 
+var (
+	_ RubyObject = &StandardError{}
+	_ error      = &StandardError{}
+	_ exception  = &StandardError{}
+)
+
 // NewRuntimeError returns a new RuntimeError with the formatted message
 func NewRuntimeError(format string, args ...interface{}) *RuntimeError {
 	return &RuntimeError{
@@ -164,6 +175,12 @@ func (e *RuntimeError) setErrorMessage(msg string) {
 // Class returns runtimeErrorClass
 func (e *RuntimeError) Class() RubyClass { return exceptionClass }
 
+var (
+	_ RubyObject = &RuntimeError{}
+	_ error      = &RuntimeError{}
+	_ exception  = &RuntimeError{}
+)
+
 // NewZeroDivisionError returns a new ZeroDivisionError with the default message
 func NewZeroDivisionError() *ZeroDivisionError {
 	return &ZeroDivisionError{
@@ -189,6 +206,12 @@ func (e *ZeroDivisionError) setErrorMessage(msg string) {
 
 // Class returns zeroDivisionErrorClass
 func (e *ZeroDivisionError) Class() RubyClass { return exceptionClass }
+
+var (
+	_ RubyObject = &ZeroDivisionError{}
+	_ error      = &ZeroDivisionError{}
+	_ exception  = &ZeroDivisionError{}
+)
 
 // NewWrongNumberOfArgumentsError returns an ArgumentError populated with the default message
 func NewWrongNumberOfArgumentsError(expected, actual int) *ArgumentError {
@@ -226,6 +249,12 @@ func (e *ArgumentError) setErrorMessage(msg string) {
 
 // Class returns argumentErrorClass
 func (e *ArgumentError) Class() RubyClass { return exceptionClass }
+
+var (
+	_ RubyObject = &ArgumentError{}
+	_ error      = &ArgumentError{}
+	_ exception  = &ArgumentError{}
+)
 
 // NewUninitializedConstantNameError returns a NameError with the default message for uninitialized constants
 func NewUninitializedConstantNameError(name string) *NameError {
@@ -268,6 +297,12 @@ func (e *NameError) setErrorMessage(msg string) {
 // Class returns nameErrorClass
 func (e *NameError) Class() RubyClass { return exceptionClass }
 
+var (
+	_ RubyObject = &NameError{}
+	_ error      = &NameError{}
+	_ exception  = &NameError{}
+)
+
 // NewNoMethodError returns a NoMethodError with the default message for undefined methods
 func NewNoMethodError(context RubyObject, method string) *NoMethodError {
 	return &NoMethodError{
@@ -298,6 +333,12 @@ func (e *NoMethodError) setErrorMessage(msg string) {
 
 // Class returns noMethodErrorClass
 func (e *NoMethodError) Class() RubyClass { return exceptionClass }
+
+var (
+	_ RubyObject = &NoMethodError{}
+	_ error      = &NoMethodError{}
+	_ exception  = &NoMethodError{}
+)
 
 // NewWrongArgumentTypeError returns a TypeError with the default message for wrong arugument type errors
 func NewWrongArgumentTypeError(expected, actual RubyObject) *TypeError {
@@ -377,6 +418,12 @@ func (e *TypeError) setErrorMessage(msg string) {
 // Class returns typeErrorClass
 func (e *TypeError) Class() RubyClass { return exceptionClass }
 
+var (
+	_ RubyObject = &TypeError{}
+	_ error      = &TypeError{}
+	_ exception  = &TypeError{}
+)
+
 // NewScriptError returns a new script error with the provided message
 func NewScriptError(format string, args ...interface{}) *ScriptError {
 	return &ScriptError{message: fmt.Sprintf(format, args...)}
@@ -400,6 +447,12 @@ func (e *ScriptError) setErrorMessage(msg string) {
 
 // Class returns scriptErrorClass
 func (e *ScriptError) Class() RubyClass { return exceptionClass }
+
+var (
+	_ RubyObject = &ScriptError{}
+	_ error      = &ScriptError{}
+	_ exception  = &ScriptError{}
+)
 
 // NewNoSuchFileLoadError returns a new LoadError with the default message
 func NewNoSuchFileLoadError(filepath string) *LoadError {
@@ -429,6 +482,12 @@ func (e *LoadError) setErrorMessage(msg string) {
 
 // Class returns loadErrorClass
 func (e *LoadError) Class() RubyClass { return exceptionClass }
+
+var (
+	_ RubyObject = &LoadError{}
+	_ error      = &LoadError{}
+	_ exception  = &LoadError{}
+)
 
 // NewSyntaxError returns a new SyntaxError with the default message
 func NewSyntaxError(syntaxError error) *SyntaxError {
@@ -464,6 +523,12 @@ func (e *SyntaxError) Class() RubyClass { return exceptionClass }
 // UnderlyingError returns the parser error wrapped by SyntaxError
 func (e *SyntaxError) UnderlyingError() error { return e.err }
 
+var (
+	_ RubyObject = &SyntaxError{}
+	_ error      = &SyntaxError{}
+	_ exception  = &SyntaxError{}
+)
+
 // NewNotImplementedError returns a NotImplementedError with the provided message
 func NewNotImplementedError(format string, args ...interface{}) *NotImplementedError {
 	return &NotImplementedError{message: fmt.Sprintf(format, args...)}
@@ -488,26 +553,18 @@ func (e *NotImplementedError) setErrorMessage(msg string) {
 // Class returns notImplementedErrorClass
 func (e *NotImplementedError) Class() RubyClass { return exceptionClass }
 
-// NewNoBlockGivenLocalJumpError returns a LocalJumpError with the default message for missing blocks
-func NewNoBlockGivenLocalJumpError() *LocalJumpError {
-	return &LocalJumpError{message: "no block given (yield)"}
+var (
+	_ RubyObject = &NotImplementedError{}
+	_ error      = &NotImplementedError{}
+	_ exception  = &NotImplementedError{}
+)
+
+// IsError returns true if the given RubyObject is an object.Error or an
+// object.Exception (or any subclass of object.Exception)
+func IsError(obj RubyObject) bool {
+	if obj == nil {
+		return false
+	}
+	_, ok := obj.(exception)
+	return ok
 }
-
-// LocalJumpError represents an error for a not supported jump
-type LocalJumpError struct {
-	message string
-}
-
-// Type returns EXCEPTION_OBJ
-func (e *LocalJumpError) Type() Type { return EXCEPTION_OBJ }
-
-// Inspect returns a string starting with the exception class name, followed by the message
-func (e *LocalJumpError) Inspect() string { return formatException(e, e.message) }
-func (e *LocalJumpError) Error() string   { return e.message }
-
-func (e *LocalJumpError) setErrorMessage(msg string) {
-	e.message = msg
-}
-
-// Class returns notImplementedErrorClass
-func (e *LocalJumpError) Class() RubyClass { return exceptionClass }
