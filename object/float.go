@@ -27,13 +27,7 @@ type Float struct {
 	Value float64
 }
 
-// Inspect returns the value as string
-func (i *Float) Inspect() string { return fmt.Sprintf("%.16f", i.Value) }
-
-// Type returns FLOAT_OBJ
-func (i *Float) Type() Type { return FLOAT_OBJ }
-
-// Class returns floatClass
+func (i *Float) Inspect() string  { return fmt.Sprintf("%.16f", i.Value) }
 func (i *Float) Class() RubyClass { return floatClass }
 
 func reinterpretCastFloatToUint64(value float64) uint64 {
@@ -45,8 +39,9 @@ func reinterpretCastFloatToUint64(value float64) uint64 {
 	}
 	return result
 }
+
 func (i *Float) hashKey() hashKey {
-	return hashKey{Type: i.Type(), Value: reinterpretCastFloatToUint64(i.Value)}
+	return hashKey(reinterpretCastFloatToUint64(i.Value))
 }
 
 var floatMethods = map[string]RubyMethod{

@@ -22,8 +22,6 @@ type Range struct {
 	Inclusive bool
 }
 
-func (a *Range) Type() Type { return RANGE_OBJ }
-
 func (a *Range) Inspect() string {
 	var out strings.Builder
 	out.WriteString(a.Left.Inspect())
@@ -47,7 +45,7 @@ func (a *Range) hashKey() hashKey {
 	} else {
 		h.Write([]byte("0"))
 	}
-	return hashKey{Type: a.Type(), Value: h.Sum64()}
+	return hashKey(h.Sum64())
 }
 
 var rangeMethods = map[string]RubyMethod{

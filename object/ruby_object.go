@@ -6,25 +6,6 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/ast"
 )
 
-// Type represents a type of an object
-type Type string
-
-const (
-	BOTTOM_OBJ       Type = "BOTTOM" // The bottom class
-	EIGENCLASS_OBJ   Type = "EIGENCLASS"
-	RETURN_VALUE_OBJ Type = "RETURN_VALUE"
-	BREAK_VALUE_OBJ  Type = "BREAK_VALUE"
-	CLASS_OBJ        Type = "CLASS"
-	ARRAY_OBJ        Type = "ARRAY"
-	RANGE_OBJ        Type = "RANGE"
-	HASH_OBJ         Type = "HASH"
-	INTEGER_OBJ      Type = "INTEGER"
-	FLOAT_OBJ        Type = "FLOAT"
-	STRING_OBJ       Type = "STRING"
-	SYMBOL_OBJ       Type = "SYMBOL"
-	EXCEPTION_OBJ    Type = "EXCEPTION"
-)
-
 type inspectable interface {
 	Inspect() string
 }
@@ -32,7 +13,6 @@ type inspectable interface {
 // RubyObject represents an object in Ruby
 type RubyObject interface {
 	inspectable
-	Type() Type
 	Class() RubyClass
 }
 
@@ -60,13 +40,7 @@ type ReturnValue struct {
 	Value RubyObject
 }
 
-// Type returns RETURN_VALUE_OBJ
-func (rv *ReturnValue) Type() Type { return RETURN_VALUE_OBJ }
-
-// Inspect returns the string representation of the wrapped object
-func (rv *ReturnValue) Inspect() string { return rv.Value.Inspect() }
-
-// Class reurns the class of the wrapped object
+func (rv *ReturnValue) Inspect() string  { return rv.Value.Inspect() }
 func (rv *ReturnValue) Class() RubyClass { return rv.Value.Class() }
 
 var (
@@ -80,14 +54,7 @@ type BreakValue struct {
 	Value RubyObject
 }
 
-// Type returns BREAK_VALUE_OBJ
-func (bv *BreakValue) Type() Type { return BREAK_VALUE_OBJ }
-
-// Inspect returns the string representation of the wrapped object
-
-func (bv *BreakValue) Inspect() string { return bv.Value.Inspect() }
-
-// Class returns the class of the wrapped object
+func (bv *BreakValue) Inspect() string  { return bv.Value.Inspect() }
 func (bv *BreakValue) Class() RubyClass { return bv.Value.Class() }
 
 var (

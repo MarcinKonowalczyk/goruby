@@ -28,9 +28,6 @@ type Integer struct {
 // Inspect returns the value as string
 func (i *Integer) Inspect() string { return fmt.Sprintf("%d", i.Value) }
 
-// Type returns INTEGER_OBJ
-func (i *Integer) Type() Type { return INTEGER_OBJ }
-
 // Class returns integerClass
 func (i *Integer) Class() RubyClass { return integerClass }
 
@@ -39,7 +36,7 @@ var (
 )
 
 func (i *Integer) hashKey() hashKey {
-	return hashKey{Type: i.Type(), Value: uint64(i.Value)}
+	return hashKey(uint64(i.Value))
 }
 
 var integerMethods = map[string]RubyMethod{

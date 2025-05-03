@@ -44,7 +44,6 @@ type class struct {
 func (c *class) Inspect() string {
 	return c.name
 }
-func (c *class) Type() Type { return CLASS_OBJ }
 func (c *class) Class() RubyClass {
 	return c.class
 }
@@ -63,7 +62,7 @@ func (c *class) GetMethod(name string) (RubyMethod, bool) {
 func (c *class) hashKey() hashKey {
 	h := fnv.New64a()
 	h.Write([]byte(c.name))
-	return hashKey{Type: c.Type(), Value: h.Sum64()}
+	return hashKey(h.Sum64())
 }
 func (c *class) addMethod(name string, method RubyMethod) {
 	c.instanceMethods.Set(name, method)

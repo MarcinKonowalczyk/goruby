@@ -12,7 +12,6 @@ type testRubyObject struct {
 	Name  string
 }
 
-func (t *testRubyObject) Type() Type      { return Type("TEST_OBJECT") }
 func (t *testRubyObject) Inspect() string { return "TEST OBJECT" }
 func (t *testRubyObject) Class() RubyClass {
 	if t.class != nil {

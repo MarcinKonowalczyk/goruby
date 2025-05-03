@@ -23,16 +23,10 @@ func NewArray(elements ...RubyObject) *Array {
 	return arr
 }
 
-// An Array represents a Ruby Array
 type Array struct {
 	Elements []RubyObject
 }
 
-// Type returns the ObjectType of the array
-func (a *Array) Type() Type { return ARRAY_OBJ }
-
-// Inspect returns all elements within the array, divided by comma and
-// surrounded by brackets
 func (a *Array) Inspect() string {
 	elems := make([]string, len(a.Elements))
 	for i, elem := range a.Elements {
@@ -48,14 +42,13 @@ func (a *Array) Inspect() string {
 	return "[" + strings.Join(elems, ", ") + "]"
 }
 
-// Class returns the class of the Array
 func (a *Array) Class() RubyClass { return arrayClass }
 func (a *Array) hashKey() hashKey {
 	h := fnv.New64a()
 	for _, e := range a.Elements {
 		h.Write(hash(e).bytes())
 	}
-	return hashKey{Type: a.Type(), Value: h.Sum64()}
+	return hashKey(h.Sum64())
 }
 
 var arrayMethods = map[string]RubyMethod{
@@ -435,9 +428,3 @@ func arrayAst(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewArgumentError("argument must be an Integer, or a String")
 	}
 }
-
-// times, ok := args[0].(*Integer)
-// if !ok {
-// 	fmt.Println("arrayAst", args[0].Inspect(), args[0].Type())
-// 	return nil, NewArgumentError("argument must be an Integer")
-// }

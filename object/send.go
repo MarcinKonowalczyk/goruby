@@ -42,7 +42,6 @@ func (e *eigenclass) Inspect() string {
 	return "(singleton class)"
 }
 
-func (e *eigenclass) Type() Type { return EIGENCLASS_OBJ }
 func (e *eigenclass) Class() RubyClass {
 	if e.wrappedClass != nil {
 		return e.wrappedClass

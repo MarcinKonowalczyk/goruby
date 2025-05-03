@@ -21,25 +21,17 @@ func init() {
 	CLASSES.Set("String", stringClass)
 }
 
-// String represents a string in Ruby
 type String struct {
 	Value string
 }
 
-// Inspect returns the Value
-func (s *String) Inspect() string { return s.Value }
-
-// Type returns STRING_OBJ
-func (s *String) Type() Type { return STRING_OBJ }
-
-// Class returns stringClass
+func (s *String) Inspect() string  { return s.Value }
 func (s *String) Class() RubyClass { return stringClass }
 
-// hashKey returns a hash key to be used by Hashes
 func (s *String) hashKey() hashKey {
 	h := fnv.New64a()
 	h.Write([]byte(s.Value))
-	return hashKey{Type: s.Type(), Value: h.Sum64()}
+	return hashKey(h.Sum64())
 }
 
 var (

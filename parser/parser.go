@@ -363,7 +363,6 @@ func (p *parser) ParseProgram() (*ast.Program, error) {
 		}
 		// fmt.Println(p.curToken, p.errors)
 		stmt := p.parseStatement()
-		// fmt.Println(stmt, reflect.TypeOf(stmt), p.errors)
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
 		}

@@ -181,7 +181,7 @@ func TestErrorHandling(t *testing.T) {
 		},
 		{
 			"-true",
-			"Exception: unknown operator: -SYMBOL",
+			"Exception: unknown operator: -*object.Symbol",
 		},
 		{
 			"true + false;",

@@ -27,13 +27,15 @@ func (h *Hash) ObjectMap() map[RubyObject]RubyObject {
 	return hashmap
 }
 
-type hashKey struct {
-	Type  Type
-	Value uint64
-}
+type hashKey uint64
 
 func (h hashKey) bytes() []byte {
-	return append([]byte(h.Type), byte(h.Value))
+	bytes := [4]byte{}
+	bytes[0] = byte(h >> 24)
+	bytes[1] = byte(h >> 16)
+	bytes[2] = byte(h >> 8)
+	bytes[3] = byte(h)
+	return bytes[:]
 }
 
 func hash(obj RubyObject) hashKey {
@@ -43,7 +45,7 @@ func hash(obj RubyObject) hashKey {
 	pointer := fmt.Sprintf("%p", obj)
 	h := fnv.New64a()
 	h.Write([]byte(pointer))
-	return hashKey{Type: obj.Type(), Value: h.Sum64()}
+	return hashKey(h.Sum64())
 }
 
 type hashPair struct {
@@ -75,8 +77,6 @@ func (h *Hash) Get(key RubyObject) (RubyObject, bool) {
 	return v.Value, true
 }
 
-func (h *Hash) Type() Type { return HASH_OBJ }
-
 func (h *Hash) Inspect() string {
 	elems := []string{}
 	for _, v := range h.Map {
@@ -92,7 +92,7 @@ func (h *Hash) hashKey() hashKey {
 	for k := range h.Map {
 		hash.Write(k.bytes())
 	}
-	return hashKey{Type: h.Type(), Value: hash.Sum64()}
+	return hashKey(hash.Sum64())
 }
 
 var hashMethods = map[string]RubyMethod{

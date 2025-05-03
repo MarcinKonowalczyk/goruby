@@ -30,16 +30,9 @@ func init() {
 	CLASSES.Set("Bottom", bottomClass)
 }
 
-// Bottom represents a bottom class -- the root of all classes
 type Bottom struct{}
 
-// Inspect return ""
-func (o *Bottom) Inspect() string { return "" }
-
-// Type returns OBJECT_OBJ
-func (o *Bottom) Type() Type { return BOTTOM_OBJ }
-
-// Class returns objectClass
+func (o *Bottom) Inspect() string  { return "" }
 func (o *Bottom) Class() RubyClass { return bottomClass }
 
 var bottomMethodSet = map[string]RubyMethod{
