@@ -7,41 +7,20 @@ import (
 
 var fileClass RubyClassObject = newClass(
 	"File",
-	fileMethods,
+	nil,
 	fileClassMethods,
-	func(RubyClassObject, ...RubyObject) (RubyObject, error) {
-		return &File{make(map[RubyObject]RubyObject)}, nil
-	},
+	notInstantiatable,
 )
 
 func init() {
 	CLASSES.Set("File", fileClass)
 }
 
-// A File represents the Ruby class File
-type File struct {
-	Map map[RubyObject]RubyObject
-}
-
-// Type returns the ObjectType of the array
-func (f *File) Type() Type { return OBJECT_OBJ }
-
-// Inspect returns all elements within the array, divided by comma and
-// surrounded by brackets
-func (f *File) Inspect() string {
-	return ""
-}
-
-// Class returns the class of the Array
-func (f *File) Class() RubyClass { return fileClass }
-
 var fileClassMethods = map[string]RubyMethod{
-	"expand_path": publicMethod(fileExpandPath),
-	"dirname":     publicMethod(fileDirname),
-	"read":        publicMethod(fileRead),
+	"expand_path": newMethod(fileExpandPath),
+	"dirname":     newMethod(fileDirname),
+	"read":        newMethod(fileRead),
 }
-
-var fileMethods = map[string]RubyMethod{}
 
 func fileExpandPath(context CallContext, args ...RubyObject) (RubyObject, error) {
 	switch len(args) {
@@ -53,7 +32,7 @@ func fileExpandPath(context CallContext, args ...RubyObject) (RubyObject, error)
 		path, err := filepath.Abs(str.Value)
 
 		if err == nil {
-			return &String{Value: path}, nil
+			return NewString(path), nil
 		}
 
 		return nil, NewNotImplementedError("Cannot determine working directory")
@@ -72,7 +51,7 @@ func fileExpandPath(context CallContext, args ...RubyObject) (RubyObject, error)
 			return nil, NewNotImplementedError("%s", err.Error())
 		}
 
-		return &String{Value: abs}, nil
+		return NewString(abs), nil
 	default:
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))
 	}
@@ -89,7 +68,7 @@ func fileDirname(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 	dirname := filepath.Dir(filename.Value)
 
-	return &String{Value: dirname}, nil
+	return NewString(dirname), nil
 }
 
 func fileRead(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -106,5 +85,5 @@ func fileRead(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewNotImplementedError("Cannot read file %s", filename.Value)
 	}
 
-	return &String{Value: string(data)}, nil
+	return NewString(string(data)), nil
 }

@@ -1,6 +1,5 @@
 package object
 
-// RubyMethod defines a Ruby method
 type RubyMethod interface {
 	Call(context CallContext, args ...RubyObject) (RubyObject, error)
 }
@@ -16,7 +15,7 @@ func withArity(arity int, fn RubyMethod) RubyMethod {
 	}
 }
 
-func publicMethod(fn func(context CallContext, args ...RubyObject) (RubyObject, error)) RubyMethod {
+func newMethod(fn func(context CallContext, args ...RubyObject) (RubyObject, error)) RubyMethod {
 	return &method{fn: fn}
 }
 
@@ -33,8 +32,8 @@ type MethodSet interface {
 	// Get returns the method found for name. The boolean will return true if
 	// a method was found, false otherwise
 	Get(name string) (RubyMethod, bool)
-	// GetAll returns a map of name to methods representing the MethodSet.
-	GetAll() map[string]RubyMethod
+	// Names returns the names of all methods in the set
+	Names() []string
 }
 
 // SettableMethodSet represents a MethodSet which can be mutated by setting
@@ -48,6 +47,9 @@ type SettableMethodSet interface {
 
 // NewMethodSet returns a new method set populated with the given methods
 func NewMethodSet(methods map[string]RubyMethod) SettableMethodSet {
+	if methods == nil {
+		methods = make(map[string]RubyMethod)
+	}
 	return &methodSet{methods: methods}
 }
 
@@ -55,10 +57,10 @@ type methodSet struct {
 	methods map[string]RubyMethod
 }
 
-func (m *methodSet) GetAll() map[string]RubyMethod {
-	methods := make(map[string]RubyMethod)
-	for k, v := range m.methods {
-		methods[k] = v
+func (m *methodSet) Names() []string {
+	methods := make([]string, 0, len(m.methods))
+	for k := range m.methods {
+		methods = append(methods, k)
 	}
 	return methods
 }

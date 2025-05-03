@@ -2,10 +2,12 @@ package object
 
 import (
 	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func TestWithArity(t *testing.T) {
-	wrappedMethod := publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+	wrappedMethod := newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return NewInteger(1), nil
 	})
 
@@ -41,8 +43,8 @@ func TestWithArity(t *testing.T) {
 
 		result, err := fn.Call(context, testCase.arguments...)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 
-		checkError(t, err, testCase.err)
+		utils.AssertError(t, err, testCase.err)
 	}
 }

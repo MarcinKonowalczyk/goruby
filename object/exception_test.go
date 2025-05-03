@@ -1,6 +1,10 @@
 package object
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
+)
 
 func TestExceptionInitialize(t *testing.T) {
 	context := &callContext{
@@ -10,46 +14,25 @@ func TestExceptionInitialize(t *testing.T) {
 	t.Run("without args", func(t *testing.T) {
 		result, err := exceptionInitialize(context)
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
-		checkResult(t, result, &Exception{message: "Exception"})
+		utils.AssertEqualCmpAny(t, result, &Exception{message: "Exception"}, CompareRubyObjectsForTests)
 	})
 	t.Run("with arg", func(t *testing.T) {
 		t.Run("string", func(t *testing.T) {
-			result, err := exceptionInitialize(context, &String{Value: "err"})
+			result, err := exceptionInitialize(context, NewString("err"))
 
-			checkError(t, err, nil)
+			utils.AssertNoError(t, err)
 
-			checkResult(t, result, &Exception{message: "err"})
+			utils.AssertEqualCmpAny(t, result, &Exception{message: "err"}, CompareRubyObjectsForTests)
 		})
 		t.Run("other object", func(t *testing.T) {
-			result, err := exceptionInitialize(context, &Symbol{Value: "symbol"})
+			result, err := exceptionInitialize(context, NewSymbol("symbol"))
 
-			checkError(t, err, nil)
+			utils.AssertNoError(t, err)
 
-			checkResult(t, result, &Exception{message: "symbol"})
+			utils.AssertEqualCmpAny(t, result, &Exception{message: "symbol"}, CompareRubyObjectsForTests)
 		})
-	})
-}
-
-func TestExceptionClassException(t *testing.T) {
-	context := &callContext{
-		receiver: exceptionClass,
-		env:      NewMainEnvironment(),
-	}
-	t.Run("without args", func(t *testing.T) {
-		result, err := exceptionClassException(context)
-
-		checkError(t, err, nil)
-
-		checkResult(t, result, &Exception{message: "Exception"})
-	})
-	t.Run("with arg", func(t *testing.T) {
-		result, err := exceptionClassException(context, &String{Value: "err"})
-
-		checkError(t, err, nil)
-
-		checkResult(t, result, &Exception{message: "err"})
 	})
 }
 
@@ -62,32 +45,32 @@ func TestExceptionException(t *testing.T) {
 	t.Run("without args", func(t *testing.T) {
 		result, err := exceptionException(context)
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		if contextObject != result {
 			t.Logf("Expected result to pointer equal context\n")
 			t.Fail()
 		}
-		checkResult(t, result, &Exception{message: "x"})
+		utils.AssertEqualCmpAny(t, result, &Exception{message: "x"}, CompareRubyObjectsForTests)
 	})
 	t.Run("with arg", func(t *testing.T) {
-		result, err := exceptionException(context, &String{Value: "x"})
+		result, err := exceptionException(context, NewString("x"))
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		if contextObject != result {
 			t.Logf("Expected result to pointer equal context\n")
 			t.Fail()
 		}
 
-		checkResult(t, result, &Exception{message: "x"})
+		utils.AssertEqualCmpAny(t, result, &Exception{message: "x"}, CompareRubyObjectsForTests)
 	})
 	t.Run("with arg but different message", func(t *testing.T) {
-		result, err := exceptionException(context, &String{Value: "err"})
+		result, err := exceptionException(context, NewString("err"))
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
-		checkResult(t, result, &Exception{message: "err"})
+		utils.AssertEqualCmpAny(t, result, &Exception{message: "err"}, CompareRubyObjectsForTests)
 	})
 }
 
@@ -100,7 +83,7 @@ func TestExceptionToS(t *testing.T) {
 
 	result, err := exceptionToS(context)
 
-	checkError(t, err, nil)
+	utils.AssertNoError(t, err)
 
-	checkResult(t, result, &String{Value: "x"})
+	utils.AssertEqualCmpAny(t, result, NewString("x"), CompareRubyObjectsForTests)
 }

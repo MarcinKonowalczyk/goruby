@@ -1,38 +1,42 @@
 package object
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
+)
 
 func TestSymbol_hashKey(t *testing.T) {
-	hello1 := &Symbol{Value: "Hello World"}
-	hello2 := &Symbol{Value: "Hello World"}
-	diff1 := &Symbol{Value: "My name is johnny"}
-	diff2 := &Symbol{Value: "My name is johnny"}
+	hello1 := NewSymbol("Hello World")
+	hello2 := NewSymbol("Hello World")
+	diff1 := NewSymbol("My name is johnny")
+	diff2 := NewSymbol("My name is johnny")
 
-	if hello1.hashKey() != hello2.hashKey() {
+	if hello1.HashKey() != hello2.HashKey() {
 		t.Errorf("strings with same content have different hash keys")
 	}
 
-	if diff1.hashKey() != diff2.hashKey() {
+	if diff1.HashKey() != diff2.HashKey() {
 		t.Errorf("strings with same content have different hash keys")
 	}
 
-	if hello1.hashKey() == diff1.hashKey() {
+	if hello1.HashKey() == diff1.HashKey() {
 		t.Errorf("strings with different content have same hash keys")
 	}
 }
 
 func TestSymbolToS(t *testing.T) {
 	context := &callContext{
-		receiver: &Symbol{Value: "foo"},
+		receiver: NewSymbol("foo"),
 	}
 
 	result, err := symbolToS(context)
 
-	checkError(t, err, nil)
+	utils.AssertNoError(t, err)
 
-	expected := &String{Value: "foo"}
+	expected := NewString("foo")
 
-	checkResult(t, result, expected)
+	utils.AssertEqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 }
 
 func TestSymbolToBool(t *testing.T) {
@@ -50,14 +54,14 @@ func TestSymbolToBool(t *testing.T) {
 	if val != false {
 		t.Errorf("Expected false, got true")
 	}
-	val, ok = SymbolToBool(&Symbol{Value: "foo"})
+	val, ok = SymbolToBool(NewSymbol("foo"))
 	if ok {
 		t.Errorf("Expected false, got true")
 	}
 	if val {
 		t.Errorf("Expected false, got true")
 	}
-	val, ok = SymbolToBool(&String{Value: "foo"})
+	val, ok = SymbolToBool(NewString("foo"))
 	if ok {
 		t.Errorf("Expected false, got true")
 	}

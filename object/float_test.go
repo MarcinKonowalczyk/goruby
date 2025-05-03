@@ -2,23 +2,25 @@ package object
 
 import (
 	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func TestFloat_hashKey(t *testing.T) {
-	hello1 := &Float{Value: 1}
-	hello2 := &Float{Value: 1}
-	diff1 := &Float{Value: 3}
-	diff2 := &Float{Value: 3}
+	hello1 := NewFloat(1)
+	hello2 := NewFloat(1)
+	diff1 := NewFloat(3)
+	diff2 := NewFloat(3)
 
-	if hello1.hashKey() != hello2.hashKey() {
+	if hello1.HashKey() != hello2.HashKey() {
 		t.Errorf("strings with same content have different hash keys")
 	}
 
-	if diff1.hashKey() != diff2.hashKey() {
+	if diff1.HashKey() != diff2.HashKey() {
 		t.Errorf("strings with same content have different hash keys")
 	}
 
-	if hello1.hashKey() == diff1.hashKey() {
+	if hello1.HashKey() == diff1.HashKey() {
 		t.Errorf("strings with different content have same hash keys")
 	}
 }
@@ -35,9 +37,9 @@ func TestFloatDiv(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(&String{}, &Float{}),
+			NewCoercionTypeError(NewString(""), NewFloat(0)),
 		},
 		{
 			[]RubyObject{NewFloat(0)},
@@ -51,9 +53,9 @@ func TestFloatDiv(t *testing.T) {
 
 		result, err := floatDiv(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
+		utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -69,9 +71,9 @@ func TestFloatMul(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(&String{}, &Float{}),
+			NewCoercionTypeError(NewString(""), NewFloat(0)),
 		},
 	}
 
@@ -80,9 +82,9 @@ func TestFloatMul(t *testing.T) {
 
 		result, err := floatMul(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
+		utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -98,9 +100,9 @@ func TestFloatAdd(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(&String{}, &Float{}),
+			NewCoercionTypeError(NewString(""), NewFloat(0)),
 		},
 	}
 
@@ -109,9 +111,9 @@ func TestFloatAdd(t *testing.T) {
 
 		result, err := floatAdd(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
+		utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -127,9 +129,9 @@ func TestFloatSub(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(&String{}, &Float{}),
+			NewCoercionTypeError(NewString(""), NewFloat(0)),
 		},
 	}
 
@@ -138,9 +140,9 @@ func TestFloatSub(t *testing.T) {
 
 		result, err := floatSub(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
+		utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -156,9 +158,9 @@ func TestFloatSub(t *testing.T) {
 // 			nil,
 // 		},
 // 		{
-// 			[]RubyObject{&String{""}},
+// 			[]RubyObject{NewString("")},
 // 			nil,
-// 			NewCoercionTypeError(&String{}, &Float{}),
+// 			NewCoercionTypeError(NewString(""), NewFloat(0)),
 // 		},
 // 	}
 
@@ -167,9 +169,9 @@ func TestFloatSub(t *testing.T) {
 
 // 		result, err := floatModulo(context, testCase.arguments...)
 
-// 		checkError(t, err, testCase.err)
+// 		utils.AssertError(t, err, testCase.err)
 
-// 		checkResult(t, result, testCase.result)
+// 		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjects)
 // 	}
 // }
 
@@ -190,7 +192,7 @@ func TestFloatLt(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
 			NewArgumentError("comparison of Float with String failed"),
 		},
@@ -201,9 +203,9 @@ func TestFloatLt(t *testing.T) {
 
 		result, _ := floatLt(context, testCase.arguments...)
 
-		// checkError(t, err, testCase.err)
+		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -224,7 +226,7 @@ func TestFloatGt(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
 			NewArgumentError("comparison of Float with String failed"),
 		},
@@ -235,9 +237,9 @@ func TestFloatGt(t *testing.T) {
 
 		result, _ := floatGt(context, testCase.arguments...)
 
-		// checkError(t, err, testCase.err)
+		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -258,7 +260,7 @@ func TestFloatGt(t *testing.T) {
 // 			nil,
 // 		},
 // 		{
-// 			[]RubyObject{&String{""}},
+// 			[]RubyObject{NewString("")},
 // 			nil,
 // 			NewArgumentError("comparison of Float with String failed"),
 // 		},
@@ -269,9 +271,9 @@ func TestFloatGt(t *testing.T) {
 
 // 		result, err := floatEq(context, testCase.arguments...)
 
-// 		checkError(t, err, testCase.err)
+// 		utils.AssertError(t, err, testCase.err)
 
-// 		checkResult(t, result, testCase.result)
+// 		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjects)
 // 	}
 // }
 
@@ -292,7 +294,7 @@ func TestFloatGt(t *testing.T) {
 // 			nil,
 // 		},
 // 		{
-// 			[]RubyObject{&String{""}},
+// 			[]RubyObject{NewString("")},
 // 			nil,
 // 			NewArgumentError("comparison of Float with String failed"),
 // 		},
@@ -303,9 +305,9 @@ func TestFloatGt(t *testing.T) {
 
 // 		result, err := floatNeq(context, testCase.arguments...)
 
-// 		checkError(t, err, testCase.err)
+// 		utils.AssertError(t, err, testCase.err)
 
-// 		checkResult(t, result, testCase.result)
+// 		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjects)
 // 	}
 // }
 
@@ -331,7 +333,7 @@ func TestFloatGte(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
 			NewArgumentError("comparison of Float with String failed"),
 		},
@@ -342,9 +344,9 @@ func TestFloatGte(t *testing.T) {
 
 		result, _ := floatGte(context, testCase.arguments...)
 
-		// checkError(t, err, testCase.err)
+		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -370,7 +372,7 @@ func TestFloatLte(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
 			NewArgumentError("comparison of Float with String failed"),
 		},
@@ -381,9 +383,9 @@ func TestFloatLte(t *testing.T) {
 
 		result, _ := floatLte(context, testCase.arguments...)
 
-		// checkError(t, err, testCase.err)
+		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -395,21 +397,21 @@ func TestFloatSpaceship(t *testing.T) {
 	}{
 		{
 			[]RubyObject{NewFloat(6)},
-			&Float{Value: -1},
+			NewFloat(-1),
 			nil,
 		},
 		{
 			[]RubyObject{NewFloat(4)},
-			&Float{Value: 0},
+			NewFloat(0),
 			nil,
 		},
 		{
 			[]RubyObject{NewFloat(2)},
-			&Float{Value: 1},
+			NewFloat(1),
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			NIL,
 			nil,
 		},
@@ -420,8 +422,8 @@ func TestFloatSpaceship(t *testing.T) {
 
 		result, _ := floatSpaceship(context, testCase.arguments...)
 
-		// checkError(t, err, testCase.err)
+		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }

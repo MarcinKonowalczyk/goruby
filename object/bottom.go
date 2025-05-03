@@ -2,64 +2,53 @@ package object
 
 import (
 	"fmt"
-	"go/token"
-	"os"
-	"path"
-	"path/filepath"
+	"reflect"
 	"strings"
-
-	"github.com/MarcinKonowalczyk/goruby/parser"
-	"github.com/pkg/errors"
 )
 
-var bottomClass = &class{
-	name: "Bottom",
-	// instanceMethods: NewMethodSet(bottomMethodSet),
-	class: newEigenclass(nil, objectClassMethods),
-	builder: func(RubyClassObject, ...RubyObject) (RubyObject, error) {
-		return &Bottom{}, nil
-	},
-	Environment: NewEnvironment(),
-}
+var (
+	bottomClass *class = nil
+	BOTTOM             = newExtendedObject(&Bottom{})
+)
+
+// TODO: make sure we don't collide with other hash keys
+const HASH_KEY_BOTTOM HashKey = 0
 
 func init() {
-	bottomClass.instanceMethods = NewMethodSet(bottomMethodSet)
+	// NOTE: create the bottom class in init to avoid circular import
+	bottomClass = newClass(
+		"Bottom",
+		bottomMethodSet,
+		nil,
+		notInstantiatable, // not instantiatable through new
+	)
 	CLASSES.Set("Bottom", bottomClass)
 }
 
-// Bottom represents a bottom class -- the root of all classes
 type Bottom struct{}
 
-// Inspect return ""
-func (o *Bottom) Inspect() string { return "" }
-
-// Type returns OBJECT_OBJ
-func (o *Bottom) Type() Type { return BOTTOM_OBJ }
-
-// Class returns objectClass
+func (o *Bottom) Inspect() string  { return "" }
 func (o *Bottom) Class() RubyClass { return bottomClass }
-
-var objectClassMethods = map[string]RubyMethod{}
+func (o *Bottom) HashKey() HashKey { return HASH_KEY_BOTTOM }
 
 var bottomMethodSet = map[string]RubyMethod{
-	"to_s":    withArity(0, publicMethod(bottomToS)),
-	"is_a?":   withArity(1, publicMethod(bottomIsA)),
-	"nil?":    withArity(0, publicMethod(bottomIsNil)),
-	"methods": publicMethod(bottomMethods),
-	"class":   withArity(0, publicMethod(bottomClassMethod)),
-	"puts":    publicMethod(bottomPuts),
-	"print":   publicMethod(bottomPrint),
-	"require": withArity(1, publicMethod(bottomRequire)),
-	"tap":     publicMethod(bottomTap),
-	"raise":   publicMethod(bottomRaise),
-	"==":      withArity(1, publicMethod(bottomEqual)),
-	"!=":      withArity(1, publicMethod(bottomNotEqual)),
+	"to_s":    withArity(0, newMethod(bottomToS)),
+	"is_a?":   withArity(1, newMethod(bottomIsA)),
+	"nil?":    withArity(0, newMethod(bottomIsNil)),
+	"methods": newMethod(bottomMethods),
+	"class":   withArity(0, newMethod(bottomClassMethod)),
+	"puts":    newMethod(bottomPuts),
+	"print":   newMethod(bottomPrint),
+	"tap":     newMethod(bottomTap),
+	"raise":   newMethod(bottomRaise),
+	"==":      withArity(1, newMethod(bottomEqual)),
+	"!=":      withArity(1, newMethod(bottomNotEqual)),
 }
 
 func bottomToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 	receiver := context.Receiver()
 	val := fmt.Sprintf("#<%s:%p>", receiver.Class().Name(), receiver)
-	return &String{Value: val}, nil
+	return NewString(val), nil
 }
 
 func bottomIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -181,66 +170,6 @@ func bottomClassMethod(context CallContext, args ...RubyObject) (RubyObject, err
 	return receiver.Class().(RubyClassObject), nil
 }
 
-func bottomRequire(context CallContext, args ...RubyObject) (RubyObject, error) {
-	name, ok := args[0].(*String)
-	if !ok {
-		return nil, NewImplicitConversionTypeError(name, args[0])
-	}
-	filename := name.Value
-	if !strings.HasSuffix(filename, "rb") {
-		filename += ".rb"
-	}
-	absolutePath, _ := filepath.Abs(filename)
-	loadedFeatures, ok := context.Env().Get("$LOADED_FEATURES")
-	if !ok {
-		loadedFeatures = NewArray()
-		context.Env().SetGlobal("$LOADED_FEATURES", loadedFeatures)
-	}
-	arr, ok := loadedFeatures.(*Array)
-	if !ok {
-		arr = NewArray()
-	}
-	loaded := false
-	for _, feat := range arr.Elements {
-		if feat.Inspect() == absolutePath {
-			loaded = true
-			break
-		}
-	}
-	if loaded {
-		return FALSE, nil
-	}
-
-	file, err := os.ReadFile(filename)
-	if os.IsNotExist(err) {
-		found := false
-		loadPath, _ := context.Env().Get("$:")
-		for _, p := range loadPath.(*Array).Elements {
-			newPath := path.Join(p.(*String).Value, filename)
-			file, err = os.ReadFile(newPath)
-			if !os.IsNotExist(err) {
-				absolutePath = newPath
-				found = true
-				break
-			}
-		}
-		if !found {
-			return nil, NewNoSuchFileLoadError(name.Value)
-		}
-	}
-
-	prog, err := parser.ParseFile(token.NewFileSet(), absolutePath, file, 0)
-	if err != nil {
-		return nil, NewSyntaxError(err)
-	}
-	_, err = context.Eval(prog, WithScopedLocalVariables(context.Env()))
-	if err != nil {
-		return nil, errors.WithMessage(err, "require")
-	}
-	arr.Elements = append(arr.Elements, &String{Value: absolutePath})
-	return TRUE, nil
-}
-
 func bottomTap(context CallContext, args ...RubyObject) (RubyObject, error) {
 	block := args[0]
 	proc, ok := block.(*Symbol)
@@ -291,6 +220,76 @@ func swapOrFalse(left, right RubyObject, swapped bool) bool {
 		// 1-depth recursive call with swapped arguments
 		return rubyObjectsEqual(right, left, true)
 	}
+}
+
+// TODO: Unify this with rubyObjectsEqual
+func CompareRubyObjectsForTests(a, b any) bool {
+	// check nils
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+	// check types
+	a_obj, a_ok := a.(RubyObject)
+	// if !ok {
+	// 	panic("a is not RubyObject")
+	// }
+	b_obj, b_ok := b.(RubyObject)
+	// if !ok {
+	// 	panic("b is not RubyObject")
+	// }
+	if !a_ok || !b_ok {
+		// maybe we're both arrays of RubyObjects?
+		a_arr, a_ok := a.([]RubyObject)
+		b_arr, b_ok := b.([]RubyObject)
+		if a_ok && b_ok {
+			// compare the arrays element by element
+			if len(a_arr) != len(b_arr) {
+				return false
+			}
+			for i := range a_arr {
+				if !CompareRubyObjectsForTests(a_arr[i], b_arr[i]) {
+					return false
+				}
+			}
+			return true
+		} else {
+			if !a_ok {
+				panic("a is not RubyObject or []RubyObject")
+			}
+			if !b_ok {
+				panic("b is not RubyObject or []RubyObject")
+			}
+			panic("a and b are not RubyObject or []RubyObject")
+		}
+	}
+
+	if a_obj.Class() != b_obj.Class() {
+		return false
+	}
+	// TODO: look into more
+	return a_obj.HashKey() == b_obj.HashKey()
+	// if a, a_hashable := a_obj.(hashable); a_hashable {
+	// 	if b, b_hashable := b_obj.(hashable); b_hashable {
+	// 	} else {
+	// 		// b is not hashable, we are not equal
+	// 		return false
+	// 	}
+	// }
+	// if _, b_hashable := b_obj.(hashable); b_hashable {
+	// 	// a is not hashable, we are not equal
+	// 	return false
+	// }
+	// ok, we are not hashable but we are the same class
+	// check the addresses
+
+	addrB := fmt.Sprintf("%p", b_obj)
+	if addrA == addrB {
+		return true
+	}
+	return reflect.DeepEqual(a_obj, b_obj)
 }
 
 func rubyObjectsEqual(left, right RubyObject, swapped bool) bool {

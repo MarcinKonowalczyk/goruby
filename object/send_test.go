@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/utils"
 	"github.com/pkg/errors"
 )
 
@@ -12,7 +13,6 @@ type testRubyObject struct {
 	Name  string
 }
 
-func (t *testRubyObject) Type() Type      { return Type("TEST_OBJECT") }
 func (t *testRubyObject) Inspect() string { return "TEST OBJECT" }
 func (t *testRubyObject) Class() RubyClass {
 	if t.class != nil {
@@ -20,14 +20,17 @@ func (t *testRubyObject) Class() RubyClass {
 	}
 	return bottomClass
 }
+func (t *testRubyObject) HashKey() HashKey {
+	return HashKey(99)
+}
 
 func TestSend(t *testing.T) {
 	// }
 	methods := map[string]RubyMethod{
-		"a_method": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+		"a_method": newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 			return TRUE, nil
 		}),
-		"another_method": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+		"another_method": newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 			return FALSE, nil
 		}),
 	}
@@ -66,9 +69,8 @@ func TestSend(t *testing.T) {
 		for _, testCase := range tests {
 			result, err := Send(context, testCase.method)
 
-			checkError(t, errors.Cause(err), testCase.expectedError)
-
-			checkResult(t, result, testCase.expectedResult)
+			utils.AssertError(t, errors.Cause(err), testCase.expectedError)
+			utils.AssertEqualCmpAny(t, result, testCase.expectedResult, CompareRubyObjectsForTests)
 		}
 	})
 }
@@ -127,19 +129,18 @@ func TestAddMethod(t *testing.T) {
 		}
 	})
 	t.Run("extended object", func(t *testing.T) {
-		context := &extendedObject{
-			RubyObject: &testRubyObject{
+		context := newExtendedObject(
+			&testRubyObject{
 				class: &class{
 					name:            "base class",
 					instanceMethods: NewMethodSet(map[string]RubyMethod{}),
 				},
 			},
-			eigenclass: newEigenclass(bottomClass, map[string]RubyMethod{
-				"bar": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
-					return NIL, nil
-				}),
-			}),
-		}
+		)
+
+		context.eigenclass.addMethod("bar", newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+			return NIL, nil
+		}))
 
 		fn := &Function{
 			Parameters: []*FunctionParameter{
@@ -214,19 +215,18 @@ func TestAddMethod(t *testing.T) {
 		}
 	})
 	t.Run("extended self object", func(t *testing.T) {
-		context := &extendedObject{
-			RubyObject: &testRubyObject{
+		context := newExtendedObject(
+			&testRubyObject{
 				class: &class{
 					name:            "base class",
 					instanceMethods: NewMethodSet(map[string]RubyMethod{}),
 				},
 			},
-			eigenclass: newEigenclass(bottomClass, map[string]RubyMethod{
-				"bar": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
-					return NIL, nil
-				}),
-			}),
-		}
+		)
+
+		context.eigenclass.addMethod("bar", newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+			return NIL, nil
+		}))
 
 		fn := &Function{
 			Parameters: []*FunctionParameter{

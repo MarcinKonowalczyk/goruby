@@ -10,50 +10,48 @@ var (
 		"Symbol",
 		symbolMethods,
 		symbolClassMethods,
-		func(RubyClassObject, ...RubyObject) (RubyObject, error) {
-			return &Symbol{}, nil
-		},
+		notInstantiatable, // not instantiatable through new
 	)
-	TRUE  RubyObject = &Symbol{Value: "true"}
-	FALSE RubyObject = &Symbol{Value: "false"}
-	NIL   RubyObject = &Symbol{Value: "nil"}
+	TRUE  RubyObject = NewSymbol("true")
+	FALSE RubyObject = NewSymbol("false")
+	NIL   RubyObject = NewSymbol("nil")
 )
 
 func init() {
 	CLASSES.Set("Symbol", symbolClass)
 }
 
-// A Symbol represents a symbol in Ruby
+func NewSymbol(value string) *Symbol {
+	return &Symbol{Value: value}
+}
+
 type Symbol struct {
 	Value string
 }
 
-// Inspect returns the value of the symbol
-func (s *Symbol) Inspect() string { return ":" + s.Value }
-
-// Type returns SYMBOL_OBJ
-func (s *Symbol) Type() Type { return SYMBOL_OBJ }
-
-// Class returns symbolClass
+func (s *Symbol) Inspect() string  { return ":" + s.Value }
 func (s *Symbol) Class() RubyClass { return symbolClass }
-
-func (s *Symbol) hashKey() hashKey {
+func (s *Symbol) HashKey() HashKey {
 	h := fnv.New64a()
 	h.Write([]byte(s.Value))
-	return hashKey{Type: s.Type(), Value: h.Sum64()}
+	return HashKey(h.Sum64())
 }
+
+var (
+	_ RubyObject = &Symbol{}
+)
 
 var symbolClassMethods = map[string]RubyMethod{}
 
 var symbolMethods = map[string]RubyMethod{
-	"to_s": withArity(0, publicMethod(symbolToS)),
-	"to_i": withArity(0, publicMethod(symbolToI)),
-	"size": withArity(0, publicMethod(symbolSize)),
+	"to_s": withArity(0, newMethod(symbolToS)),
+	"to_i": withArity(0, newMethod(symbolToI)),
+	"size": withArity(0, newMethod(symbolSize)),
 }
 
 func symbolToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 	if sym, ok := context.Receiver().(*Symbol); ok {
-		return &String{Value: sym.Value}, nil
+		return NewString(sym.Value), nil
 	}
 	return nil, nil
 }

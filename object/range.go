@@ -8,7 +8,7 @@ import (
 var rangeClass RubyClassObject = newClass(
 	"Range",
 	rangeMethods,
-	rangeClassMethods,
+	nil,
 	notInstantiatable,
 )
 
@@ -16,18 +16,12 @@ func init() {
 	CLASSES.Set("Range", rangeClass)
 }
 
-// An Range represents a Ruby Range
 type Range struct {
 	Left      *Integer
 	Right     *Integer
 	Inclusive bool
 }
 
-// Type returns the ObjectType of the range
-func (a *Range) Type() Type { return RANGE_OBJ }
-
-// Inspect returns all elements within the range, divided by comma and
-// surrounded by brackets
 func (a *Range) Inspect() string {
 	var out strings.Builder
 	out.WriteString(a.Left.Inspect())
@@ -40,9 +34,9 @@ func (a *Range) Inspect() string {
 	return out.String()
 }
 
-// Class returns the class of the Range
 func (a *Range) Class() RubyClass { return rangeClass }
-func (a *Range) hashKey() hashKey {
+
+func (a *Range) HashKey() HashKey {
 	h := fnv.New64a()
 	h.Write([]byte(a.Left.Inspect()))
 	h.Write([]byte(a.Right.Inspect()))
@@ -51,14 +45,12 @@ func (a *Range) hashKey() hashKey {
 	} else {
 		h.Write([]byte("0"))
 	}
-	return hashKey{Type: a.Type(), Value: h.Sum64()}
+	return HashKey(h.Sum64())
 }
 
-var rangeClassMethods = map[string]RubyMethod{}
-
 var rangeMethods = map[string]RubyMethod{
-	"find_all": publicMethod(rangeFindAll),
-	"all?":     publicMethod(rangeAll),
+	"find_all": newMethod(rangeFindAll),
+	"all?":     newMethod(rangeAll),
 }
 
 func (rang *Range) ToArray() *Array {
@@ -68,7 +60,7 @@ func (rang *Range) ToArray() *Array {
 		right++
 	}
 	for i := left; i < right; i++ {
-		result.Elements = append(result.Elements, &Integer{Value: i})
+		result.Elements = append(result.Elements, NewInteger(i))
 	}
 	return result
 }

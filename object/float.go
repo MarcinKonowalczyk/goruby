@@ -10,7 +10,7 @@ import (
 )
 
 var floatClass RubyClassObject = newClass(
-	"Float", floatMethods, floatClassMethods, notInstantiatable,
+	"Float", floatMethods, nil, notInstantiatable,
 )
 
 func init() {
@@ -27,13 +27,7 @@ type Float struct {
 	Value float64
 }
 
-// Inspect returns the value as string
-func (i *Float) Inspect() string { return fmt.Sprintf("%.16f", i.Value) }
-
-// Type returns FLOAT_OBJ
-func (i *Float) Type() Type { return FLOAT_OBJ }
-
-// Class returns floatClass
+func (i *Float) Inspect() string  { return fmt.Sprintf("%.16f", i.Value) }
 func (i *Float) Class() RubyClass { return floatClass }
 
 func reinterpretCastFloatToUint64(value float64) uint64 {
@@ -45,28 +39,28 @@ func reinterpretCastFloatToUint64(value float64) uint64 {
 	}
 	return result
 }
-func (i *Float) hashKey() hashKey {
-	return hashKey{Type: i.Type(), Value: reinterpretCastFloatToUint64(i.Value)}
+
+func (i *Float) HashKey() HashKey {
+	return HashKey(reinterpretCastFloatToUint64(i.Value))
 }
 
-var floatClassMethods = map[string]RubyMethod{}
+var (
+	_ RubyObject = &Float{}
+)
 
 var floatMethods = map[string]RubyMethod{
-	"div": withArity(1, publicMethod(floatDiv)),
-	"/":   withArity(1, publicMethod(floatDiv)),
-	"*":   withArity(1, publicMethod(floatMul)),
-	"+":   withArity(1, publicMethod(floatAdd)),
-	"-":   withArity(1, publicMethod(floatSub)),
-	// "%":   withArity(1, publicMethod(floatModulo)),
-	"<": withArity(1, publicMethod(floatLt)),
-	">": withArity(1, publicMethod(floatGt)),
-	// "==":   withArity(1, publicMethod(floatEq)),
-	// "!=":   withArity(1, publicMethod(floatNeq)),
-	">=":   withArity(1, publicMethod(floatGte)),
-	"<=":   withArity(1, publicMethod(floatLte)),
-	"<=>":  withArity(1, publicMethod(floatSpaceship)),
-	"to_i": withArity(0, publicMethod(floatToI)),
-	"**":   withArity(1, publicMethod(floatPow)),
+	"div":  withArity(1, newMethod(floatDiv)),
+	"/":    withArity(1, newMethod(floatDiv)),
+	"*":    withArity(1, newMethod(floatMul)),
+	"+":    withArity(1, newMethod(floatAdd)),
+	"-":    withArity(1, newMethod(floatSub)),
+	"<":    withArity(1, newMethod(floatLt)),
+	">":    withArity(1, newMethod(floatGt)),
+	">=":   withArity(1, newMethod(floatGte)),
+	"<=":   withArity(1, newMethod(floatLte)),
+	"<=>":  withArity(1, newMethod(floatSpaceship)),
+	"to_i": withArity(0, newMethod(floatToI)),
+	"**":   withArity(1, newMethod(floatPow)),
 }
 
 func floatDiv(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -119,15 +113,6 @@ func floatSub(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return NewFloat(i.Value - sub.Value), nil
 }
 
-//	func floatModulo(context CallContext, args ...RubyObject) (RubyObject, error) {
-//		i := context.Receiver().(*Float)
-//		mod, ok := args[0].(*Float)
-//		if !ok {
-//			return nil, NewCoercionTypeError(args[0], i)
-//		}
-//		return NewFloat(i.Value % mod.Value), nil
-//	}
-
 // Objects which can *safely* be converted to a float
 func safeObjectToFloat(arg RubyObject) (float64, bool) {
 	var right float64
@@ -136,12 +121,6 @@ func safeObjectToFloat(arg RubyObject) (float64, bool) {
 		right = arg.Value
 	case *Integer:
 		right = float64(arg.Value)
-	// case *Boolean:
-	// 	if arg.Value {
-	// 		right = 1.0
-	// 	} else {
-	// 		right = 0.0
-	// 	}
 	default:
 		return 0, false
 	}
@@ -229,11 +208,11 @@ func floatSpaceship(context CallContext, args ...RubyObject) (RubyObject, error)
 	}
 	switch {
 	case i.Value > right:
-		return &Float{Value: 1}, nil
+		return NewFloat(1), nil
 	case i.Value < right:
-		return &Float{Value: -1}, nil
+		return NewFloat(-1), nil
 	case i.Value == right:
-		return &Float{Value: 0}, nil
+		return NewFloat(0), nil
 	default:
 		panic("not reachable")
 	}

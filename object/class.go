@@ -15,30 +15,21 @@ func newClass(
 	classMethods map[string]RubyMethod,
 	builder func(RubyClassObject, ...RubyObject) (RubyObject, error),
 ) *class {
-	return newClassWithEnv(
-		name,
-		instanceMethods,
-		classMethods,
-		builder,
-		nil,
-	)
-}
-
-// newClass returns a new Ruby Class
-func newClassWithEnv(
-	name string,
-	instanceMethods,
-	classMethods map[string]RubyMethod,
-	builder func(RubyClassObject, ...RubyObject) (RubyObject, error),
-	env Environment,
-) *class {
-	return &class{
+	if instanceMethods == nil {
+		instanceMethods = make(map[string]RubyMethod)
+	}
+	if classMethods == nil {
+		classMethods = make(map[string]RubyMethod)
+	}
+	cls := &class{
 		name:            name,
 		instanceMethods: NewMethodSet(instanceMethods),
-		class:           newEigenclass(bottomClass, classMethods),
+		class:           newEigenclass(bottomClass),
 		builder:         builder,
-		Environment:     NewEnclosedEnvironment(env),
+		Environment:     NewEnclosedEnvironment(nil),
 	}
+	cls.class.(*eigenclass).methods = NewMethodSet(classMethods)
+	return cls
 }
 
 // class represents a Ruby Class object
@@ -53,7 +44,6 @@ type class struct {
 func (c *class) Inspect() string {
 	return c.name
 }
-func (c *class) Type() Type { return CLASS_OBJ }
 func (c *class) Class() RubyClass {
 	return c.class
 }
@@ -69,10 +59,10 @@ func (c *class) GetMethod(name string) (RubyMethod, bool) {
 	return nil, false
 }
 
-func (c *class) hashKey() hashKey {
+func (c *class) HashKey() HashKey {
 	h := fnv.New64a()
 	h.Write([]byte(c.name))
-	return hashKey{Type: c.Type(), Value: h.Sum64()}
+	return HashKey(h.Sum64())
 }
 func (c *class) addMethod(name string, method RubyMethod) {
 	c.instanceMethods.Set(name, method)

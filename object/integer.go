@@ -8,7 +8,7 @@ import (
 )
 
 var integerClass RubyClassObject = newClass(
-	"Integer", integerMethods, integerClassMethods, notInstantiatable,
+	"Integer", integerMethods, nil, notInstantiatable,
 )
 
 func init() {
@@ -28,9 +28,6 @@ type Integer struct {
 // Inspect returns the value as string
 func (i *Integer) Inspect() string { return fmt.Sprintf("%d", i.Value) }
 
-// Type returns INTEGER_OBJ
-func (i *Integer) Type() Type { return INTEGER_OBJ }
-
 // Class returns integerClass
 func (i *Integer) Class() RubyClass { return integerClass }
 
@@ -38,27 +35,25 @@ var (
 	_ RubyObject = &Integer{}
 )
 
-func (i *Integer) hashKey() hashKey {
-	return hashKey{Type: i.Type(), Value: uint64(i.Value)}
+func (i *Integer) HashKey() HashKey {
+	return HashKey(uint64(i.Value))
 }
 
-var integerClassMethods = map[string]RubyMethod{}
-
 var integerMethods = map[string]RubyMethod{
-	"div":  withArity(1, publicMethod(integerDiv)),
-	"/":    withArity(1, publicMethod(integerDiv)),
-	"*":    withArity(1, publicMethod(integerMul)),
-	"+":    withArity(1, publicMethod(integerAdd)),
-	"-":    withArity(1, publicMethod(integerSub)),
-	"%":    withArity(1, publicMethod(integerModulo)),
-	"<":    withArity(1, publicMethod(integerLt)),
-	">":    withArity(1, publicMethod(integerGt)),
-	">=":   withArity(1, publicMethod(integerGte)),
-	"<=":   withArity(1, publicMethod(integerLte)),
-	"<=>":  withArity(1, publicMethod(integerSpaceship)),
-	"to_i": withArity(0, publicMethod(integerToI)),
-	"**":   withArity(1, publicMethod(integerPow)),
-	"chr":  withArity(0, publicMethod(integerChr)),
+	"div":  withArity(1, newMethod(integerDiv)),
+	"/":    withArity(1, newMethod(integerDiv)),
+	"*":    withArity(1, newMethod(integerMul)),
+	"+":    withArity(1, newMethod(integerAdd)),
+	"-":    withArity(1, newMethod(integerSub)),
+	"%":    withArity(1, newMethod(integerModulo)),
+	"<":    withArity(1, newMethod(integerLt)),
+	">":    withArity(1, newMethod(integerGt)),
+	">=":   withArity(1, newMethod(integerGte)),
+	"<=":   withArity(1, newMethod(integerLte)),
+	"<=>":  withArity(1, newMethod(integerSpaceship)),
+	"to_i": withArity(0, newMethod(integerToI)),
+	"**":   withArity(1, newMethod(integerPow)),
+	"chr":  withArity(0, newMethod(integerChr)),
 }
 
 func integerDiv(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -210,11 +205,11 @@ func integerSpaceship(context CallContext, args ...RubyObject) (RubyObject, erro
 	}
 	switch {
 	case i.Value > right:
-		return &Integer{Value: 1}, nil
+		return NewInteger(1), nil
 	case i.Value < right:
-		return &Integer{Value: -1}, nil
+		return NewInteger(-1), nil
 	case i.Value == right:
-		return &Integer{Value: 0}, nil
+		return NewInteger(0), nil
 	default:
 		panic("not reachable")
 	}
@@ -271,6 +266,6 @@ func integerChr(context CallContext, args ...RubyObject) (RubyObject, error) {
 	if i.Value < 0 || i.Value > 255 {
 		return nil, NewArgumentError("chr out of range")
 	}
-	// return &String{Value: string(i.Value)}, nil
-	return &String{Value: string(rune(i.Value))}, nil
+	// return NewString(string(i.Value)), nil
+	return NewString(string(rune(i.Value))), nil
 }

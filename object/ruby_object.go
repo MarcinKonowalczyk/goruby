@@ -6,47 +6,27 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/ast"
 )
 
-// Type represents a type of an object
-type Type string
-
-const (
-	BOTTOM_OBJ         Type = "BOTTOM" // The bottom class
-	EIGENCLASS_OBJ     Type = "EIGENCLASS"
-	FUNCTION_OBJ       Type = "FUNCTION"
-	RETURN_VALUE_OBJ   Type = "RETURN_VALUE"
-	BREAK_VALUE_OBJ    Type = "BREAK_VALUE"
-	BASIC_OBJECT_OBJ   Type = "BASIC_OBJECT"
-	OBJECT_OBJ         Type = "OBJECT"
-	CLASS_OBJ          Type = "CLASS"
-	CLASS_INSTANCE_OBJ Type = "CLASS"
-	ARRAY_OBJ          Type = "ARRAY"
-	RANGE_OBJ          Type = "RANGE"
-	HASH_OBJ           Type = "HASH"
-	INTEGER_OBJ        Type = "INTEGER"
-	FLOAT_OBJ          Type = "FLOAT"
-	STRING_OBJ         Type = "STRING"
-	SYMBOL_OBJ         Type = "SYMBOL"
-	EXCEPTION_OBJ      Type = "EXCEPTION"
-	MODULE_OBJ         Type = "MODULE"
-	IO_OBJ             Type = "IO"
-	SELF               Type = "SELF"
-)
-
 type inspectable interface {
 	Inspect() string
+}
+
+type hashable interface {
+	HashKey() HashKey
 }
 
 // RubyObject represents an object in Ruby
 type RubyObject interface {
 	inspectable
-	Type() Type
+	hashable
 	Class() RubyClass
 }
 
 // RubyClass represents a class in Ruby
 type RubyClass interface {
-	Methods() MethodSet
+	inspectable
+	hashable
 	GetMethod(name string) (RubyMethod, bool)
+	Methods() MethodSet
 	New(args ...RubyObject) (RubyObject, error)
 	Name() string
 }
@@ -57,28 +37,18 @@ type RubyClassObject interface {
 	RubyClass
 }
 
-type hashable interface {
-	hashKey() hashKey
-}
-
 // ReturnValue represents a wrapper object for a return statement. It is no
 // real Ruby object and only used within the interpreter evaluation
 type ReturnValue struct {
 	Value RubyObject
 }
 
-// Type returns RETURN_VALUE_OBJ
-func (rv *ReturnValue) Type() Type { return RETURN_VALUE_OBJ }
-
-// Inspect returns the string representation of the wrapped object
-func (rv *ReturnValue) Inspect() string { return rv.Value.Inspect() }
-
-// Class reurns the class of the wrapped object
+func (rv *ReturnValue) Inspect() string  { return rv.Value.Inspect() }
 func (rv *ReturnValue) Class() RubyClass { return rv.Value.Class() }
+func (rv *ReturnValue) HashKey() HashKey { return rv.Value.HashKey() }
 
 var (
-	_ RubyObject  = &ReturnValue{}
-	_ inspectable = &ReturnValue{}
+	_ RubyObject = &ReturnValue{}
 )
 
 // BreakValue represents a wrapper object for a break statement. It is no
@@ -87,19 +57,12 @@ type BreakValue struct {
 	Value RubyObject
 }
 
-// Type returns BREAK_VALUE_OBJ
-func (bv *BreakValue) Type() Type { return BREAK_VALUE_OBJ }
-
-// Inspect returns the string representation of the wrapped object
-
-func (bv *BreakValue) Inspect() string { return bv.Value.Inspect() }
-
-// Class returns the class of the wrapped object
+func (bv *BreakValue) Inspect() string  { return bv.Value.Inspect() }
 func (bv *BreakValue) Class() RubyClass { return bv.Value.Class() }
+func (bv *BreakValue) HashKey() HashKey { return bv.Value.HashKey() }
 
 var (
-	_ RubyObject  = &BreakValue{}
-	_ inspectable = &BreakValue{}
+	_ RubyObject = &BreakValue{}
 )
 
 // FunctionParameters represents a list of function parameters.
@@ -115,25 +78,6 @@ func (f functionParameters) defaultParamCount() int {
 	return count
 }
 
-//	func (f functionParameters) mandatoryParams() []*FunctionParameter {
-//		params := make([]*FunctionParameter, 0)
-//		for _, p := range f {
-//			if p.Default == nil {
-//				params = append(params, p)
-//			}
-//		}
-//		return params
-//	}
-//
-//	func (f functionParameters) optionalParams() []*FunctionParameter {
-//		params := make([]*FunctionParameter, 0)
-//		for _, p := range f {
-//			if p.Default != nil {
-//				params = append(params, p)
-//			}
-//		}
-//		return params
-//	}
 func (f functionParameters) separateDefaultParams() ([]*FunctionParameter, []*FunctionParameter) {
 	mandatory, defaults := make([]*FunctionParameter, 0), make([]*FunctionParameter, 0)
 	for _, p := range f {

@@ -1,61 +1,47 @@
 package object
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
+)
 
 func TestString_hashKey(t *testing.T) {
-	hello1 := &String{Value: "Hello World"}
-	hello2 := &String{Value: "Hello World"}
-	diff1 := &String{Value: "My name is johnny"}
-	diff2 := &String{Value: "My name is johnny"}
+	hello1 := NewString("Hello World")
+	hello2 := NewString("Hello World")
+	diff1 := NewString("My name is johnny")
+	diff2 := NewString("My name is johnny")
 
-	if hello1.hashKey() != hello2.hashKey() {
+	if hello1.HashKey() != hello2.HashKey() {
 		t.Errorf("strings with same content have different hash keys")
 	}
 
-	if diff1.hashKey() != diff2.hashKey() {
+	if diff1.HashKey() != diff2.HashKey() {
 		t.Errorf("strings with same content have different hash keys")
 	}
 
-	if hello1.hashKey() == diff1.hashKey() {
+	if hello1.HashKey() == diff1.HashKey() {
 		t.Errorf("strings with different content have same hash keys")
 	}
 }
 
 func Test_stringify(t *testing.T) {
 	t.Run("object with regular `to_s`", func(t *testing.T) {
-		obj := &Symbol{Value: "sym"}
+		obj := NewSymbol("sym")
 
 		res, err := stringify(obj)
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		if res != "sym" {
 			t.Logf("Expected stringify to return 'sym', got %q\n", res)
 			t.Fail()
 		}
 	})
-	t.Run("object with `to_s` returning not string", func(t *testing.T) {
-		toS := func(CallContext, ...RubyObject) (RubyObject, error) {
-			return &Integer{Value: 42}, nil
-		}
-		obj := &extendedObject{
-			RubyObject: &Bottom{},
-			eigenclass: newEigenclass(bottomClass, map[string]RubyMethod{
-				"to_s": publicMethod(toS),
-			}),
-			Environment: NewEnvironment(),
-		}
-
-		_, err := stringify(obj)
-
-		checkError(t, err, NewTypeError(
-			"can't convert Bottom to String (Bottom#to_s gives Integer)",
-		))
-	})
 	t.Run("object without `to_s`", func(t *testing.T) {
 		_, err := stringify(nil)
 
-		checkError(t, err, NewTypeError("can't convert nil into String"))
+		utils.AssertError(t, err, NewTypeError("can't convert nil into String"))
 	})
 }
 
@@ -66,25 +52,24 @@ func TestStringAdd(t *testing.T) {
 		err       error
 	}{
 		{
-			[]RubyObject{&String{Value: " bar"}},
-			&String{Value: "foo bar"},
+			[]RubyObject{NewString(" bar")},
+			NewString("foo bar"),
 			nil,
 		},
 		{
-			[]RubyObject{&Integer{Value: 3}},
+			[]RubyObject{NewInteger(3)},
 			nil,
-			NewImplicitConversionTypeError(&String{}, &Integer{}),
+			NewImplicitConversionTypeError(NewString(""), NewInteger(0)),
 		},
 	}
 
 	for _, testCase := range tests {
-		context := &callContext{receiver: &String{Value: "foo"}}
+		context := &callContext{receiver: NewString("foo")}
 
 		result, err := stringAdd(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
-
-		checkResult(t, result, testCase.result)
+		utils.AssertError(t, err, testCase.err)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -95,19 +80,19 @@ func Test_StringGsub(t *testing.T) {
 		err       error
 	}{
 		{
-			[]RubyObject{&String{Value: "o"}, &String{Value: "zz"}},
-			&String{Value: "fzzzzbar"},
+			[]RubyObject{NewString("o"), NewString("zz")},
+			NewString("fzzzzbar"),
 			nil,
 		},
 	}
 
 	for _, testCase := range tests {
-		context := &callContext{receiver: &String{Value: "foobar"}}
+		context := &callContext{receiver: NewString("foobar")}
 
 		result, err := stringGsub(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
+		utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }

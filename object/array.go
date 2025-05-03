@@ -8,7 +8,7 @@ import (
 var arrayClass RubyClassObject = newClass(
 	"Array",
 	arrayMethods,
-	arrayClassMethods,
+	nil,
 	func(c RubyClassObject, args ...RubyObject) (RubyObject, error) { return NewArray(args...), nil },
 )
 
@@ -19,20 +19,17 @@ func init() {
 // NewArray returns a new array populated with elements.
 func NewArray(elements ...RubyObject) *Array {
 	arr := &Array{Elements: make([]RubyObject, len(elements))}
+	if len(elements) == 0 {
+		return arr
+	}
 	copy(arr.Elements, elements)
 	return arr
 }
 
-// An Array represents a Ruby Array
 type Array struct {
 	Elements []RubyObject
 }
 
-// Type returns the ObjectType of the array
-func (a *Array) Type() Type { return ARRAY_OBJ }
-
-// Inspect returns all elements within the array, divided by comma and
-// surrounded by brackets
 func (a *Array) Inspect() string {
 	elems := make([]string, len(a.Elements))
 	for i, elem := range a.Elements {
@@ -48,35 +45,32 @@ func (a *Array) Inspect() string {
 	return "[" + strings.Join(elems, ", ") + "]"
 }
 
-// Class returns the class of the Array
 func (a *Array) Class() RubyClass { return arrayClass }
-func (a *Array) hashKey() hashKey {
+func (a *Array) HashKey() HashKey {
 	h := fnv.New64a()
 	for _, e := range a.Elements {
-		h.Write(hash(e).bytes())
+		h.Write(e.HashKey().bytes())
 	}
-	return hashKey{Type: a.Type(), Value: h.Sum64()}
+	return HashKey(h.Sum64())
 }
 
-var arrayClassMethods = map[string]RubyMethod{}
-
 var arrayMethods = map[string]RubyMethod{
-	"push":     publicMethod(arrayPush),
-	"unshift":  publicMethod(arrayUnshift),
-	"size":     publicMethod(arraySize),
-	"length":   publicMethod(arraySize),
-	"find_all": publicMethod(arrayFindAll),
-	"first":    publicMethod(arrayFirst),
-	"map":      publicMethod(arrayMap),
-	"all?":     publicMethod(arrayAll),
-	"join":     publicMethod(arrayJoin),
-	"include?": publicMethod(arrayInclude),
-	"each":     publicMethod(arrayEach),
-	"reject":   publicMethod(arrayReject),
-	"pop":      publicMethod(arrayPop),
-	"-":        publicMethod(arrayMinus),
-	"+":        publicMethod(arrayPlus),
-	"*":        publicMethod(arrayAst),
+	"push":     newMethod(arrayPush),
+	"unshift":  newMethod(arrayUnshift),
+	"size":     newMethod(arraySize),
+	"length":   newMethod(arraySize),
+	"find_all": newMethod(arrayFindAll),
+	"first":    newMethod(arrayFirst),
+	"map":      newMethod(arrayMap),
+	"all?":     newMethod(arrayAll),
+	"join":     newMethod(arrayJoin),
+	"include?": newMethod(arrayInclude),
+	"each":     newMethod(arrayEach),
+	"reject":   newMethod(arrayReject),
+	"pop":      newMethod(arrayPop),
+	"-":        newMethod(arrayMinus),
+	"+":        newMethod(arrayPlus),
+	"*":        newMethod(arrayAst),
 }
 
 func arrayPush(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -93,7 +87,7 @@ func arrayUnshift(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func arraySize(context CallContext, args ...RubyObject) (RubyObject, error) {
 	array, _ := context.Receiver().(*Array)
-	return &Integer{Value: int64(len(array.Elements))}, nil
+	return NewInteger(int64(len(array.Elements))), nil
 }
 
 func arrayFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -233,7 +227,7 @@ func arrayJoin(context CallContext, args ...RubyObject) (RubyObject, error) {
 		element_strings[i] = elem.Inspect()
 	}
 	result := strings.Join(element_strings, separator.Value)
-	return &String{Value: result}, nil
+	return NewString(result), nil
 }
 
 func arrayInclude(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -431,15 +425,9 @@ func arrayAst(context CallContext, args ...RubyObject) (RubyObject, error) {
 			element_strings[i] = elem.Inspect()
 		}
 		result := strings.Join(element_strings, joiner)
-		return &String{Value: result}, nil
+		return NewString(result), nil
 
 	default:
 		return nil, NewArgumentError("argument must be an Integer, or a String")
 	}
 }
-
-// times, ok := args[0].(*Integer)
-// if !ok {
-// 	fmt.Println("arrayAst", args[0].Inspect(), args[0].Type())
-// 	return nil, NewArgumentError("argument must be an Integer")
-// }

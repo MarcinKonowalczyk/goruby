@@ -28,8 +28,8 @@ func (r rubyObjects) Inspect() string {
 	}
 	return strings.Join(toS, ", ")
 }
-func (r rubyObjects) Type() object.Type       { return "" }
 func (r rubyObjects) Class() object.RubyClass { return nil }
+func (r rubyObjects) HashKey() object.HashKey { return expandToArrayIfNeeded(r).HashKey() }
 
 func expandToArrayIfNeeded(obj object.RubyObject) object.RubyObject {
 	arr, ok := obj.(rubyObjects)
@@ -343,26 +343,16 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 				object.NewSyntaxError(fmt.Errorf("range start or end is nil")),
 			)
 		}
-		if left.Type() != right.Type() {
-			return nil, errors.WithStack(
-				object.NewSyntaxError(fmt.Errorf("range start and end are not the same type: %s %s", left.Type(), right.Type())),
-			)
-		}
-		if left.Type() != object.INTEGER_OBJ {
-			return nil, errors.WithStack(
-				object.NewSyntaxError(fmt.Errorf("range start and end are not integers: %s %s", left.Type(), right.Type())),
-			)
-		}
 		leftInt, ok := left.(*object.Integer)
 		if !ok {
 			return nil, errors.WithStack(
-				object.NewSyntaxError(fmt.Errorf("range start is not an integer: %s", left.Type())),
+				object.NewSyntaxError(fmt.Errorf("range start is not an integer: %T", left)),
 			)
 		}
 		rightInt, ok := right.(*object.Integer)
 		if !ok {
 			return nil, errors.WithStack(
-				object.NewSyntaxError(fmt.Errorf("range end is not an integer: %s", right.Type())),
+				object.NewSyntaxError(fmt.Errorf("range end is not an integer: %T", right)),
 			)
 		}
 
@@ -575,15 +565,10 @@ func evalArrayElements(elements []ast.Expression, env object.Environment) ([]obj
 				return nil, errors.WithMessage(err, "eval splat value")
 			}
 			if evaluated != nil {
-				if evaluated.Type() != object.ARRAY_OBJ {
-					return nil, errors.WithStack(
-						object.NewException("splat value is not an array: %s", evaluated.Type()),
-					)
-				}
 				arrObj, ok := evaluated.(*object.Array)
 				if !ok {
 					return nil, errors.WithStack(
-						object.NewException("splat value is not an array: %s", evaluated.Type()),
+						object.NewException("splat value is not an array: %T", evaluated),
 					)
 				}
 
@@ -608,7 +593,7 @@ func evalPrefixExpression(operator string, right object.RubyObject) (object.Ruby
 	case "-":
 		return evalMinusPrefixOperatorExpression(right)
 	default:
-		return nil, errors.WithStack(object.NewException("unknown operator: %s%s", operator, right.Type()))
+		return nil, errors.WithStack(object.NewException("unknown operator: %s%T", operator, right))
 	}
 }
 
@@ -630,7 +615,7 @@ func evalMinusPrefixOperatorExpression(right object.RubyObject) (object.RubyObje
 	case *object.Integer:
 		return &object.Integer{Value: -right.Value}, nil
 	default:
-		return nil, errors.WithStack(object.NewException("unknown operator: -%s", right.Type()))
+		return nil, errors.WithStack(object.NewException("unknown operator: -%T", right))
 	}
 }
 
@@ -676,7 +661,7 @@ func evalIndexExpressionAssignment(left, index, right object.RubyObject) (object
 		return right, nil
 	default:
 		return nil, errors.Wrap(
-			object.NewException("assignment target not supported: %s", left.Type()),
+			object.NewException("assignment target not supported: %s", fmt.Sprintf("%T", left)),
 			"eval IndexExpression Assignment",
 		)
 	}
@@ -691,11 +676,7 @@ func evalIndexExpression(left, index object.RubyObject) (object.RubyObject, erro
 	case *object.String:
 		return evalStringIndexExpression(target, index)
 	default:
-		var left_type string = string(left.Type())
-		if left_type == "" {
-			left_type = fmt.Sprintf("%T", left)
-		}
-		return nil, errors.WithStack(object.NewException("index operator not supported: %s", left_type))
+		return nil, errors.WithStack(object.NewException("index operator not supported: %s", fmt.Sprintf("%T", left)))
 	}
 }
 
@@ -713,15 +694,10 @@ func evalSymbolIndexExpression(env object.Environment, target *object.Symbol, in
 				object.NewException("splat value is nil"),
 			)
 		}
-		if evaluated.Type() != object.ARRAY_OBJ {
-			return nil, errors.WithStack(
-				object.NewException("splat value is not an array: %s", evaluated.Type()),
-			)
-		}
 		arrObj, ok := evaluated.(*object.Array)
 		if !ok {
 			return nil, errors.WithStack(
-				object.NewException("splat value is not an array: %s", evaluated.Type()),
+				object.NewException("splat value is not an array: %T", evaluated),
 			)
 		}
 
@@ -797,12 +773,8 @@ func evalArrayIndexExpression(arrayObject *object.Array, index object.RubyObject
 		index_array := object.NewArray(index...)
 		return evalArrayIndexExpression(arrayObject, index_array)
 	default:
-		index_type := string(index.Type())
-		if index_type == "" {
-			index_type = fmt.Sprintf("%T", index)
-		}
 		err := &object.TypeError{
-			Message: fmt.Sprintf("array index must be Integer, Array or Range, got %s", index_type),
+			Message: fmt.Sprintf("array index must be Integer, Array or Range, got %T", index),
 		}
 
 		return nil, err
@@ -846,20 +818,6 @@ func objectArrayToIndex(index *object.Array, length int64) (int64, int64, bool, 
 	}
 	first_element := index.Elements[0]
 	last_element := index.Elements[len(index.Elements)-1]
-
-	if first_element.Type() != object.INTEGER_OBJ {
-		return 0, 0, true, errors.Wrap(
-			object.NewImplicitConversionTypeError(first_element, first_element),
-			"eval array index",
-		)
-	}
-
-	if last_element.Type() != object.INTEGER_OBJ {
-		return 0, 0, true, errors.Wrap(
-			object.NewImplicitConversionTypeError(last_element, last_element),
-			"eval array index",
-		)
-	}
 
 	left_index, ok := first_element.(*object.Integer)
 	if !ok {
@@ -953,14 +911,12 @@ func evalBlockStatement(block *ast.BlockStatement, env object.Environment) (obje
 			return nil, err
 		}
 		if result != nil {
-			rt := result.Type()
-			if rt == object.RETURN_VALUE_OBJ {
+			switch result := result.(type) {
+			case *object.ReturnValue:
 				return result, nil
-			} else if rt == object.BREAK_VALUE_OBJ {
-				if isTruthy(result.(*object.BreakValue).Value) {
+			case *object.BreakValue:
+				if isTruthy(result.Value) {
 					return result, nil
-				} else {
-					//
 				}
 			}
 		}
@@ -1035,13 +991,4 @@ func isTruthy(obj object.RubyObject) bool {
 			return true
 		}
 	}
-}
-
-// IsError returns true if the given RubyObject is an object.Error or an
-// object.Exception (or any subclass of object.Exception)
-func IsError(obj object.RubyObject) bool {
-	if obj != nil {
-		return obj.Type() == object.EXCEPTION_OBJ
-	}
-	return false
 }

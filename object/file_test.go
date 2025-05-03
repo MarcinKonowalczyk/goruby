@@ -3,6 +3,8 @@ package object
 import (
 	"os"
 	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func TestFileExpandPath(t *testing.T) {
@@ -12,19 +14,19 @@ func TestFileExpandPath(t *testing.T) {
 			receiver: fileClass,
 			env:      env,
 		}
-		filename := &String{Value: "./fixtures/testfile.rb"}
+		filename := NewString("./fixtures/testfile.rb")
 
 		result, err := fileExpandPath(context, filename)
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		cwd, err := os.Getwd()
 		if err != nil {
 			t.Skip("Cannot determine working directory")
 		}
-		expected := &String{Value: cwd + "/fixtures/testfile.rb"}
+		expected := NewString(cwd + "/fixtures/testfile.rb")
 
-		checkResult(t, result, expected)
+		utils.AssertEqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 	})
 	t.Run("two arg flavour", func(t *testing.T) {
 		env := NewEnvironment()
@@ -32,20 +34,20 @@ func TestFileExpandPath(t *testing.T) {
 			receiver: fileClass,
 			env:      env,
 		}
-		filename := &String{Value: "../../main.go"}
-		dirname := &String{Value: "object/fixtures/"}
+		filename := NewString("../../main.go")
+		dirname := NewString("object/fixtures/")
 
 		result, err := fileExpandPath(context, filename, dirname)
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		cwd, err := os.Getwd()
 		if err != nil {
 			t.Skip("Cannot determine working directory")
 		}
-		expected := &String{Value: cwd + "/main.go"}
+		expected := NewString(cwd + "/main.go")
 
-		checkResult(t, result, expected)
+		utils.AssertEqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 	})
 }
 
@@ -54,13 +56,13 @@ func TestFileDirname(t *testing.T) {
 		receiver: fileClass,
 		env:      NewEnvironment(),
 	}
-	filename := &String{Value: "/var/log/foo.log"}
+	filename := NewString("/var/log/foo.log")
 
 	result, err := fileDirname(context, filename)
 
-	checkError(t, err, nil)
+	utils.AssertNoError(t, err)
 
-	expected := &String{Value: "/var/log"}
+	expected := NewString("/var/log")
 
-	checkResult(t, result, expected)
+	utils.AssertEqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 }

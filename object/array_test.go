@@ -1,96 +1,66 @@
 package object
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func TestArrayPush(t *testing.T) {
 	t.Run("one argument", func(t *testing.T) {
-		array := &Array{}
+		array := NewArray()
 		env := NewEnvironment()
 		context := &callContext{
 			receiver: array,
 			env:      env,
 		}
 
-		result, err := arrayPush(context, &Integer{Value: 17})
+		result, err := arrayPush(context, NewInteger(17))
 
-		checkError(t, err, nil)
-
-		expectedResult := &Array{Elements: []RubyObject{&Integer{Value: 17}}}
-
-		checkResult(t, result, expectedResult)
-
-		if !reflect.DeepEqual(expectedResult, array) {
-			t.Logf("Expected array to equal\n%+#v\n\tgot\n%+#v\n", expectedResult, array)
-			t.Fail()
-		}
+		utils.AssertNoError(t, err)
+		utils.AssertEqualCmpAny(t, result, NewArray(NewInteger(17)), CompareRubyObjectsForTests)
 	})
+
 	t.Run("more than one argument", func(t *testing.T) {
-		array := &Array{}
+		array := NewArray()
 		env := NewEnvironment()
 		context := &callContext{
 			receiver: array,
 			env:      env,
 		}
 
-		result, err := arrayPush(context, &Integer{Value: 17}, NIL, TRUE, FALSE)
+		result, err := arrayPush(context, NewInteger(17), NIL, TRUE, FALSE)
 
-		checkError(t, err, nil)
-
-		expectedResult := &Array{Elements: []RubyObject{&Integer{Value: 17}, NIL, TRUE, FALSE}}
-
-		checkResult(t, result, expectedResult)
-
-		if !reflect.DeepEqual(expectedResult, array) {
-			t.Logf("Expected array to equal\n%+#v\n\tgot\n%+#v\n", expectedResult, array)
-			t.Fail()
-		}
+		utils.AssertNoError(t, err)
+		utils.AssertEqualCmpAny(t, result, NewArray(NewInteger(17), NIL, TRUE, FALSE), CompareRubyObjectsForTests)
 	})
 }
 
 func TestArrayUnshift(t *testing.T) {
 	t.Run("one argument", func(t *testing.T) {
-		array := &Array{Elements: []RubyObject{&String{Value: "first element"}}}
+		array := NewArray(NewString("first element"))
 		env := NewEnvironment()
 		context := &callContext{
 			receiver: array,
 			env:      env,
 		}
 
-		result, err := arrayUnshift(context, &Integer{Value: 17})
+		result, err := arrayUnshift(context, NewInteger(17))
 
-		checkError(t, err, nil)
-
-		expectedResult := &Array{Elements: []RubyObject{&Integer{Value: 17}, &String{Value: "first element"}}}
-
-		checkResult(t, result, expectedResult)
-
-		if !reflect.DeepEqual(expectedResult, array) {
-			t.Logf("Expected array to equal\n%+#v\n\tgot\n%+#v\n", expectedResult, array)
-			t.Fail()
-		}
+		utils.AssertNoError(t, err)
+		utils.AssertEqualCmpAny(t, result, NewArray(NewInteger(17), NewString("first element")), CompareRubyObjectsForTests)
 	})
 	t.Run("more than one argument", func(t *testing.T) {
-		array := &Array{Elements: []RubyObject{&String{Value: "first element"}}}
+		array := NewArray(NewString("first element"))
 		env := NewEnvironment()
 		context := &callContext{
 			receiver: array,
 			env:      env,
 		}
 
-		result, err := arrayUnshift(context, &Integer{Value: 17}, NIL, TRUE, FALSE)
+		result, err := arrayUnshift(context, NewInteger(17), NIL, TRUE, FALSE)
 
-		checkError(t, err, nil)
-
-		expectedResult := &Array{Elements: []RubyObject{&Integer{Value: 17}, NIL, TRUE, FALSE, &String{Value: "first element"}}}
-
-		checkResult(t, result, expectedResult)
-
-		if !reflect.DeepEqual(expectedResult, array) {
-			t.Logf("Expected array to equal\n%+#v\n\tgot\n%+#v\n", expectedResult, array)
-			t.Fail()
-		}
+		utils.AssertNoError(t, err)
+		utils.AssertEqualCmpAny(t, result, NewArray(NewInteger(17), NIL, TRUE, FALSE, NewString("first element")), CompareRubyObjectsForTests)
 	})
 }

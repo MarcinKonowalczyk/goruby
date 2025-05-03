@@ -1,25 +1,26 @@
 package object
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func TestInteger_hashKey(t *testing.T) {
-	hello1 := &Integer{Value: 1}
-	hello2 := &Integer{Value: 1}
-	diff1 := &Integer{Value: 3}
-	diff2 := &Integer{Value: 3}
+	hello1 := NewInteger(1)
+	hello2 := NewInteger(1)
+	diff1 := NewInteger(3)
+	diff2 := NewInteger(3)
 
-	if hello1.hashKey() != hello2.hashKey() {
+	if hello1.HashKey() != hello2.HashKey() {
 		t.Errorf("strings with same content have different hash keys")
 	}
 
-	if diff1.hashKey() != diff2.hashKey() {
+	if diff1.HashKey() != diff2.HashKey() {
 		t.Errorf("strings with same content have different hash keys")
 	}
 
-	if hello1.hashKey() == diff1.hashKey() {
+	if hello1.HashKey() == diff1.HashKey() {
 		t.Errorf("strings with different content have same hash keys")
 	}
 }
@@ -36,9 +37,9 @@ func TestIntegerDiv(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(&String{}, &Integer{}),
+			NewCoercionTypeError(NewString(""), NewInteger(0)),
 		},
 		{
 			[]RubyObject{NewInteger(0)},
@@ -52,9 +53,9 @@ func TestIntegerDiv(t *testing.T) {
 
 		result, err := integerDiv(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
+		utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -70,9 +71,9 @@ func TestIntegerMul(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(&String{}, &Integer{}),
+			NewCoercionTypeError(NewString(""), NewInteger(0)),
 		},
 	}
 
@@ -81,9 +82,8 @@ func TestIntegerMul(t *testing.T) {
 
 		result, err := integerMul(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
-
-		checkResult(t, result, testCase.result)
+		utils.AssertError(t, err, testCase.err)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -99,9 +99,9 @@ func TestIntegerAdd(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(&String{}, &Integer{}),
+			NewCoercionTypeError(NewString(""), NewInteger(0)),
 		},
 	}
 
@@ -110,9 +110,8 @@ func TestIntegerAdd(t *testing.T) {
 
 		result, err := integerAdd(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
-
-		checkResult(t, result, testCase.result)
+		utils.AssertError(t, err, testCase.err)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -128,9 +127,9 @@ func TestIntegerSub(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(&String{}, &Integer{}),
+			NewCoercionTypeError(NewString(""), NewInteger(0)),
 		},
 	}
 
@@ -139,9 +138,9 @@ func TestIntegerSub(t *testing.T) {
 
 		result, err := integerSub(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
+		utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -157,9 +156,9 @@ func TestIntegerSub(t *testing.T) {
 // 			nil,
 // 		},
 // 		{
-// 			[]RubyObject{&String{""}},
+// 			[]RubyObject{NewString("")},
 // 			nil,
-// 			NewCoercionTypeError(&String{}, &Integer{}),
+// 			NewCoercionTypeError(NewString(""), NewInteger(0)),)),
 // 		},
 // 	}
 
@@ -168,7 +167,7 @@ func TestIntegerSub(t *testing.T) {
 
 // 		result, err := integerModulo(context, testCase.arguments...)
 
-// 		checkError(t, err, testCase.err)
+// 		utils.AssertError(t, err, testCase.err)
 
 // 		checkResult(t, result, testCase.result)
 // 	}
@@ -191,7 +190,7 @@ func TestIntegerLt(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
 			NewArgumentError("comparison of Integer with String failed"),
 		},
@@ -202,9 +201,9 @@ func TestIntegerLt(t *testing.T) {
 
 		result, _ := integerLt(context, testCase.arguments...)
 
-		// checkError(t, err, testCase.err)
+		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -225,7 +224,7 @@ func TestIntegerGt(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
 			NewArgumentError("comparison of Integer with String failed"),
 		},
@@ -236,9 +235,9 @@ func TestIntegerGt(t *testing.T) {
 
 		result, _ := integerGt(context, testCase.arguments...)
 
-		// checkError(t, err, testCase.err)
+		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -259,7 +258,7 @@ func TestIntegerGt(t *testing.T) {
 // 			nil,
 // 		},
 // 		{
-// 			[]RubyObject{&String{""}},
+// 			[]RubyObject{NewString("")},
 // 			nil,
 // 			NewArgumentError("comparison of Integer with String failed"),
 // 		},
@@ -270,7 +269,7 @@ func TestIntegerGt(t *testing.T) {
 
 // 		result, err := integerEq(context, testCase.arguments...)
 
-// 		checkError(t, err, testCase.err)
+// 		utils.AssertError(t, err, testCase.err)
 
 // 		checkResult(t, result, testCase.result)
 // 	}
@@ -293,7 +292,7 @@ func TestIntegerGt(t *testing.T) {
 // 			nil,
 // 		},
 // 		{
-// 			[]RubyObject{&String{""}},
+// 			[]RubyObject{NewString("")},
 // 			nil,
 // 			NewArgumentError("comparison of Integer with String failed"),
 // 		},
@@ -304,7 +303,7 @@ func TestIntegerGt(t *testing.T) {
 
 // 		result, err := integerNeq(context, testCase.arguments...)
 
-// 		checkError(t, err, testCase.err)
+// 		utils.AssertError(t, err, testCase.err)
 
 // 		checkResult(t, result, testCase.result)
 // 	}
@@ -332,7 +331,7 @@ func TestIntegerGte(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			NIL,
 			NewArgumentError("comparison of Integer with String failed"),
 		},
@@ -343,9 +342,9 @@ func TestIntegerGte(t *testing.T) {
 
 		result, _ := integerGte(context, testCase.arguments...)
 
-		// checkError(t, err, testCase.err)
+		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -371,7 +370,7 @@ func TestIntegerLte(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			NIL,
 			NewArgumentError("comparison of Integer with String failed"),
 		},
@@ -382,9 +381,9 @@ func TestIntegerLte(t *testing.T) {
 
 		result, _ := integerLte(context, testCase.arguments...)
 
-		// checkError(t, err, testCase.err)
+		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -396,21 +395,21 @@ func TestIntegerSpaceship(t *testing.T) {
 	}{
 		{
 			[]RubyObject{NewInteger(6)},
-			&Integer{Value: -1},
+			NewInteger(-1),
 			nil,
 		},
 		{
 			[]RubyObject{NewInteger(4)},
-			&Integer{Value: 0},
+			NewInteger(0),
 			nil,
 		},
 		{
 			[]RubyObject{NewInteger(2)},
-			&Integer{Value: 1},
+			NewInteger(1),
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			NIL,
 			nil,
 		},
@@ -421,31 +420,8 @@ func TestIntegerSpaceship(t *testing.T) {
 
 		result, _ := integerSpaceship(context, testCase.arguments...)
 
-		// checkError(t, err, testCase.err)
+		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
-}
-
-func checkError(t *testing.T, actual, expected error) {
-	t.Helper()
-	if !reflect.DeepEqual(expected, actual) {
-		t.Logf("Expected error to equal\n%T:%v\n\tgot\n%T:%v\n", expected, expected, actual, actual)
-		t.Fail()
-	}
-}
-
-func checkResult(t *testing.T, actual, expected RubyObject) {
-	t.Helper()
-	if !reflect.DeepEqual(expected, actual) {
-		t.Logf("Expected result to equal %s (%T), got %s (%T)\n", toString(expected), expected, toString(actual), actual)
-		t.Fail()
-	}
-}
-
-func toString(obj RubyObject) string {
-	if obj == nil {
-		return "nil"
-	}
-	return obj.Inspect()
 }

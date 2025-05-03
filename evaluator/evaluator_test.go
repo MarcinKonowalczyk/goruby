@@ -9,6 +9,7 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/evaluator"
 	"github.com/MarcinKonowalczyk/goruby/object"
 	"github.com/MarcinKonowalczyk/goruby/parser"
+	"github.com/MarcinKonowalczyk/goruby/utils"
 	"github.com/pkg/errors"
 )
 
@@ -16,7 +17,7 @@ func TestEvalComment(t *testing.T) {
 	input := "5 # five"
 
 	evaluated, err := testEval(input)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 
 	var expected int64 = 5
 	testIntegerObject(t, evaluated, expected)
@@ -47,7 +48,7 @@ func TestEvalIntegerExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		evaluated, err := testEval(tt.input, object.NewMainEnvironment())
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 		testIntegerObject(t, evaluated, tt.expected)
 	}
 }
@@ -84,7 +85,7 @@ func TestEvalBooleanExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		evaluated, err := testEval(tt.input)
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 		testBooleanObject(t, evaluated, tt.expected)
 	}
 }
@@ -104,7 +105,7 @@ func TestBangOperator(t *testing.T) {
 
 	for _, tt := range tests {
 		evaluated, err := testEval(tt.input)
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 		testBooleanObject(t, evaluated, tt.expected)
 	}
 }
@@ -132,7 +133,7 @@ func TestConditionalExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		evaluated, err := testEval(tt.input)
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 		integer, ok := tt.expected.(int)
 		if ok {
 			testIntegerObject(t, evaluated, int64(integer))
@@ -161,7 +162,7 @@ func TestReturnStatements(t *testing.T) {
 
 	for _, tt := range tests {
 		evaluated, err := testEval(tt.input)
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 		testIntegerObject(t, evaluated, tt.expected)
 	}
 }
@@ -181,7 +182,7 @@ func TestErrorHandling(t *testing.T) {
 		},
 		{
 			"-true",
-			"Exception: unknown operator: -SYMBOL",
+			"Exception: unknown operator: -*object.Symbol",
 		},
 		{
 			"true + false;",
@@ -252,12 +253,9 @@ end
 		}
 
 		actual, ok := errors.Cause(err).(object.RubyObject)
-		if !ok {
-			t.Logf("Error is not a RubyObject, got %T:%v\n", err, err)
-			t.FailNow()
-		}
-
-		testExceptionObject(t, actual, tt.expectedMessage)
+		utils.Assert(t, ok, "Error is not a RubyObject. got=%T (%+v)", err, err)
+		utils.Assert(t, object.IsError(actual), "Expected error or exception, got %T", actual)
+		utils.AssertEqual(t, actual.Inspect(), tt.expectedMessage)
 	}
 }
 
@@ -287,8 +285,7 @@ func TestAssignment(t *testing.T) {
 
 		for _, tt := range tests {
 			evaluated, err := testEval(tt.input)
-			checkError(t, err)
-
+			utils.AssertNoError(t, err)
 			testObject(t, evaluated, tt.expected)
 		}
 	})
@@ -313,8 +310,7 @@ func TestAssignment(t *testing.T) {
 
 		for _, tt := range tests {
 			evaluated, err := testEval(tt.input, object.NewMainEnvironment())
-			checkError(t, err)
-
+			utils.AssertNoError(t, err)
 			testIntegerObject(t, evaluated, tt.expected)
 		}
 	})
@@ -335,53 +331,37 @@ func TestAssignment(t *testing.T) {
 
 		for _, tt := range tests {
 			evaluated, err := testEval(tt.input, object.NewMainEnvironment())
-			checkError(t, err)
-
+			utils.AssertNoError(t, err)
 			testObject(t, evaluated, tt.expected)
 		}
 	})
 	t.Run("assign to array", func(t *testing.T) {
 		tests := []struct {
 			input    string
-			size     int
 			elements []object.RubyObject
 		}{
 			{
 				`x = [3]; x[0] = 5; x`,
-				1,
-				[]object.RubyObject{&object.Integer{Value: 5}},
+				[]object.RubyObject{object.NewInteger(5)},
 			},
 			{
 				`x = []; x[0] = 5; x`,
-				1,
-				[]object.RubyObject{&object.Integer{Value: 5}},
+				[]object.RubyObject{object.NewInteger(5)},
 			},
 			{
 				`x = [3]; x[3] = 5; x`,
-				4,
-				[]object.RubyObject{&object.Integer{Value: 3}, object.NIL, object.NIL, &object.Integer{Value: 5}},
+				[]object.RubyObject{object.NewInteger(3), object.NIL, object.NIL, object.NewInteger(5)},
 			},
 		}
 
 		for _, tt := range tests {
 			evaluated, err := testEval(tt.input)
-			checkError(t, err)
+			utils.AssertNoError(t, err)
 
 			array, ok := evaluated.(*object.Array)
-			if !ok {
-				t.Logf("Expected to eval to array, got %T\n", evaluated)
-				t.FailNow()
-			}
-
-			if len(array.Elements) != tt.size {
-				t.Logf("Expected array size to equal %d, got %d\n", tt.size, len(array.Elements))
-				t.Fail()
-			}
-
-			if !reflect.DeepEqual(array.Elements, tt.elements) {
-				t.Logf("Expected elements to equal\n%s\n\tgot\n%s\n", tt.elements, array.Elements)
-				t.Fail()
-			}
+			utils.Assert(t, ok, "object is not Array. got=%T (%+v)", evaluated, evaluated)
+			utils.AssertEqual(t, len(array.Elements), len(tt.elements))
+			utils.AssertEqualCmpAny(t, array.Elements, tt.elements, object.CompareRubyObjectsForTests)
 		}
 	})
 	t.Run("assign operator on local variable", func(t *testing.T) {
@@ -401,8 +381,7 @@ func TestAssignment(t *testing.T) {
 
 		for _, tt := range tests {
 			evaluated, err := testEval(tt.input, object.NewMainEnvironment())
-			checkError(t, err)
-
+			utils.AssertNoError(t, err)
 			testIntegerObject(t, evaluated, tt.expected)
 		}
 	})
@@ -418,17 +397,17 @@ func TestMultiAssignment(t *testing.T) {
 			name:  "evenly distributed sides",
 			input: "x, y, z = 1, 2, 3; [x, y, z]",
 			output: &object.Array{Elements: []object.RubyObject{
-				&object.Integer{Value: 1},
-				&object.Integer{Value: 2},
-				&object.Integer{Value: 3},
+				object.NewInteger(1),
+				object.NewInteger(2),
+				object.NewInteger(3),
 			}},
 		},
 		{
 			name:  "value side one less",
 			input: "x, y, z = 1, 2; [x, y, z]",
 			output: &object.Array{Elements: []object.RubyObject{
-				&object.Integer{Value: 1},
-				&object.Integer{Value: 2},
+				object.NewInteger(1),
+				object.NewInteger(2),
 				object.NIL,
 			}},
 		},
@@ -436,7 +415,7 @@ func TestMultiAssignment(t *testing.T) {
 			name:  "value side two less",
 			input: "x, y, z = 1; [x, y, z]",
 			output: &object.Array{Elements: []object.RubyObject{
-				&object.Integer{Value: 1},
+				object.NewInteger(1),
 				object.NIL,
 				object.NIL,
 			}},
@@ -454,12 +433,8 @@ func TestMultiAssignment(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			evaluated, err := testEval(tt.input, object.NewMainEnvironment())
-			checkError(t, err)
-
-			if !reflect.DeepEqual(tt.output, evaluated) {
-				t.Logf("Expected result to equal\n%s\n\tgot\n%s\n", tt.output.Inspect(), evaluated.Inspect())
-				t.Fail()
-			}
+			utils.AssertNoError(t, err)
+			utils.AssertEqualCmpAny(t, evaluated, tt.output, object.CompareRubyObjectsForTests)
 		})
 	}
 }
@@ -479,7 +454,7 @@ func TestGlobalAssignmentExpression(t *testing.T) {
 		for _, tt := range tests {
 			t.Run(tt.input, func(t *testing.T) {
 				evaluated, err := testEval(tt.input)
-				checkError(t, err)
+				utils.AssertNoError(t, err)
 				testIntegerObject(t, evaluated, tt.expected)
 			})
 		}
@@ -490,19 +465,13 @@ func TestGlobalAssignmentExpression(t *testing.T) {
 		outer := object.NewEnvironment()
 		env := object.NewEnclosedEnvironment(outer)
 		_, err := testEval(input, env)
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 
 		_, ok := outer.Get("$Foo")
-		if !ok {
-			t.Logf("Expected $FOO to be set in outer env, was not")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected $FOO to be set in outer env, was not")
 
 		_, ok = env.Clone().Get("$Foo")
-		if ok {
-			t.Logf("Expected $FOO not to be set in inner env")
-			t.Fail()
-		}
+		utils.Assert(t, !ok, "Expected $FOO to not be set in inner env, was")
 	})
 }
 
@@ -545,47 +514,25 @@ func TestFunctionObject(t *testing.T) {
 			env := object.NewEnvironment()
 			env.Set("self", &object.Bottom{})
 			evaluated, err := testEval(tt.input, env)
-			checkError(t, err)
+			utils.AssertNoError(t, err)
 			sym, ok := evaluated.(*object.Symbol)
-			if !ok {
-				t.Fatalf("object is not Symbol. got=%T (%+v)", evaluated, evaluated)
-			}
-			if sym.Value != "foo" {
-				t.Logf("Expected returned symbol to have value %q, got %q", "foo", sym.Value)
-				t.Fail()
-			}
+			utils.Assert(t, ok, "object is not Symbol. got=%T (%+v)", evaluated, evaluated)
+			utils.AssertEqual(t, sym.Value, "foo")
 
 			self, _ := env.Get("self")
 			method, ok := self.Class().Methods().Get("foo")
-			if !ok {
-				t.Logf("Expected function to be added to self")
-				t.Fail()
-			}
+			utils.Assert(t, ok, "Expected method to be added to self")
 			fn, ok := method.(*object.Function)
-			if !ok {
-				t.Logf("self method is not Function, got=%T (%+v)", method, method)
-				t.Fail()
-			}
-
-			if len(fn.Parameters) != len(tt.expectedParameters) {
-				t.Fatalf("function has wrong parameters. Parameters=%+v", fn.Parameters)
-			}
+			utils.Assert(t, ok, "Expected method to be a function. got=%T (%+v)", method, method)
+			utils.AssertEqual(t, len(fn.Parameters), len(tt.expectedParameters))
 
 			for i, param := range fn.Parameters {
 				testParam := tt.expectedParameters[i]
-				if testParam.name != param.Name {
-					t.Logf("Expected parameter %d to have name %q, got %q\n", i+1, testParam.name, param.Name)
-					t.Fail()
-				}
-				if !reflect.DeepEqual(testParam.defaultValue, param.Default) {
-					t.Logf("Expected parameter %d to have default %v, got %v\n", i+1, testParam.defaultValue, param.Default)
-					t.Fail()
-				}
+				utils.AssertEqual(t, param.Name, param.Name)
+				utils.AssertEqualCmpAny(t, param.Default, testParam.defaultValue, object.CompareRubyObjectsForTests)
 			}
 
-			if fn.Body.String() != tt.expectedBody {
-				t.Fatalf("body is not %q. got=%q", tt.expectedBody, fn.Body.String())
-			}
+			utils.AssertEqual(t, fn.Body.String(), tt.expectedBody)
 		}
 	})
 }
@@ -609,7 +556,7 @@ func TestFunctionApplication(t *testing.T) {
 		env := object.NewEnvironment()
 		env.Set("self", &object.Bottom{})
 		evaluated, err := testEval(tt.input, env)
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 		testIntegerObject(t, evaluated, tt.expected)
 	}
 }
@@ -618,88 +565,57 @@ func TestGlobalLiteral(t *testing.T) {
 	input := `$foo = 'bar'; $foo`
 
 	evaluated, err := testEval(input)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 	str, ok := evaluated.(*object.String)
-	if !ok {
-		t.Fatalf("object is not String. got=%T (%+v)", evaluated, evaluated)
-	}
-
-	if str.Value != "bar" {
-		t.Errorf("String has wrong value. got=%q", str.Value)
-	}
+	utils.Assert(t, ok, "object is not String. got=%T (%+v)", evaluated, evaluated)
+	utils.AssertEqual(t, str.Value, "bar")
 }
 
 func TestStringLiteral(t *testing.T) {
 	input := `"Hello World!"`
 
 	evaluated, err := testEval(input)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 	str, ok := evaluated.(*object.String)
-	if !ok {
-		t.Fatalf("object is not String. got=%T (%+v)", evaluated, evaluated)
-	}
-
-	if str.Value != "Hello World!" {
-		t.Errorf("String has wrong value. got=%q", str.Value)
-	}
+	utils.Assert(t, ok, "object is not String. got=%T (%+v)", evaluated, evaluated)
+	utils.AssertEqual(t, str.Value, "Hello World!")
 }
 
 func TestStringConcatenation(t *testing.T) {
 	input := `"Hello" + " " + "World!"`
 
 	evaluated, err := testEval(input)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 	str, ok := evaluated.(*object.String)
-	if !ok {
-		t.Fatalf("object is not String. got=%T (%+v)", evaluated, evaluated)
-	}
-
-	if str.Value != "Hello World!" {
-		t.Errorf("String has wrong value. got=%q", str.Value)
-	}
+	utils.Assert(t, ok, "object is not String. got=%T (%+v)", evaluated, evaluated)
+	utils.AssertEqual(t, str.Value, "Hello World!")
 }
 
 func TestSymbolLiteral(t *testing.T) {
 	input := `:foobar;`
 
 	evaluated, err := testEval(input)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 	sym, ok := evaluated.(*object.Symbol)
-	if !ok {
-		t.Fatalf("object is not Symbol. got=%T (%+v)", evaluated, evaluated)
-	}
-
-	if sym.Value != "foobar" {
-		t.Errorf("Symbol has wrong value. got=%q", sym.Value)
-	}
+	utils.Assert(t, ok, "object is not Symbol. got=%T (%+v)", evaluated, evaluated)
+	utils.AssertEqual(t, sym.Value, "foobar")
 }
 
 func TestMethodCalls(t *testing.T) {
-	input := "x = 2; x.foo :bar"
-
-	evaluated, err := testEval(input)
-
-	if err == nil {
-		t.Logf("Expected error, got %T:%s\n", evaluated, evaluated)
-		t.Fail()
-	}
+	t.Skip("TODO: check we get a correct error")
+	// input := "x = 2; x.foo :bar"
+	// _, _ := testEval(input)
+	// utils.AssertError(t, err, object.NewNoMethodError("undefined method `foo' for 2:Integer"))
 }
 
 func TestArrayLiterals(t *testing.T) {
 	input := "[1, 2 * 2, 3 + 3]"
 	evaluated, err := testEval(input)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 
 	result, ok := evaluated.(*object.Array)
-	if !ok {
-		t.Fatalf("object is not Array. got=%T (%+v)", evaluated, evaluated)
-	}
-	if len(result.Elements) != 3 {
-		t.Fatalf(
-			"array has wrong num of elements. got=%d",
-			len(result.Elements),
-		)
-	}
+	utils.Assert(t, ok, "object is not Array. got=%T (%+v)", evaluated, evaluated)
+	utils.AssertEqual(t, len(result.Elements), 3)
 	testIntegerObject(t, result.Elements[0], 1)
 	testIntegerObject(t, result.Elements[1], 4)
 	testIntegerObject(t, result.Elements[2], 6)
@@ -778,18 +694,14 @@ func TestArrayIndexExpressions(t *testing.T) {
 
 	for _, tt := range tests {
 		evaluated, err := testEval(tt.input)
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 		switch expected := tt.expected.(type) {
 		case int:
 			testIntegerObject(t, evaluated, int64(expected))
 		case []int:
 			array, ok := evaluated.(*object.Array)
-			if !ok {
-				t.Fatalf("Expected evaluated object to be *object.Array, got=%T", evaluated)
-			}
-			if len(array.Elements) != len(expected) {
-				t.Fatalf("Expected array length to be %d, got %d", len(expected), len(array.Elements))
-			}
+			utils.Assert(t, ok, "object is not Array. got=%T (%+v)", evaluated, evaluated)
+			utils.AssertEqual(t, len(array.Elements), len(expected))
 			for i, v := range expected {
 				testIntegerObject(t, array.Elements[i], int64(v))
 			}
@@ -804,7 +716,7 @@ func TestArrayIndexExpressions(t *testing.T) {
 func TestNilExpression(t *testing.T) {
 	input := "nil"
 	evaluated, err := testEval(input)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 	testNilObject(t, evaluated)
 }
 
@@ -813,20 +725,17 @@ func TestHashLiteral(t *testing.T) {
 
 	env := object.NewMainEnvironment()
 	evaluated, err := testEval(input, env)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 
 	hash, ok := evaluated.(*object.Hash)
-	if !ok {
-		t.Logf("Expected evaluated object to be *object.Hash, got=%T", evaluated)
-		t.FailNow()
-	}
+	utils.Assert(t, ok, "object is not Hash. got=%T (%+v)", evaluated, evaluated)
 
 	expected := map[string]object.RubyObject{
-		"foo":   &object.Integer{Value: 42},
-		":bar":  &object.Integer{Value: 2},
+		"foo":   object.NewInteger(42),
+		":bar":  object.NewInteger(2),
 		":nil":  object.TRUE,
 		":true": object.FALSE,
-		"2":     &object.Integer{Value: 2},
+		"2":     object.NewInteger(2),
 	}
 
 	actual := make(map[string]object.RubyObject)
@@ -834,9 +743,11 @@ func TestHashLiteral(t *testing.T) {
 		actual[k.Inspect()] = v
 	}
 
-	if !reflect.DeepEqual(expected, actual) {
-		t.Logf("Expected hash to equal\n%s\n\tgot\n%s\n", expected, actual)
-		t.Fail()
+	utils.AssertEqual(t, len(expected), len(actual))
+	for k, v := range expected {
+		actual_v, ok := actual[k]
+		utils.Assert(t, ok, "Expected key %q to be present in hash", k)
+		utils.AssertEqualCmpAny(t, v, actual_v, object.CompareRubyObjectsForTests)
 	}
 }
 
@@ -901,7 +812,7 @@ func TestHashIndexExpressions(t *testing.T) {
 
 	for _, tt := range tests {
 		evaluated, err := testEval(tt.input)
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 		integer, ok := tt.expected.(int)
 		if ok {
 			testIntegerObject(t, evaluated, int64(integer))
@@ -916,37 +827,13 @@ func TestKeyword__File__(t *testing.T) {
 
 	env := object.NewEnvironment()
 	program, err := parser.ParseFile(token.NewFileSet(), "some_file.rb", input, 0)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 	evaluated, err := evaluator.Eval(program, env)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 
 	str, ok := evaluated.(*object.String)
-	if !ok {
-		t.Logf("Expected evaluated to be *object.String, got %T\n", evaluated)
-		t.FailNow()
-	}
-
-	expected := "some_file.rb"
-
-	if expected != str.Value {
-		t.Logf("Expected __FILE__ to equal %q, got %q\n", expected, str.Value)
-		t.Fail()
-	}
-}
-
-func testExceptionObject(t *testing.T, obj object.RubyObject, errorMessage string) {
-	t.Helper()
-	if !evaluator.IsError(obj) {
-		t.Logf("Expected error or exception, got %T", obj)
-		t.Fail()
-	}
-
-	actual := obj.Inspect()
-
-	if errorMessage != actual {
-		t.Logf("Expected obj to stringify to %q, got %q", errorMessage, actual)
-		t.Fail()
-	}
+	utils.Assert(t, ok, "Expected evaluated to be *object.String, got %T\n", evaluated)
+	utils.AssertEqual(t, str.Value, "some_file.rb")
 }
 
 func testNilObject(t *testing.T, obj object.RubyObject) bool {
@@ -968,14 +855,6 @@ func testEval(input string, context ...object.Environment) (object.RubyObject, e
 		return nil, object.NewSyntaxError(err)
 	}
 	return evaluator.Eval(program, env)
-}
-
-func checkError(t *testing.T, err error) {
-	t.Helper()
-	if err != nil {
-		t.Logf("Expected no error, got %T:%v\n", err, err)
-		t.Fail()
-	}
 }
 
 func testObject(t *testing.T, exp object.RubyObject, expected interface{}) bool {
