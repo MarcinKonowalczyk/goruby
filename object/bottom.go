@@ -17,9 +17,7 @@ func init() {
 		"Bottom",
 		bottomMethodSet,
 		nil,
-		func(RubyClassObject, ...RubyObject) (RubyObject, error) {
-			return &Bottom{}, nil
-		},
+		notInstantiatable, // not instantiatable through new
 	)
 	CLASSES.Set("Bottom", bottomClass)
 }
