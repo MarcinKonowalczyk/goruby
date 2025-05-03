@@ -10,26 +10,20 @@ import (
 type Type string
 
 const (
-	BOTTOM_OBJ         Type = "BOTTOM" // The bottom class
-	EIGENCLASS_OBJ     Type = "EIGENCLASS"
-	FUNCTION_OBJ       Type = "FUNCTION"
-	RETURN_VALUE_OBJ   Type = "RETURN_VALUE"
-	BREAK_VALUE_OBJ    Type = "BREAK_VALUE"
-	BASIC_OBJECT_OBJ   Type = "BASIC_OBJECT"
-	OBJECT_OBJ         Type = "OBJECT"
-	CLASS_OBJ          Type = "CLASS"
-	CLASS_INSTANCE_OBJ Type = "CLASS"
-	ARRAY_OBJ          Type = "ARRAY"
-	RANGE_OBJ          Type = "RANGE"
-	HASH_OBJ           Type = "HASH"
-	INTEGER_OBJ        Type = "INTEGER"
-	FLOAT_OBJ          Type = "FLOAT"
-	STRING_OBJ         Type = "STRING"
-	SYMBOL_OBJ         Type = "SYMBOL"
-	EXCEPTION_OBJ      Type = "EXCEPTION"
-	MODULE_OBJ         Type = "MODULE"
-	IO_OBJ             Type = "IO"
-	SELF               Type = "SELF"
+	BOTTOM_OBJ       Type = "BOTTOM" // The bottom class
+	EIGENCLASS_OBJ   Type = "EIGENCLASS"
+	RETURN_VALUE_OBJ Type = "RETURN_VALUE"
+	BREAK_VALUE_OBJ  Type = "BREAK_VALUE"
+	BASIC_OBJECT_OBJ Type = "BASIC_OBJECT"
+	CLASS_OBJ        Type = "CLASS"
+	ARRAY_OBJ        Type = "ARRAY"
+	RANGE_OBJ        Type = "RANGE"
+	HASH_OBJ         Type = "HASH"
+	INTEGER_OBJ      Type = "INTEGER"
+	FLOAT_OBJ        Type = "FLOAT"
+	STRING_OBJ       Type = "STRING"
+	SYMBOL_OBJ       Type = "SYMBOL"
+	EXCEPTION_OBJ    Type = "EXCEPTION"
 )
 
 type inspectable interface {
