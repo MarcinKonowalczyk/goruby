@@ -37,9 +37,9 @@ func TestIntegerDiv(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(&String{}, &Integer{}),
+			NewCoercionTypeError(NewString(""), &Integer{}),
 		},
 		{
 			[]RubyObject{NewInteger(0)},
@@ -71,9 +71,9 @@ func TestIntegerMul(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(&String{}, &Integer{}),
+			NewCoercionTypeError(NewString(""), &Integer{}),
 		},
 	}
 
@@ -99,9 +99,9 @@ func TestIntegerAdd(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(&String{}, &Integer{}),
+			NewCoercionTypeError(NewString(""), &Integer{}),
 		},
 	}
 
@@ -127,9 +127,9 @@ func TestIntegerSub(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(&String{}, &Integer{}),
+			NewCoercionTypeError(NewString(""), &Integer{}),
 		},
 	}
 
@@ -156,9 +156,9 @@ func TestIntegerSub(t *testing.T) {
 // 			nil,
 // 		},
 // 		{
-// 			[]RubyObject{&String{""}},
+// 			[]RubyObject{NewString("")},
 // 			nil,
-// 			NewCoercionTypeError(&String{}, &Integer{}),
+// 			NewCoercionTypeError(NewString(""), &Integer{}),
 // 		},
 // 	}
 
@@ -190,7 +190,7 @@ func TestIntegerLt(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
 			NewArgumentError("comparison of Integer with String failed"),
 		},
@@ -224,7 +224,7 @@ func TestIntegerGt(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
 			NewArgumentError("comparison of Integer with String failed"),
 		},
@@ -258,7 +258,7 @@ func TestIntegerGt(t *testing.T) {
 // 			nil,
 // 		},
 // 		{
-// 			[]RubyObject{&String{""}},
+// 			[]RubyObject{NewString("")},
 // 			nil,
 // 			NewArgumentError("comparison of Integer with String failed"),
 // 		},
@@ -292,7 +292,7 @@ func TestIntegerGt(t *testing.T) {
 // 			nil,
 // 		},
 // 		{
-// 			[]RubyObject{&String{""}},
+// 			[]RubyObject{NewString("")},
 // 			nil,
 // 			NewArgumentError("comparison of Integer with String failed"),
 // 		},
@@ -370,7 +370,7 @@ func TestIntegerLte(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			NIL,
 			NewArgumentError("comparison of Integer with String failed"),
 		},
@@ -409,7 +409,7 @@ func TestIntegerSpaceship(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			NIL,
 			nil,
 		},

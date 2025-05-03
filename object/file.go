@@ -32,7 +32,7 @@ func fileExpandPath(context CallContext, args ...RubyObject) (RubyObject, error)
 		path, err := filepath.Abs(str.Value)
 
 		if err == nil {
-			return &String{Value: path}, nil
+			return NewString(path), nil
 		}
 
 		return nil, NewNotImplementedError("Cannot determine working directory")
@@ -51,7 +51,7 @@ func fileExpandPath(context CallContext, args ...RubyObject) (RubyObject, error)
 			return nil, NewNotImplementedError("%s", err.Error())
 		}
 
-		return &String{Value: abs}, nil
+		return NewString(abs), nil
 	default:
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))
 	}
@@ -68,7 +68,7 @@ func fileDirname(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 	dirname := filepath.Dir(filename.Value)
 
-	return &String{Value: dirname}, nil
+	return NewString(dirname), nil
 }
 
 func fileRead(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -85,5 +85,5 @@ func fileRead(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewNotImplementedError("Cannot read file %s", filename.Value)
 	}
 
-	return &String{Value: string(data)}, nil
+	return NewString(string(data)), nil
 }

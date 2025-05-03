@@ -46,7 +46,7 @@ var bottomMethodSet = map[string]RubyMethod{
 func bottomToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 	receiver := context.Receiver()
 	val := fmt.Sprintf("#<%s:%p>", receiver.Class().Name(), receiver)
-	return &String{Value: val}, nil
+	return NewString(val), nil
 }
 
 func bottomIsA(context CallContext, args ...RubyObject) (RubyObject, error) {

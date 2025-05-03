@@ -108,7 +108,7 @@ func exceptionException(context CallContext, args ...RubyObject) (RubyObject, er
 func exceptionToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 	receiver := context.Receiver()
 	if err, ok := receiver.(exception); ok {
-		return &String{Value: err.Error()}, nil
+		return NewString(err.Error()), nil
 	}
 	return nil, nil
 }

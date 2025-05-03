@@ -37,9 +37,9 @@ func TestFloatDiv(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(&String{}, &Float{}),
+			NewCoercionTypeError(NewString(""), &Float{}),
 		},
 		{
 			[]RubyObject{NewFloat(0)},
@@ -71,9 +71,9 @@ func TestFloatMul(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(&String{}, &Float{}),
+			NewCoercionTypeError(NewString(""), &Float{}),
 		},
 	}
 
@@ -100,9 +100,9 @@ func TestFloatAdd(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(&String{}, &Float{}),
+			NewCoercionTypeError(NewString(""), &Float{}),
 		},
 	}
 
@@ -129,9 +129,9 @@ func TestFloatSub(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(&String{}, &Float{}),
+			NewCoercionTypeError(NewString(""), &Float{}),
 		},
 	}
 
@@ -158,9 +158,9 @@ func TestFloatSub(t *testing.T) {
 // 			nil,
 // 		},
 // 		{
-// 			[]RubyObject{&String{""}},
+// 			[]RubyObject{NewString("")},
 // 			nil,
-// 			NewCoercionTypeError(&String{}, &Float{}),
+// 			NewCoercionTypeError(NewString(""), &Float{}),
 // 		},
 // 	}
 
@@ -192,7 +192,7 @@ func TestFloatLt(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
 			NewArgumentError("comparison of Float with String failed"),
 		},
@@ -226,7 +226,7 @@ func TestFloatGt(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
 			NewArgumentError("comparison of Float with String failed"),
 		},
@@ -260,7 +260,7 @@ func TestFloatGt(t *testing.T) {
 // 			nil,
 // 		},
 // 		{
-// 			[]RubyObject{&String{""}},
+// 			[]RubyObject{NewString("")},
 // 			nil,
 // 			NewArgumentError("comparison of Float with String failed"),
 // 		},
@@ -294,7 +294,7 @@ func TestFloatGt(t *testing.T) {
 // 			nil,
 // 		},
 // 		{
-// 			[]RubyObject{&String{""}},
+// 			[]RubyObject{NewString("")},
 // 			nil,
 // 			NewArgumentError("comparison of Float with String failed"),
 // 		},
@@ -333,7 +333,7 @@ func TestFloatGte(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
 			NewArgumentError("comparison of Float with String failed"),
 		},
@@ -372,7 +372,7 @@ func TestFloatLte(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			nil,
 			NewArgumentError("comparison of Float with String failed"),
 		},
@@ -411,7 +411,7 @@ func TestFloatSpaceship(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			NIL,
 			nil,
 		},

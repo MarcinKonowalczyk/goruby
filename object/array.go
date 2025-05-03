@@ -224,7 +224,7 @@ func arrayJoin(context CallContext, args ...RubyObject) (RubyObject, error) {
 		element_strings[i] = elem.Inspect()
 	}
 	result := strings.Join(element_strings, separator.Value)
-	return &String{Value: result}, nil
+	return NewString(result), nil
 }
 
 func arrayInclude(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -422,7 +422,7 @@ func arrayAst(context CallContext, args ...RubyObject) (RubyObject, error) {
 			element_strings[i] = elem.Inspect()
 		}
 		result := strings.Join(element_strings, joiner)
-		return &String{Value: result}, nil
+		return NewString(result), nil
 
 	default:
 		return nil, NewArgumentError("argument must be an Integer, or a String")

@@ -7,10 +7,10 @@ import (
 )
 
 func TestString_hashKey(t *testing.T) {
-	hello1 := &String{Value: "Hello World"}
-	hello2 := &String{Value: "Hello World"}
-	diff1 := &String{Value: "My name is johnny"}
-	diff2 := &String{Value: "My name is johnny"}
+	hello1 := NewString("Hello World")
+	hello2 := NewString("Hello World")
+	diff1 := NewString("My name is johnny")
+	diff2 := NewString("My name is johnny")
 
 	if hello1.hashKey() != hello2.hashKey() {
 		t.Errorf("strings with same content have different hash keys")
@@ -52,19 +52,19 @@ func TestStringAdd(t *testing.T) {
 		err       error
 	}{
 		{
-			[]RubyObject{&String{Value: " bar"}},
-			&String{Value: "foo bar"},
+			[]RubyObject{NewString(" bar")},
+			NewString("foo bar"),
 			nil,
 		},
 		{
 			[]RubyObject{&Integer{Value: 3}},
 			nil,
-			NewImplicitConversionTypeError(&String{}, &Integer{}),
+			NewImplicitConversionTypeError(NewString(""), &Integer{}),
 		},
 	}
 
 	for _, testCase := range tests {
-		context := &callContext{receiver: &String{Value: "foo"}}
+		context := &callContext{receiver: NewString("foo")}
 
 		result, err := stringAdd(context, testCase.arguments...)
 
@@ -80,14 +80,14 @@ func Test_StringGsub(t *testing.T) {
 		err       error
 	}{
 		{
-			[]RubyObject{&String{Value: "o"}, &String{Value: "zz"}},
-			&String{Value: "fzzzzbar"},
+			[]RubyObject{NewString("o"), NewString("zz")},
+			NewString("fzzzzbar"),
 			nil,
 		},
 	}
 
 	for _, testCase := range tests {
-		context := &callContext{receiver: &String{Value: "foobar"}}
+		context := &callContext{receiver: NewString("foobar")}
 
 		result, err := stringGsub(context, testCase.arguments...)
 

@@ -9,7 +9,7 @@ func TestHashSet(t *testing.T) {
 	t.Run("Set on initialized hash", func(t *testing.T) {
 		hash := &Hash{Map: make(map[hashKey]hashPair)}
 
-		key := &String{Value: "foo"}
+		key := NewString("foo")
 		value := &Integer{Value: 42}
 
 		result := hash.Set(key, value)
@@ -41,7 +41,7 @@ func TestHashSet(t *testing.T) {
 	t.Run("Set on uninitialized hash", func(t *testing.T) {
 		var hash Hash
 
-		key := &String{Value: "foo"}
+		key := NewString("foo")
 		value := &Integer{Value: 42}
 
 		result := hash.Set(key, value)
@@ -74,7 +74,7 @@ func TestHashSet(t *testing.T) {
 
 func TestHashGet(t *testing.T) {
 	t.Run("value found", func(t *testing.T) {
-		key := &String{Value: "foo"}
+		key := NewString("foo")
 		value := &Integer{Value: 42}
 
 		hash := &Hash{Map: map[hashKey]hashPair{
@@ -94,7 +94,7 @@ func TestHashGet(t *testing.T) {
 		}
 	})
 	t.Run("value not found", func(t *testing.T) {
-		key := &String{Value: "foo"}
+		key := NewString("foo")
 
 		hash := &Hash{Map: map[hashKey]hashPair{}}
 
@@ -111,7 +111,7 @@ func TestHashGet(t *testing.T) {
 		}
 	})
 	t.Run("on uninitalized hash", func(t *testing.T) {
-		key := &String{Value: "foo"}
+		key := NewString("foo")
 
 		var hash Hash
 
@@ -131,7 +131,7 @@ func TestHashGet(t *testing.T) {
 
 func TestHashMap(t *testing.T) {
 	t.Run("on initialized hash", func(t *testing.T) {
-		key := &String{Value: "foo"}
+		key := NewString("foo")
 		value := &Integer{Value: 42}
 
 		hash := &Hash{Map: map[hashKey]hashPair{
@@ -173,7 +173,7 @@ func TestHashMap(t *testing.T) {
 
 func Test_hash(t *testing.T) {
 	t.Run("hashable object", func(t *testing.T) {
-		obj := &String{Value: "bar"}
+		obj := NewString("bar")
 
 		hashKey := hash(obj)
 

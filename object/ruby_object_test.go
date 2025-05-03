@@ -71,7 +71,7 @@ func TestFunctionCall(t *testing.T) {
 	t.Run("uses the function env as env for CallContext#Eval", func(t *testing.T) {
 		contextEnv := NewEnvironment()
 		contextEnv.Set("self", &Integer{Value: 42})
-		contextEnv.Set("bar", &String{Value: "not reachable in Eval"})
+		contextEnv.Set("bar", NewString("not reachable in Eval"))
 		var evalEnv Environment
 		context := &callContext{
 			env: contextEnv,
@@ -268,7 +268,7 @@ func TestFunctionCall(t *testing.T) {
 		t.Run("without block argument", func(t *testing.T) {
 			expected := NewWrongNumberOfArgumentsError(0, 1)
 
-			_, err := function.Call(context, &String{Value: "foo"})
+			_, err := function.Call(context, NewString("foo"))
 
 			if !reflect.DeepEqual(expected, err) {
 				t.Logf("Expected error to equal\n%v\n\tgot\n%v\n", expected, err)

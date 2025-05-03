@@ -13,7 +13,7 @@ var stringClass RubyClassObject = newClass(
 	stringMethods,
 	stringClassMethods,
 	func(RubyClassObject, ...RubyObject) (RubyObject, error) {
-		return &String{}, nil
+		return NewString(""), nil
 	},
 )
 
@@ -26,7 +26,7 @@ func NewString(value string) *String {
 }
 
 func NewStringf(format string, args ...interface{}) *String {
-	return &String{Value: fmt.Sprintf(format, args...)}
+	return NewString(fmt.Sprintf(format, args...))
 }
 
 type String struct {
@@ -90,7 +90,7 @@ var stringMethods = map[string]RubyMethod{
 
 func stringToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 	str := context.Receiver().(*String)
-	return &String{str.Value}, nil
+	return NewString(str.Value), nil
 }
 
 func stringAdd(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -99,7 +99,7 @@ func stringAdd(context CallContext, args ...RubyObject) (RubyObject, error) {
 	if !ok {
 		return nil, NewImplicitConversionTypeError(add, args[0])
 	}
-	return &String{s.Value + add.Value}, nil
+	return NewString(s.Value + add.Value), nil
 }
 
 func stringGsub(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -122,7 +122,7 @@ func stringGsub(context CallContext, args ...RubyObject) (RubyObject, error) {
 	result := re.ReplaceAllString(s.Value, replacement.Value)
 
 	// Return the modified string
-	return &String{Value: result}, nil
+	return NewString(result), nil
 }
 
 func stringLength(context CallContext, args ...RubyObject) (RubyObject, error) {
@@ -135,7 +135,7 @@ func stringLines(context CallContext, args ...RubyObject) (RubyObject, error) {
 	lines := strings.Split(s.Value, "\n")
 	arr := NewArray()
 	for _, line := range lines {
-		arr.Elements = append(arr.Elements, &String{Value: line + "\n"})
+		arr.Elements = append(arr.Elements, NewString(line+"\n"))
 	}
 	return arr, nil
 }

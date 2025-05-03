@@ -45,7 +45,7 @@ var symbolMethods = map[string]RubyMethod{
 
 func symbolToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 	if sym, ok := context.Receiver().(*Symbol); ok {
-		return &String{Value: sym.Value}, nil
+		return NewString(sym.Value), nil
 	}
 	return nil, nil
 }

@@ -30,6 +30,6 @@ func ioClassGets(context CallContext, args ...RubyObject) (RubyObject, error) {
 	// remove the newline character
 	text = text[:len(text)-1]
 	// create a new string object
-	str := &String{Value: text}
+	str := NewString(text)
 	return str, nil
 }

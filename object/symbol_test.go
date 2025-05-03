@@ -34,7 +34,7 @@ func TestSymbolToS(t *testing.T) {
 
 	utils.AssertNoError(t, err)
 
-	expected := &String{Value: "foo"}
+	expected := NewString("foo")
 
 	utils.AssertEqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 }
@@ -61,7 +61,7 @@ func TestSymbolToBool(t *testing.T) {
 	if val {
 		t.Errorf("Expected false, got true")
 	}
-	val, ok = SymbolToBool(&String{Value: "foo"})
+	val, ok = SymbolToBool(NewString("foo"))
 	if ok {
 		t.Errorf("Expected false, got true")
 	}

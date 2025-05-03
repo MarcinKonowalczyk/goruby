@@ -20,7 +20,7 @@ func TestExceptionInitialize(t *testing.T) {
 	})
 	t.Run("with arg", func(t *testing.T) {
 		t.Run("string", func(t *testing.T) {
-			result, err := exceptionInitialize(context, &String{Value: "err"})
+			result, err := exceptionInitialize(context, NewString("err"))
 
 			utils.AssertNoError(t, err)
 
@@ -54,7 +54,7 @@ func TestExceptionException(t *testing.T) {
 		utils.AssertEqualCmpAny(t, result, &Exception{message: "x"}, CompareRubyObjectsForTests)
 	})
 	t.Run("with arg", func(t *testing.T) {
-		result, err := exceptionException(context, &String{Value: "x"})
+		result, err := exceptionException(context, NewString("x"))
 
 		utils.AssertNoError(t, err)
 
@@ -66,7 +66,7 @@ func TestExceptionException(t *testing.T) {
 		utils.AssertEqualCmpAny(t, result, &Exception{message: "x"}, CompareRubyObjectsForTests)
 	})
 	t.Run("with arg but different message", func(t *testing.T) {
-		result, err := exceptionException(context, &String{Value: "err"})
+		result, err := exceptionException(context, NewString("err"))
 
 		utils.AssertNoError(t, err)
 
@@ -85,5 +85,5 @@ func TestExceptionToS(t *testing.T) {
 
 	utils.AssertNoError(t, err)
 
-	utils.AssertEqualCmpAny(t, result, &String{Value: "x"}, CompareRubyObjectsForTests)
+	utils.AssertEqualCmpAny(t, result, NewString("x"), CompareRubyObjectsForTests)
 }

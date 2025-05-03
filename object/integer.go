@@ -266,6 +266,6 @@ func integerChr(context CallContext, args ...RubyObject) (RubyObject, error) {
 	if i.Value < 0 || i.Value > 255 {
 		return nil, NewArgumentError("chr out of range")
 	}
-	// return &String{Value: string(i.Value)}, nil
-	return &String{Value: string(rune(i.Value))}, nil
+	// return NewString( string(i.Value)), nil
+	return NewString(string(rune(i.Value))), nil
 }
