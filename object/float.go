@@ -44,17 +44,19 @@ func (i *Float) hashKey() hashKey {
 	return hashKey(reinterpretCastFloatToUint64(i.Value))
 }
 
+var (
+	_ RubyObject = &Float{}
+	_ hashable   = &Float{}
+)
+
 var floatMethods = map[string]RubyMethod{
-	"div": withArity(1, newMethod(floatDiv)),
-	"/":   withArity(1, newMethod(floatDiv)),
-	"*":   withArity(1, newMethod(floatMul)),
-	"+":   withArity(1, newMethod(floatAdd)),
-	"-":   withArity(1, newMethod(floatSub)),
-	// "%":   withArity(1, publicMethod(floatModulo)),
-	"<": withArity(1, newMethod(floatLt)),
-	">": withArity(1, newMethod(floatGt)),
-	// "==":   withArity(1, publicMethod(floatEq)),
-	// "!=":   withArity(1, publicMethod(floatNeq)),
+	"div":  withArity(1, newMethod(floatDiv)),
+	"/":    withArity(1, newMethod(floatDiv)),
+	"*":    withArity(1, newMethod(floatMul)),
+	"+":    withArity(1, newMethod(floatAdd)),
+	"-":    withArity(1, newMethod(floatSub)),
+	"<":    withArity(1, newMethod(floatLt)),
+	">":    withArity(1, newMethod(floatGt)),
 	">=":   withArity(1, newMethod(floatGte)),
 	"<=":   withArity(1, newMethod(floatLte)),
 	"<=>":  withArity(1, newMethod(floatSpaceship)),
@@ -112,15 +114,6 @@ func floatSub(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return NewFloat(i.Value - sub.Value), nil
 }
 
-//	func floatModulo(context CallContext, args ...RubyObject) (RubyObject, error) {
-//		i := context.Receiver().(*Float)
-//		mod, ok := args[0].(*Float)
-//		if !ok {
-//			return nil, NewCoercionTypeError(args[0], i)
-//		}
-//		return NewFloat(i.Value % mod.Value), nil
-//	}
-
 // Objects which can *safely* be converted to a float
 func safeObjectToFloat(arg RubyObject) (float64, bool) {
 	var right float64
@@ -129,12 +122,6 @@ func safeObjectToFloat(arg RubyObject) (float64, bool) {
 		right = arg.Value
 	case *Integer:
 		right = float64(arg.Value)
-	// case *Boolean:
-	// 	if arg.Value {
-	// 		right = 1.0
-	// 	} else {
-	// 		right = 0.0
-	// 	}
 	default:
 		return 0, false
 	}
@@ -222,11 +209,11 @@ func floatSpaceship(context CallContext, args ...RubyObject) (RubyObject, error)
 	}
 	switch {
 	case i.Value > right:
-		return &Float{Value: 1}, nil
+		return NewFloat(1), nil
 	case i.Value < right:
-		return &Float{Value: -1}, nil
+		return NewFloat(-1), nil
 	case i.Value == right:
-		return &Float{Value: 0}, nil
+		return NewFloat(0), nil
 	default:
 		panic("not reachable")
 	}

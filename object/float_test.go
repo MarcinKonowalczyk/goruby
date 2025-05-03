@@ -7,10 +7,10 @@ import (
 )
 
 func TestFloat_hashKey(t *testing.T) {
-	hello1 := &Float{Value: 1}
-	hello2 := &Float{Value: 1}
-	diff1 := &Float{Value: 3}
-	diff2 := &Float{Value: 3}
+	hello1 := NewFloat(1)
+	hello2 := NewFloat(1)
+	diff1 := NewFloat(3)
+	diff2 := NewFloat(3)
 
 	if hello1.hashKey() != hello2.hashKey() {
 		t.Errorf("strings with same content have different hash keys")
@@ -39,7 +39,7 @@ func TestFloatDiv(t *testing.T) {
 		{
 			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(NewString(""), &Float{}),
+			NewCoercionTypeError(NewString(""), NewFloat(0)),
 		},
 		{
 			[]RubyObject{NewFloat(0)},
@@ -73,7 +73,7 @@ func TestFloatMul(t *testing.T) {
 		{
 			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(NewString(""), &Float{}),
+			NewCoercionTypeError(NewString(""), NewFloat(0)),
 		},
 	}
 
@@ -102,7 +102,7 @@ func TestFloatAdd(t *testing.T) {
 		{
 			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(NewString(""), &Float{}),
+			NewCoercionTypeError(NewString(""), NewFloat(0)),
 		},
 	}
 
@@ -131,7 +131,7 @@ func TestFloatSub(t *testing.T) {
 		{
 			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(NewString(""), &Float{}),
+			NewCoercionTypeError(NewString(""), NewFloat(0)),
 		},
 	}
 
@@ -160,7 +160,7 @@ func TestFloatSub(t *testing.T) {
 // 		{
 // 			[]RubyObject{NewString("")},
 // 			nil,
-// 			NewCoercionTypeError(NewString(""), &Float{}),
+// 			NewCoercionTypeError(NewString(""), NewFloat(0)),
 // 		},
 // 	}
 
@@ -397,17 +397,17 @@ func TestFloatSpaceship(t *testing.T) {
 	}{
 		{
 			[]RubyObject{NewFloat(6)},
-			&Float{Value: -1},
+			NewFloat(-1),
 			nil,
 		},
 		{
 			[]RubyObject{NewFloat(4)},
-			&Float{Value: 0},
+			NewFloat(0),
 			nil,
 		},
 		{
 			[]RubyObject{NewFloat(2)},
-			&Float{Value: 1},
+			NewFloat(1),
 			nil,
 		},
 		{

@@ -145,16 +145,16 @@ var FLOAT_RE = regexp.MustCompile(`[-+]?\d*\.?\d+`)
 func stringToF(context CallContext, args ...RubyObject) (RubyObject, error) {
 	s := context.Receiver().(*String)
 	if s.Value == "" {
-		return &Float{Value: 0.0}, nil
+		return NewFloat(0.0), nil
 	}
 	match := FLOAT_RE.FindString(s.Value)
 	if match == "" {
-		return &Float{Value: 0.0}, nil
+		return NewFloat(0.0), nil
 	}
 	// Convert the string to a float
 	val, err := strconv.ParseFloat(match, 64)
 	if err != nil {
 		return nil, NewTypeError("Invalid float value: " + s.Value)
 	}
-	return &Float{Value: val}, nil
+	return NewFloat(val), nil
 }

@@ -207,7 +207,7 @@ func integerSpaceship(context CallContext, args ...RubyObject) (RubyObject, erro
 	case i.Value > right:
 		return NewInteger(1), nil
 	case i.Value < right:
-		return &Integer{Value: -1}, nil
+		return NewInteger(-1), nil
 	case i.Value == right:
 		return NewInteger(0), nil
 	default:
