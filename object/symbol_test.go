@@ -7,10 +7,10 @@ import (
 )
 
 func TestSymbol_hashKey(t *testing.T) {
-	hello1 := &Symbol{Value: "Hello World"}
-	hello2 := &Symbol{Value: "Hello World"}
-	diff1 := &Symbol{Value: "My name is johnny"}
-	diff2 := &Symbol{Value: "My name is johnny"}
+	hello1 := NewSymbol("Hello World")
+	hello2 := NewSymbol("Hello World")
+	diff1 := NewSymbol("My name is johnny")
+	diff2 := NewSymbol("My name is johnny")
 
 	if hello1.hashKey() != hello2.hashKey() {
 		t.Errorf("strings with same content have different hash keys")
@@ -27,7 +27,7 @@ func TestSymbol_hashKey(t *testing.T) {
 
 func TestSymbolToS(t *testing.T) {
 	context := &callContext{
-		receiver: &Symbol{Value: "foo"},
+		receiver: NewSymbol("foo"),
 	}
 
 	result, err := symbolToS(context)
@@ -54,7 +54,7 @@ func TestSymbolToBool(t *testing.T) {
 	if val != false {
 		t.Errorf("Expected false, got true")
 	}
-	val, ok = SymbolToBool(&Symbol{Value: "foo"})
+	val, ok = SymbolToBool(NewSymbol("foo"))
 	if ok {
 		t.Errorf("Expected false, got true")
 	}

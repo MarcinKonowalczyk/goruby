@@ -4,7 +4,7 @@ func getMethods(class RubyClass, addSuperMethods bool) *Array {
 	var methodSymbols []RubyObject
 	names := class.Methods().Names()
 	for _, name := range names {
-		methodSymbols = append(methodSymbols, &Symbol{name})
+		methodSymbols = append(methodSymbols, NewSymbol(name))
 	}
 	if class == bottomClass {
 		return &Array{Elements: methodSymbols}
@@ -12,7 +12,7 @@ func getMethods(class RubyClass, addSuperMethods bool) *Array {
 	if addSuperMethods {
 		names := bottomClass.Methods().Names()
 		for _, name := range names {
-			methodSymbols = append(methodSymbols, &Symbol{name})
+			methodSymbols = append(methodSymbols, NewSymbol(name))
 		}
 	}
 	return &Array{Elements: methodSymbols}

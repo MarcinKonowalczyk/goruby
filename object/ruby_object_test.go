@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func mustCall(t *testing.T) func(obj RubyObject, err error) RubyObject {
@@ -82,7 +83,7 @@ func TestFunctionCall(t *testing.T) {
 		}
 
 		functionEnv := NewEnvironment()
-		functionEnv.Set("foo", &Symbol{Value: "bar"})
+		functionEnv.Set("foo", NewSymbol("bar"))
 		function := &Function{
 			Parameters: []*FunctionParameter{},
 			Env:        functionEnv,
@@ -91,25 +92,15 @@ func TestFunctionCall(t *testing.T) {
 		mustCall(t)(function.Call(context))
 
 		{
-			expected := &Symbol{Value: "bar"}
+			expected := NewSymbol("bar")
 			actual, ok := evalEnv.Get("foo")
 
-			if !ok {
-				t.Logf("Expected key 'foo' to be in Eval env")
-				t.FailNow()
-			}
-
-			if !reflect.DeepEqual(expected, actual) {
-				t.Logf("Expected 'foo' to equal\n%v(%T)\n\tgot\n%v(%T)\n", expected, expected, actual, actual)
-				t.Fail()
-			}
+			utils.Assert(t, ok, "Expected key 'foo' to be in Eval env")
+			utils.AssertEqualCmpAny(t, expected, actual, CompareRubyObjectsForTests)
 		}
 
 		_, ok := evalEnv.Get("bar")
-		if ok {
-			t.Logf("Expected key 'bar' not to be in Eval env")
-			t.Fail()
-		}
+		utils.Assert(t, !ok, "Expected key 'bar' not to be in Eval env")
 
 	})
 	t.Run("puts the Call args into the env for CallContext#Eval", func(t *testing.T) {
@@ -132,7 +123,7 @@ func TestFunctionCall(t *testing.T) {
 				},
 			}
 
-			mustCall(t)(function.Call(context, NewInteger(300), &Symbol{Value: "sym"}))
+			mustCall(t)(function.Call(context, NewInteger(300), NewString("sym")))
 
 			{
 				expected := NewInteger(300)
@@ -149,7 +140,7 @@ func TestFunctionCall(t *testing.T) {
 				}
 			}
 			{
-				expected := &Symbol{Value: "sym"}
+				expected := NewString("sym")
 				actual, ok := evalEnv.Get("bar")
 
 				if !ok {
@@ -173,7 +164,7 @@ func TestFunctionCall(t *testing.T) {
 				},
 			}
 
-			mustCall(t)(function.Call(context, NewInteger(300), &Symbol{Value: "sym"}))
+			mustCall(t)(function.Call(context, NewInteger(300), NewSymbol("sym")))
 
 			{
 				expected := NewInteger(12)
@@ -204,7 +195,7 @@ func TestFunctionCall(t *testing.T) {
 				}
 			}
 			{
-				expected := &Symbol{Value: "sym"}
+				expected := NewSymbol("sym")
 				actual, ok := evalEnv.Get("qux")
 
 				if !ok {

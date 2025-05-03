@@ -27,7 +27,7 @@ func TestExceptionInitialize(t *testing.T) {
 			utils.AssertEqualCmpAny(t, result, &Exception{message: "err"}, CompareRubyObjectsForTests)
 		})
 		t.Run("other object", func(t *testing.T) {
-			result, err := exceptionInitialize(context, &Symbol{Value: "symbol"})
+			result, err := exceptionInitialize(context, NewSymbol("symbol"))
 
 			utils.AssertNoError(t, err)
 

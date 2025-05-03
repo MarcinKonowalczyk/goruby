@@ -10,17 +10,19 @@ var (
 		"Symbol",
 		symbolMethods,
 		symbolClassMethods,
-		func(RubyClassObject, ...RubyObject) (RubyObject, error) {
-			return &Symbol{}, nil
-		},
+		notInstantiatable, // not instantiatable through new
 	)
-	TRUE  RubyObject = &Symbol{Value: "true"}
-	FALSE RubyObject = &Symbol{Value: "false"}
-	NIL   RubyObject = &Symbol{Value: "nil"}
+	TRUE  RubyObject = NewSymbol("true")
+	FALSE RubyObject = NewSymbol("false")
+	NIL   RubyObject = NewSymbol("nil")
 )
 
 func init() {
 	CLASSES.Set("Symbol", symbolClass)
+}
+
+func NewSymbol(value string) *Symbol {
+	return &Symbol{Value: value}
 }
 
 type Symbol struct {
@@ -34,6 +36,11 @@ func (s *Symbol) hashKey() hashKey {
 	h.Write([]byte(s.Value))
 	return hashKey(h.Sum64())
 }
+
+var (
+	_ RubyObject = &Symbol{}
+	_ hashable   = &Symbol{}
+)
 
 var symbolClassMethods = map[string]RubyMethod{}
 
