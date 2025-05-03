@@ -40,13 +40,12 @@ func reinterpretCastFloatToUint64(value float64) uint64 {
 	return result
 }
 
-func (i *Float) hashKey() hashKey {
-	return hashKey(reinterpretCastFloatToUint64(i.Value))
+func (i *Float) HashKey() HashKey {
+	return HashKey(reinterpretCastFloatToUint64(i.Value))
 }
 
 var (
 	_ RubyObject = &Float{}
-	_ hashable   = &Float{}
 )
 
 var floatMethods = map[string]RubyMethod{

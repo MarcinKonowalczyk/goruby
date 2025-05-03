@@ -11,7 +11,7 @@ var hashClass RubyClassObject = newClass(
 	hashMethods,
 	nil,
 	func(RubyClassObject, ...RubyObject) (RubyObject, error) {
-		return &Hash{Map: make(map[hashKey]hashPair)}, nil
+		return &Hash{Map: make(map[HashKey]hashPair)}, nil
 	},
 )
 
@@ -27,9 +27,9 @@ func (h *Hash) ObjectMap() map[RubyObject]RubyObject {
 	return hashmap
 }
 
-type hashKey uint64
+type HashKey uint64
 
-func (h hashKey) bytes() []byte {
+func (h HashKey) bytes() []byte {
 	bytes := [4]byte{}
 	bytes[0] = byte(h >> 24)
 	bytes[1] = byte(h >> 16)
@@ -38,15 +38,15 @@ func (h hashKey) bytes() []byte {
 	return bytes[:]
 }
 
-func hash(obj RubyObject) hashKey {
-	if hashable, ok := obj.(hashable); ok {
-		return hashable.hashKey()
-	}
-	pointer := fmt.Sprintf("%p", obj)
-	h := fnv.New64a()
-	h.Write([]byte(pointer))
-	return hashKey(h.Sum64())
-}
+// func hash(obj RubyObject) HashKey {
+// 	if hashable, ok := obj.(hashable); ok {
+// 		return hashable.HashKey()
+// 	}
+// 	pointer := fmt.Sprintf("%p", obj)
+// 	h := fnv.New64a()
+// 	h.Write([]byte(pointer))
+// 	return HashKey(h.Sum64())
+// }
 
 type hashPair struct {
 	Key   RubyObject
@@ -54,23 +54,23 @@ type hashPair struct {
 }
 
 type Hash struct {
-	Map map[hashKey]hashPair
+	Map map[HashKey]hashPair
 }
 
 func (h *Hash) init() {
 	if h.Map == nil {
-		h.Map = make(map[hashKey]hashPair)
+		h.Map = make(map[HashKey]hashPair)
 	}
 }
 
 func (h *Hash) Set(key, value RubyObject) RubyObject {
 	h.init()
-	h.Map[hash(key)] = hashPair{Key: key, Value: value}
+	h.Map[key.HashKey()] = hashPair{Key: key, Value: value}
 	return value
 }
 
 func (h *Hash) Get(key RubyObject) (RubyObject, bool) {
-	v, ok := h.Map[hash(key)]
+	v, ok := h.Map[key.HashKey()]
 	if !ok {
 		return nil, false
 	}
@@ -87,12 +87,12 @@ func (h *Hash) Inspect() string {
 
 func (h *Hash) Class() RubyClass { return hashClass }
 
-func (h *Hash) hashKey() hashKey {
+func (h *Hash) HashKey() HashKey {
 	hash := fnv.New64a()
 	for k := range h.Map {
 		hash.Write(k.bytes())
 	}
-	return hashKey(hash.Sum64())
+	return HashKey(hash.Sum64())
 }
 
 var hashMethods = map[string]RubyMethod{

@@ -31,15 +31,14 @@ type Symbol struct {
 
 func (s *Symbol) Inspect() string  { return ":" + s.Value }
 func (s *Symbol) Class() RubyClass { return symbolClass }
-func (s *Symbol) hashKey() hashKey {
+func (s *Symbol) HashKey() HashKey {
 	h := fnv.New64a()
 	h.Write([]byte(s.Value))
-	return hashKey(h.Sum64())
+	return HashKey(h.Sum64())
 }
 
 var (
 	_ RubyObject = &Symbol{}
-	_ hashable   = &Symbol{}
 )
 
 var symbolClassMethods = map[string]RubyMethod{}

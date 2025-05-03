@@ -36,7 +36,7 @@ func (a *Range) Inspect() string {
 
 func (a *Range) Class() RubyClass { return rangeClass }
 
-func (a *Range) hashKey() hashKey {
+func (a *Range) HashKey() HashKey {
 	h := fnv.New64a()
 	h.Write([]byte(a.Left.Inspect()))
 	h.Write([]byte(a.Right.Inspect()))
@@ -45,7 +45,7 @@ func (a *Range) hashKey() hashKey {
 	} else {
 		h.Write([]byte("0"))
 	}
-	return hashKey(h.Sum64())
+	return HashKey(h.Sum64())
 }
 
 var rangeMethods = map[string]RubyMethod{

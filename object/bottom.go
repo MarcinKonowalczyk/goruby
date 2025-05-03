@@ -26,6 +26,9 @@ type Bottom struct{}
 
 func (o *Bottom) Inspect() string  { return "" }
 func (o *Bottom) Class() RubyClass { return bottomClass }
+func (o *Bottom) HashKey() HashKey {
+	return HashKey(0)
+}
 
 var bottomMethodSet = map[string]RubyMethod{
 	"to_s":    withArity(0, newMethod(bottomToS)),
@@ -265,18 +268,19 @@ func CompareRubyObjectsForTests(a, b any) bool {
 	if a_obj.Class() != b_obj.Class() {
 		return false
 	}
-	if a, a_hashable := a_obj.(hashable); a_hashable {
-		if b, b_hashable := b_obj.(hashable); b_hashable {
-			return a.hashKey() == b.hashKey()
-		} else {
-			// b is not hashable, we are not equal
-			return false
-		}
-	}
-	if _, b_hashable := b_obj.(hashable); b_hashable {
-		// a is not hashable, we are not equal
-		return false
-	}
+	// TODO: look into more
+	return a_obj.HashKey() == b_obj.HashKey()
+	// if a, a_hashable := a_obj.(hashable); a_hashable {
+	// 	if b, b_hashable := b_obj.(hashable); b_hashable {
+	// 	} else {
+	// 		// b is not hashable, we are not equal
+	// 		return false
+	// 	}
+	// }
+	// if _, b_hashable := b_obj.(hashable); b_hashable {
+	// 	// a is not hashable, we are not equal
+	// 	return false
+	// }
 	// ok, we are not hashable but we are the same class
 	// check the addresses
 	addrA := fmt.Sprintf("%p", a_obj)

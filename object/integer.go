@@ -35,8 +35,8 @@ var (
 	_ RubyObject = &Integer{}
 )
 
-func (i *Integer) hashKey() hashKey {
-	return hashKey(uint64(i.Value))
+func (i *Integer) HashKey() HashKey {
+	return HashKey(uint64(i.Value))
 }
 
 var integerMethods = map[string]RubyMethod{

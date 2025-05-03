@@ -1,5 +1,7 @@
 package object
 
+import "hash/fnv"
+
 // Send sends message method with args to context and returns its result
 func Send(context CallContext, method string, args ...RubyObject) (RubyObject, error) {
 	receiver := context.Receiver()
@@ -68,6 +70,15 @@ func (e *eigenclass) New(args ...RubyObject) (RubyObject, error) {
 func (e *eigenclass) Name() string { return e.wrappedClass.Name() }
 func (e *eigenclass) addMethod(name string, method RubyMethod) {
 	e.methods.Set(name, method)
+}
+func (e *eigenclass) HashKey() HashKey {
+	if e.wrappedClass != nil {
+		h := fnv.New64a()
+		h.Write([]byte(e.wrappedClass.Name()))
+		return HashKey(h.Sum64())
+	}
+	// NOTE: temp fix.
+	return HashKey(1)
 }
 
 var (

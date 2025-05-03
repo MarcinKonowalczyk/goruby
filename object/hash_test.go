@@ -7,7 +7,7 @@ import (
 
 func TestHashSet(t *testing.T) {
 	t.Run("Set on initialized hash", func(t *testing.T) {
-		hash := &Hash{Map: make(map[hashKey]hashPair)}
+		hash := &Hash{Map: make(map[HashKey]hashPair)}
 
 		key := NewString("foo")
 		value := NewInteger(42)
@@ -77,8 +77,8 @@ func TestHashGet(t *testing.T) {
 		key := NewString("foo")
 		value := NewInteger(42)
 
-		hash := &Hash{Map: map[hashKey]hashPair{
-			key.hashKey(): hashPair{Key: key, Value: value},
+		hash := &Hash{Map: map[HashKey]hashPair{
+			key.HashKey(): hashPair{Key: key, Value: value},
 		}}
 
 		result, ok := hash.Get(key)
@@ -96,7 +96,7 @@ func TestHashGet(t *testing.T) {
 	t.Run("value not found", func(t *testing.T) {
 		key := NewString("foo")
 
-		hash := &Hash{Map: map[hashKey]hashPair{}}
+		hash := &Hash{Map: map[HashKey]hashPair{}}
 
 		result, ok := hash.Get(key)
 
@@ -134,8 +134,8 @@ func TestHashMap(t *testing.T) {
 		key := NewString("foo")
 		value := NewInteger(42)
 
-		hash := &Hash{Map: map[hashKey]hashPair{
-			key.hashKey(): hashPair{Key: key, Value: value},
+		hash := &Hash{Map: map[HashKey]hashPair{
+			key.HashKey(): hashPair{Key: key, Value: value},
 		}}
 
 		var result map[RubyObject]RubyObject = hash.ObjectMap()
@@ -166,19 +166,6 @@ func TestHashMap(t *testing.T) {
 
 		if !reflect.DeepEqual(expected, actual) {
 			t.Logf("Expected hash to equal\n%s\n\tgot\n%s\n", expected, actual)
-			t.Fail()
-		}
-	})
-}
-
-func Test_hash(t *testing.T) {
-	t.Run("hashable object", func(t *testing.T) {
-		obj := NewString("bar")
-
-		hashKey := hash(obj)
-
-		if hashKey != obj.hashKey() {
-			t.Logf("Expected to get the same hashKey as from the hashKey fn, got %v", hashKey)
 			t.Fail()
 		}
 	})

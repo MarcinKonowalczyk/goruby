@@ -29,6 +29,7 @@ func (r rubyObjects) Inspect() string {
 	return strings.Join(toS, ", ")
 }
 func (r rubyObjects) Class() object.RubyClass { return nil }
+func (r rubyObjects) HashKey() object.HashKey { return expandToArrayIfNeeded(r).HashKey() }
 
 func expandToArrayIfNeeded(obj object.RubyObject) object.RubyObject {
 	arr, ok := obj.(rubyObjects)

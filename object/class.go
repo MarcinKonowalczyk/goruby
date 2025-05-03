@@ -59,10 +59,10 @@ func (c *class) GetMethod(name string) (RubyMethod, bool) {
 	return nil, false
 }
 
-func (c *class) hashKey() hashKey {
+func (c *class) HashKey() HashKey {
 	h := fnv.New64a()
 	h.Write([]byte(c.name))
-	return hashKey(h.Sum64())
+	return HashKey(h.Sum64())
 }
 func (c *class) addMethod(name string, method RubyMethod) {
 	c.instanceMethods.Set(name, method)

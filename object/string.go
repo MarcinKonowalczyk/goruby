@@ -36,15 +36,14 @@ type String struct {
 func (s *String) Inspect() string  { return s.Value }
 func (s *String) Class() RubyClass { return stringClass }
 
-func (s *String) hashKey() hashKey {
+func (s *String) HashKey() HashKey {
 	h := fnv.New64a()
 	h.Write([]byte(s.Value))
-	return hashKey(h.Sum64())
+	return HashKey(h.Sum64())
 }
 
 var (
-	_ RubyObject  = &String{}
-	_ inspectable = &String{}
+	_ RubyObject = &String{}
 )
 
 func stringify(obj RubyObject) (string, error) {

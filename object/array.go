@@ -46,12 +46,12 @@ func (a *Array) Inspect() string {
 }
 
 func (a *Array) Class() RubyClass { return arrayClass }
-func (a *Array) hashKey() hashKey {
+func (a *Array) HashKey() HashKey {
 	h := fnv.New64a()
 	for _, e := range a.Elements {
-		h.Write(hash(e).bytes())
+		h.Write(e.HashKey().bytes())
 	}
-	return hashKey(h.Sum64())
+	return HashKey(h.Sum64())
 }
 
 var arrayMethods = map[string]RubyMethod{

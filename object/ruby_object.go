@@ -10,14 +10,21 @@ type inspectable interface {
 	Inspect() string
 }
 
+type hashable interface {
+	HashKey() HashKey
+}
+
 // RubyObject represents an object in Ruby
 type RubyObject interface {
 	inspectable
+	hashable
 	Class() RubyClass
 }
 
 // RubyClass represents a class in Ruby
 type RubyClass interface {
+	inspectable
+	hashable
 	GetMethod(name string) (RubyMethod, bool)
 	Methods() MethodSet
 	New(args ...RubyObject) (RubyObject, error)
@@ -30,10 +37,6 @@ type RubyClassObject interface {
 	RubyClass
 }
 
-type hashable interface {
-	hashKey() hashKey
-}
-
 // ReturnValue represents a wrapper object for a return statement. It is no
 // real Ruby object and only used within the interpreter evaluation
 type ReturnValue struct {
@@ -42,10 +45,10 @@ type ReturnValue struct {
 
 func (rv *ReturnValue) Inspect() string  { return rv.Value.Inspect() }
 func (rv *ReturnValue) Class() RubyClass { return rv.Value.Class() }
+func (rv *ReturnValue) HashKey() HashKey { return rv.Value.HashKey() }
 
 var (
-	_ RubyObject  = &ReturnValue{}
-	_ inspectable = &ReturnValue{}
+	_ RubyObject = &ReturnValue{}
 )
 
 // BreakValue represents a wrapper object for a break statement. It is no
@@ -56,10 +59,10 @@ type BreakValue struct {
 
 func (bv *BreakValue) Inspect() string  { return bv.Value.Inspect() }
 func (bv *BreakValue) Class() RubyClass { return bv.Value.Class() }
+func (bv *BreakValue) HashKey() HashKey { return bv.Value.HashKey() }
 
 var (
-	_ RubyObject  = &BreakValue{}
-	_ inspectable = &BreakValue{}
+	_ RubyObject = &BreakValue{}
 )
 
 // FunctionParameters represents a list of function parameters.

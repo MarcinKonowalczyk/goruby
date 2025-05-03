@@ -20,6 +20,9 @@ func (t *testRubyObject) Class() RubyClass {
 	}
 	return bottomClass
 }
+func (t *testRubyObject) HashKey() HashKey {
+	return HashKey(99)
+}
 
 func TestSend(t *testing.T) {
 	// }
