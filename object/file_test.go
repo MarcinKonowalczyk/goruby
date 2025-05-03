@@ -26,7 +26,7 @@ func TestFileExpandPath(t *testing.T) {
 		}
 		expected := &String{Value: cwd + "/fixtures/testfile.rb"}
 
-		checkResult(t, result, expected)
+		utils.AssertEqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 	})
 	t.Run("two arg flavour", func(t *testing.T) {
 		env := NewEnvironment()
@@ -47,7 +47,7 @@ func TestFileExpandPath(t *testing.T) {
 		}
 		expected := &String{Value: cwd + "/main.go"}
 
-		checkResult(t, result, expected)
+		utils.AssertEqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 	})
 }
 
@@ -64,5 +64,5 @@ func TestFileDirname(t *testing.T) {
 
 	expected := &String{Value: "/var/log"}
 
-	checkResult(t, result, expected)
+	utils.AssertEqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 }

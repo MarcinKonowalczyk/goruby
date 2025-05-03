@@ -1,7 +1,6 @@
 package object
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/utils"
@@ -19,12 +18,7 @@ func TestArrayPush(t *testing.T) {
 		result, err := arrayPush(context, &Integer{Value: 17})
 
 		utils.AssertNoError(t, err)
-
-		expectedResult := &Array{Elements: []RubyObject{&Integer{Value: 17}}}
-
-		checkResult(t, result, expectedResult)
-
-		utils.Assert(t, reflect.DeepEqual(expectedResult, array), "Expected array to equal\n%+#v\n\tgot\n%+#v\n", expectedResult, array)
+		utils.AssertEqualCmpAny(t, result, NewArray(NewInteger(17)), CompareRubyObjectsForTests)
 	})
 
 	t.Run("more than one argument", func(t *testing.T) {
@@ -38,15 +32,7 @@ func TestArrayPush(t *testing.T) {
 		result, err := arrayPush(context, &Integer{Value: 17}, NIL, TRUE, FALSE)
 
 		utils.AssertNoError(t, err)
-
-		expectedResult := &Array{Elements: []RubyObject{&Integer{Value: 17}, NIL, TRUE, FALSE}}
-
-		checkResult(t, result, expectedResult)
-
-		if !reflect.DeepEqual(expectedResult, array) {
-			t.Logf("Expected array to equal\n%+#v\n\tgot\n%+#v\n", expectedResult, array)
-			t.Fail()
-		}
+		utils.AssertEqualCmpAny(t, result, NewArray(NewInteger(17), NIL, TRUE, FALSE), CompareRubyObjectsForTests)
 	})
 }
 
@@ -62,15 +48,7 @@ func TestArrayUnshift(t *testing.T) {
 		result, err := arrayUnshift(context, &Integer{Value: 17})
 
 		utils.AssertNoError(t, err)
-
-		expectedResult := &Array{Elements: []RubyObject{&Integer{Value: 17}, &String{Value: "first element"}}}
-
-		checkResult(t, result, expectedResult)
-
-		if !reflect.DeepEqual(expectedResult, array) {
-			t.Logf("Expected array to equal\n%+#v\n\tgot\n%+#v\n", expectedResult, array)
-			t.Fail()
-		}
+		utils.AssertEqualCmpAny(t, result, NewArray(NewInteger(17), NewString("first element")), CompareRubyObjectsForTests)
 	})
 	t.Run("more than one argument", func(t *testing.T) {
 		array := &Array{Elements: []RubyObject{&String{Value: "first element"}}}
@@ -83,14 +61,6 @@ func TestArrayUnshift(t *testing.T) {
 		result, err := arrayUnshift(context, &Integer{Value: 17}, NIL, TRUE, FALSE)
 
 		utils.AssertNoError(t, err)
-
-		expectedResult := &Array{Elements: []RubyObject{&Integer{Value: 17}, NIL, TRUE, FALSE, &String{Value: "first element"}}}
-
-		checkResult(t, result, expectedResult)
-
-		if !reflect.DeepEqual(expectedResult, array) {
-			t.Logf("Expected array to equal\n%+#v\n\tgot\n%+#v\n", expectedResult, array)
-			t.Fail()
-		}
+		utils.AssertEqualCmpAny(t, result, NewArray(NewInteger(17), NIL, TRUE, FALSE, NewString("first element")), CompareRubyObjectsForTests)
 	})
 }

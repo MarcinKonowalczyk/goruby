@@ -69,8 +69,7 @@ func TestStringAdd(t *testing.T) {
 		result, err := stringAdd(context, testCase.arguments...)
 
 		utils.AssertError(t, err, testCase.err)
-
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -94,6 +93,6 @@ func Test_StringGsub(t *testing.T) {
 
 		utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }

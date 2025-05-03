@@ -3,6 +3,8 @@ package object
 import (
 	"reflect"
 	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func TestEnvStat(t *testing.T) {
@@ -365,44 +367,26 @@ func Test_localVariableGuardGet(t *testing.T) {
 
 	t.Run("constants", func(t *testing.T) {
 		val, ok := env.Get("Foo")
-		if !ok {
-			t.Logf("Expected env to contain 'Foo'")
-			t.Fail()
-		}
-
-		checkResult(t, TRUE, val)
+		utils.Assert(t, ok, "Expected env to contain 'Foo'")
+		utils.AssertEqualCmpAny(t, TRUE, val, CompareRubyObjectsForTests)
 	})
 
 	t.Run("self", func(t *testing.T) {
 		self, ok := env.Get("self")
-		if !ok {
-			t.Logf("Expected env to contain 'self'")
-			t.Fail()
-		}
-
-		checkResult(t, TRUE, self)
+		utils.Assert(t, ok, "Expected env to contain 'self'")
+		utils.AssertEqualCmpAny(t, TRUE, self, CompareRubyObjectsForTests)
 	})
 
 	t.Run("local variables", func(t *testing.T) {
 		val, ok := env.Get("foo")
-		if !ok {
-			t.Logf("Expected env to contain 'foo'")
-			t.Fail()
-		}
-
-		checkResult(t, FALSE, val)
+		utils.Assert(t, ok, "Expected env to contain 'foo'")
+		utils.AssertEqualCmpAny(t, FALSE, val, CompareRubyObjectsForTests)
 
 		_, ok = env.Get("bar")
-		if !ok {
-			t.Logf("Expected env to contain 'bar'")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected env to contain 'bar'")
 
 		_, ok = env.Get("qux")
-		if ok {
-			t.Logf("Expected env not to contain 'qux'")
-			t.Fail()
-		}
+		utils.Assert(t, !ok, "Expected env to not contain 'qux'")
 	})
 }
 
@@ -459,58 +443,37 @@ func Test_localVariableGuardUnset(t *testing.T) {
 		env.Unset("Foo")
 
 		_, ok := env.Get("Foo")
-		if ok {
-			t.Logf("Expected env not to contain 'Foo'")
-			t.Fail()
-		}
+		utils.Assert(t, !ok, "Expected env not to contain 'Foo'")
 	})
 
 	t.Run("instance variables", func(t *testing.T) {
 		env.Unset("@foo")
 
 		_, ok := env.Get("@foo")
-		if ok {
-			t.Logf("Expected env not to contain '@foo'")
-			t.Fail()
-		}
+		utils.Assert(t, !ok, "Expected env not to contain '@foo'")
 	})
 
 	t.Run("local variables", func(t *testing.T) {
 		env.Unset("foo")
 
 		_, ok := env.Get("foo")
-		if ok {
-			t.Logf("Expected env not to contain 'foo'")
-			t.Fail()
-		}
+		utils.Assert(t, !ok, "Expected env not to contain 'foo'")
 
 		_, ok = env.Environment.Get("foo")
-		if !ok {
-			t.Logf("Expected embedded env to contain 'foo'")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected embedded env to contain 'foo'")
 
 		env.Unset("bar")
 
 		_, ok = env.Get("bar")
-		if ok {
-			t.Logf("Expected env not to contain 'bar'")
-			t.Fail()
-		}
+		utils.Assert(t, !ok, "Expected env not to contain 'bar'")
 
 		env.Unset("qux")
 
 		_, ok = env.Get("qux")
-		if ok {
-			t.Logf("Expected env not to contain 'qux'")
-			t.Fail()
-		}
+		utils.Assert(t, !ok, "Expected env not to contain 'qux'")
 
 		_, ok = env.Environment.Get("qux")
-		if !ok {
-			t.Logf("Expected embedded env to contain 'qux'")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected embedded env to contain 'qux'")
 	})
 }
 

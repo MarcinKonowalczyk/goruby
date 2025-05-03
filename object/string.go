@@ -21,6 +21,14 @@ func init() {
 	CLASSES.Set("String", stringClass)
 }
 
+func NewString(value string) *String {
+	return &String{Value: value}
+}
+
+func NewStringf(format string, args ...interface{}) *String {
+	return &String{Value: fmt.Sprintf(format, args...)}
+}
+
 type String struct {
 	Value string
 }

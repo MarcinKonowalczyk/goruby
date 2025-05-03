@@ -55,7 +55,7 @@ func TestFloatDiv(t *testing.T) {
 
 		utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -84,7 +84,7 @@ func TestFloatMul(t *testing.T) {
 
 		utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -113,7 +113,7 @@ func TestFloatAdd(t *testing.T) {
 
 		utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -142,7 +142,7 @@ func TestFloatSub(t *testing.T) {
 
 		utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -171,7 +171,7 @@ func TestFloatSub(t *testing.T) {
 
 // 		utils.AssertError(t, err, testCase.err)
 
-// 		checkResult(t, result, testCase.result)
+// 		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjects)
 // 	}
 // }
 
@@ -205,7 +205,7 @@ func TestFloatLt(t *testing.T) {
 
 		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -239,7 +239,7 @@ func TestFloatGt(t *testing.T) {
 
 		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -273,7 +273,7 @@ func TestFloatGt(t *testing.T) {
 
 // 		utils.AssertError(t, err, testCase.err)
 
-// 		checkResult(t, result, testCase.result)
+// 		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjects)
 // 	}
 // }
 
@@ -307,7 +307,7 @@ func TestFloatGt(t *testing.T) {
 
 // 		utils.AssertError(t, err, testCase.err)
 
-// 		checkResult(t, result, testCase.result)
+// 		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjects)
 // 	}
 // }
 
@@ -346,7 +346,7 @@ func TestFloatGte(t *testing.T) {
 
 		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -385,7 +385,7 @@ func TestFloatLte(t *testing.T) {
 
 		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -424,6 +424,6 @@ func TestFloatSpaceship(t *testing.T) {
 
 		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }

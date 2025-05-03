@@ -7,8 +7,8 @@ import (
 	"testing"
 )
 
-func getParentInfo() (string, int) {
-	parent, _, _, _ := runtime.Caller(2)
+func getParentInfo(N int) (string, int) {
+	parent, _, _, _ := runtime.Caller(2 + N)
 	info := runtime.FuncForPC(parent)
 	file, line := info.FileLine(parent)
 	return file, line
@@ -17,7 +17,7 @@ func getParentInfo() (string, int) {
 func Assert(t *testing.T, predicate bool, msg string, args ...any) {
 	t.Helper()
 	if !predicate {
-		file, line := getParentInfo()
+		file, line := getParentInfo(0)
 		msg = fmt.Sprintf(msg, args...)
 		t.Errorf(msg+" in %s:%d", file, line)
 	}
@@ -26,24 +26,24 @@ func Assert(t *testing.T, predicate bool, msg string, args ...any) {
 func AssertEqual[T comparable](t *testing.T, a T, b T) {
 	t.Helper()
 	if a != b {
-		file, line := getParentInfo()
-		t.Errorf("Expected %v == %v (%T) in %s:%d", a, b, a, file, line)
+		file, line := getParentInfo(0)
+		t.Errorf("expected %v == %v (%T) in %s:%d", a, b, a, file, line)
 	}
 }
 
 // func AssertDeepEqual[T any](t *testing.T, a T, b T) {
 // 	t.Helper()
 // 	if !reflect.DeepEqual(a, b) {
-// 		file, line := getParentInfo()
-// 		t.Errorf("Expected reflect.DeepEqual(%v, %v) in %s:%d", a, b, file, line)
+// 		file, line := getParentInfo(0)
+// 		t.Errorf("expected reflect.DeepEqual(%v, %v) in %s:%d", a, b, file, line)
 // 	}
 // }
 
 func AssertNotEqual[T comparable](t *testing.T, a T, b T) {
 	t.Helper()
 	if a == b {
-		file, line := getParentInfo()
-		t.Errorf("Expected %v != %v (%T) in %s:%d", a, b, a, file, line)
+		file, line := getParentInfo(0)
+		t.Errorf("expected %v != %v (%T) in %s:%d", a, b, a, file, line)
 	}
 }
 
@@ -88,17 +88,35 @@ func AssertError(t *testing.T, err error, expected error) {
 	}
 
 	if msg != "" {
-		file, line := getParentInfo()
+		file, line := getParentInfo(0)
 		t.Errorf(msg+" in %s:%d", file, line)
 	}
 }
 
 // Compare two values using a custom comparator function.
-func AssertEqualWithComparator[T any](t *testing.T, a T, b T, comparator func(T, T) bool) {
+func AssertEqualCmp[T any](t *testing.T, a T, b T, comparator func(T, T) bool) {
 	t.Helper()
 	if !comparator(a, b) {
-		file, line := getParentInfo()
-		t.Errorf("Expected %v (%T) == %v (%T) in %s:%d", a, a, b, b, file, line)
+		file, line := getParentInfo(0)
+		t.Errorf("expected %v (%T) == %v (%T) in %s:%d", a, a, b, b, file, line)
+	}
+}
+
+// Compare two values of any type using a custom comparator function.
+// This is a more generic version of AssertEqualCmp, but it is less type-safe.
+// The comparator function is responsible for type assertions.
+func AssertEqualCmpAny(t *testing.T, a any, b any, comparator func(any, any) bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			// If the comparator panics, we want to catch it and report it as a test failure.
+			file, line := getParentInfo(3)
+			t.Errorf("Comparator panicked: %v in %s:%d", r, file, line)
+		}
+	}()
+	t.Helper()
+	if !comparator(a, b) {
+		file, line := getParentInfo(0)
+		t.Errorf("expected %v (%T) == %v (%T) in %s:%d", a, a, b, b, file, line)
 	}
 }
 
@@ -142,14 +160,14 @@ func CompareMaps[T comparable, V comparable](a map[T]V, b map[T]V) bool {
 // where the comparator is CompareArrays.
 func AssertEqualArrays[T comparable](t *testing.T, a []T, b []T) {
 	t.Helper()
-	AssertEqualWithComparator(t, a, b, CompareArrays)
+	AssertEqualCmp(t, a, b, CompareArrays)
 }
 
 // Utility functions for comparing maps. Equivalent to AssertEqualWithComparator
 // where the comparator is CompareMaps.
 func AssertEqualMaps[T comparable, V comparable](t *testing.T, a map[T]V, b map[T]V) {
 	t.Helper()
-	AssertEqualWithComparator(t, a, b, CompareMaps)
+	AssertEqualCmp(t, a, b, CompareMaps)
 }
 
 // Check if two arrays are equal, regardless of the order of the elements.
@@ -173,5 +191,5 @@ func CompareArraysUnordered[T comparable](a []T, b []T) bool {
 
 func AssertEqualArraysUnordered[T comparable](t *testing.T, a []T, b []T) {
 	t.Helper()
-	AssertEqualWithComparator(t, a, b, CompareArraysUnordered)
+	AssertEqualCmp(t, a, b, CompareArraysUnordered)
 }

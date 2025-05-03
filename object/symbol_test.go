@@ -36,7 +36,7 @@ func TestSymbolToS(t *testing.T) {
 
 	expected := &String{Value: "foo"}
 
-	checkResult(t, result, expected)
+	utils.AssertEqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 }
 
 func TestSymbolToBool(t *testing.T) {

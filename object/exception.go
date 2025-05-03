@@ -115,7 +115,6 @@ func exceptionToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func hashException(exception RubyObject) hashKey {
 	h := fnv.New64a()
-	fmt.Println("hashException", reflect.TypeOf(exception).Elem().Name())
 	h.Write([]byte(reflect.TypeOf(exception).Elem().Name()))
 	if err, ok := exception.(error); ok {
 		h.Write([]byte(err.Error()))

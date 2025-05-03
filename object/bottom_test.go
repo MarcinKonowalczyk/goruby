@@ -1,9 +1,7 @@
 package object
 
 import (
-	"fmt"
 	"path/filepath"
-	"reflect"
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
@@ -19,15 +17,8 @@ func TestBottomIsNil(t *testing.T) {
 	utils.AssertNoError(t, err)
 
 	boolean, ok := SymbolToBool(result)
-	if !ok {
-		t.Logf("Expected Boolean, got %T", result)
-		t.FailNow()
-	}
-
-	if boolean != false {
-		t.Logf("Expected false, got true")
-		t.Fail()
-	}
+	utils.Assert(t, ok, "Expected boolean, got %T", result)
+	utils.Assert(t, !boolean, "Expected false, got true")
 }
 
 func TestBottomRequire(t *testing.T) {
@@ -45,37 +36,16 @@ func TestBottomRequire(t *testing.T) {
 			eval:     eval,
 			receiver: &Bottom{},
 		}
-		name := &String{"./fixtures/testfile.rb"}
+		name := NewString("./fixtures/testfile.rb")
 
 		result, err := bottomRequire(context, name)
-
-		if err != nil {
-			t.Logf("expected no error, got %T:%v\n", err, err)
-			t.Fail()
-		}
+		utils.AssertNoError(t, err)
 
 		_, ok := SymbolToBool(result)
-		if !ok {
-			t.Logf("Expected Boolean, got %#v", result)
-			t.FailNow()
-		}
-
-		if result != TRUE {
-			t.Logf("Expected return to equal TRUE, got FALSE")
-			t.Fail()
-		}
-
-		if evalCallCount != 1 {
-			t.Logf("Expected context.Eval to be called once, was %d\n", evalCallCount)
-			t.Fail()
-		}
-
-		expectedASTNodeString := "x = 5"
-		actualASTNodeString := evalCallASTNode.String()
-		if expectedASTNodeString != actualASTNodeString {
-			t.Logf("Expected Eval AST param to equal %q, got %q\n", expectedASTNodeString, actualASTNodeString)
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected boolean, got %T", result)
+		utils.AssertEqualCmpAny(t, result, TRUE, CompareRubyObjectsForTests)
+		utils.AssertEqual(t, evalCallCount, 1)
+		utils.AssertEqual(t, "x = 5", evalCallASTNode.String())
 	})
 	t.Run("env side effects no $LOADED_FEATURES", func(t *testing.T) {
 		env := NewEnvironment()
@@ -88,34 +58,19 @@ func TestBottomRequire(t *testing.T) {
 			eval:     eval,
 			receiver: &Bottom{},
 		}
-		name := &String{"./fixtures/testfile.rb"}
+		name := NewString("./fixtures/testfile.rb")
 
 		_, err := bottomRequire(context, name)
-		if err != nil {
-			panic(err)
-		}
+		utils.AssertNoError(t, err)
 
 		loadedFeatures, ok := env.Get("$LOADED_FEATURES")
-
-		if !ok {
-			t.Logf("Expected env to contain global $LOADED_FEATURES")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected env to contain global $LOADED_FEATURES")
 
 		arr, ok := loadedFeatures.(*Array)
-
-		if !ok {
-			t.Logf("Expected $LOADED_FEATURES to be an Array, got %T", loadedFeatures)
-			t.FailNow()
-		}
+		utils.Assert(t, ok, "Expected $LOADED_FEATURES to be an Array, got %T", loadedFeatures)
 
 		abs, _ := filepath.Abs("./fixtures/testfile.rb")
-		expected := NewArray(&String{abs})
-
-		if !reflect.DeepEqual(expected, arr) {
-			t.Logf("Expected $LOADED_FEATURES to equal\n%#v\n\tgot\n%#v\n", expected.Inspect(), arr.Inspect())
-			t.Fail()
-		}
+		utils.AssertEqualCmpAny(t, arr, NewArray(NewString(abs)), CompareRubyObjectsForTests)
 	})
 	t.Run("env side effects missing suffix", func(t *testing.T) {
 		env := NewEnvironment()
@@ -128,38 +83,23 @@ func TestBottomRequire(t *testing.T) {
 			eval:     eval,
 			receiver: &Bottom{},
 		}
-		name := &String{"./fixtures/testfile"}
+		name := NewString("./fixtures/testfile")
 
 		_, err := bottomRequire(context, name)
-		if err != nil {
-			panic(err)
-		}
+		utils.AssertNoError(t, err)
 
 		loadedFeatures, ok := env.Get("$LOADED_FEATURES")
-
-		if !ok {
-			t.Logf("Expected env to contain global $LOADED_FEATURES")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected env to contain global $LOADED_FEATURES")
 
 		arr, ok := loadedFeatures.(*Array)
-
-		if !ok {
-			t.Logf("Expected $LOADED_FEATURES to be an Array, got %T", loadedFeatures)
-			t.FailNow()
-		}
+		utils.Assert(t, ok, "Expected $LOADED_FEATURES to be an Array, got %T", loadedFeatures)
 
 		abs, _ := filepath.Abs("./fixtures/testfile.rb")
-		expected := NewArray(&String{abs})
-
-		if !reflect.DeepEqual(expected, arr) {
-			t.Logf("Expected $LOADED_FEATURES to equal\n%#v\n\tgot\n%#v\n", expected.Inspect(), arr.Inspect())
-			t.Fail()
-		}
+		utils.AssertEqualCmpAny(t, arr, NewArray(NewString(abs)), CompareRubyObjectsForTests)
 	})
 	t.Run("env side effects $LOADED_FEATURES exist", func(t *testing.T) {
 		env := NewEnvironment()
-		env.SetGlobal("$LOADED_FEATURES", NewArray(&String{"foo"}))
+		env.SetGlobal("$LOADED_FEATURES", NewArray(NewString("foo")))
 		eval := func(node ast.Node, env Environment) (RubyObject, error) {
 			return TRUE, nil
 		}
@@ -169,34 +109,19 @@ func TestBottomRequire(t *testing.T) {
 			eval:     eval,
 			receiver: &Bottom{},
 		}
-		name := &String{"./fixtures/testfile"}
+		name := NewString("./fixtures/testfile")
 
 		_, err := bottomRequire(context, name)
-		if err != nil {
-			panic(err)
-		}
+		utils.AssertNoError(t, err)
 
 		loadedFeatures, ok := env.Get("$LOADED_FEATURES")
-
-		if !ok {
-			t.Logf("Expected env to contain global $LOADED_FEATURES")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected env to contain global $LOADED_FEATURES")
 
 		arr, ok := loadedFeatures.(*Array)
-
-		if !ok {
-			t.Logf("Expected $LOADED_FEATURES to be an Array, got %T", loadedFeatures)
-			t.FailNow()
-		}
+		utils.Assert(t, ok, "Expected $LOADED_FEATURES to be an Array, got %T", loadedFeatures)
 
 		abs, _ := filepath.Abs("./fixtures/testfile.rb")
-		expected := NewArray(&String{"foo"}, &String{abs})
-
-		if !reflect.DeepEqual(expected, arr) {
-			t.Logf("Expected $LOADED_FEATURES to equal\n%#v\n\tgot\n%#v\n", expected.Inspect(), arr.Inspect())
-			t.Fail()
-		}
+		utils.AssertEqualCmpAny(t, arr, NewArray(NewString("foo"), NewString(abs)), CompareRubyObjectsForTests)
 	})
 	t.Run("env side effects local variables", func(t *testing.T) {
 		env := NewEnvironment()
@@ -232,19 +157,11 @@ func TestBottomRequire(t *testing.T) {
 			eval:     eval,
 			receiver: &Bottom{},
 		}
-		name := &String{"./fixtures/testfile"}
-
-		_, err := bottomRequire(context, name)
-		if err != nil {
-			panic(err)
-		}
+		_, err := bottomRequire(context, NewString("./fixtures/testfile"))
+		utils.AssertNoError(t, err)
 
 		_, ok := env.Get("x")
-
-		if ok {
-			t.Logf("Expected local variable not to leak over require")
-			t.Fail()
-		}
+		utils.Assert(t, !ok, "Expected local variable not to leak over require")
 	})
 	t.Run("file does not exist", func(t *testing.T) {
 		env := NewEnvironment()
@@ -258,40 +175,16 @@ func TestBottomRequire(t *testing.T) {
 			eval:     eval,
 			receiver: &Bottom{},
 		}
-		name := &String{"file/not/exist"}
-
-		_, err := bottomRequire(context, name)
-		if err == nil {
-			t.Logf("Expected error not to be nil")
-			t.Fail()
-		}
-
-		expectedErr := NewNoSuchFileLoadError("file/not/exist")
-		if !reflect.DeepEqual(expectedErr, err) {
-			t.Logf("Expected error to equal %v, got %v", expectedErr, err)
-			t.Fail()
-		}
+		_, err := bottomRequire(context, NewString("file/not/exist"))
+		utils.AssertError(t, err, NewNoSuchFileLoadError("file/not/exist"))
 
 		loadedFeatures, ok := env.Get("$LOADED_FEATURES")
-
-		if !ok {
-			t.Logf("Expected env to contain global $LOADED_FEATURES")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected env to contain global $LOADED_FEATURES")
 
 		arr, ok := loadedFeatures.(*Array)
+		utils.Assert(t, ok, "Expected $LOADED_FEATURES to be an Array, got %T", loadedFeatures)
 
-		if !ok {
-			t.Logf("Expected $LOADED_FEATURES to be an Array, got %T", loadedFeatures)
-			t.FailNow()
-		}
-
-		expected := NewArray()
-
-		if !reflect.DeepEqual(expected, arr) {
-			t.Logf("Expected $LOADED_FEATURES to equal\n%#v\n\tgot\n%#v\n", expected.Inspect(), arr.Inspect())
-			t.Fail()
-		}
+		utils.AssertEqualCmpAny(t, arr, NewArray(), CompareRubyObjectsForTests)
 	})
 	t.Run("syntax error", func(t *testing.T) {
 		env := NewEnvironment()
@@ -304,45 +197,21 @@ func TestBottomRequire(t *testing.T) {
 			eval:     eval,
 			receiver: &Bottom{},
 		}
-		name := &String{"./fixtures/testfile_syntax_error.rb"}
-
-		_, err := bottomRequire(context, name)
-		if err == nil {
-			t.Logf("Expected error not to be nil")
-			t.Fail()
-		}
+		_, err := bottomRequire(context, NewString("./fixtures/testfile_syntax_error.rb"))
+		utils.AssertNotEqual(t, err, nil)
 
 		syntaxErr, ok := err.(*SyntaxError)
-		if !ok {
-			t.Logf("Expected syntax error, got %T:%v\n", err, err)
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected SyntaxError, got %T:%v", err, err)
+
 		underlyingErr := syntaxErr.UnderlyingError()
-		if !parser.IsEOFError(underlyingErr) {
-			t.Logf("Expected EOF error, got:\n%q", underlyingErr)
-			t.Fail()
-		}
+		utils.Assert(t, parser.IsEOFError(underlyingErr), "Expected EOF error, got:\n%q", underlyingErr)
 
 		loadedFeatures, ok := env.Get("$LOADED_FEATURES")
-
-		if !ok {
-			t.Logf("Expected env to contain global $LOADED_FEATURES")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected env to contain global $LOADED_FEATURES")
 
 		arr, ok := loadedFeatures.(*Array)
-
-		if !ok {
-			t.Logf("Expected $LOADED_FEATURES to be an Array, got %T", loadedFeatures)
-			t.FailNow()
-		}
-
-		expected := NewArray()
-
-		if !reflect.DeepEqual(expected, arr) {
-			t.Logf("Expected $LOADED_FEATURES to equal\n%#v\n\tgot\n%#v\n", expected.Inspect(), arr.Inspect())
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected $LOADED_FEATURES to be an Array, got %T", loadedFeatures)
+		utils.AssertEqualCmpAny(t, arr, NewArray(), CompareRubyObjectsForTests)
 	})
 	t.Run("thrown error", func(t *testing.T) {
 		env := NewEnvironment()
@@ -355,45 +224,25 @@ func TestBottomRequire(t *testing.T) {
 			eval:     eval,
 			receiver: &Bottom{},
 		}
-		name := &String{"./fixtures/testfile_name_error.rb"}
-
-		_, err := bottomRequire(context, name)
-		if err == nil {
-			t.Logf("Expected error not to be nil")
-			t.Fail()
-		}
+		_, err := bottomRequire(context, NewString("./fixtures/testfile_name_error.rb"))
+		utils.AssertNotEqual(t, err, nil)
 
 		expectedErr := NewException("something went wrong")
-		if !reflect.DeepEqual(expectedErr, errors.Cause(err)) {
-			t.Logf("Expected error to equal\n%q\n\tgot\n%q", expectedErr, err)
-			t.Fail()
-		}
+		utils.AssertEqualCmpAny(t, errors.Cause(err), expectedErr, CompareRubyObjectsForTests)
 
 		loadedFeatures, ok := env.Get("$LOADED_FEATURES")
-
-		if !ok {
-			t.Logf("Expected env to contain global $LOADED_FEATURES")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected env to contain global $LOADED_FEATURES")
 
 		arr, ok := loadedFeatures.(*Array)
-
-		if !ok {
-			t.Logf("Expected $LOADED_FEATURES to be an Array, got %T", loadedFeatures)
-			t.FailNow()
-		}
+		utils.Assert(t, ok, "Expected $LOADED_FEATURES to be an Array, got %T", loadedFeatures)
 
 		expected := NewArray()
-
-		if !reflect.DeepEqual(expected, arr) {
-			t.Logf("Expected $LOADED_FEATURES to equal\n%#v\n\tgot\n%#v\n", expected.Inspect(), arr.Inspect())
-			t.Fail()
-		}
+		utils.AssertEqualCmpAny(t, arr, expected, CompareRubyObjectsForTests)
 	})
 	t.Run("already loaded", func(t *testing.T) {
 		abs, _ := filepath.Abs("./fixtures/testfile.rb")
 		env := NewEnvironment()
-		env.SetGlobal("$LOADED_FEATURES", NewArray(&String{abs}))
+		env.SetGlobal("$LOADED_FEATURES", NewArray(NewString(abs)))
 		eval := func(node ast.Node, env Environment) (RubyObject, error) {
 			return TRUE, nil
 		}
@@ -403,75 +252,39 @@ func TestBottomRequire(t *testing.T) {
 			eval:     eval,
 			receiver: &Bottom{},
 		}
-		name := &String{"./fixtures/testfile.rb"}
+		name := NewString("./fixtures/testfile.rb")
 
 		result, err := bottomRequire(context, name)
-		if err != nil {
-			t.Logf("Expected no error, got %T:%v", err, err)
-			t.Fail()
-		}
+		utils.AssertNoError(t, err)
 
 		_, ok := SymbolToBool(result)
-		if !ok {
-			t.Logf("Expected Boolean, got %#v", result)
-			t.FailNow()
-		}
-
-		if result != FALSE {
-			t.Logf("Expected return to equal FALSE, got TRUE")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected boolean, got %T", result)
+		utils.AssertEqualCmpAny(t, result, FALSE, CompareRubyObjectsForTests)
 
 		loadedFeatures, ok := env.Get("$LOADED_FEATURES")
-
-		if !ok {
-			t.Logf("Expected env to contain global $LOADED_FEATURES")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected env to contain global $LOADED_FEATURES")
 
 		arr, ok := loadedFeatures.(*Array)
+		utils.Assert(t, ok, "Expected $LOADED_FEATURES to be an Array, got %T", loadedFeatures)
 
-		if !ok {
-			t.Logf("Expected $LOADED_FEATURES to be an Array, got %T", loadedFeatures)
-			t.FailNow()
-		}
-
-		expected := NewArray(&String{abs})
-
-		if !reflect.DeepEqual(expected, arr) {
-			t.Logf("Expected $LOADED_FEATURES to equal\n%#v\n\tgot\n%#v\n", expected.Inspect(), arr.Inspect())
-			t.Fail()
-		}
+		expected := NewArray(NewString(abs))
+		utils.AssertEqualCmpAny(t, arr, expected, CompareRubyObjectsForTests)
 	})
 }
 
 func TestBottomToS(t *testing.T) {
 	t.Run("object as receiver", func(t *testing.T) {
-		context := &callContext{
-			receiver: &Bottom{},
-		}
-
+		context := &callContext{receiver: &Bottom{}}
 		result, err := bottomToS(context)
-
 		utils.AssertNoError(t, err)
-
-		expected := &String{Value: fmt.Sprintf("#<Bottom:%p>", context.receiver)}
-
-		checkResult(t, result, expected)
+		utils.AssertEqualCmpAny(t, result, NewStringf("#<Bottom:%p>", context.receiver), CompareRubyObjectsForTests)
 	})
 	t.Run("self object as receiver", func(t *testing.T) {
 		self := &Bottom{}
-		context := &callContext{
-			receiver: self,
-		}
-
+		context := &callContext{receiver: self}
 		result, err := bottomToS(context)
-
 		utils.AssertNoError(t, err)
-
-		expected := &String{Value: fmt.Sprintf("#<Bottom:%p>", self)}
-
-		checkResult(t, result, expected)
+		utils.AssertEqualCmpAny(t, result, NewStringf("#<Bottom:%p>", self), CompareRubyObjectsForTests)
 	})
 }
 
@@ -485,24 +298,20 @@ func TestBottomRaise(t *testing.T) {
 
 	t.Run("without args", func(t *testing.T) {
 		result, err := bottomRaise(context)
-
-		checkResult(t, result, nil)
-
+		utils.AssertEqualCmpAny(t, result, nil, CompareRubyObjectsForTests)
 		utils.AssertError(t, err, NewRuntimeError(""))
 	})
 
 	t.Run("with 1 arg", func(t *testing.T) {
 		t.Run("string argument", func(t *testing.T) {
-			result, err := bottomRaise(context, &String{Value: "ouch"})
-
-			checkResult(t, result, nil)
-
+			result, err := bottomRaise(context, NewString("ouch"))
+			utils.AssertEqualCmpAny(t, result, nil, CompareRubyObjectsForTests)
 			utils.AssertError(t, err, NewRuntimeError("ouch"))
 		})
 		t.Run("integer argument", func(t *testing.T) {
 			obj := &Integer{Value: 5}
 			result, err := bottomRaise(context, obj)
-			checkResult(t, result, nil)
+			utils.AssertEqualCmpAny(t, result, nil, CompareRubyObjectsForTests)
 			utils.AssertError(t, err, NewRuntimeError("%s", obj.Inspect()))
 		})
 	})

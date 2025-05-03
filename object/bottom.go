@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/parser"
@@ -285,6 +286,75 @@ func swapOrFalse(left, right RubyObject, swapped bool) bool {
 		// 1-depth recursive call with swapped arguments
 		return rubyObjectsEqual(right, left, true)
 	}
+}
+
+// TODO: Unify this with rubyObjectsEqual
+func CompareRubyObjectsForTests(a, b any) bool {
+	// check nils
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+	// check types
+	a_obj, a_ok := a.(RubyObject)
+	// if !ok {
+	// 	panic("a is not RubyObject")
+	// }
+	b_obj, b_ok := b.(RubyObject)
+	// if !ok {
+	// 	panic("b is not RubyObject")
+	// }
+	if !a_ok || !b_ok {
+		// maybe we're both arrays of RubyObjects?
+		a_arr, a_ok := a.([]RubyObject)
+		b_arr, b_ok := b.([]RubyObject)
+		if a_ok && b_ok {
+			// compare the arrays element by element
+			if len(a_arr) != len(b_arr) {
+				return false
+			}
+			for i := range a_arr {
+				if !CompareRubyObjectsForTests(a_arr[i], b_arr[i]) {
+					return false
+				}
+			}
+			return true
+		} else {
+			if !a_ok {
+				panic("a is not RubyObject or []RubyObject")
+			}
+			if !b_ok {
+				panic("b is not RubyObject or []RubyObject")
+			}
+			panic("a and b are not RubyObject or []RubyObject")
+		}
+	}
+
+	if a_obj.Class() != b_obj.Class() {
+		return false
+	}
+	if a, a_hashable := a_obj.(hashable); a_hashable {
+		if b, b_hashable := b_obj.(hashable); b_hashable {
+			return a.hashKey() == b.hashKey()
+		} else {
+			// b is not hashable, we are not equal
+			return false
+		}
+	}
+	if _, b_hashable := b_obj.(hashable); b_hashable {
+		// a is not hashable, we are not equal
+		return false
+	}
+	// ok, we are not hashable but we are the same class
+	// check the addresses
+	addrA := fmt.Sprintf("%p", a_obj)
+	addrB := fmt.Sprintf("%p", b_obj)
+	if addrA == addrB {
+		return true
+	}
+	return reflect.DeepEqual(a_obj, b_obj)
 }
 
 func rubyObjectsEqual(left, right RubyObject, swapped bool) bool {

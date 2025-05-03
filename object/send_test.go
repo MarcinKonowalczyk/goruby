@@ -67,8 +67,7 @@ func TestSend(t *testing.T) {
 			result, err := Send(context, testCase.method)
 
 			utils.AssertError(t, errors.Cause(err), testCase.expectedError)
-
-			checkResult(t, result, testCase.expectedResult)
+			utils.AssertEqualCmpAny(t, result, testCase.expectedResult, CompareRubyObjectsForTests)
 		}
 	})
 }

@@ -43,7 +43,7 @@ func TestWithArity(t *testing.T) {
 
 		result, err := fn.Call(context, testCase.arguments...)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 
 		utils.AssertError(t, err, testCase.err)
 	}

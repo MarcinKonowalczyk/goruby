@@ -1,8 +1,6 @@
 package object
 
 import (
-	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/utils"
@@ -57,7 +55,7 @@ func TestIntegerDiv(t *testing.T) {
 
 		utils.AssertError(t, err, testCase.err)
 
-		utils.AssertEqualWithComparator(t, result, testCase.result, CompareRubyObjects)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -85,8 +83,7 @@ func TestIntegerMul(t *testing.T) {
 		result, err := integerMul(context, testCase.arguments...)
 
 		utils.AssertError(t, err, testCase.err)
-
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -114,8 +111,7 @@ func TestIntegerAdd(t *testing.T) {
 		result, err := integerAdd(context, testCase.arguments...)
 
 		utils.AssertError(t, err, testCase.err)
-
-		utils.AssertEqualWithComparator(t, result, testCase.result, CompareRubyObjects)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -144,7 +140,7 @@ func TestIntegerSub(t *testing.T) {
 
 		utils.AssertError(t, err, testCase.err)
 
-		utils.AssertEqualWithComparator(t, result, testCase.result, CompareRubyObjects)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -207,7 +203,7 @@ func TestIntegerLt(t *testing.T) {
 
 		// utils.AssertError(t, err, testCase.err)
 
-		utils.AssertEqualWithComparator(t, result, testCase.result, CompareRubyObjects)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -241,7 +237,7 @@ func TestIntegerGt(t *testing.T) {
 
 		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -335,7 +331,7 @@ func TestIntegerGte(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&String{""}},
+			[]RubyObject{NewString("")},
 			NIL,
 			NewArgumentError("comparison of Integer with String failed"),
 		},
@@ -348,7 +344,7 @@ func TestIntegerGte(t *testing.T) {
 
 		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -387,7 +383,7 @@ func TestIntegerLte(t *testing.T) {
 
 		// utils.AssertError(t, err, testCase.err)
 
-		checkResult(t, result, testCase.result)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
 
@@ -426,45 +422,6 @@ func TestIntegerSpaceship(t *testing.T) {
 
 		// utils.AssertError(t, err, testCase.err)
 
-		utils.AssertEqualWithComparator(t, result, testCase.result, CompareRubyObjects)
+		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
-}
-
-func CompareRubyObjects(a, b RubyObject) bool {
-	if a == nil && b == nil {
-		return true
-	}
-	if a == nil || b == nil {
-		return false
-	}
-	if a.Class() != b.Class() {
-		return false
-	}
-	if a, a_hashable := a.(hashable); a_hashable {
-		if b, b_hashable := b.(hashable); b_hashable {
-			fmt.Println("comparing hash keys")
-			return a.hashKey() == b.hashKey()
-		} else {
-			// b is not hashable, we are not equal
-			return false
-		}
-	}
-	if _, b_hashable := b.(hashable); b_hashable {
-		// a is not hashable, we are not equal
-		return false
-	}
-	// ok, we are not hashable but we are the same class
-	// check the addresses
-	addrA := fmt.Sprintf("%p", a)
-	addrB := fmt.Sprintf("%p", b)
-	if addrA == addrB {
-		return true
-	}
-	fmt.Println("comparing values")
-	return reflect.DeepEqual(a, b)
-}
-
-func checkResult(t *testing.T, actual, expected RubyObject) {
-	t.Helper()
-	utils.AssertEqualWithComparator(t, actual, expected, CompareRubyObjects)
 }

@@ -16,7 +16,7 @@ func TestExceptionInitialize(t *testing.T) {
 
 		utils.AssertNoError(t, err)
 
-		checkResult(t, result, &Exception{message: "Exception"})
+		utils.AssertEqualCmpAny(t, result, &Exception{message: "Exception"}, CompareRubyObjectsForTests)
 	})
 	t.Run("with arg", func(t *testing.T) {
 		t.Run("string", func(t *testing.T) {
@@ -24,14 +24,14 @@ func TestExceptionInitialize(t *testing.T) {
 
 			utils.AssertNoError(t, err)
 
-			checkResult(t, result, &Exception{message: "err"})
+			utils.AssertEqualCmpAny(t, result, &Exception{message: "err"}, CompareRubyObjectsForTests)
 		})
 		t.Run("other object", func(t *testing.T) {
 			result, err := exceptionInitialize(context, &Symbol{Value: "symbol"})
 
 			utils.AssertNoError(t, err)
 
-			checkResult(t, result, &Exception{message: "symbol"})
+			utils.AssertEqualCmpAny(t, result, &Exception{message: "symbol"}, CompareRubyObjectsForTests)
 		})
 	})
 }
@@ -51,7 +51,7 @@ func TestExceptionException(t *testing.T) {
 			t.Logf("Expected result to pointer equal context\n")
 			t.Fail()
 		}
-		checkResult(t, result, &Exception{message: "x"})
+		utils.AssertEqualCmpAny(t, result, &Exception{message: "x"}, CompareRubyObjectsForTests)
 	})
 	t.Run("with arg", func(t *testing.T) {
 		result, err := exceptionException(context, &String{Value: "x"})
@@ -63,14 +63,14 @@ func TestExceptionException(t *testing.T) {
 			t.Fail()
 		}
 
-		checkResult(t, result, &Exception{message: "x"})
+		utils.AssertEqualCmpAny(t, result, &Exception{message: "x"}, CompareRubyObjectsForTests)
 	})
 	t.Run("with arg but different message", func(t *testing.T) {
 		result, err := exceptionException(context, &String{Value: "err"})
 
 		utils.AssertNoError(t, err)
 
-		checkResult(t, result, &Exception{message: "err"})
+		utils.AssertEqualCmpAny(t, result, &Exception{message: "err"}, CompareRubyObjectsForTests)
 	})
 }
 
@@ -85,5 +85,5 @@ func TestExceptionToS(t *testing.T) {
 
 	utils.AssertNoError(t, err)
 
-	checkResult(t, result, &String{Value: "x"})
+	utils.AssertEqualCmpAny(t, result, &String{Value: "x"}, CompareRubyObjectsForTests)
 }
