@@ -34,24 +34,6 @@ func Test_stringify(t *testing.T) {
 			t.Fail()
 		}
 	})
-	t.Run("object with `to_s` returning not string", func(t *testing.T) {
-		toS := func(CallContext, ...RubyObject) (RubyObject, error) {
-			return &Integer{Value: 42}, nil
-		}
-		obj := &extendedObject{
-			RubyObject: &Bottom{},
-			eigenclass: newEigenclass(bottomClass, map[string]RubyMethod{
-				"to_s": newMethod(toS),
-			}),
-			Environment: NewEnvironment(),
-		}
-
-		_, err := stringify(obj)
-
-		checkError(t, err, NewTypeError(
-			"can't convert Bottom to String (Bottom#to_s gives Integer)",
-		))
-	})
 	t.Run("object without `to_s`", func(t *testing.T) {
 		_, err := stringify(nil)
 

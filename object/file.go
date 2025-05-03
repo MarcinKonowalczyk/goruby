@@ -7,7 +7,7 @@ import (
 
 var fileClass RubyClassObject = newClass(
 	"File",
-	fileMethods,
+	nil,
 	fileClassMethods,
 	func(RubyClassObject, ...RubyObject) (RubyObject, error) {
 		return &File{make(map[RubyObject]RubyObject)}, nil
@@ -40,8 +40,6 @@ var fileClassMethods = map[string]RubyMethod{
 	"dirname":     newMethod(fileDirname),
 	"read":        newMethod(fileRead),
 }
-
-var fileMethods = map[string]RubyMethod{}
 
 func fileExpandPath(context CallContext, args ...RubyObject) (RubyObject, error) {
 	switch len(args) {

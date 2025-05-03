@@ -10,7 +10,7 @@ var (
 	exceptionClass RubyClassObject = newClass(
 		"Exception",
 		exceptionMethods,
-		exceptionClassMethods,
+		nil,
 		func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
 			return &Exception{message: c.Name()}, nil
 		},
@@ -55,10 +55,6 @@ func (e *Exception) setErrorMessage(msg string) {
 // Class returns exceptionClass
 func (e *Exception) Class() RubyClass { return exceptionClass }
 
-var exceptionClassMethods = map[string]RubyMethod{
-	"exception": newMethod(exceptionClassException),
-}
-
 var exceptionMethods = map[string]RubyMethod{
 	"initialize": newMethod(exceptionInitialize),
 	"exception":  newMethod(exceptionException),
@@ -78,33 +74,6 @@ func exceptionInitialize(context CallContext, args ...RubyObject) (RubyObject, e
 	}
 	if exception, ok := receiver.(exception); ok {
 		exception.setErrorMessage(message)
-	}
-	return receiver, nil
-}
-
-func exceptionClassException(context CallContext, args ...RubyObject) (RubyObject, error) {
-	receiver := context.Receiver()
-	var message string
-	class, ok := receiver.(RubyClass)
-	if ok {
-		receiver, _ = class.New()
-	}
-	if class == nil {
-		class = receiver.Class()
-	}
-	message = class.Name()
-	if len(args) == 1 {
-		msg, err := stringify(args[0])
-		if err != nil {
-			return nil, err
-		}
-		message = msg
-	}
-	if exception, ok := receiver.(exception); ok {
-		msg := exception.Error()
-		if msg != message {
-			exception.setErrorMessage(message)
-		}
 	}
 	return receiver, nil
 }

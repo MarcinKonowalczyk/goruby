@@ -12,14 +12,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-var bottomClass *class = nil
+var (
+	bottomClass *class = nil
+	BOTTOM             = newExtendedObject(&Bottom{})
+)
 
 func init() {
 	// NOTE: create the bottom class in init to avoid circular import
 	bottomClass = newClass(
 		"Bottom",
 		bottomMethodSet,
-		objectClassMethods,
+		nil,
 		func(RubyClassObject, ...RubyObject) (RubyObject, error) {
 			return &Bottom{}, nil
 		},
@@ -38,8 +41,6 @@ func (o *Bottom) Type() Type { return BOTTOM_OBJ }
 
 // Class returns objectClass
 func (o *Bottom) Class() RubyClass { return bottomClass }
-
-var objectClassMethods = map[string]RubyMethod{}
 
 var bottomMethodSet = map[string]RubyMethod{
 	"to_s":    withArity(0, newMethod(bottomToS)),

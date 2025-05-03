@@ -8,7 +8,7 @@ import (
 var arrayClass RubyClassObject = newClass(
 	"Array",
 	arrayMethods,
-	arrayClassMethods,
+	nil,
 	func(c RubyClassObject, args ...RubyObject) (RubyObject, error) { return NewArray(args...), nil },
 )
 
@@ -57,8 +57,6 @@ func (a *Array) hashKey() hashKey {
 	}
 	return hashKey{Type: a.Type(), Value: h.Sum64()}
 }
-
-var arrayClassMethods = map[string]RubyMethod{}
 
 var arrayMethods = map[string]RubyMethod{
 	"push":     newMethod(arrayPush),

@@ -9,7 +9,7 @@ import (
 var hashClass RubyClassObject = newClass(
 	"Hash",
 	hashMethods,
-	hashClassMethods,
+	nil,
 	func(RubyClassObject, ...RubyObject) (RubyObject, error) {
 		return &Hash{Map: make(map[hashKey]hashPair)}, nil
 	},
@@ -102,8 +102,6 @@ func (h *Hash) hashKey() hashKey {
 	}
 	return hashKey{Type: h.Type(), Value: hash.Sum64()}
 }
-
-var hashClassMethods = map[string]RubyMethod{}
 
 var hashMethods = map[string]RubyMethod{
 	"has_key?": newMethod(hashHasKey),

@@ -32,27 +32,6 @@ func TestExceptionInitialize(t *testing.T) {
 	})
 }
 
-func TestExceptionClassException(t *testing.T) {
-	context := &callContext{
-		receiver: exceptionClass,
-		env:      NewMainEnvironment(),
-	}
-	t.Run("without args", func(t *testing.T) {
-		result, err := exceptionClassException(context)
-
-		checkError(t, err, nil)
-
-		checkResult(t, result, &Exception{message: "Exception"})
-	})
-	t.Run("with arg", func(t *testing.T) {
-		result, err := exceptionClassException(context, &String{Value: "err"})
-
-		checkError(t, err, nil)
-
-		checkResult(t, result, &Exception{message: "err"})
-	})
-}
-
 func TestExceptionException(t *testing.T) {
 	contextObject := &Exception{message: "x"}
 	context := &callContext{

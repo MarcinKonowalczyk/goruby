@@ -127,19 +127,18 @@ func TestAddMethod(t *testing.T) {
 		}
 	})
 	t.Run("extended object", func(t *testing.T) {
-		context := &extendedObject{
-			RubyObject: &testRubyObject{
+		context := newExtendedObject(
+			&testRubyObject{
 				class: &class{
 					name:            "base class",
 					instanceMethods: NewMethodSet(map[string]RubyMethod{}),
 				},
 			},
-			eigenclass: newEigenclass(bottomClass, map[string]RubyMethod{
-				"bar": newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
-					return NIL, nil
-				}),
-			}),
-		}
+		)
+
+		context.eigenclass.addMethod("bar", newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+			return NIL, nil
+		}))
 
 		fn := &Function{
 			Parameters: []*FunctionParameter{
@@ -214,19 +213,18 @@ func TestAddMethod(t *testing.T) {
 		}
 	})
 	t.Run("extended self object", func(t *testing.T) {
-		context := &extendedObject{
-			RubyObject: &testRubyObject{
+		context := newExtendedObject(
+			&testRubyObject{
 				class: &class{
 					name:            "base class",
 					instanceMethods: NewMethodSet(map[string]RubyMethod{}),
 				},
 			},
-			eigenclass: newEigenclass(bottomClass, map[string]RubyMethod{
-				"bar": newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
-					return NIL, nil
-				}),
-			}),
-		}
+		)
+
+		context.eigenclass.addMethod("bar", newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+			return NIL, nil
+		}))
 
 		fn := &Function{
 			Parameters: []*FunctionParameter{

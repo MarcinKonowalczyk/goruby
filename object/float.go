@@ -10,7 +10,7 @@ import (
 )
 
 var floatClass RubyClassObject = newClass(
-	"Float", floatMethods, floatClassMethods, notInstantiatable,
+	"Float", floatMethods, nil, notInstantiatable,
 )
 
 func init() {
@@ -48,8 +48,6 @@ func reinterpretCastFloatToUint64(value float64) uint64 {
 func (i *Float) hashKey() hashKey {
 	return hashKey{Type: i.Type(), Value: reinterpretCastFloatToUint64(i.Value)}
 }
-
-var floatClassMethods = map[string]RubyMethod{}
 
 var floatMethods = map[string]RubyMethod{
 	"div": withArity(1, newMethod(floatDiv)),

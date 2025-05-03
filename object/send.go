@@ -23,11 +23,70 @@ func Send(context CallContext, method string, args ...RubyObject) (RubyObject, e
 	return nil, NewNoMethodError(receiver, method)
 }
 
+func newEigenclass(wrappedClass RubyClass) *eigenclass {
+	return &eigenclass{
+		methods:      NewMethodSet(nil),
+		wrappedClass: wrappedClass,
+	}
+}
+
+type eigenclass struct {
+	methods      SettableMethodSet
+	wrappedClass RubyClass
+}
+
+func (e *eigenclass) Inspect() string {
+	if e.wrappedClass != nil {
+		return e.wrappedClass.(RubyClassObject).Inspect()
+	}
+	return "(singleton class)"
+}
+
+func (e *eigenclass) Type() Type { return EIGENCLASS_OBJ }
+func (e *eigenclass) Class() RubyClass {
+	if e.wrappedClass != nil {
+		return e.wrappedClass
+	}
+	return nil
+}
+func (e *eigenclass) Methods() MethodSet { return e.methods }
+func (e *eigenclass) GetMethod(name string) (RubyMethod, bool) {
+	if method, ok := e.methods.Get(name); ok {
+		return method, true
+	}
+	return nil, false
+}
+
+func (e *eigenclass) SuperClass() RubyClass {
+	if e.wrappedClass != nil {
+		return e.wrappedClass
+	}
+	return bottomClass
+}
+func (e *eigenclass) New(args ...RubyObject) (RubyObject, error) {
+	return e.wrappedClass.New(args...)
+}
+func (e *eigenclass) Name() string { return e.wrappedClass.Name() }
+func (e *eigenclass) addMethod(name string, method RubyMethod) {
+	e.methods.Set(name, method)
+}
+
+var (
+	_ RubyObject = &eigenclass{}
+	_ RubyClass  = &eigenclass{}
+)
+
 // extendedObject is a wrapper object for an object extended by methods.
 type extendedObject struct {
 	RubyObject
 	eigenclass *eigenclass
-	Environment
+}
+
+func newExtendedObject(object RubyObject) *extendedObject {
+	return &extendedObject{
+		RubyObject: object,
+		eigenclass: newEigenclass(object.Class()),
+	}
 }
 
 func (e *extendedObject) Class() RubyClass { return e.eigenclass }
@@ -40,6 +99,11 @@ func (e *extendedObject) addMethod(name string, method RubyMethod) {
 	e.eigenclass.addMethod(name, method)
 }
 
+var (
+	_ RubyObject = &extendedObject{}
+	_ extendable = &extendedObject{}
+)
+
 type extendable interface {
 	addMethod(name string, method RubyMethod)
 }
@@ -51,15 +115,10 @@ type extendableRubyObject interface {
 
 // AddMethod adds a method to a given object. It returns the object with the modified method set
 func AddMethod(context RubyObject, methodName string, method *Function) (RubyObject, bool) {
-	objectToExtend := context
-	extended, contextIsExtendable := objectToExtend.(extendableRubyObject)
-	if !contextIsExtendable {
-		extended = &extendedObject{
-			RubyObject:  objectToExtend,
-			eigenclass:  newEigenclass(context.Class().(RubyClassObject), map[string]RubyMethod{}),
-			Environment: NewEnvironment(),
-		}
+	extended, is_extendable := context.(extendableRubyObject)
+	if !is_extendable {
+		extended = newExtendedObject(context)
 	}
 	extended.addMethod(methodName, method)
-	return extended, !contextIsExtendable
+	return extended, !is_extendable
 }

@@ -9,12 +9,6 @@ import (
 
 var (
 	CLASSES = NewEnvironment()
-	_BOTTOM = &Bottom{}
-	BOTTOM  = &extendedObject{
-		RubyObject:  _BOTTOM,
-		eigenclass:  newEigenclass(_BOTTOM.Class().(RubyClassObject), map[string]RubyMethod{}),
-		Environment: NewEnvironment(),
-	}
 )
 
 // NewMainEnvironment returns a new Environment populated with all Ruby classes
@@ -26,6 +20,7 @@ func NewMainEnvironment() Environment {
 	env.SetGlobal("$LOADED_FEATURES", NewArray())
 	env.SetGlobal("$:", loadPath)
 	env.SetGlobal("$LOAD_PATH", loadPath)
+	env.SetGlobal("$stdin", IoClass)
 	return env
 }
 

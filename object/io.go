@@ -5,49 +5,22 @@ import (
 	"os"
 )
 
-var ioClass RubyClassObject = newClass(
+var IoClass RubyClassObject = newClass(
 	"IO",
-	ioMethods,
+	nil,
 	ioClassMethods,
-	func(RubyClassObject, ...RubyObject) (RubyObject, error) {
-		return NewIo(), nil
-	},
+	notInstantiatable,
 )
-
-func NewIo() *Io {
-	return &Io{}
-}
 
 func init() {
-	CLASSES.Set("Io", ioClass)
+	CLASSES.Set("Io", IoClass)
 }
 
-// Io represents a io in Ruby
-type Io struct{}
-
-var IO = &Io{}
-
-// Inspect returns the Value
-func (s *Io) Inspect() string { return "" }
-
-// Type returns IO_OBJ
-func (s *Io) Type() Type { return IO_OBJ }
-
-// Class returns ioClass
-func (s *Io) Class() RubyClass { return ioClass }
-
-var (
-	_ RubyObject  = &Io{}
-	_ inspectable = &Io{}
-)
-
-var ioClassMethods = map[string]RubyMethod{}
-
-var ioMethods = map[string]RubyMethod{
-	"gets": withArity(0, newMethod(ioGets)),
+var ioClassMethods = map[string]RubyMethod{
+	"gets": withArity(0, newMethod(ioClassGets)),
 }
 
-func ioGets(context CallContext, args ...RubyObject) (RubyObject, error) {
+func ioClassGets(context CallContext, args ...RubyObject) (RubyObject, error) {
 	// read a string from stdin
 	reader := bufio.NewReader(os.Stdin)
 	text, err := reader.ReadString('\n')

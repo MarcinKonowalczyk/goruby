@@ -15,30 +15,21 @@ func newClass(
 	classMethods map[string]RubyMethod,
 	builder func(RubyClassObject, ...RubyObject) (RubyObject, error),
 ) *class {
-	return newClassWithEnv(
-		name,
-		instanceMethods,
-		classMethods,
-		builder,
-		nil,
-	)
-}
-
-// newClass returns a new Ruby Class
-func newClassWithEnv(
-	name string,
-	instanceMethods,
-	classMethods map[string]RubyMethod,
-	builder func(RubyClassObject, ...RubyObject) (RubyObject, error),
-	env Environment,
-) *class {
-	return &class{
+	if instanceMethods == nil {
+		instanceMethods = make(map[string]RubyMethod)
+	}
+	if classMethods == nil {
+		classMethods = make(map[string]RubyMethod)
+	}
+	cls := &class{
 		name:            name,
 		instanceMethods: NewMethodSet(instanceMethods),
-		class:           newEigenclass(bottomClass, classMethods),
+		class:           newEigenclass(bottomClass),
 		builder:         builder,
-		Environment:     NewEnclosedEnvironment(env),
+		Environment:     NewEnclosedEnvironment(nil),
 	}
+	cls.class.(*eigenclass).methods = NewMethodSet(classMethods)
+	return cls
 }
 
 // class represents a Ruby Class object

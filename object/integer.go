@@ -8,7 +8,7 @@ import (
 )
 
 var integerClass RubyClassObject = newClass(
-	"Integer", integerMethods, integerClassMethods, notInstantiatable,
+	"Integer", integerMethods, nil, notInstantiatable,
 )
 
 func init() {
@@ -41,8 +41,6 @@ var (
 func (i *Integer) hashKey() hashKey {
 	return hashKey{Type: i.Type(), Value: uint64(i.Value)}
 }
-
-var integerClassMethods = map[string]RubyMethod{}
 
 var integerMethods = map[string]RubyMethod{
 	"div":  withArity(1, newMethod(integerDiv)),

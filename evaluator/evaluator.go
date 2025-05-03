@@ -959,8 +959,6 @@ func evalBlockStatement(block *ast.BlockStatement, env object.Environment) (obje
 			} else if rt == object.BREAK_VALUE_OBJ {
 				if isTruthy(result.(*object.BreakValue).Value) {
 					return result, nil
-				} else {
-					//
 				}
 			}
 		}

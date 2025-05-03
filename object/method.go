@@ -48,6 +48,9 @@ type SettableMethodSet interface {
 
 // NewMethodSet returns a new method set populated with the given methods
 func NewMethodSet(methods map[string]RubyMethod) SettableMethodSet {
+	if methods == nil {
+		methods = make(map[string]RubyMethod)
+	}
 	return &methodSet{methods: methods}
 }
 
