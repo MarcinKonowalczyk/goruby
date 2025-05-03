@@ -284,7 +284,7 @@ func CompareRubyObjectsForTests(a, b any) bool {
 	// }
 	// ok, we are not hashable but we are the same class
 	// check the addresses
-	addrA := fmt.Sprintf("%p", a_obj)
+
 	addrB := fmt.Sprintf("%p", b_obj)
 	if addrA == addrB {
 		return true
