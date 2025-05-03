@@ -61,22 +61,22 @@ func (a *Array) hashKey() hashKey {
 var arrayClassMethods = map[string]RubyMethod{}
 
 var arrayMethods = map[string]RubyMethod{
-	"push":     publicMethod(arrayPush),
-	"unshift":  publicMethod(arrayUnshift),
-	"size":     publicMethod(arraySize),
-	"length":   publicMethod(arraySize),
-	"find_all": publicMethod(arrayFindAll),
-	"first":    publicMethod(arrayFirst),
-	"map":      publicMethod(arrayMap),
-	"all?":     publicMethod(arrayAll),
-	"join":     publicMethod(arrayJoin),
-	"include?": publicMethod(arrayInclude),
-	"each":     publicMethod(arrayEach),
-	"reject":   publicMethod(arrayReject),
-	"pop":      publicMethod(arrayPop),
-	"-":        publicMethod(arrayMinus),
-	"+":        publicMethod(arrayPlus),
-	"*":        publicMethod(arrayAst),
+	"push":     newMethod(arrayPush),
+	"unshift":  newMethod(arrayUnshift),
+	"size":     newMethod(arraySize),
+	"length":   newMethod(arraySize),
+	"find_all": newMethod(arrayFindAll),
+	"first":    newMethod(arrayFirst),
+	"map":      newMethod(arrayMap),
+	"all?":     newMethod(arrayAll),
+	"join":     newMethod(arrayJoin),
+	"include?": newMethod(arrayInclude),
+	"each":     newMethod(arrayEach),
+	"reject":   newMethod(arrayReject),
+	"pop":      newMethod(arrayPop),
+	"-":        newMethod(arrayMinus),
+	"+":        newMethod(arrayPlus),
+	"*":        newMethod(arrayAst),
 }
 
 func arrayPush(context CallContext, args ...RubyObject) (RubyObject, error) {

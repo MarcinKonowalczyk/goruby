@@ -2,17 +2,17 @@ package object
 
 func getMethods(class RubyClass, addSuperMethods bool) *Array {
 	var methodSymbols []RubyObject
-	methods := class.Methods().GetAll()
-	for meth := range methods {
-		methodSymbols = append(methodSymbols, &Symbol{meth})
+	names := class.Methods().Names()
+	for _, name := range names {
+		methodSymbols = append(methodSymbols, &Symbol{name})
 	}
 	if class == bottomClass {
 		return &Array{Elements: methodSymbols}
 	}
 	if addSuperMethods {
-		methods := bottomClass.Methods().GetAll()
-		for meth := range methods {
-			methodSymbols = append(methodSymbols, &Symbol{meth})
+		names := bottomClass.Methods().Names()
+		for _, name := range names {
+			methodSymbols = append(methodSymbols, &Symbol{name})
 		}
 	}
 	return &Array{Elements: methodSymbols}

@@ -8,8 +8,8 @@ import (
 
 func TestGetMethods(t *testing.T) {
 	contextMethods := map[string]RubyMethod{
-		"foo": publicMethod(nil),
-		"bar": publicMethod(nil),
+		"foo": newMethod(nil),
+		"bar": newMethod(nil),
 	}
 	myClass := &class{
 		instanceMethods: NewMethodSet(contextMethods),

@@ -52,21 +52,21 @@ func (i *Float) hashKey() hashKey {
 var floatClassMethods = map[string]RubyMethod{}
 
 var floatMethods = map[string]RubyMethod{
-	"div": withArity(1, publicMethod(floatDiv)),
-	"/":   withArity(1, publicMethod(floatDiv)),
-	"*":   withArity(1, publicMethod(floatMul)),
-	"+":   withArity(1, publicMethod(floatAdd)),
-	"-":   withArity(1, publicMethod(floatSub)),
+	"div": withArity(1, newMethod(floatDiv)),
+	"/":   withArity(1, newMethod(floatDiv)),
+	"*":   withArity(1, newMethod(floatMul)),
+	"+":   withArity(1, newMethod(floatAdd)),
+	"-":   withArity(1, newMethod(floatSub)),
 	// "%":   withArity(1, publicMethod(floatModulo)),
-	"<": withArity(1, publicMethod(floatLt)),
-	">": withArity(1, publicMethod(floatGt)),
+	"<": withArity(1, newMethod(floatLt)),
+	">": withArity(1, newMethod(floatGt)),
 	// "==":   withArity(1, publicMethod(floatEq)),
 	// "!=":   withArity(1, publicMethod(floatNeq)),
-	">=":   withArity(1, publicMethod(floatGte)),
-	"<=":   withArity(1, publicMethod(floatLte)),
-	"<=>":  withArity(1, publicMethod(floatSpaceship)),
-	"to_i": withArity(0, publicMethod(floatToI)),
-	"**":   withArity(1, publicMethod(floatPow)),
+	">=":   withArity(1, newMethod(floatGte)),
+	"<=":   withArity(1, newMethod(floatLte)),
+	"<=>":  withArity(1, newMethod(floatSpaceship)),
+	"to_i": withArity(0, newMethod(floatToI)),
+	"**":   withArity(1, newMethod(floatPow)),
 }
 
 func floatDiv(context CallContext, args ...RubyObject) (RubyObject, error) {

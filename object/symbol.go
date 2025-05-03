@@ -23,7 +23,6 @@ func init() {
 	CLASSES.Set("Symbol", symbolClass)
 }
 
-// A Symbol represents a symbol in Ruby
 type Symbol struct {
 	Value string
 }
@@ -46,9 +45,9 @@ func (s *Symbol) hashKey() hashKey {
 var symbolClassMethods = map[string]RubyMethod{}
 
 var symbolMethods = map[string]RubyMethod{
-	"to_s": withArity(0, publicMethod(symbolToS)),
-	"to_i": withArity(0, publicMethod(symbolToI)),
-	"size": withArity(0, publicMethod(symbolSize)),
+	"to_s": withArity(0, newMethod(symbolToS)),
+	"to_i": withArity(0, newMethod(symbolToI)),
+	"size": withArity(0, newMethod(symbolSize)),
 }
 
 func symbolToS(context CallContext, args ...RubyObject) (RubyObject, error) {

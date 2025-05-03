@@ -106,7 +106,7 @@ func (h *Hash) hashKey() hashKey {
 var hashClassMethods = map[string]RubyMethod{}
 
 var hashMethods = map[string]RubyMethod{
-	"has_key?": publicMethod(hashHasKey),
+	"has_key?": newMethod(hashHasKey),
 }
 
 func hashHasKey(context CallContext, args ...RubyObject) (RubyObject, error) {

@@ -36,9 +36,9 @@ func (f *File) Inspect() string {
 func (f *File) Class() RubyClass { return fileClass }
 
 var fileClassMethods = map[string]RubyMethod{
-	"expand_path": publicMethod(fileExpandPath),
-	"dirname":     publicMethod(fileDirname),
-	"read":        publicMethod(fileRead),
+	"expand_path": newMethod(fileExpandPath),
+	"dirname":     newMethod(fileDirname),
+	"read":        newMethod(fileRead),
 }
 
 var fileMethods = map[string]RubyMethod{}

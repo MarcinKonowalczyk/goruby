@@ -56,13 +56,13 @@ func (e *Exception) setErrorMessage(msg string) {
 func (e *Exception) Class() RubyClass { return exceptionClass }
 
 var exceptionClassMethods = map[string]RubyMethod{
-	"exception": publicMethod(exceptionClassException),
+	"exception": newMethod(exceptionClassException),
 }
 
 var exceptionMethods = map[string]RubyMethod{
-	"initialize": publicMethod(exceptionInitialize),
-	"exception":  publicMethod(exceptionException),
-	"to_s":       withArity(0, publicMethod(exceptionToS)),
+	"initialize": newMethod(exceptionInitialize),
+	"exception":  newMethod(exceptionException),
+	"to_s":       withArity(0, newMethod(exceptionToS)),
 }
 
 func exceptionInitialize(context CallContext, args ...RubyObject) (RubyObject, error) {

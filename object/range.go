@@ -16,14 +16,12 @@ func init() {
 	CLASSES.Set("Range", rangeClass)
 }
 
-// An Range represents a Ruby Range
 type Range struct {
 	Left      *Integer
 	Right     *Integer
 	Inclusive bool
 }
 
-// Type returns the ObjectType of the range
 func (a *Range) Type() Type { return RANGE_OBJ }
 
 // Inspect returns all elements within the range, divided by comma and
@@ -57,8 +55,8 @@ func (a *Range) hashKey() hashKey {
 var rangeClassMethods = map[string]RubyMethod{}
 
 var rangeMethods = map[string]RubyMethod{
-	"find_all": publicMethod(rangeFindAll),
-	"all?":     publicMethod(rangeAll),
+	"find_all": newMethod(rangeFindAll),
+	"all?":     newMethod(rangeAll),
 }
 
 func (rang *Range) ToArray() *Array {

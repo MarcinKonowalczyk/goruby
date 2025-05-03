@@ -24,10 +24,10 @@ func (t *testRubyObject) Class() RubyClass {
 func TestSend(t *testing.T) {
 	// }
 	methods := map[string]RubyMethod{
-		"a_method": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+		"a_method": newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 			return TRUE, nil
 		}),
-		"another_method": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+		"another_method": newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 			return FALSE, nil
 		}),
 	}
@@ -135,7 +135,7 @@ func TestAddMethod(t *testing.T) {
 				},
 			},
 			eigenclass: newEigenclass(bottomClass, map[string]RubyMethod{
-				"bar": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+				"bar": newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 					return NIL, nil
 				}),
 			}),
@@ -222,7 +222,7 @@ func TestAddMethod(t *testing.T) {
 				},
 			},
 			eigenclass: newEigenclass(bottomClass, map[string]RubyMethod{
-				"bar": publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+				"bar": newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 					return NIL, nil
 				}),
 			}),

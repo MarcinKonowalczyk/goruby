@@ -36,13 +36,6 @@ func (s *Io) Type() Type { return IO_OBJ }
 // Class returns ioClass
 func (s *Io) Class() RubyClass { return ioClass }
 
-// // hashKey returns a hash key to be used by Hashes
-// func (s *Io) hashKey() hashKey {
-// 	h := fnv.New64a()
-// 	h.Write([]byte(s.Value))
-// 	return hashKey{Type: s.Type(), Value: h.Sum64()}
-// }
-
 var (
 	_ RubyObject  = &Io{}
 	_ inspectable = &Io{}
@@ -51,7 +44,7 @@ var (
 var ioClassMethods = map[string]RubyMethod{}
 
 var ioMethods = map[string]RubyMethod{
-	"gets": withArity(0, publicMethod(ioGets)),
+	"gets": withArity(0, newMethod(ioGets)),
 }
 
 func ioGets(context CallContext, args ...RubyObject) (RubyObject, error) {

@@ -12,18 +12,18 @@ import (
 	"github.com/pkg/errors"
 )
 
-var bottomClass = &class{
-	name: "Bottom",
-	// instanceMethods: NewMethodSet(bottomMethodSet),
-	class: newEigenclass(nil, objectClassMethods),
-	builder: func(RubyClassObject, ...RubyObject) (RubyObject, error) {
-		return &Bottom{}, nil
-	},
-	Environment: NewEnvironment(),
-}
+var bottomClass *class = nil
 
 func init() {
-	bottomClass.instanceMethods = NewMethodSet(bottomMethodSet)
+	// NOTE: create the bottom class in init to avoid circular import
+	bottomClass = newClass(
+		"Bottom",
+		bottomMethodSet,
+		objectClassMethods,
+		func(RubyClassObject, ...RubyObject) (RubyObject, error) {
+			return &Bottom{}, nil
+		},
+	)
 	CLASSES.Set("Bottom", bottomClass)
 }
 
@@ -42,18 +42,18 @@ func (o *Bottom) Class() RubyClass { return bottomClass }
 var objectClassMethods = map[string]RubyMethod{}
 
 var bottomMethodSet = map[string]RubyMethod{
-	"to_s":    withArity(0, publicMethod(bottomToS)),
-	"is_a?":   withArity(1, publicMethod(bottomIsA)),
-	"nil?":    withArity(0, publicMethod(bottomIsNil)),
-	"methods": publicMethod(bottomMethods),
-	"class":   withArity(0, publicMethod(bottomClassMethod)),
-	"puts":    publicMethod(bottomPuts),
-	"print":   publicMethod(bottomPrint),
-	"require": withArity(1, publicMethod(bottomRequire)),
-	"tap":     publicMethod(bottomTap),
-	"raise":   publicMethod(bottomRaise),
-	"==":      withArity(1, publicMethod(bottomEqual)),
-	"!=":      withArity(1, publicMethod(bottomNotEqual)),
+	"to_s":    withArity(0, newMethod(bottomToS)),
+	"is_a?":   withArity(1, newMethod(bottomIsA)),
+	"nil?":    withArity(0, newMethod(bottomIsNil)),
+	"methods": newMethod(bottomMethods),
+	"class":   withArity(0, newMethod(bottomClassMethod)),
+	"puts":    newMethod(bottomPuts),
+	"print":   newMethod(bottomPrint),
+	"require": withArity(1, newMethod(bottomRequire)),
+	"tap":     newMethod(bottomTap),
+	"raise":   newMethod(bottomRaise),
+	"==":      withArity(1, newMethod(bottomEqual)),
+	"!=":      withArity(1, newMethod(bottomNotEqual)),
 }
 
 func bottomToS(context CallContext, args ...RubyObject) (RubyObject, error) {

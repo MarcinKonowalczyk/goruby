@@ -79,34 +79,14 @@ func stringify(obj RubyObject) (string, error) {
 var stringClassMethods = map[string]RubyMethod{}
 
 var stringMethods = map[string]RubyMethod{
-	// "initialize": publicMethod(stringInitialize),
-	"to_s":   withArity(0, publicMethod(stringToS)),
-	"+":      withArity(1, publicMethod(stringAdd)),
-	"gsub":   withArity(2, publicMethod(stringGsub)),
-	"length": withArity(0, publicMethod(stringLength)),
-	"size":   withArity(0, publicMethod(stringLength)),
-	// "==":         withArity(1, publicMethod(stringEqual)),
-	// "!=":         withArity(1, publicMethod(stringNotEqual)),
-	"lines": withArity(0, publicMethod(stringLines)),
-	"to_f":  withArity(0, publicMethod(stringToF)),
+	"to_s":   withArity(0, newMethod(stringToS)),
+	"+":      withArity(1, newMethod(stringAdd)),
+	"gsub":   withArity(2, newMethod(stringGsub)),
+	"length": withArity(0, newMethod(stringLength)),
+	"size":   withArity(0, newMethod(stringLength)),
+	"lines":  withArity(0, newMethod(stringLines)),
+	"to_f":   withArity(0, newMethod(stringToF)),
 }
-
-// func stringInitialize(context CallContext, args ...RubyObject) (RubyObject, error) {
-// 	switch len(args) {
-// 	case 0:
-// 		self.RubyObject = &String{}
-// 		return self, nil
-// 	case 1:
-// 		str, ok := args[0].(*String)
-// 		if !ok {
-// 			return nil, NewImplicitConversionTypeError(str, args[0])
-// 		}
-// 		self.RubyObject = &String{Value: str.Value}
-// 		return self, nil
-// 	default:
-// 		return nil, NewWrongNumberOfArgumentsError(len(args), 1)
-// 	}
-// }
 
 func stringToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 	str := context.Receiver().(*String)
@@ -150,31 +130,12 @@ func stringLength(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return &Integer{Value: int64(len(s.Value))}, nil
 }
 
-// func stringEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
-// 	s := context.Receiver().(*String)
-// 	other, ok := args[0].(*String)
-// 	if !ok {
-// 		return nil, NewImplicitConversionTypeError(other, args[0])
-// 	}
-// 	return &Boolean{Value: s.Value == other.Value}, nil
-// }
-
-// func stringNotEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
-// 	s := context.Receiver().(*String)
-// 	other, ok := args[0].(*String)
-// 	if !ok {
-// 		return nil, NewImplicitConversionTypeError(other, args[0])
-// 	}
-// 	return &Boolean{Value: s.Value != other.Value}, nil
-// }
-
 func stringLines(context CallContext, args ...RubyObject) (RubyObject, error) {
 	s := context.Receiver().(*String)
 	lines := strings.Split(s.Value, "\n")
 	arr := NewArray()
 	for _, line := range lines {
 		arr.Elements = append(arr.Elements, &String{Value: line + "\n"})
-		// arr.Elements = append(arr.Elements, &String{Value: line})
 	}
 	return arr, nil
 }

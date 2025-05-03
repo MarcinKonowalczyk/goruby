@@ -45,8 +45,8 @@ type RubyObject interface {
 
 // RubyClass represents a class in Ruby
 type RubyClass interface {
-	Methods() MethodSet
 	GetMethod(name string) (RubyMethod, bool)
+	Methods() MethodSet
 	New(args ...RubyObject) (RubyObject, error)
 	Name() string
 }
@@ -115,25 +115,6 @@ func (f functionParameters) defaultParamCount() int {
 	return count
 }
 
-//	func (f functionParameters) mandatoryParams() []*FunctionParameter {
-//		params := make([]*FunctionParameter, 0)
-//		for _, p := range f {
-//			if p.Default == nil {
-//				params = append(params, p)
-//			}
-//		}
-//		return params
-//	}
-//
-//	func (f functionParameters) optionalParams() []*FunctionParameter {
-//		params := make([]*FunctionParameter, 0)
-//		for _, p := range f {
-//			if p.Default != nil {
-//				params = append(params, p)
-//			}
-//		}
-//		return params
-//	}
 func (f functionParameters) separateDefaultParams() ([]*FunctionParameter, []*FunctionParameter) {
 	mandatory, defaults := make([]*FunctionParameter, 0), make([]*FunctionParameter, 0)
 	for _, p := range f {

@@ -5,7 +5,7 @@ import (
 )
 
 func TestWithArity(t *testing.T) {
-	wrappedMethod := publicMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+	wrappedMethod := newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return NewInteger(1), nil
 	})
 
