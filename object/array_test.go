@@ -8,7 +8,7 @@ import (
 
 func TestArrayPush(t *testing.T) {
 	t.Run("one argument", func(t *testing.T) {
-		array := &Array{}
+		array := NewArray()
 		env := NewEnvironment()
 		context := &callContext{
 			receiver: array,
@@ -22,7 +22,7 @@ func TestArrayPush(t *testing.T) {
 	})
 
 	t.Run("more than one argument", func(t *testing.T) {
-		array := &Array{}
+		array := NewArray()
 		env := NewEnvironment()
 		context := &callContext{
 			receiver: array,
@@ -38,7 +38,7 @@ func TestArrayPush(t *testing.T) {
 
 func TestArrayUnshift(t *testing.T) {
 	t.Run("one argument", func(t *testing.T) {
-		array := &Array{Elements: []RubyObject{NewString("first element")}}
+		array := NewArray(NewString("first element"))
 		env := NewEnvironment()
 		context := &callContext{
 			receiver: array,
@@ -51,7 +51,7 @@ func TestArrayUnshift(t *testing.T) {
 		utils.AssertEqualCmpAny(t, result, NewArray(NewInteger(17), NewString("first element")), CompareRubyObjectsForTests)
 	})
 	t.Run("more than one argument", func(t *testing.T) {
-		array := &Array{Elements: []RubyObject{NewString("first element")}}
+		array := NewArray(NewString("first element"))
 		env := NewEnvironment()
 		context := &callContext{
 			receiver: array,

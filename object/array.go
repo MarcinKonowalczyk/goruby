@@ -19,6 +19,9 @@ func init() {
 // NewArray returns a new array populated with elements.
 func NewArray(elements ...RubyObject) *Array {
 	arr := &Array{Elements: make([]RubyObject, len(elements))}
+	if len(elements) == 0 {
+		return arr
+	}
 	copy(arr.Elements, elements)
 	return arr
 }

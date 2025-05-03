@@ -1,8 +1,9 @@
 package object
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func TestRangeEvalToArray(t *testing.T) {
@@ -13,13 +14,7 @@ func TestRangeEvalToArray(t *testing.T) {
 			Inclusive: false,
 		}
 		arr := rng.ToArray()
-		expected := &Array{
-			Elements: []RubyObject{},
-		}
-		if !reflect.DeepEqual(arr, expected) {
-			t.Logf("Expected array to equal\n%+#v\n\tgot\n%+#v\n", expected, arr)
-			t.Fail()
-		}
+		utils.AssertEqualCmpAny(t, arr, NewArray(), CompareRubyObjectsForTests)
 	})
 	t.Run("inclusive range", func(t *testing.T) {
 		rng := &Range{
@@ -28,17 +23,12 @@ func TestRangeEvalToArray(t *testing.T) {
 			Inclusive: true,
 		}
 		arr := rng.ToArray()
-		expected := &Array{
-			Elements: []RubyObject{
-				NewInteger(1),
-				NewInteger(2),
-				NewInteger(3),
-			},
-		}
-		if !reflect.DeepEqual(arr, expected) {
-			t.Logf("Expected array to equal\n%+#v\n\tgot\n%+#v\n", expected, arr)
-			t.Fail()
-		}
+		expected := NewArray(
+			NewInteger(1),
+			NewInteger(2),
+			NewInteger(3),
+		)
+		utils.AssertEqualCmpAny(t, arr, expected, CompareRubyObjectsForTests)
 	})
 	t.Run("exclusive range", func(t *testing.T) {
 		rng := &Range{
@@ -47,15 +37,10 @@ func TestRangeEvalToArray(t *testing.T) {
 			Inclusive: false,
 		}
 		arr := rng.ToArray()
-		expected := &Array{
-			Elements: []RubyObject{
-				NewInteger(1),
-				NewInteger(2),
-			},
-		}
-		if !reflect.DeepEqual(arr, expected) {
-			t.Logf("Expected array to equal\n%+#v\n\tgot\n%+#v\n", expected, arr)
-			t.Fail()
-		}
+		expected := NewArray(
+			NewInteger(1),
+			NewInteger(2),
+		)
+		utils.AssertEqualCmpAny(t, arr, expected, CompareRubyObjectsForTests)
 	})
 }
