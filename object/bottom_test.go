@@ -8,6 +8,7 @@ import (
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/parser"
+	"github.com/MarcinKonowalczyk/goruby/utils"
 	"github.com/pkg/errors"
 )
 
@@ -15,7 +16,7 @@ func TestBottomIsNil(t *testing.T) {
 	context := &callContext{receiver: TRUE}
 	result, err := bottomIsNil(context)
 
-	checkError(t, err, nil)
+	utils.AssertNoError(t, err)
 
 	boolean, ok := SymbolToBool(result)
 	if !ok {
@@ -452,7 +453,7 @@ func TestBottomToS(t *testing.T) {
 
 		result, err := bottomToS(context)
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		expected := &String{Value: fmt.Sprintf("#<Bottom:%p>", context.receiver)}
 
@@ -466,7 +467,7 @@ func TestBottomToS(t *testing.T) {
 
 		result, err := bottomToS(context)
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		expected := &String{Value: fmt.Sprintf("#<Bottom:%p>", self)}
 
@@ -487,7 +488,7 @@ func TestBottomRaise(t *testing.T) {
 
 		checkResult(t, result, nil)
 
-		checkError(t, err, NewRuntimeError(""))
+		utils.AssertError(t, err, NewRuntimeError(""))
 	})
 
 	t.Run("with 1 arg", func(t *testing.T) {
@@ -496,13 +497,13 @@ func TestBottomRaise(t *testing.T) {
 
 			checkResult(t, result, nil)
 
-			checkError(t, err, NewRuntimeError("ouch"))
+			utils.AssertError(t, err, NewRuntimeError("ouch"))
 		})
 		t.Run("integer argument", func(t *testing.T) {
 			obj := &Integer{Value: 5}
 			result, err := bottomRaise(context, obj)
 			checkResult(t, result, nil)
-			checkError(t, err, NewRuntimeError("%s", obj.Inspect()))
+			utils.AssertError(t, err, NewRuntimeError("%s", obj.Inspect()))
 		})
 	})
 }

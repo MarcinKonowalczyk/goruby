@@ -9,6 +9,7 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/evaluator"
 	"github.com/MarcinKonowalczyk/goruby/object"
 	"github.com/MarcinKonowalczyk/goruby/parser"
+	"github.com/MarcinKonowalczyk/goruby/utils"
 	"github.com/pkg/errors"
 )
 
@@ -16,7 +17,7 @@ func TestEvalComment(t *testing.T) {
 	input := "5 # five"
 
 	evaluated, err := testEval(input)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 
 	var expected int64 = 5
 	testIntegerObject(t, evaluated, expected)
@@ -47,7 +48,7 @@ func TestEvalIntegerExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		evaluated, err := testEval(tt.input, object.NewMainEnvironment())
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 		testIntegerObject(t, evaluated, tt.expected)
 	}
 }
@@ -84,7 +85,7 @@ func TestEvalBooleanExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		evaluated, err := testEval(tt.input)
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 		testBooleanObject(t, evaluated, tt.expected)
 	}
 }
@@ -104,7 +105,7 @@ func TestBangOperator(t *testing.T) {
 
 	for _, tt := range tests {
 		evaluated, err := testEval(tt.input)
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 		testBooleanObject(t, evaluated, tt.expected)
 	}
 }
@@ -132,7 +133,7 @@ func TestConditionalExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		evaluated, err := testEval(tt.input)
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 		integer, ok := tt.expected.(int)
 		if ok {
 			testIntegerObject(t, evaluated, int64(integer))
@@ -161,7 +162,7 @@ func TestReturnStatements(t *testing.T) {
 
 	for _, tt := range tests {
 		evaluated, err := testEval(tt.input)
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 		testIntegerObject(t, evaluated, tt.expected)
 	}
 }
@@ -287,7 +288,7 @@ func TestAssignment(t *testing.T) {
 
 		for _, tt := range tests {
 			evaluated, err := testEval(tt.input)
-			checkError(t, err)
+			utils.AssertNoError(t, err)
 
 			testObject(t, evaluated, tt.expected)
 		}
@@ -313,7 +314,7 @@ func TestAssignment(t *testing.T) {
 
 		for _, tt := range tests {
 			evaluated, err := testEval(tt.input, object.NewMainEnvironment())
-			checkError(t, err)
+			utils.AssertNoError(t, err)
 
 			testIntegerObject(t, evaluated, tt.expected)
 		}
@@ -335,7 +336,7 @@ func TestAssignment(t *testing.T) {
 
 		for _, tt := range tests {
 			evaluated, err := testEval(tt.input, object.NewMainEnvironment())
-			checkError(t, err)
+			utils.AssertNoError(t, err)
 
 			testObject(t, evaluated, tt.expected)
 		}
@@ -365,7 +366,7 @@ func TestAssignment(t *testing.T) {
 
 		for _, tt := range tests {
 			evaluated, err := testEval(tt.input)
-			checkError(t, err)
+			utils.AssertNoError(t, err)
 
 			array, ok := evaluated.(*object.Array)
 			if !ok {
@@ -401,7 +402,7 @@ func TestAssignment(t *testing.T) {
 
 		for _, tt := range tests {
 			evaluated, err := testEval(tt.input, object.NewMainEnvironment())
-			checkError(t, err)
+			utils.AssertNoError(t, err)
 
 			testIntegerObject(t, evaluated, tt.expected)
 		}
@@ -454,7 +455,7 @@ func TestMultiAssignment(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			evaluated, err := testEval(tt.input, object.NewMainEnvironment())
-			checkError(t, err)
+			utils.AssertNoError(t, err)
 
 			if !reflect.DeepEqual(tt.output, evaluated) {
 				t.Logf("Expected result to equal\n%s\n\tgot\n%s\n", tt.output.Inspect(), evaluated.Inspect())
@@ -479,7 +480,7 @@ func TestGlobalAssignmentExpression(t *testing.T) {
 		for _, tt := range tests {
 			t.Run(tt.input, func(t *testing.T) {
 				evaluated, err := testEval(tt.input)
-				checkError(t, err)
+				utils.AssertNoError(t, err)
 				testIntegerObject(t, evaluated, tt.expected)
 			})
 		}
@@ -490,7 +491,7 @@ func TestGlobalAssignmentExpression(t *testing.T) {
 		outer := object.NewEnvironment()
 		env := object.NewEnclosedEnvironment(outer)
 		_, err := testEval(input, env)
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 
 		_, ok := outer.Get("$Foo")
 		if !ok {
@@ -545,7 +546,7 @@ func TestFunctionObject(t *testing.T) {
 			env := object.NewEnvironment()
 			env.Set("self", &object.Bottom{})
 			evaluated, err := testEval(tt.input, env)
-			checkError(t, err)
+			utils.AssertNoError(t, err)
 			sym, ok := evaluated.(*object.Symbol)
 			if !ok {
 				t.Fatalf("object is not Symbol. got=%T (%+v)", evaluated, evaluated)
@@ -609,7 +610,7 @@ func TestFunctionApplication(t *testing.T) {
 		env := object.NewEnvironment()
 		env.Set("self", &object.Bottom{})
 		evaluated, err := testEval(tt.input, env)
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 		testIntegerObject(t, evaluated, tt.expected)
 	}
 }
@@ -618,7 +619,7 @@ func TestGlobalLiteral(t *testing.T) {
 	input := `$foo = 'bar'; $foo`
 
 	evaluated, err := testEval(input)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 	str, ok := evaluated.(*object.String)
 	if !ok {
 		t.Fatalf("object is not String. got=%T (%+v)", evaluated, evaluated)
@@ -633,7 +634,7 @@ func TestStringLiteral(t *testing.T) {
 	input := `"Hello World!"`
 
 	evaluated, err := testEval(input)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 	str, ok := evaluated.(*object.String)
 	if !ok {
 		t.Fatalf("object is not String. got=%T (%+v)", evaluated, evaluated)
@@ -648,7 +649,7 @@ func TestStringConcatenation(t *testing.T) {
 	input := `"Hello" + " " + "World!"`
 
 	evaluated, err := testEval(input)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 	str, ok := evaluated.(*object.String)
 	if !ok {
 		t.Fatalf("object is not String. got=%T (%+v)", evaluated, evaluated)
@@ -663,7 +664,7 @@ func TestSymbolLiteral(t *testing.T) {
 	input := `:foobar;`
 
 	evaluated, err := testEval(input)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 	sym, ok := evaluated.(*object.Symbol)
 	if !ok {
 		t.Fatalf("object is not Symbol. got=%T (%+v)", evaluated, evaluated)
@@ -688,7 +689,7 @@ func TestMethodCalls(t *testing.T) {
 func TestArrayLiterals(t *testing.T) {
 	input := "[1, 2 * 2, 3 + 3]"
 	evaluated, err := testEval(input)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 
 	result, ok := evaluated.(*object.Array)
 	if !ok {
@@ -778,7 +779,7 @@ func TestArrayIndexExpressions(t *testing.T) {
 
 	for _, tt := range tests {
 		evaluated, err := testEval(tt.input)
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 		switch expected := tt.expected.(type) {
 		case int:
 			testIntegerObject(t, evaluated, int64(expected))
@@ -804,7 +805,7 @@ func TestArrayIndexExpressions(t *testing.T) {
 func TestNilExpression(t *testing.T) {
 	input := "nil"
 	evaluated, err := testEval(input)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 	testNilObject(t, evaluated)
 }
 
@@ -813,7 +814,7 @@ func TestHashLiteral(t *testing.T) {
 
 	env := object.NewMainEnvironment()
 	evaluated, err := testEval(input, env)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 
 	hash, ok := evaluated.(*object.Hash)
 	if !ok {
@@ -901,7 +902,7 @@ func TestHashIndexExpressions(t *testing.T) {
 
 	for _, tt := range tests {
 		evaluated, err := testEval(tt.input)
-		checkError(t, err)
+		utils.AssertNoError(t, err)
 		integer, ok := tt.expected.(int)
 		if ok {
 			testIntegerObject(t, evaluated, int64(integer))
@@ -916,9 +917,9 @@ func TestKeyword__File__(t *testing.T) {
 
 	env := object.NewEnvironment()
 	program, err := parser.ParseFile(token.NewFileSet(), "some_file.rb", input, 0)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 	evaluated, err := evaluator.Eval(program, env)
-	checkError(t, err)
+	utils.AssertNoError(t, err)
 
 	str, ok := evaluated.(*object.String)
 	if !ok {
@@ -968,14 +969,6 @@ func testEval(input string, context ...object.Environment) (object.RubyObject, e
 		return nil, object.NewSyntaxError(err)
 	}
 	return evaluator.Eval(program, env)
-}
-
-func checkError(t *testing.T, err error) {
-	t.Helper()
-	if err != nil {
-		t.Logf("Expected no error, got %T:%v\n", err, err)
-		t.Fail()
-	}
 }
 
 func testObject(t *testing.T, exp object.RubyObject, expected interface{}) bool {

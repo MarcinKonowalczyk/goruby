@@ -3,6 +3,8 @@ package object
 import (
 	"reflect"
 	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func TestArrayPush(t *testing.T) {
@@ -16,17 +18,15 @@ func TestArrayPush(t *testing.T) {
 
 		result, err := arrayPush(context, &Integer{Value: 17})
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		expectedResult := &Array{Elements: []RubyObject{&Integer{Value: 17}}}
 
 		checkResult(t, result, expectedResult)
 
-		if !reflect.DeepEqual(expectedResult, array) {
-			t.Logf("Expected array to equal\n%+#v\n\tgot\n%+#v\n", expectedResult, array)
-			t.Fail()
-		}
+		utils.Assert(t, reflect.DeepEqual(expectedResult, array), "Expected array to equal\n%+#v\n\tgot\n%+#v\n", expectedResult, array)
 	})
+
 	t.Run("more than one argument", func(t *testing.T) {
 		array := &Array{}
 		env := NewEnvironment()
@@ -37,7 +37,7 @@ func TestArrayPush(t *testing.T) {
 
 		result, err := arrayPush(context, &Integer{Value: 17}, NIL, TRUE, FALSE)
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		expectedResult := &Array{Elements: []RubyObject{&Integer{Value: 17}, NIL, TRUE, FALSE}}
 
@@ -61,7 +61,7 @@ func TestArrayUnshift(t *testing.T) {
 
 		result, err := arrayUnshift(context, &Integer{Value: 17})
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		expectedResult := &Array{Elements: []RubyObject{&Integer{Value: 17}, &String{Value: "first element"}}}
 
@@ -82,7 +82,7 @@ func TestArrayUnshift(t *testing.T) {
 
 		result, err := arrayUnshift(context, &Integer{Value: 17}, NIL, TRUE, FALSE)
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		expectedResult := &Array{Elements: []RubyObject{&Integer{Value: 17}, NIL, TRUE, FALSE, &String{Value: "first element"}}}
 

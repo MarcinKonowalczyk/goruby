@@ -2,6 +2,8 @@ package object
 
 import (
 	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func TestFloat_hashKey(t *testing.T) {
@@ -51,7 +53,7 @@ func TestFloatDiv(t *testing.T) {
 
 		result, err := floatDiv(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
+		utils.AssertError(t, err, testCase.err)
 
 		checkResult(t, result, testCase.result)
 	}
@@ -80,7 +82,7 @@ func TestFloatMul(t *testing.T) {
 
 		result, err := floatMul(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
+		utils.AssertError(t, err, testCase.err)
 
 		checkResult(t, result, testCase.result)
 	}
@@ -109,7 +111,7 @@ func TestFloatAdd(t *testing.T) {
 
 		result, err := floatAdd(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
+		utils.AssertError(t, err, testCase.err)
 
 		checkResult(t, result, testCase.result)
 	}
@@ -138,7 +140,7 @@ func TestFloatSub(t *testing.T) {
 
 		result, err := floatSub(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
+		utils.AssertError(t, err, testCase.err)
 
 		checkResult(t, result, testCase.result)
 	}
@@ -167,7 +169,7 @@ func TestFloatSub(t *testing.T) {
 
 // 		result, err := floatModulo(context, testCase.arguments...)
 
-// 		checkError(t, err, testCase.err)
+// 		utils.AssertError(t, err, testCase.err)
 
 // 		checkResult(t, result, testCase.result)
 // 	}
@@ -201,7 +203,7 @@ func TestFloatLt(t *testing.T) {
 
 		result, _ := floatLt(context, testCase.arguments...)
 
-		// checkError(t, err, testCase.err)
+		// utils.AssertError(t, err, testCase.err)
 
 		checkResult(t, result, testCase.result)
 	}
@@ -235,7 +237,7 @@ func TestFloatGt(t *testing.T) {
 
 		result, _ := floatGt(context, testCase.arguments...)
 
-		// checkError(t, err, testCase.err)
+		// utils.AssertError(t, err, testCase.err)
 
 		checkResult(t, result, testCase.result)
 	}
@@ -269,7 +271,7 @@ func TestFloatGt(t *testing.T) {
 
 // 		result, err := floatEq(context, testCase.arguments...)
 
-// 		checkError(t, err, testCase.err)
+// 		utils.AssertError(t, err, testCase.err)
 
 // 		checkResult(t, result, testCase.result)
 // 	}
@@ -303,7 +305,7 @@ func TestFloatGt(t *testing.T) {
 
 // 		result, err := floatNeq(context, testCase.arguments...)
 
-// 		checkError(t, err, testCase.err)
+// 		utils.AssertError(t, err, testCase.err)
 
 // 		checkResult(t, result, testCase.result)
 // 	}
@@ -342,7 +344,7 @@ func TestFloatGte(t *testing.T) {
 
 		result, _ := floatGte(context, testCase.arguments...)
 
-		// checkError(t, err, testCase.err)
+		// utils.AssertError(t, err, testCase.err)
 
 		checkResult(t, result, testCase.result)
 	}
@@ -381,7 +383,7 @@ func TestFloatLte(t *testing.T) {
 
 		result, _ := floatLte(context, testCase.arguments...)
 
-		// checkError(t, err, testCase.err)
+		// utils.AssertError(t, err, testCase.err)
 
 		checkResult(t, result, testCase.result)
 	}
@@ -420,7 +422,7 @@ func TestFloatSpaceship(t *testing.T) {
 
 		result, _ := floatSpaceship(context, testCase.arguments...)
 
-		// checkError(t, err, testCase.err)
+		// utils.AssertError(t, err, testCase.err)
 
 		checkResult(t, result, testCase.result)
 	}

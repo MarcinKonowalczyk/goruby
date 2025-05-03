@@ -1,6 +1,10 @@
 package object
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
+)
 
 func TestString_hashKey(t *testing.T) {
 	hello1 := &String{Value: "Hello World"}
@@ -27,7 +31,7 @@ func Test_stringify(t *testing.T) {
 
 		res, err := stringify(obj)
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		if res != "sym" {
 			t.Logf("Expected stringify to return 'sym', got %q\n", res)
@@ -37,7 +41,7 @@ func Test_stringify(t *testing.T) {
 	t.Run("object without `to_s`", func(t *testing.T) {
 		_, err := stringify(nil)
 
-		checkError(t, err, NewTypeError("can't convert nil into String"))
+		utils.AssertError(t, err, NewTypeError("can't convert nil into String"))
 	})
 }
 
@@ -64,7 +68,7 @@ func TestStringAdd(t *testing.T) {
 
 		result, err := stringAdd(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
+		utils.AssertError(t, err, testCase.err)
 
 		checkResult(t, result, testCase.result)
 	}
@@ -88,7 +92,7 @@ func Test_StringGsub(t *testing.T) {
 
 		result, err := stringGsub(context, testCase.arguments...)
 
-		checkError(t, err, testCase.err)
+		utils.AssertError(t, err, testCase.err)
 
 		checkResult(t, result, testCase.result)
 	}

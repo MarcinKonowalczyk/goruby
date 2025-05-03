@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/utils"
 	"github.com/pkg/errors"
 )
 
@@ -65,7 +66,7 @@ func TestSend(t *testing.T) {
 		for _, testCase := range tests {
 			result, err := Send(context, testCase.method)
 
-			checkError(t, errors.Cause(err), testCase.expectedError)
+			utils.AssertError(t, errors.Cause(err), testCase.expectedError)
 
 			checkResult(t, result, testCase.expectedResult)
 		}

@@ -1,6 +1,10 @@
 package object
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
+)
 
 func TestExceptionInitialize(t *testing.T) {
 	context := &callContext{
@@ -10,7 +14,7 @@ func TestExceptionInitialize(t *testing.T) {
 	t.Run("without args", func(t *testing.T) {
 		result, err := exceptionInitialize(context)
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		checkResult(t, result, &Exception{message: "Exception"})
 	})
@@ -18,14 +22,14 @@ func TestExceptionInitialize(t *testing.T) {
 		t.Run("string", func(t *testing.T) {
 			result, err := exceptionInitialize(context, &String{Value: "err"})
 
-			checkError(t, err, nil)
+			utils.AssertNoError(t, err)
 
 			checkResult(t, result, &Exception{message: "err"})
 		})
 		t.Run("other object", func(t *testing.T) {
 			result, err := exceptionInitialize(context, &Symbol{Value: "symbol"})
 
-			checkError(t, err, nil)
+			utils.AssertNoError(t, err)
 
 			checkResult(t, result, &Exception{message: "symbol"})
 		})
@@ -41,7 +45,7 @@ func TestExceptionException(t *testing.T) {
 	t.Run("without args", func(t *testing.T) {
 		result, err := exceptionException(context)
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		if contextObject != result {
 			t.Logf("Expected result to pointer equal context\n")
@@ -52,7 +56,7 @@ func TestExceptionException(t *testing.T) {
 	t.Run("with arg", func(t *testing.T) {
 		result, err := exceptionException(context, &String{Value: "x"})
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		if contextObject != result {
 			t.Logf("Expected result to pointer equal context\n")
@@ -64,7 +68,7 @@ func TestExceptionException(t *testing.T) {
 	t.Run("with arg but different message", func(t *testing.T) {
 		result, err := exceptionException(context, &String{Value: "err"})
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		checkResult(t, result, &Exception{message: "err"})
 	})
@@ -79,7 +83,7 @@ func TestExceptionToS(t *testing.T) {
 
 	result, err := exceptionToS(context)
 
-	checkError(t, err, nil)
+	utils.AssertNoError(t, err)
 
 	checkResult(t, result, &String{Value: "x"})
 }

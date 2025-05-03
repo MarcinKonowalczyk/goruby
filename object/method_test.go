@@ -2,6 +2,8 @@ package object
 
 import (
 	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func TestWithArity(t *testing.T) {
@@ -43,6 +45,6 @@ func TestWithArity(t *testing.T) {
 
 		checkResult(t, result, testCase.result)
 
-		checkError(t, err, testCase.err)
+		utils.AssertError(t, err, testCase.err)
 	}
 }

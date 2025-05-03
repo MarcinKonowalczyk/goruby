@@ -3,6 +3,8 @@ package object
 import (
 	"os"
 	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func TestFileExpandPath(t *testing.T) {
@@ -16,7 +18,7 @@ func TestFileExpandPath(t *testing.T) {
 
 		result, err := fileExpandPath(context, filename)
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -37,7 +39,7 @@ func TestFileExpandPath(t *testing.T) {
 
 		result, err := fileExpandPath(context, filename, dirname)
 
-		checkError(t, err, nil)
+		utils.AssertNoError(t, err)
 
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -58,7 +60,7 @@ func TestFileDirname(t *testing.T) {
 
 	result, err := fileDirname(context, filename)
 
-	checkError(t, err, nil)
+	utils.AssertNoError(t, err)
 
 	expected := &String{Value: "/var/log"}
 

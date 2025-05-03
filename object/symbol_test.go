@@ -1,6 +1,10 @@
 package object
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
+)
 
 func TestSymbol_hashKey(t *testing.T) {
 	hello1 := &Symbol{Value: "Hello World"}
@@ -28,7 +32,7 @@ func TestSymbolToS(t *testing.T) {
 
 	result, err := symbolToS(context)
 
-	checkError(t, err, nil)
+	utils.AssertNoError(t, err)
 
 	expected := &String{Value: "foo"}
 
