@@ -10,7 +10,7 @@ func TestHashSet(t *testing.T) {
 		hash := &Hash{Map: make(map[hashKey]hashPair)}
 
 		key := NewString("foo")
-		value := &Integer{Value: 42}
+		value := NewInteger(42)
 
 		result := hash.Set(key, value)
 
@@ -42,7 +42,7 @@ func TestHashSet(t *testing.T) {
 		var hash Hash
 
 		key := NewString("foo")
-		value := &Integer{Value: 42}
+		value := NewInteger(42)
 
 		result := hash.Set(key, value)
 
@@ -75,7 +75,7 @@ func TestHashSet(t *testing.T) {
 func TestHashGet(t *testing.T) {
 	t.Run("value found", func(t *testing.T) {
 		key := NewString("foo")
-		value := &Integer{Value: 42}
+		value := NewInteger(42)
 
 		hash := &Hash{Map: map[hashKey]hashPair{
 			key.hashKey(): hashPair{Key: key, Value: value},
@@ -132,7 +132,7 @@ func TestHashGet(t *testing.T) {
 func TestHashMap(t *testing.T) {
 	t.Run("on initialized hash", func(t *testing.T) {
 		key := NewString("foo")
-		value := &Integer{Value: 42}
+		value := NewInteger(42)
 
 		hash := &Hash{Map: map[hashKey]hashPair{
 			key.hashKey(): hashPair{Key: key, Value: value},

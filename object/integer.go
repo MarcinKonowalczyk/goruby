@@ -205,11 +205,11 @@ func integerSpaceship(context CallContext, args ...RubyObject) (RubyObject, erro
 	}
 	switch {
 	case i.Value > right:
-		return &Integer{Value: 1}, nil
+		return NewInteger(1), nil
 	case i.Value < right:
 		return &Integer{Value: -1}, nil
 	case i.Value == right:
-		return &Integer{Value: 0}, nil
+		return NewInteger(0), nil
 	default:
 		panic("not reachable")
 	}
@@ -266,6 +266,6 @@ func integerChr(context CallContext, args ...RubyObject) (RubyObject, error) {
 	if i.Value < 0 || i.Value > 255 {
 		return nil, NewArgumentError("chr out of range")
 	}
-	// return NewString( string(i.Value)), nil
+	// return NewString(string(i.Value)), nil
 	return NewString(string(rune(i.Value))), nil
 }

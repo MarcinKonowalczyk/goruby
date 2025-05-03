@@ -84,7 +84,7 @@ func arrayUnshift(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func arraySize(context CallContext, args ...RubyObject) (RubyObject, error) {
 	array, _ := context.Receiver().(*Array)
-	return &Integer{Value: int64(len(array.Elements))}, nil
+	return NewInteger(int64(len(array.Elements))), nil
 }
 
 func arrayFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {

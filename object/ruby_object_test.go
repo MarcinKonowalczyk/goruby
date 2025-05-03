@@ -70,7 +70,7 @@ func TestFunctionCall(t *testing.T) {
 	})
 	t.Run("uses the function env as env for CallContext#Eval", func(t *testing.T) {
 		contextEnv := NewEnvironment()
-		contextEnv.Set("self", &Integer{Value: 42})
+		contextEnv.Set("self", NewInteger(42))
 		contextEnv.Set("bar", NewString("not reachable in Eval"))
 		var evalEnv Environment
 		context := &callContext{
@@ -114,7 +114,7 @@ func TestFunctionCall(t *testing.T) {
 	})
 	t.Run("puts the Call args into the env for CallContext#Eval", func(t *testing.T) {
 		contextEnv := NewEnvironment()
-		contextEnv.Set("self", &Integer{Value: 42})
+		contextEnv.Set("self", NewInteger(42))
 		var evalEnv Environment
 		context := &callContext{
 			env: contextEnv,
@@ -132,10 +132,10 @@ func TestFunctionCall(t *testing.T) {
 				},
 			}
 
-			mustCall(t)(function.Call(context, &Integer{Value: 300}, &Symbol{Value: "sym"}))
+			mustCall(t)(function.Call(context, NewInteger(300), &Symbol{Value: "sym"}))
 
 			{
-				expected := &Integer{Value: 300}
+				expected := NewInteger(300)
 				actual, ok := evalEnv.Get("foo")
 
 				if !ok {
@@ -167,16 +167,16 @@ func TestFunctionCall(t *testing.T) {
 			t.Skip()
 			function := &Function{
 				Parameters: []*FunctionParameter{
-					{Name: "foo", Default: &Integer{Value: 12}},
+					{Name: "foo", Default: NewInteger(12)},
 					{Name: "bar"},
 					{Name: "qux"},
 				},
 			}
 
-			mustCall(t)(function.Call(context, &Integer{Value: 300}, &Symbol{Value: "sym"}))
+			mustCall(t)(function.Call(context, NewInteger(300), &Symbol{Value: "sym"}))
 
 			{
-				expected := &Integer{Value: 12}
+				expected := NewInteger(12)
 				actual, ok := evalEnv.Get("foo")
 
 				if !ok {
@@ -190,7 +190,7 @@ func TestFunctionCall(t *testing.T) {
 				}
 			}
 			{
-				expected := &Integer{Value: 300}
+				expected := NewInteger(300)
 				actual, ok := evalEnv.Get("bar")
 
 				if !ok {
@@ -223,14 +223,14 @@ func TestFunctionCall(t *testing.T) {
 		t.Run("vanilla object", func(t *testing.T) {
 			context := &callContext{
 				env:  NewMainEnvironment(),
-				eval: func(ast.Node, Environment) (RubyObject, error) { return &Integer{Value: 8}, nil },
+				eval: func(ast.Node, Environment) (RubyObject, error) { return NewInteger(8), nil },
 			}
 
 			function := &Function{}
 
 			result, _ := function.Call(context)
 
-			expected := &Integer{Value: 8}
+			expected := NewInteger(8)
 
 			if !reflect.DeepEqual(expected, result) {
 				t.Logf("Expected result to equal\n%v\n\tgot\n%v\n", expected, result)
@@ -240,14 +240,14 @@ func TestFunctionCall(t *testing.T) {
 		t.Run("wrapped into a return value", func(t *testing.T) {
 			context := &callContext{
 				env:  NewMainEnvironment(),
-				eval: func(ast.Node, Environment) (RubyObject, error) { return &ReturnValue{Value: &Integer{Value: 8}}, nil },
+				eval: func(ast.Node, Environment) (RubyObject, error) { return &ReturnValue{Value: NewInteger(8)}, nil },
 			}
 
 			function := &Function{}
 
 			result, _ := function.Call(context)
 
-			expected := &Integer{Value: 8}
+			expected := NewInteger(8)
 
 			if !reflect.DeepEqual(expected, result) {
 				t.Logf("Expected result to equal\n%v\n\tgot\n%v\n", expected, result)
@@ -282,7 +282,7 @@ func TestFunctionCall(t *testing.T) {
 				{Name: "y"},
 			}
 
-			_, err := function.Call(context, &Integer{Value: 8})
+			_, err := function.Call(context, NewInteger(8))
 
 			if err != nil {
 				t.Logf("Expected no error, got %T:%v\n", err, err)

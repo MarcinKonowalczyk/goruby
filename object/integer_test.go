@@ -7,10 +7,10 @@ import (
 )
 
 func TestInteger_hashKey(t *testing.T) {
-	hello1 := &Integer{Value: 1}
-	hello2 := &Integer{Value: 1}
-	diff1 := &Integer{Value: 3}
-	diff2 := &Integer{Value: 3}
+	hello1 := NewInteger(1)
+	hello2 := NewInteger(1)
+	diff1 := NewInteger(3)
+	diff2 := NewInteger(3)
 
 	if hello1.hashKey() != hello2.hashKey() {
 		t.Errorf("strings with same content have different hash keys")
@@ -39,7 +39,7 @@ func TestIntegerDiv(t *testing.T) {
 		{
 			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(NewString(""), &Integer{}),
+			NewCoercionTypeError(NewString(""), NewInteger(0)),
 		},
 		{
 			[]RubyObject{NewInteger(0)},
@@ -73,7 +73,7 @@ func TestIntegerMul(t *testing.T) {
 		{
 			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(NewString(""), &Integer{}),
+			NewCoercionTypeError(NewString(""), NewInteger(0)),
 		},
 	}
 
@@ -101,7 +101,7 @@ func TestIntegerAdd(t *testing.T) {
 		{
 			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(NewString(""), &Integer{}),
+			NewCoercionTypeError(NewString(""), NewInteger(0)),
 		},
 	}
 
@@ -129,7 +129,7 @@ func TestIntegerSub(t *testing.T) {
 		{
 			[]RubyObject{NewString("")},
 			nil,
-			NewCoercionTypeError(NewString(""), &Integer{}),
+			NewCoercionTypeError(NewString(""), NewInteger(0)),
 		},
 	}
 
@@ -158,7 +158,7 @@ func TestIntegerSub(t *testing.T) {
 // 		{
 // 			[]RubyObject{NewString("")},
 // 			nil,
-// 			NewCoercionTypeError(NewString(""), &Integer{}),
+// 			NewCoercionTypeError(NewString(""), NewInteger(0)),)),
 // 		},
 // 	}
 
@@ -395,17 +395,17 @@ func TestIntegerSpaceship(t *testing.T) {
 	}{
 		{
 			[]RubyObject{NewInteger(6)},
-			&Integer{Value: -1},
+			NewInteger(-1),
 			nil,
 		},
 		{
 			[]RubyObject{NewInteger(4)},
-			&Integer{Value: 0},
+			NewInteger(0),
 			nil,
 		},
 		{
 			[]RubyObject{NewInteger(2)},
-			&Integer{Value: 1},
+			NewInteger(1),
 			nil,
 		},
 		{

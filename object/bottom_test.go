@@ -54,7 +54,7 @@ func TestBottomRaise(t *testing.T) {
 			utils.AssertError(t, err, NewRuntimeError("ouch"))
 		})
 		t.Run("integer argument", func(t *testing.T) {
-			obj := &Integer{Value: 5}
+			obj := NewInteger(5)
 			result, err := bottomRaise(context, obj)
 			utils.AssertEqualCmpAny(t, result, nil, CompareRubyObjectsForTests)
 			utils.AssertError(t, err, NewRuntimeError("%s", obj.Inspect()))

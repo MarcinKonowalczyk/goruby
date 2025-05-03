@@ -8,8 +8,8 @@ import (
 func TestRangeEvalToArray(t *testing.T) {
 	t.Run("empty range", func(t *testing.T) {
 		rng := &Range{
-			Left:      &Integer{Value: 1},
-			Right:     &Integer{Value: 1},
+			Left:      NewInteger(1),
+			Right:     NewInteger(1),
 			Inclusive: false,
 		}
 		arr := rng.ToArray()
@@ -23,16 +23,16 @@ func TestRangeEvalToArray(t *testing.T) {
 	})
 	t.Run("inclusive range", func(t *testing.T) {
 		rng := &Range{
-			Left:      &Integer{Value: 1},
-			Right:     &Integer{Value: 3},
+			Left:      NewInteger(1),
+			Right:     NewInteger(3),
 			Inclusive: true,
 		}
 		arr := rng.ToArray()
 		expected := &Array{
 			Elements: []RubyObject{
-				&Integer{Value: 1},
-				&Integer{Value: 2},
-				&Integer{Value: 3},
+				NewInteger(1),
+				NewInteger(2),
+				NewInteger(3),
 			},
 		}
 		if !reflect.DeepEqual(arr, expected) {
@@ -42,15 +42,15 @@ func TestRangeEvalToArray(t *testing.T) {
 	})
 	t.Run("exclusive range", func(t *testing.T) {
 		rng := &Range{
-			Left:      &Integer{Value: 1},
-			Right:     &Integer{Value: 3},
+			Left:      NewInteger(1),
+			Right:     NewInteger(3),
 			Inclusive: false,
 		}
 		arr := rng.ToArray()
 		expected := &Array{
 			Elements: []RubyObject{
-				&Integer{Value: 1},
-				&Integer{Value: 2},
+				NewInteger(1),
+				NewInteger(2),
 			},
 		}
 		if !reflect.DeepEqual(arr, expected) {

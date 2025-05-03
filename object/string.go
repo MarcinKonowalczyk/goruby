@@ -127,7 +127,7 @@ func stringGsub(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func stringLength(context CallContext, args ...RubyObject) (RubyObject, error) {
 	s := context.Receiver().(*String)
-	return &Integer{Value: int64(len(s.Value))}, nil
+	return NewInteger(int64(len(s.Value))), nil
 }
 
 func stringLines(context CallContext, args ...RubyObject) (RubyObject, error) {

@@ -60,7 +60,7 @@ func (rang *Range) ToArray() *Array {
 		right++
 	}
 	for i := left; i < right; i++ {
-		result.Elements = append(result.Elements, &Integer{Value: i})
+		result.Elements = append(result.Elements, NewInteger(i))
 	}
 	return result
 }

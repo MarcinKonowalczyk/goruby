@@ -57,9 +57,9 @@ func TestStringAdd(t *testing.T) {
 			nil,
 		},
 		{
-			[]RubyObject{&Integer{Value: 3}},
+			[]RubyObject{NewInteger(3)},
 			nil,
-			NewImplicitConversionTypeError(NewString(""), &Integer{}),
+			NewImplicitConversionTypeError(NewString(""), NewInteger(0)),
 		},
 	}
 
