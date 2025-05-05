@@ -176,30 +176,6 @@ func floatGt(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-// func floatEq(context CallContext, args ...RubyObject) (RubyObject, error) {
-// 	i := context.Receiver().(*Float)
-// 	right, err := rightToFloat(args)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	if i.Value == right {
-// 		return TRUE, nil
-// 	}
-// 	return FALSE, nil
-// }
-
-// func floatNeq(context CallContext, args ...RubyObject) (RubyObject, error) {
-// 	i := context.Receiver().(*Float)
-// 	right, err := rightToFloat(args)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	if i.Value != right {
-// 		return TRUE, nil
-// 	}
-// 	return FALSE, nil
-// }
-
 func floatSpaceship(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Float)
 	right, err := floatCmpHelper(args)

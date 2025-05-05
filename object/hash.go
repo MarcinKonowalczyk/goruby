@@ -38,16 +38,6 @@ func (h HashKey) bytes() []byte {
 	return bytes[:]
 }
 
-// func hash(obj RubyObject) HashKey {
-// 	if hashable, ok := obj.(hashable); ok {
-// 		return hashable.HashKey()
-// 	}
-// 	pointer := fmt.Sprintf("%p", obj)
-// 	h := fnv.New64a()
-// 	h.Write([]byte(pointer))
-// 	return HashKey(h.Sum64())
-// }
-
 type hashPair struct {
 	Key   RubyObject
 	Value RubyObject

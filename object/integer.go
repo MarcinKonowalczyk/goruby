@@ -114,13 +114,6 @@ func safeObjectToInteger(arg RubyObject) (int64, bool) {
 }
 
 func integerCmpHelper(args []RubyObject) (int64, error) {
-	// NOTE: len args already checked by `withArity`
-	// if len(args) != 1 {
-	// 	return 0, errors.WithMessage(
-	// 		NewWrongNumberOfArgumentsError(1, len(args)),
-	// 		callersName(),
-	// 	)
-	// }
 	right, ok := safeObjectToInteger(args[0])
 	if !ok {
 		return 0, errors.WithMessage(
@@ -166,36 +159,6 @@ func integerGt(context CallContext, args ...RubyObject) (RubyObject, error) {
 	}
 	return FALSE, nil
 }
-
-// func integerEq(context CallContext, args ...RubyObject) (RubyObject, error) {
-// 	i := context.Receiver().(*Integer)
-// 	right, ok := args[0].(*Integer)
-// 	if !ok {
-// 		return nil, NewArgumentError(
-// 			"comparison of Integer with %s failed",
-// 			args[0].Class().(RubyObject).Inspect(),
-// 		)
-// 	}
-// 	if i.Value == right.Value {
-// 		return TRUE, nil
-// 	}
-// 	return FALSE, nil
-// }
-
-// func integerNeq(context CallContext, args ...RubyObject) (RubyObject, error) {
-// 	i := context.Receiver().(*Integer)
-// 	right, ok := args[0].(*Integer)
-// 	if !ok {
-// 		return nil, NewArgumentError(
-// 			"comparison of Integer with %s failed",
-// 			args[0].Class().(RubyObject).Inspect(),
-// 		)
-// 	}
-// 	if i.Value != right.Value {
-// 		return TRUE, nil
-// 	}
-// 	return FALSE, nil
-// }
 
 func integerSpaceship(context CallContext, args ...RubyObject) (RubyObject, error) {
 	i := context.Receiver().(*Integer)
