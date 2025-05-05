@@ -2,6 +2,8 @@ package token
 
 import (
 	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func filterEmpty(arr []string) []string {
@@ -118,24 +120,13 @@ func TestTypeSting(t *testing.T) {
 	seen := make(map[Type]bool)
 
 	for _, test := range tests {
-		if seen[test.tk] {
-			t.Errorf("Duplicate token %s in tests!", test.tk)
-		}
+		utils.Assert(t, !seen[test.tk], "Duplicate token %s in tests!", test.tk)
 		seen[test.tk] = true
 
-		if test.tk.String() != test.str {
-			t.Errorf("Expected %s, got %s", test.str, test.tk.String())
-		}
-		if ToType(test.str) != test.tk {
-			t.Errorf("Expected %s, got %s", test.str, ToType(test.str))
-		}
-		if test.repr != "" {
-			if type_reprs[test.tk] != test.repr {
-				t.Errorf("Expected %s, got %s", test.repr, type_reprs[test.tk])
-			}
-		} else {
-			t.Errorf("Expected non-empty repr for %s", test.tk)
-		}
+		utils.AssertEqual(t, test.tk.String(), test.str)
+		utils.AssertEqual(t, ToType(test.str), test.tk)
+		utils.AssertNotEqual(t, test.repr, "")
+		utils.AssertEqual(t, type_reprs[test.tk], test.repr)
 	}
 
 	test_strings := make([]string, 0)
@@ -146,32 +137,21 @@ func TestTypeSting(t *testing.T) {
 	}
 
 	missing := findMissingSkipEmpty(test_reprs, filterEmpty(type_reprs[:]))
-	if len(missing) > 0 {
-		t.Errorf("Missing tokens: %v", missing)
-	}
+	utils.AssertEqual(t, len(missing), 0)
 
 	missing = findMissingSkipEmpty(test_strings, filterEmpty(type_strings[:]))
-	if len(missing) > 0 {
-		t.Errorf("Missing tokens: %v", missing)
-	}
+	utils.AssertEqual(t, len(missing), 0)
 
 }
 
 func TestIllegalTypeIsZero(t *testing.T) {
-	if ILLEGAL != 0 {
-		t.Errorf("Illegal token should be 0 but got %d", ILLEGAL)
-	}
+	utils.AssertEqual(t, ILLEGAL, 0)
 }
 
 func TestTypeCount(t *testing.T) {
 
 	n_type_reprs := len(filterEmpty(type_reprs[:]))
 	n_type_strings := len(filterEmpty(type_strings[:]))
-
-	if type_count != n_type_reprs {
-		t.Errorf("Token count %d does not match type_reprs %d", type_count, n_type_reprs)
-	}
-	if type_count != n_type_strings {
-		t.Errorf("Token count %d does not match type_strings %d", type_count, n_type_strings)
-	}
+	utils.AssertEqual(t, type_count, n_type_reprs)
+	utils.AssertEqual(t, type_count, n_type_strings)
 }
