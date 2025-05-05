@@ -1263,8 +1263,8 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 
 	p.nextToken()
 
-	if !p.currentTokenOneOf(token.IDENT, token.CLASS) && !p.curToken.Type.IsOperator() {
-		p.Error(p.curToken.Type, "", token.IDENT, token.CLASS)
+	if !p.currentTokenIs(token.IDENT) && !p.curToken.Type.IsOperator() {
+		p.Error(p.curToken.Type, "", token.IDENT)
 		return nil
 	}
 
@@ -1279,7 +1279,7 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 		p.accept(token.LPAREN)
 		p.nextToken()
 		contextCallExpression.Arguments = p.parseExpressionList(token.RPAREN)
-		if p.peekTokenOneOf(token.LBRACE) {
+		if p.peekTokenIs(token.LBRACE) {
 			p.acceptOneOf(token.LBRACE)
 			contextCallExpression.Block = p.parseBlock()
 		}
@@ -1293,7 +1293,7 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 	p.nextToken()
 
 	contextCallExpression.Arguments = p.parseCallArguments(token.LBRACE)
-	if p.currentTokenOneOf(token.LBRACE) {
+	if p.currentTokenIs(token.LBRACE) {
 		contextCallExpression.Block = p.parseBlock()
 	}
 	return contextCallExpression
@@ -1304,12 +1304,12 @@ func (p *parser) parseContextCallExpression(context ast.Expression) ast.Expressi
 		defer un(trace(p, "parseContextCallExpression"))
 	}
 	contextCallExpression := &ast.ContextCallExpression{Context: context}
-	if p.currentTokenOneOf(token.DOT) {
+	if p.currentTokenIs(token.DOT) {
 		p.nextToken()
 	}
 
-	if !p.currentTokenOneOf(token.IDENT, token.CLASS) {
-		p.Error(p.curToken.Type, "", token.IDENT, token.CLASS)
+	if !p.currentTokenIs(token.IDENT) {
+		p.Error(p.curToken.Type, "", token.IDENT)
 		return nil
 	}
 

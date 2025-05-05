@@ -79,7 +79,6 @@ func TestTypeSting(t *testing.T) {
 		{tk: COMMA, str: "COMMA", repr: ","},
 		{tk: SEMICOLON, str: "SEMICOLON", repr: ";"},
 		{tk: COMMENT, str: "COMMENT", repr: "# ..."},
-		{tk: CLASS, str: "CLASS", repr: "class"},
 		//
 		{tk: DOT, str: "DOT", repr: "."},
 		{tk: DDOT, str: "DDOT", repr: ".."},
