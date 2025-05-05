@@ -51,7 +51,6 @@ var precedences = map[token.Type]int{
 	token.SPACESHIP:  precEquals,
 	token.LSHIFT:     precShift,
 	token.QMARK:      precTernary,
-	token.SQMARK:     precTernary,
 	token.COLON:      precTernary,
 	token.LT:         precLessGreater,
 	token.GT:         precLessGreater,
@@ -194,7 +193,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerInfix(token.IF, p.parseModifierConditionalExpression)
 	p.registerInfix(token.UNLESS, p.parseModifierConditionalExpression)
 	p.registerInfix(token.QMARK, p.parseTernaryIfExpression)
-	p.registerInfix(token.SQMARK, p.parseTernaryIfExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpressionWithParens)
 	p.registerInfix(token.IDENT, p.parseCallArgument)
 	p.registerInfix(token.INT, p.parseCallArgument)
@@ -1272,7 +1270,7 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 
 	contextCallExpression.Function = &ast.Identifier{Value: p.curToken.Literal}
 
-	if p.peekTokenOneOf(token.SEMICOLON, token.NEWLINE, token.EOF, token.DOT, token.RPAREN, token.SQMARK) {
+	if p.peekTokenOneOf(token.SEMICOLON, token.NEWLINE, token.EOF, token.DOT, token.RPAREN, token.QMARK) {
 		contextCallExpression.Arguments = []ast.Expression{}
 		return contextCallExpression
 	}

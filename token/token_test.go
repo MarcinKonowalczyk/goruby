@@ -94,7 +94,6 @@ func TestTypeSting(t *testing.T) {
 		{tk: RBRACKET, str: "RBRACKET", repr: "]"},
 		//
 		{tk: QMARK, str: "QMARK", repr: "?"},
-		{tk: SQMARK, str: "SQMARK", repr: "_?"},
 		{tk: SYMBOL, str: "SYMBOL", repr: ":"},
 		{tk: POW, str: "POW", repr: "**"},
 		//

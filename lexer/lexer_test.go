@@ -313,7 +313,7 @@ func TestLex(t *testing.T) {
 				expect(t)("IDENT", "foo"),
 				expect(t)("DOT", "."),
 				expect(t)("IDENT", "bar"),
-				expect(t)("SQMARK", " ?"),
+				expect(t)("QMARK", " ?"),
 				expect(t)("INT", "1"),
 				expect(t)("COLON", ":"),
 				expect(t)("INT", "2"),

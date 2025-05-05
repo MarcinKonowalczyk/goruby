@@ -138,7 +138,7 @@ func startLexer(l *Lexer) StateFn {
 		switch l.peek() {
 		case '?':
 			l.next() // consume the whitespace
-			l.emit(token.SQMARK)
+			l.emit(token.QMARK)
 		case '[':
 			l.next() // consume the whitespace
 			l.emit(token.SLBRACKET)

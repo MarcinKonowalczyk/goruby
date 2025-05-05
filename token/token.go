@@ -76,7 +76,6 @@ const (
 	RBRACKET  // ]
 
 	QMARK  // ?
-	SQMARK // _?
 	SYMBOL // : ...
 
 	// Keywords
@@ -171,7 +170,7 @@ var type_strings = [...]string{
 	COMMA:     "COMMA",
 	SEMICOLON: "SEMICOLON",
 	COMMENT:   "COMMENT",
-	CLASS:     "CLASS",
+	CLASS:     "CLASS", // NOTE: treated as a comment. classes are not supported
 
 	DOT:       "DOT",
 	DDOT:      "DDOT",
@@ -190,7 +189,6 @@ var type_strings = [...]string{
 	LAMBDAROCKET: "LAMBDAROCKET",
 
 	QMARK:  "QMARK",
-	SQMARK: "SQMARK",
 	SYMBOL: "SYMBOL",
 
 	DEF:    "DEF",
@@ -249,7 +247,7 @@ var type_reprs = [...]string{
 	COMMA:     ",",
 	SEMICOLON: ";",
 	COMMENT:   "# ...",
-	CLASS:     "class",
+	CLASS:     "class", // NOTE: treated as a comment. classes are not supported
 
 	DOT:       ".",
 	DDOT:      "..",
@@ -268,7 +266,6 @@ var type_reprs = [...]string{
 	LAMBDAROCKET: "->",
 
 	QMARK:  "?",
-	SQMARK: "_?",
 	SYMBOL: ":",
 
 	DEF:    "def",
