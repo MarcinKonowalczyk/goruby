@@ -41,8 +41,6 @@ func TestTypeSting(t *testing.T) {
 		{tk: ILLEGAL, str: "ILLEGAL", repr: "ILLEGAL"},
 		{tk: EOF, str: "EOF", repr: "EOF"},
 		{tk: IDENT, str: "IDENT", repr: "IDENT"},
-		{tk: CONST, str: "CONST", repr: "CONST"},
-		{tk: GLOBAL, str: "GLOBAL", repr: "GLOBAL"},
 		{tk: INT, str: "INT", repr: "INT"},
 		{tk: FLOAT, str: "FLOAT", repr: "FLOAT"},
 		{tk: STRING, str: "STRING", repr: "STRING"},

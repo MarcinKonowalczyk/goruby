@@ -11,7 +11,7 @@ import (
 func Test_Parent(t *testing.T) {
 	t.Run("parent found", func(t *testing.T) {
 		child := &Assignment{
-			Left:  &Identifier{Value: "x"},
+			Left:  &Identifier{"x"},
 			Right: &IntegerLiteral{Value: 2},
 		}
 		parent := &ExpressionStatement{Expression: child}
@@ -50,7 +50,7 @@ func Test_Parent(t *testing.T) {
 				},
 				&ExpressionStatement{
 					Expression: &Assignment{
-						Left:  &Identifier{Value: "x"},
+						Left:  &Identifier{"x"},
 						Right: &IntegerLiteral{Value: 2},
 					},
 				},
@@ -66,7 +66,7 @@ func Test_Parent(t *testing.T) {
 func Test_Path(t *testing.T) {
 	t.Run("child found", func(t *testing.T) {
 		child := &Assignment{
-			Left:  &Identifier{Value: "x"},
+			Left:  &Identifier{"x"},
 			Right: &IntegerLiteral{Value: 2},
 		}
 		root := &Program{
@@ -99,7 +99,7 @@ func Test_Path(t *testing.T) {
 				},
 				&ExpressionStatement{
 					Expression: &Assignment{
-						Left:  &Identifier{Value: "x"},
+						Left:  &Identifier{"x"},
 						Right: &IntegerLiteral{Value: 2},
 					},
 				},
@@ -120,7 +120,7 @@ func Test_treeToList(t *testing.T) {
 			},
 			&ExpressionStatement{
 				Expression: &Assignment{
-					Left:  &Identifier{Value: "x"},
+					Left:  &Identifier{"x"},
 					Right: &IntegerLiteral{Value: 2},
 				},
 			},
@@ -137,15 +137,15 @@ func Test_treeToList(t *testing.T) {
 	expected.PushBack(&IntegerLiteral{Value: 3})
 	expected.PushBack(&ExpressionStatement{
 		Expression: &Assignment{
-			Left:  &Identifier{Value: "x"},
+			Left:  &Identifier{"x"},
 			Right: &IntegerLiteral{Value: 2},
 		},
 	})
 	expected.PushBack(&Assignment{
-		Left:  &Identifier{Value: "x"},
+		Left:  &Identifier{"x"},
 		Right: &IntegerLiteral{Value: 2},
 	})
-	expected.PushBack(&Identifier{Value: "x"})
+	expected.PushBack(&Identifier{"x"})
 	expected.PushBack(&IntegerLiteral{Value: 2})
 
 	utils.Assert(t, reflect.DeepEqual(expected, actual), "Expected list to equal\n%+#v\n\tgot\n%+#v\n", expected, actual)
@@ -177,7 +177,7 @@ func Test_Contains(t *testing.T) {
 		needle := &IntegerLiteral{Value: 3}
 		statement := &ExpressionStatement{
 			Expression: &Assignment{
-				Left:  &Identifier{Value: "foo"},
+				Left:  &Identifier{"foo"},
 				Right: &StringLiteral{Value: "bar"},
 			},
 		}

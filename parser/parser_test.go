@@ -418,9 +418,10 @@ func TestGlobalExpression(t *testing.T) {
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 	utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
-	global, ok := stmt.Expression.(*ast.Global)
+	global, ok := stmt.Expression.(*ast.Identifier)
 	utils.Assert(t, ok, "expression not *ast.Global. got=%T", stmt.Expression)
 	utils.AssertEqual(t, global.Value, "$foobar")
+	utils.Assert(t, global.IsGlobal(), "global not set to true")
 }
 
 func TestGlobalExpressionWithIndex(t *testing.T) {
@@ -2197,10 +2198,7 @@ func TestArraySplat(t *testing.T) {
 		for i, expected := range tt.expected {
 			element := arrayLit.Elements[i]
 			if expected.is_splat {
-				expected_expr := &ast.Identifier{
-					Value: expected.name,
-				}
-				testSplat(t, element, expected_expr)
+				testSplat(t, element, &ast.Identifier{Value: expected.name})
 			} else {
 				testIdentifier(t, element, expected.name)
 			}
@@ -2326,9 +2324,10 @@ func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) {
 
 func testGlobal(t *testing.T, exp ast.Expression, value string) {
 	t.Helper()
-	global, ok := exp.(*ast.Global)
+	global, ok := exp.(*ast.Identifier)
 	utils.Assert(t, ok, "exp not *ast.Global. got=%T", exp)
 	utils.AssertEqual(t, global.Value, value)
+	utils.Assert(t, global.IsGlobal())
 }
 
 func testSymbol(t *testing.T, exp ast.Expression, value string) {

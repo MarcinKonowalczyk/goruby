@@ -187,10 +187,8 @@ var (
 	_ Expression = &MultiAssignment{}
 )
 
-// An Identifier represents an identifier in the program
 type Identifier struct {
-	Constant bool // true if the identifier is a constant
-	Value    string
+	Value string
 }
 
 func (i *Identifier) node()           {}
@@ -203,23 +201,19 @@ var (
 	_ Expression = &Identifier{}
 )
 
-// IsConstant returns true if the Identifier represents a Constant, false otherwise
-// func (i *Identifier) IsConstant() bool { return i.Token.Type == token.CONST }
-
-// Global represents a global in the AST
-type Global struct {
-	Value string
+func (i *Identifier) IsConstant() bool {
+	if len(i.Value) == 0 {
+		return false
+	}
+	return i.Value[0] >= 'A' && i.Value[0] <= 'Z'
 }
 
-func (g *Global) node()           {}
-func (g *Global) expressionNode() {}
-
-func (g *Global) String() string { return g.Value }
-
-var (
-	_ Node       = &Global{}
-	_ Expression = &Global{}
-)
+func (i *Identifier) IsGlobal() bool {
+	if len(i.Value) == 0 {
+		return false
+	}
+	return i.Value[0] == '$'
+}
 
 // IntegerLiteral represents an integer in the AST
 type IntegerLiteral struct {

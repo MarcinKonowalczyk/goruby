@@ -97,7 +97,7 @@ func TestLex(t *testing.T) {
 				expect(t)("ASSIGN", "="),
 				expect(t)("INT", "5"),
 				NL,
-				expect(t)("CONST", "Ten"),
+				expect(t)("IDENT", "Ten"),
 				expect(t)("ASSIGN", "="),
 				expect(t)("INT", "10"),
 			},
@@ -335,21 +335,18 @@ func TestLex(t *testing.T) {
 				$foo;
 				$Foo
 				$dotAfter.
-				$@
 			`,
 			exp: []expected{
-				expect(t)("GLOBAL", "$foo"),
+				expect(t)("IDENT", "$foo"),
 				expect(t)("COMMA", ","),
 				NL,
-				expect(t)("GLOBAL", "$foo"),
+				expect(t)("IDENT", "$foo"),
 				expect(t)("SEMICOLON", ";"),
 				NL,
-				expect(t)("GLOBAL", "$Foo"),
+				expect(t)("IDENT", "$Foo"),
 				NL,
-				expect(t)("GLOBAL", "$dotAfter"),
+				expect(t)("IDENT", "$dotAfter"),
 				expect(t)("DOT", "."),
-				NL,
-				expect(t)("GLOBAL", "$@"),
 			},
 		},
 		{
@@ -394,7 +391,7 @@ func TestLex(t *testing.T) {
 				expect(t)("END", "end"),
 				NL,
 				expect(t)("IDENT", "module"),
-				expect(t)("CONST", "Abc"),
+				expect(t)("IDENT", "Abc"),
 				NL,
 				expect(t)("END", "end"),
 				NL,

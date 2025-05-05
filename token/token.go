@@ -1,9 +1,7 @@
 package token
 
 import (
-	"bytes"
 	"strconv"
-	"unicode"
 )
 
 //go:generate stringer -type=Type
@@ -16,8 +14,6 @@ const (
 	// Identifier + literals
 	literal_beg
 	IDENT
-	CONST
-	GLOBAL
 	INT
 	FLOAT
 	STRING
@@ -140,8 +136,6 @@ var type_strings = [...]string{
 	EOF:     "EOF",
 
 	IDENT:  "IDENT",
-	CONST:  "CONST",
-	GLOBAL: "GLOBAL",
 	INT:    "INT",
 	FLOAT:  "FLOAT",
 	STRING: "STRING",
@@ -220,8 +214,6 @@ var type_reprs = [...]string{
 	EOF:     "EOF",
 
 	IDENT:  "IDENT",
-	CONST:  "CONST",
-	GLOBAL: "GLOBAL",
 	INT:    "INT",
 	FLOAT:  "FLOAT",
 	STRING: "STRING",
@@ -353,9 +345,6 @@ func LookupIdent(ident string) Type {
 	}
 	if ident == "class" {
 		return COMMENT
-	}
-	if unicode.IsUpper(bytes.Runes([]byte(ident))[0]) {
-		return CONST
 	}
 	return IDENT
 }

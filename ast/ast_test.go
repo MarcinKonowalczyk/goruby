@@ -11,12 +11,8 @@ func TestString(t *testing.T) {
 		Statements: []Statement{
 			&ExpressionStatement{
 				Expression: &Assignment{
-					Left: &Identifier{
-						Value: "myVar",
-					},
-					Right: &Identifier{
-						Value: "anotherVar",
-					},
+					Left:  &Identifier{"myVar"},
+					Right: &Identifier{"anotherVar"},
 				},
 			},
 		},

@@ -149,7 +149,6 @@ func Walk(v Visitor, node Node) {
 	switch n := node.(type) {
 	// Expressions
 	case *Identifier,
-		*Global,
 		*IntegerLiteral,
 		*StringLiteral,
 		*SymbolLiteral,

@@ -74,8 +74,6 @@ var precedences = map[token.Type]int{
 	token.DDOT:       precRange,
 	token.DDDOT:      precRange,
 	token.IDENT:      precCallArg,
-	token.CONST:      precCallArg,
-	token.GLOBAL:     precCallArg,
 	token.INT:        precCallArg,
 	token.STRING:     precCallArg,
 	token.SLBRACKET:  precCallArg,
@@ -145,7 +143,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 
 	p.prefixParseFns = make(map[token.Type]prefixParseFn)
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
-	p.registerPrefix(token.CONST, p.parseIdentifier)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
 	p.registerPrefix(token.FLOAT, p.parseFloatLiteral)
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
@@ -164,7 +161,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerPrefix(token.SLBRACKET, p.parseArrayLiteral)
 	p.registerPrefix(token.NIL, p.parseNilLiteral)
 	p.registerPrefix(token.LBRACE, p.parseHash)
-	p.registerPrefix(token.GLOBAL, p.parseGlobal)
 	p.registerPrefix(token.LAMBDAROCKET, p.parseLambdaLiteral)
 	p.registerPrefix(token.ASTERISK, p.parseSplat)
 
@@ -201,8 +197,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerInfix(token.SQMARK, p.parseTernaryIfExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpressionWithParens)
 	p.registerInfix(token.IDENT, p.parseCallArgument)
-	p.registerInfix(token.CONST, p.parseCallArgument)
-	p.registerInfix(token.GLOBAL, p.parseCallArgument)
 	p.registerInfix(token.INT, p.parseCallArgument)
 	p.registerInfix(token.STRING, p.parseCallArgument)
 	p.registerInfix(token.SYMBOL, p.parseCallArgument)
@@ -284,10 +278,8 @@ func (p *parser) parseIdentifier() ast.Expression {
 	if p.trace {
 		defer un(trace(p, "parseIdentifier"))
 	}
-	return &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
+	return &ast.Identifier{Value: p.curToken.Literal}
 }
-
-// Constant: p.currentTokenIs(token.CONST),
 
 // Errors returns all errors which happened during the parsing of the input.
 func (p *parser) Errors() []error {
@@ -532,7 +524,7 @@ func (p *parser) parseLambdaLiteral() ast.Expression {
 		defer un(trace(p, "parseLambdaLiteral"))
 	}
 	proc := &ast.FunctionLiteral{
-		Name: &ast.Identifier{Constant: false, Value: newAnonymousName("lambda")},
+		Name: &ast.Identifier{Value: newAnonymousName("lambda")},
 	}
 	if p.peekTokenIs(token.LPAREN) {
 		proc.Parameters = p.parseFunctionParameters(token.LPAREN, token.RPAREN)
@@ -625,7 +617,6 @@ func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
 
 	switch left.(type) {
 	case *ast.Identifier:
-	case *ast.Global:
 	case *ast.IndexExpression:
 	case ast.ExpressionList:
 	default:
@@ -697,13 +688,6 @@ func (p *parser) parseNilLiteral() ast.Expression {
 		defer un(trace(p, "parseNilLiteral"))
 	}
 	return &ast.SymbolLiteral{Value: "nil"}
-}
-
-func (p *parser) parseGlobal() ast.Expression {
-	if p.trace {
-		defer un(trace(p, "parseGlobal"))
-	}
-	return &ast.Global{Value: p.curToken.Literal}
 }
 
 var integerLiteralReplacer = strings.NewReplacer("_", "")
@@ -868,7 +852,7 @@ func (p *parser) parseBlock() *ast.FunctionLiteral {
 		defer un(trace(p, "parseBlock"))
 	}
 	block := &ast.FunctionLiteral{
-		Name: &ast.Identifier{Constant: false, Value: newAnonymousName("block")},
+		Name: &ast.Identifier{Value: newAnonymousName("block")},
 	}
 	if p.peekTokenIs(token.PIPE) {
 		block.Parameters = p.parseFunctionParameters(token.PIPE, token.PIPE)
@@ -1115,17 +1099,17 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 	}
 	lit := &ast.FunctionLiteral{}
 
-	if !p.peekTokenOneOf(token.IDENT, token.CONST) && !p.peekToken.Type.IsOperator() {
-		p.Error(p.peekToken.Type, "", token.IDENT, token.CONST)
+	if !p.peekTokenOneOf(token.IDENT) && !p.peekToken.Type.IsOperator() {
+		p.Error(p.peekToken.Type, "", token.IDENT)
 		return nil
 	}
 
-	if p.peekTokenOneOf(token.IDENT, token.CONST) {
-		p.acceptOneOf(token.IDENT, token.CONST)
-		lit.Name = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
+	if p.peekTokenOneOf(token.IDENT) {
+		p.acceptOneOf(token.IDENT)
+		lit.Name = &ast.Identifier{Value: p.curToken.Literal}
 	} else {
 		p.nextToken()
-		lit.Name = &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
+		lit.Name = &ast.Identifier{Value: p.curToken.Literal}
 	}
 
 	lit.Parameters = p.parseFunctionParameters(token.LPAREN, token.RPAREN)
@@ -1151,13 +1135,13 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 		}
 		switch left := x.Left.(type) {
 		case *ast.Identifier:
-			if left.Constant {
+			if left.IsConstant() {
 				p.errors = append(p.errors, fmt.Errorf("dynamic constant assignment"))
 			}
 		case ast.ExpressionList:
 			for _, expr := range left {
 				if ident, ok := expr.(*ast.Identifier); ok {
-					if ident.Constant {
+					if ident.IsConstant() {
 						p.errors = append(p.errors, fmt.Errorf("dynamic constant assignment"))
 					}
 				}
@@ -1203,7 +1187,7 @@ func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast
 	}
 	p.accept(token.IDENT)
 
-	ident := &ast.FunctionParameter{Name: &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}}
+	ident := &ast.FunctionParameter{Name: &ast.Identifier{Value: p.curToken.Literal}}
 	if got_splat {
 		ident.Splat = true
 		got_splat = false
@@ -1221,7 +1205,7 @@ func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast
 			p.accept(token.ASTERISK)
 		}
 		p.accept(token.IDENT)
-		ident := &ast.FunctionParameter{Name: &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}}
+		ident := &ast.FunctionParameter{Name: &ast.Identifier{Value: p.curToken.Literal}}
 		if got_splat {
 			ident.Splat = true
 			got_splat = false
@@ -1286,8 +1270,7 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 		return nil
 	}
 
-	function := &ast.Identifier{Constant: p.currentTokenIs(token.CONST), Value: p.curToken.Literal}
-	contextCallExpression.Function = function
+	contextCallExpression.Function = &ast.Identifier{Value: p.curToken.Literal}
 
 	if p.peekTokenOneOf(token.SEMICOLON, token.NEWLINE, token.EOF, token.DOT, token.RPAREN, token.SQMARK) {
 		contextCallExpression.Arguments = []ast.Expression{}

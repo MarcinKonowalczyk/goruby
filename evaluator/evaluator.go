@@ -85,13 +85,21 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 	// case (*ast.Boolean):
 	// 	return nativeBoolToBooleanObject(node.Value), nil
 	case *ast.Identifier:
-		return evalIdentifier(node, env)
-	case *ast.Global:
-		val, ok := env.Get(node.Value)
-		if !ok {
-			return object.NIL, nil
+		if node.IsGlobal() {
+			val, ok := env.Get(node.Value)
+			if !ok {
+				return object.NIL, nil
+			}
+			return val, nil
+		} else {
+			return evalIdentifier(node, env)
 		}
-		return val, nil
+	// case *ast.Global:
+	// 	val, ok := env.Get(node.Value)
+	// 	if !ok {
+	// 		return object.NIL, nil
+	// 	}
+	// 	return val, nil
 	case *ast.StringLiteral:
 		value := unescapeStringLiteral(node)
 		value, err := evaluateFormatDirectives(env, value)
@@ -186,11 +194,11 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			return evalIndexExpressionAssignment(indexLeft, index, expandToArrayIfNeeded(right))
 		case *ast.Identifier:
 			right = expandToArrayIfNeeded(right)
-			env.Set(left.Value, right)
-			return right, nil
-		case *ast.Global:
-			right = expandToArrayIfNeeded(right)
-			env.SetGlobal(left.Value, right)
+			if left.IsGlobal() {
+				env.SetGlobal(left.Value, right)
+			} else {
+				env.Set(left.Value, right)
+			}
 			return right, nil
 		case ast.ExpressionList:
 			var values rubyObjects
@@ -461,9 +469,7 @@ func evaluateFormatDirectives(env object.Environment, value string) (string, err
 		start += 3 // skip the `#{`
 		end -= 2   // skip the }`
 		// loop up identifier
-		val, err := Eval(&ast.Identifier{
-			Value: value[start:end],
-		}, env)
+		val, err := Eval(&ast.Identifier{Value: value[start:end]}, env)
 		if err != nil {
 			return "", errors.WithMessage(err, "eval format directive")
 		}
@@ -930,7 +936,7 @@ func evalIdentifier(node *ast.Identifier, env object.Environment) (object.RubyOb
 		return val, nil
 	}
 
-	if node.Constant {
+	if node.IsConstant() {
 		return nil, errors.Wrap(
 			object.NewUninitializedConstantNameError(node.Value),
 			"eval identifier",
