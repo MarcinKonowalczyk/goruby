@@ -2,7 +2,6 @@ package object
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 )
 
@@ -285,11 +284,11 @@ func CompareRubyObjectsForTests(a, b any) bool {
 	// ok, we are not hashable but we are the same class
 	// check the addresses
 
-	addrB := fmt.Sprintf("%p", b_obj)
-	if addrA == addrB {
-		return true
-	}
-	return reflect.DeepEqual(a_obj, b_obj)
+	// addrB := fmt.Sprintf("%p", b_obj)
+	// if addrA == addrB {
+	// 	return true
+	// }
+	// return reflect.DeepEqual(a_obj, b_obj)
 }
 
 func rubyObjectsEqual(left, right RubyObject, swapped bool) bool {
