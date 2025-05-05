@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/token"
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 // raise "foo" unless x < 10
@@ -581,16 +582,10 @@ func TestLex(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			lexer := New(preprocessLines(test.lines))
 			tokens := allTokens(lexer)
-			if len(tokens) != len(test.exp) {
-				t.Fatalf("Expected %d tokens, got %d: %v", len(test.exp), len(tokens), tokens)
-			}
+			utils.AssertEqual(t, len(tokens), len(test.exp))
 			for i, exp := range test.exp {
-				if tokens[i].Type != exp.typ {
-					t.Fatalf("Expected token %d to be %q, got %q", i, exp.typ, tokens[i].Type)
-				}
-				if tokens[i].Literal != exp.lit {
-					t.Fatalf("Expected token %d to be %q, got %q", i, exp.lit, tokens[i].Literal)
-				}
+				utils.AssertEqual(t, tokens[i].Type, exp.typ)
+				utils.AssertEqual(t, tokens[i].Literal, exp.lit)
 			}
 		})
 	}

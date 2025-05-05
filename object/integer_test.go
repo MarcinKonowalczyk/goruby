@@ -12,17 +12,9 @@ func TestInteger_hashKey(t *testing.T) {
 	diff1 := NewInteger(3)
 	diff2 := NewInteger(3)
 
-	if hello1.HashKey() != hello2.HashKey() {
-		t.Errorf("strings with same content have different hash keys")
-	}
-
-	if diff1.HashKey() != diff2.HashKey() {
-		t.Errorf("strings with same content have different hash keys")
-	}
-
-	if hello1.HashKey() == diff1.HashKey() {
-		t.Errorf("strings with different content have same hash keys")
-	}
+	utils.AssertEqual(t, hello1.HashKey(), hello2.HashKey())
+	utils.AssertEqual(t, diff1.HashKey(), diff2.HashKey())
+	utils.AssertNotEqual(t, hello1.HashKey(), diff1.HashKey())
 }
 
 func TestIntegerDiv(t *testing.T) {

@@ -2,7 +2,6 @@ package evaluator_test
 
 import (
 	"go/token"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -242,15 +241,8 @@ end
 		env := object.NewEnvironment()
 		obj := &object.Bottom{}
 		env.Set("self", obj)
-		evaluated, err := testEval(tt.input, env)
-
-		if err == nil {
-			t.Errorf(
-				"no error returned. got=%T(%+v)",
-				evaluated,
-				evaluated,
-			)
-		}
+		_, err := testEval(tt.input, env)
+		utils.AssertNotEqual(t, err, nil)
 
 		actual, ok := errors.Cause(err).(object.RubyObject)
 		utils.Assert(t, ok, "Error is not a RubyObject. got=%T (%+v)", err, err)
@@ -838,10 +830,7 @@ func TestKeyword__File__(t *testing.T) {
 
 func testNilObject(t *testing.T, obj object.RubyObject) bool {
 	t.Helper()
-	if obj != object.NIL {
-		t.Errorf("object is not NIL. got=%T (%+v)", obj, obj)
-		return false
-	}
+	utils.AssertEqualCmpAny(t, obj, object.NIL, object.CompareRubyObjectsForTests)
 	return true
 }
 
@@ -857,167 +846,78 @@ func testEval(input string, context ...object.Environment) (object.RubyObject, e
 	return evaluator.Eval(program, env)
 }
 
-func testObject(t *testing.T, exp object.RubyObject, expected interface{}) bool {
+func testObject(t *testing.T, exp object.RubyObject, expected interface{}) {
 	t.Helper()
 	switch v := expected.(type) {
 	case int:
-		return testIntegerObject(t, exp, int64(v))
+		testIntegerObject(t, exp, int64(v))
 	case int64:
-		return testIntegerObject(t, exp, v)
+		testIntegerObject(t, exp, v)
 	case string:
 		if strings.HasPrefix(v, ":") {
-			return testSymbolObject(t, exp, strings.TrimPrefix(v, ":"))
+			testSymbolObject(t, exp, strings.TrimPrefix(v, ":"))
 		}
-		return testStringObject(t, exp, v)
+		testStringObject(t, exp, v)
 	case bool:
-		return testBooleanObject(t, exp, v)
+		testBooleanObject(t, exp, v)
 	case map[string]string:
-		return testHashObject(t, exp, v)
+		testHashObject(t, exp, v)
 	case []string:
-		return testArrayObject(t, exp, v)
+		testArrayObject(t, exp, v)
 	case nil:
-		return true
+		//
+	default:
+		t.Errorf("type of object not handled. got=%T", exp)
 	}
-	t.Errorf("type of object not handled. got=%T", exp)
-	return false
 }
 
 func testBooleanObject(t *testing.T, obj object.RubyObject, expected bool) bool {
 	t.Helper()
 	result, ok := object.SymbolToBool(obj)
-	if !ok {
-		t.Errorf(
-			"object is not Boolean. got=%T (%+v)",
-			obj,
-			obj,
-		)
-		return false
-	}
-	if result != expected {
-		t.Errorf(
-			"object has wrong value. got=%v, want=%v",
-			result,
-			expected,
-		)
-		return false
-	}
+	utils.Assert(t, ok, "object is not Boolean. got=%T (%+v)", obj, obj)
+	utils.AssertEqual(t, result, expected)
 	return true
 }
 
-func testIntegerObject(t *testing.T, obj object.RubyObject, expected int64) bool {
+func testIntegerObject(t *testing.T, obj object.RubyObject, expected int64) {
 	t.Helper()
 	result, ok := obj.(*object.Integer)
-	if !ok {
-		t.Errorf(
-			"object is not Integer. got=%T (%+v)",
-			obj,
-			obj,
-		)
-		return false
-	}
-	if result.Value != expected {
-		t.Errorf(
-			"object has wrong value. got=%v, want=%v",
-			result.Value,
-			expected,
-		)
-		return false
-	}
-	return true
+	utils.Assert(t, ok, "object is not Integer. got=%T (%+v)", obj, obj)
+	utils.AssertEqual(t, result.Value, expected)
 }
 
-func testSymbolObject(t *testing.T, obj object.RubyObject, expected string) bool {
+func testSymbolObject(t *testing.T, obj object.RubyObject, expected string) {
 	t.Helper()
 	result, ok := obj.(*object.Symbol)
-	if !ok {
-		t.Errorf(
-			"object is not Symbol. got=%T (%+v)",
-			obj,
-			obj,
-		)
-		return false
-	}
-	if result.Value != expected {
-		t.Errorf(
-			"object has wrong value. got=%v, want=%v",
-			result.Value,
-			expected,
-		)
-		return false
-	}
-	return true
+	utils.Assert(t, ok, "object is not Symbol. got=%T (%+v)", obj, obj)
+	utils.AssertEqual(t, result.Value, expected)
 }
 
-func testStringObject(t *testing.T, obj object.RubyObject, expected string) bool {
+func testStringObject(t *testing.T, obj object.RubyObject, expected string) {
 	t.Helper()
 	result, ok := obj.(*object.String)
-	if !ok {
-		t.Errorf(
-			"object is not String. got=%T (%+v)",
-			obj,
-			obj,
-		)
-		return false
-	}
-	if result.Value != expected {
-		t.Errorf(
-			"object has wrong value. got=%v, want=%v",
-			result.Value,
-			expected,
-		)
-		return false
-	}
-	return true
+	utils.Assert(t, ok, "object is not String. got=%T (%+v)", obj, obj)
+	utils.AssertEqual(t, result.Value, expected)
 }
 
-func testHashObject(t *testing.T, obj object.RubyObject, expected map[string]string) bool {
+func testHashObject(t *testing.T, obj object.RubyObject, expected map[string]string) {
 	t.Helper()
 	result, ok := obj.(*object.Hash)
-	if !ok {
-		t.Errorf(
-			"object is not Hash. got=%T (%+v)",
-			obj,
-			obj,
-		)
-		return false
-	}
+	utils.Assert(t, ok, "object is not Hash. got=%T (%+v)", obj, obj)
 	hashMap := make(map[string]string)
 	for k, v := range result.ObjectMap() {
 		hashMap[k.Inspect()] = v.Inspect()
 	}
-	if !reflect.DeepEqual(hashMap, expected) {
-		t.Errorf(
-			"object has wrong value. got=%v, want=%v",
-			hashMap,
-			expected,
-		)
-		return false
-	}
-	return true
+	utils.AssertEqualCmp(t, hashMap, expected, utils.CompareMaps)
 }
 
-func testArrayObject(t *testing.T, obj object.RubyObject, expected []string) bool {
+func testArrayObject(t *testing.T, obj object.RubyObject, expected []string) {
 	t.Helper()
 	result, ok := obj.(*object.Array)
-	if !ok {
-		t.Errorf(
-			"object is not Array. got=%T (%+v)",
-			obj,
-			obj,
-		)
-		return false
-	}
+	utils.Assert(t, ok, "object is not Array. got=%T (%+v)", obj, obj)
 	array := make([]string, len(result.Elements))
 	for i, v := range result.Elements {
 		array[i] = v.Inspect()
 	}
-	if !reflect.DeepEqual(array, expected) {
-		t.Errorf(
-			"object has wrong value. got=%v, want=%v",
-			array,
-			expected,
-		)
-		return false
-	}
-	return true
+	utils.AssertEqualCmp(t, array, expected, utils.CompareArrays)
 }

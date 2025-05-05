@@ -13,6 +13,7 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/ast/infix"
 	p "github.com/MarcinKonowalczyk/goruby/parser"
+	"github.com/MarcinKonowalczyk/goruby/utils"
 	"github.com/pkg/errors"
 )
 
@@ -29,115 +30,6 @@ func TestMain(m *testing.M) {
 	}
 	os.Exit(m.Run())
 }
-
-// func TestBlockCapture(t *testing.T) {
-// 	tests := []struct {
-// 		desc   string
-// 		input  string
-// 		result ast.Expression
-// 		err    error
-// 	}{
-// 		{
-// 			desc:  "block capture in func params as only argument",
-// 			input: "def foo &block; end",
-// 			result: &ast.FunctionLiteral{
-// 				Name: &ast.Identifier{Value: "foo"},
-// 				CapturedBlock: &ast.BlockCapture{
-// 					Name: &ast.Identifier{Value: "block"},
-// 				},
-// 			},
-// 		},
-// 		// {
-// 		// 	desc:  "block capture in func params as last arguments",
-// 		// 	input: "def foo x, y, &block; end",
-// 		// 	result: &ast.FunctionLiteral{
-// 		// 		Name: &ast.Identifier{Value: "foo"},
-// 		// 		Parameters: []*ast.FunctionParameter{
-// 		// 			{Name: &ast.Identifier{Value: "x"}},
-// 		// 			{Name: &ast.Identifier{Value: "y"}},
-// 		// 		},
-// 		// 		CapturedBlock: &ast.BlockCapture{
-// 		// 			Name: &ast.Identifier{Value: "block"},
-// 		// 		},
-// 		// 	},
-// 		// },
-// 		// {
-// 		// 	desc:   "block capture in func params not last arguments",
-// 		// 	input:  "def foo x, &block, y; end",
-// 		// 	result: nil,
-// 		// 	err: &p.UnexpectedTokenError{
-// 		// 		ExpectedTokens: []token.Type{token.NEWLINE, token.SEMICOLON},
-// 		// 		ActualToken:    token.COMMA,
-// 		// 	},
-// 		// },
-// 		// {
-// 		// 	desc:   "block capture in func params on integer",
-// 		// 	input:  "def foo &2; end",
-// 		// 	result: nil,
-// 		// 	err: &p.UnexpectedTokenError{
-// 		// 		ExpectedTokens: []token.Type{token.IDENT},
-// 		// 		ActualToken:    token.INT,
-// 		// 	},
-// 		// },
-// 		// {
-// 		// 	desc: "block capture only statement in func body",
-// 		// 	input: `
-// 		// 	def foo
-// 		// 		&block
-// 		// 	end`,
-// 		// 	result: &ast.FunctionLiteral{
-// 		// 		Name:       &ast.Identifier{Value: "foo"},
-// 		// 		Parameters: []*ast.FunctionParameter{},
-// 		// 		Body: &ast.BlockStatement{
-// 		// 			Statements: []ast.Statement{
-// 		// 				&ast.ExpressionStatement{
-// 		// 					Expression: &ast.BlockCapture{
-// 		// 						Name: &ast.Identifier{Value: "block"},
-// 		// 					},
-// 		// 				},
-// 		// 			},
-// 		// 		},
-// 		// 	},
-// 		// },
-// 		// {
-// 		// 	desc: "block capture as arg on call in func body",
-// 		// 	input: `
-// 		// 	def foo
-// 		// 		each &block
-// 		// 	end`,
-// 		// 	result: &ast.FunctionLiteral{
-// 		// 		Name:       &ast.Identifier{Value: "foo"},
-// 		// 		Parameters: []*ast.FunctionParameter{},
-// 		// 		Body: &ast.BlockStatement{
-// 		// 			Statements: []ast.Statement{
-// 		// 				&ast.ExpressionStatement{
-// 		// 					Expression: &ast.ContextCallExpression{
-// 		// 						Function: &ast.Identifier{Value: "each"},
-// 		// 						Arguments: []ast.Expression{
-// 		// 							&ast.BlockCapture{
-// 		// 								Name: &ast.Identifier{Value: "block"},
-// 		// 							},
-// 		// 						},
-// 		// 					},
-// 		// 				},
-// 		// 			},
-// 		// 		},
-// 		// 	},
-// 		// },
-// 	}
-
-// 	for _, tt := range tests {
-// 		t.Run(tt.desc, func(t *testing.T) {
-// 			expr, err := parseExpression(tt.input, p.Trace)
-// 			compareFirstParserError(t, tt.err, err)
-
-// 			if !ast.Equal(expr, tt.result) {
-// 				t.Logf("Expected AST node to equal '%v', got '%v'", tt.result, expr)
-// 				t.Fail()
-// 			}
-// 		})
-// 	}
-// }
 
 func TestAssignment(t *testing.T) {
 	tests := []struct {
@@ -170,49 +62,21 @@ func TestAssignment(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			program, err := parseSource(tt.input)
 			checkParserErrors(t, err)
-
-			if len(program.Statements) != 1 {
-				t.Fatalf(
-					"program.Statements does not contain 1 statements. got=%d",
-					len(program.Statements),
-				)
-			}
+			utils.AssertEqual(t, len(program.Statements), 1)
 			stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-			if !ok {
-				t.Fatalf(
-					"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-					program.Statements[0],
-				)
-			}
+			utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 			assign, ok := stmt.Expression.(*ast.Assignment)
-			if !ok {
-				t.Fatalf(
-					"stmt.Expression is not *ast.Assignment. got=%T",
-					stmt.Expression,
-				)
-			}
+			utils.Assert(t, ok, "stmt.Expression is not *ast.Assignment. got=%T", stmt.Expression)
 
 			{
 				actual := reflect.TypeOf(assign.Left)
-				if tt.leftType != actual {
-					t.Fatalf(
-						"assign.Left is not %v. got=%v",
-						tt.leftType,
-						actual,
-					)
-				}
+				utils.AssertEqual(t, actual, tt.leftType)
 			}
 
 			{
 				actual := reflect.TypeOf(assign.Right)
-				if tt.rightType != actual {
-					t.Fatalf(
-						"assign.Right is not %v. got=%v",
-						tt.rightType,
-						actual,
-					)
-				}
+				utils.AssertEqual(t, actual, tt.rightType)
 			}
 		})
 	}
@@ -238,59 +102,22 @@ func TestAssignmentOperator(t *testing.T) {
 			program, err := parseSource(tt.input)
 			checkParserErrors(t, err)
 
-			if len(program.Statements) != 1 {
-				t.Logf(
-					"program.Statements does not contain 1 statements. got=%d",
-					len(program.Statements),
-				)
-				t.Logf(
-					"program.Statements: %v",
-					program.Statements,
-				)
-				t.FailNow()
-			}
+			utils.AssertEqual(t, len(program.Statements), 1)
 			stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-			if !ok {
-				t.Fatalf(
-					"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-					program.Statements[0],
-				)
-			}
+			utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 			assign, ok := stmt.Expression.(*ast.Assignment)
-			if !ok {
-				t.Fatalf(
-					"stmt.Expression is not *ast.Assignment. got=%T",
-					stmt.Expression,
-				)
-			}
+			utils.Assert(t, ok, "stmt.Expression is not *ast.Assignment. got=%T", stmt.Expression)
 
 			{
 				actual := reflect.TypeOf(assign.Left)
-				if tt.leftType != actual {
-					t.Fatalf(
-						"assign.Left is not %v. got=%v",
-						tt.leftType,
-						actual,
-					)
-				}
+				utils.AssertEqual(t, actual, tt.leftType)
 			}
 
 			{
 				infix_exp, ok := assign.Right.(*ast.InfixExpression)
-				if !ok {
-					t.Logf("Expected right assign type to be %T, got %T", infix_exp, assign.Right)
-					t.FailNow()
-				}
-
-				if infix_exp.Operator != tt.rightOperator {
-					t.Logf(
-						"Expected right assign infix operator to be %q, got %q",
-						tt.rightOperator,
-						infix_exp.Operator,
-					)
-					t.Fail()
-				}
+				utils.Assert(t, ok, "expected right assign type to be %T, got %T", infix_exp, assign.Right)
+				utils.AssertEqual(t, infix_exp.Operator, tt.rightOperator)
 			}
 		})
 	}
@@ -313,43 +140,14 @@ func TestVariableExpression(t *testing.T) {
 		for _, tt := range tests {
 			program, err := parseSource(tt.input)
 			checkParserErrors(t, err)
-
-			if len(program.Statements) != 1 {
-				t.Fatalf(
-					"program.Statements does not contain 1 statements. got=%d",
-					len(program.Statements),
-				)
-			}
+			utils.AssertEqual(t, len(program.Statements), 1)
 			stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-			if !ok {
-				t.Fatalf(
-					"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-					program.Statements[0],
-				)
-			}
+			utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 			variable, ok := stmt.Expression.(*ast.Assignment)
-			if !ok {
-				t.Fatalf(
-					"stmt.Expression is not *ast.VariableAssignment. got=%T",
-					stmt.Expression,
-				)
-			}
-
-			if !testIdentifier(t, variable.Left, tt.expectedIdentifier) {
-				return
-			}
-
-			val := variable.Right.String()
-
-			if val != tt.expectedValue {
-				t.Logf(
-					"Expected variable value to equal %s, got %s\n",
-					tt.expectedValue,
-					val,
-				)
-				t.Fail()
-			}
+			utils.Assert(t, ok, "stmt.Expression is not *ast.Assignment. got=%T", stmt.Expression)
+			testIdentifier(t, variable.Left, tt.expectedIdentifier)
+			utils.AssertEqual(t, variable.Right.String(), tt.expectedValue)
 		}
 	})
 	t.Run("const assignment within function", func(t *testing.T) {
@@ -380,22 +178,11 @@ func TestVariableExpression(t *testing.T) {
 			t.Run(tt.desc, func(t *testing.T) {
 
 				_, errs := parseExpression(tt.input)
-
-				if errs == nil {
-					t.Logf("Expected error, got nil")
-					t.FailNow()
-				}
+				utils.AssertNotEqual(t, errs, nil)
 
 				errors := errs.Errors
-				if len(errors) != 1 {
-					t.Logf("Exected one error, got %d", len(errors))
-					t.FailNow()
-				}
-
-				if !reflect.DeepEqual(errors[0], tt.err) {
-					t.Logf("Expected error to equal\n%v\n\tgot\n%v\n", tt.err, errors[0])
-					t.Fail()
-				}
+				utils.AssertEqual(t, len(errors), 1)
+				utils.AssertError(t, errors[0], tt.err)
 			})
 		}
 	})
@@ -427,32 +214,13 @@ func TestWhileExpression(t *testing.T) {
 			program, err := parseSource(tt.input)
 			checkParserErrors(t, err)
 
-			if len(program.Statements) != 1 {
-				t.Logf(
-					"program.Body does not contain %d statements. got=%d\n",
-					1,
-					len(program.Statements),
-				)
-				t.Logf("%s\n", program.Statements)
-				t.FailNow()
-			}
+			utils.AssertEqual(t, len(program.Statements), 1)
 
 			stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-			if !ok {
-				t.Fatalf(
-					"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-					program.Statements[0],
-				)
-			}
+			utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 			exp, ok := stmt.Expression.(*ast.LoopExpression)
-			if !ok {
-				t.Fatalf(
-					"stmt.Expression is not %T. got=%T",
-					exp,
-					stmt.Expression,
-				)
-			}
+			utils.Assert(t, ok, "stmt.Expression is not %T. got=%T", exp, stmt.Expression)
 		})
 	}
 }
@@ -462,48 +230,15 @@ func TestGlobalAssignment(t *testing.T) {
 
 	program, err := parseSource(input)
 	checkParserErrors(t, err)
-
-	if len(program.Statements) != 1 {
-		t.Fatalf(
-			"program.Statements does not contain 1 statements. got=%d",
-			len(program.Statements),
-		)
-	}
+	utils.AssertEqual(t, len(program.Statements), 1)
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf(
-			"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-			program.Statements[0],
-		)
-	}
+	utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 	variable, ok := stmt.Expression.(*ast.Assignment)
-	if !ok {
-		t.Fatalf(
-			"stmt.Expression is not %T. got=%T",
-			variable,
-			stmt.Expression,
-		)
-	}
+	utils.Assert(t, ok, "stmt.Expression is not *ast.Assignment. got=%T", stmt.Expression)
 
-	expectedGlobal := "$foo"
-
-	if !testGlobal(t, variable.Left, expectedGlobal) {
-		return
-	}
-
-	val := variable.Right.String()
-
-	expectedValue := "3"
-
-	if val != expectedValue {
-		t.Logf(
-			"Expected variable value to equal %s, got %s\n",
-			expectedValue,
-			val,
-		)
-		t.Fail()
-	}
+	testGlobal(t, variable.Left, "$foo")
+	utils.AssertEqual(t, variable.Right.String(), "3")
 }
 
 func TestParseMultiAssignment(t *testing.T) {
@@ -545,31 +280,17 @@ func TestParseMultiAssignment(t *testing.T) {
 			checkParserErrors(t, err)
 
 			assign, ok := expr.(*ast.Assignment)
-			if !ok {
-				t.Logf("Expected expression to be %T, got %T\n", assign, expr)
-				t.FailNow()
-			}
+			utils.Assert(t, ok, "Expected expression to be %T, got %T\n", assign, expr)
 
 			left, ok := assign.Left.(ast.ExpressionList)
-			if !ok {
-				t.Logf("Expected left to be %T, got %T\n", left, assign.Left)
-				t.FailNow()
-			}
+			utils.Assert(t, ok, "Expected left to be %T, got %T\n", left, assign.Left)
 
 			actualVars := make([]string, len(left))
 			for i, v := range left {
 				actualVars[i] = v.String()
 			}
-
-			if !reflect.DeepEqual(tt.variables, actualVars) {
-				t.Logf("Expected variable identifiers to equal %s, got %s\n", tt.variables, actualVars)
-				t.Fail()
-			}
-
-			if !reflect.DeepEqual(strings.Join(tt.values, ", "), assign.Right.String()) {
-				t.Logf("Expected variable values to equal %s, got %s\n", tt.values, assign.Right.String())
-				t.Fail()
-			}
+			utils.AssertEqualCmp(t, tt.variables, actualVars, utils.CompareArrays)
+			utils.AssertEqual(t, strings.Join(tt.values, ", "), assign.Right.String())
 		})
 	}
 }
@@ -588,22 +309,12 @@ func TestReturnStatements(t *testing.T) {
 	for _, tt := range tests {
 		program, err := parseSource(tt.input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program.Statements does not contain 1 statements. got=%d",
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt := program.Statements[0]
 		returnStmt, ok := stmt.(*ast.ReturnStatement)
-		if !ok {
-			t.Fatalf("stmt not *ast.returnStatement. got=%T", stmt)
-		}
-		if !testLiteralExpression(t, returnStmt.ReturnValue, tt.expectedValue) {
-			t.Fail()
-		}
+		utils.Assert(t, ok, "stmt not *ast.returnStatement. got=%T", stmt)
+		testLiteralExpression(t, returnStmt.ReturnValue, tt.expectedValue)
 	}
 }
 
@@ -630,24 +341,11 @@ func TestParseComment(t *testing.T) {
 		for _, tt := range tests {
 			program, err := parseSource(tt.input)
 			checkParserErrors(t, err)
-
-			if len(program.Statements) != 1 {
-				t.Fatalf(
-					"program has not enough statements. got=%d",
-					len(program.Statements),
-				)
-			}
+			utils.AssertEqual(t, len(program.Statements), 1)
 
 			comment, ok := program.Statements[0].(*ast.Comment)
-			if !ok {
-				t.Logf("Expected program.Statements[0] to be %T, got %T\n", comment, program.Statements[0])
-				t.FailNow()
-			}
-
-			if comment.Value != tt.commentValue {
-				t.Logf("Expected comment value to equal %q, got %q\n", tt.commentValue, comment.Value)
-				t.Fail()
-			}
+			utils.Assert(t, ok, "Expected program.Statements[0] to be %T, got %T\n", comment, program.Statements[0])
+			utils.AssertEqual(t, comment.Value, tt.commentValue)
 		}
 	})
 	t.Run("inline comment", func(t *testing.T) {
@@ -672,24 +370,11 @@ func TestParseComment(t *testing.T) {
 		for _, tt := range tests {
 			program, err := parseSource(tt.input)
 			checkParserErrors(t, err)
-
-			if len(program.Statements) != 2 {
-				t.Fatalf(
-					"program has not enough statements. got=%d",
-					len(program.Statements),
-				)
-			}
+			utils.AssertEqual(t, len(program.Statements), 2)
 
 			comment, ok := program.Statements[1].(*ast.Comment)
-			if !ok {
-				t.Logf("Expected program.Statements[1] to be %T, got %T\n", comment, program.Statements[1])
-				t.FailNow()
-			}
-
-			if comment.Value != tt.commentValue {
-				t.Logf("Expected comment value to equal %q, got %q\n", tt.commentValue, comment.Value)
-				t.Fail()
-			}
+			utils.Assert(t, ok, "Expected program.Statements[1] to be %T, got %T\n", comment, program.Statements[1])
+			utils.AssertEqual(t, comment.Value, tt.commentValue)
 		}
 	})
 }
@@ -701,55 +386,26 @@ func TestIdentifierExpression(t *testing.T) {
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
 
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program has not enough statements. got=%d",
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf(
-				"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-				program.Statements[0],
-			)
-		}
+		utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		ident, ok := stmt.Expression.(*ast.Identifier)
-		if !ok {
-			t.Fatalf("expression not *ast.Identifier. got=%T", stmt.Expression)
-		}
-		if ident.Value != "foobar" {
-			t.Errorf("ident.Value not %s. got=%s", "foobar", ident.Value)
-		}
+		utils.Assert(t, ok, "expression not *ast.Identifier. got=%T", stmt.Expression)
+		utils.AssertEqual(t, ident.Value, "foobar")
 	})
 	t.Run("constant", func(t *testing.T) {
 		input := "Foobar;"
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program has not enough statements. got=%d",
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf(
-				"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-				program.Statements[0],
-			)
-		}
+		utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		ident, ok := stmt.Expression.(*ast.Identifier)
-		if !ok {
-			t.Fatalf("expression not *ast.Identifier. got=%T", stmt.Expression)
-		}
-		if ident.Value != "Foobar" {
-			t.Errorf("ident.Value not %s. got=%s", "Foobar", ident.Value)
-		}
+		utils.Assert(t, ok, "expression not *ast.Identifier. got=%T", stmt.Expression)
+		utils.AssertEqual(t, ident.Value, "Foobar")
 	})
 }
 
@@ -758,28 +414,13 @@ func TestGlobalExpression(t *testing.T) {
 
 	program, err := parseSource(input)
 	checkParserErrors(t, err)
-
-	if len(program.Statements) != 1 {
-		t.Fatalf(
-			"program has not enough statements. got=%d",
-			len(program.Statements),
-		)
-	}
+	utils.AssertEqual(t, len(program.Statements), 1)
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf(
-			"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-			program.Statements[0],
-		)
-	}
+	utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 	global, ok := stmt.Expression.(*ast.Global)
-	if !ok {
-		t.Fatalf("expression not *ast.Global. got=%T", stmt.Expression)
-	}
-	if global.Value != "$foobar" {
-		t.Errorf("ident.Value not %s. got=%s", "$foobar", global.Value)
-	}
+	utils.Assert(t, ok, "expression not *ast.Global. got=%T", stmt.Expression)
+	utils.AssertEqual(t, global.Value, "$foobar")
 }
 
 func TestGlobalExpressionWithIndex(t *testing.T) {
@@ -787,32 +428,15 @@ func TestGlobalExpressionWithIndex(t *testing.T) {
 	program, err := parseSource(input)
 	checkParserErrors(t, err)
 
-	if len(program.Statements) != 1 {
-		t.Fatalf(
-			"program has not enough statements. got=%d",
-			len(program.Statements),
-		)
-	}
-
+	utils.AssertEqual(t, len(program.Statements), 1)
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf(
-			"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-			program.Statements[0],
-		)
-	}
+	utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 	index, ok := stmt.Expression.(*ast.IndexExpression)
-	if !ok {
-		t.Fatalf("expression not *ast.IndexExpression. got=%T", stmt.Expression)
-	}
+	utils.Assert(t, ok, "expression not *ast.IndexExpression. got=%T", stmt.Expression)
 
-	if !testGlobal(t, index.Left, "$foobar") {
-		return
-	}
-	if !testLiteralExpression(t, index.Index, 1) {
-		return
-	}
+	testGlobal(t, index.Left, "$foobar")
+	testLiteralExpression(t, index.Index, 1)
 }
 
 func TestKeyword__FILE__(t *testing.T) {
@@ -821,52 +445,22 @@ func TestKeyword__FILE__(t *testing.T) {
 
 		program, err := p.ParseFile(gotoken.NewFileSet(), "a_filename.rb", input, 0)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program has not enough statements. got=%d",
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf(
-				"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-				program.Statements[0],
-			)
-		}
+		utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		file, ok := stmt.Expression.(*ast.Keyword__FILE__)
-		if !ok {
-			t.Fatalf("expression not *ast.Keyword__FILE__. got=%T", stmt.Expression)
-		}
-
-		expected := "a_filename.rb"
-
-		if expected != file.Filename {
-			t.Logf("Expected filename to equal %q, got %q\n", expected, file.Filename)
-			t.Fail()
-		}
+		utils.Assert(t, ok, "expression not *ast.Keyword__FILE__. got=%T", stmt.Expression)
+		utils.AssertEqual(t, file.Filename, "a_filename.rb")
 	})
 	t.Run("assignment to keyword", func(t *testing.T) {
 		input := "__FILE__ = 42;"
 
 		_, err := parseSource(input)
 
-		expected := "1:9: Can't assign to __FILE__"
-
 		parserErrors := err.Errors
-		if len(parserErrors) != 1 {
-			t.Logf("Expected one error, got %d\n", len(parserErrors))
-			t.Logf("Errors: %v\n", err)
-			t.FailNow()
-		}
-
-		if expected != parserErrors[0].Error() {
-			t.Logf("Expected error to equal\n%q\n\tgot\n%q\n", expected, parserErrors[0].Error())
-			t.Fail()
-		}
-
+		utils.AssertEqual(t, len(parserErrors), 1)
+		utils.AssertEqual(t, parserErrors[0].Error(), "1:9: Can't assign to __FILE__")
 	})
 }
 
@@ -875,27 +469,13 @@ func TestIntegerLiteralExpression(t *testing.T) {
 
 	program, err := parseSource(input)
 	checkParserErrors(t, err)
-
-	if len(program.Statements) != 1 {
-		t.Fatalf(
-			"program has not enough statements. got=%d",
-			len(program.Statements),
-		)
-	}
+	utils.AssertEqual(t, len(program.Statements), 1)
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf(
-			"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-			program.Statements[0])
-	}
+	utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 	literal, ok := stmt.Expression.(*ast.IntegerLiteral)
-	if !ok {
-		t.Fatalf("expression not *ast.IntegerLiteral. got=%T", stmt.Expression)
-	}
-	if literal.Value != 5 {
-		t.Errorf("expression.Value not %d. got=%d", 5, literal.Value)
-	}
+	utils.Assert(t, ok, "expression not *ast.IntegerLiteral. got=%T", stmt.Expression)
+	utils.AssertEqual(t, literal.Value, 5)
 }
 
 func TestParsingPrefixExpressions(t *testing.T) {
@@ -915,36 +495,15 @@ func TestParsingPrefixExpressions(t *testing.T) {
 	for _, tt := range prefixTests {
 		program, err := parseSource(tt.input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program.Statements does not contain %d statements. got=%d\n",
-				1,
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf(
-				"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-				program.Statements[0],
-			)
-		}
+		utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.PrefixExpression)
-		if !ok {
-			t.Fatalf("stmt is not ast.PrefixExpression. got=%T", stmt.Expression)
-		}
-		if exp.Operator != tt.operator {
-			t.Fatalf(
-				"exp.Operator is not '%s'. got=%s",
-				tt.operator, exp.Operator,
-			)
-		}
-		if !testLiteralExpression(t, exp.Right, tt.value) {
-			return
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.PrefixExpression. got=%T", stmt.Expression)
+		utils.AssertEqual(t, exp.Operator, tt.operator)
+		testLiteralExpression(t, exp.Right, tt.value)
 	}
 }
 
@@ -987,27 +546,12 @@ func TestParsingInfixExpressions(t *testing.T) {
 		for _, tt := range infixTests {
 			program, err := parseSource(tt.input)
 			checkParserErrors(t, err)
-
-			if len(program.Statements) != 1 {
-				t.Fatalf(
-					"program.Statements does not contain %d statements. got=%d\n",
-					1,
-					len(program.Statements),
-				)
-			}
+			utils.AssertEqual(t, len(program.Statements), 1)
 
 			stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-			if !ok {
-				t.Fatalf(
-					"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-					program.Statements[0],
-				)
-			}
+			utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
-			if !testInfixExpression(t, stmt.Expression, tt.leftValue,
-				tt.operator, tt.rightValue) {
-				return
-			}
+			testInfixExpression(t, stmt.Expression, tt.leftValue, tt.operator, tt.rightValue)
 		}
 	})
 	t.Run("symbols expressions", func(t *testing.T) {
@@ -1015,124 +559,52 @@ func TestParsingInfixExpressions(t *testing.T) {
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program.Statements does not contain %d statements. got=%d\n",
-				1,
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf(
-				"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-				program.Statements[0],
-			)
-		}
+		utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
-		infix, ok := stmt.Expression.(*ast.InfixExpression)
-		if !ok {
-			t.Fatalf(
-				"stmt.Expression is not %T. got=%T",
-				infix,
-				stmt.Expression,
-			)
-		}
+		_, ok = stmt.Expression.(*ast.InfixExpression)
+		utils.Assert(t, ok, "stmt.Expression is not *ast.InfixExpression. got=%T", stmt.Expression)
 	})
 	t.Run("call expression no args", func(t *testing.T) {
 		input := "foo.bar <=> 13"
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program.Statements does not contain %d statements. got=%d\n",
-				1,
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf(
-				"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-				program.Statements[0],
-			)
-		}
+		utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
-		infix, ok := stmt.Expression.(*ast.InfixExpression)
-		if !ok {
-			t.Fatalf(
-				"stmt.Expression is not %T. got=%T",
-				infix,
-				stmt.Expression,
-			)
-		}
+		_, ok = stmt.Expression.(*ast.InfixExpression)
+		utils.Assert(t, ok, "stmt.Expression is not *ast.InfixExpression. got=%T", stmt.Expression)
 	})
 	t.Run("call expression with one arg", func(t *testing.T) {
 		input := "foo.bar 3 <=> 13"
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program.Statements does not contain %d statements. got=%d\n",
-				1,
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf(
-				"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-				program.Statements[0],
-			)
-		}
+		utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
-		cce, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf(
-				"stmt.Expression is not %T. got=%T",
-				cce,
-				stmt.Expression,
-			)
-		}
+		_, ok = stmt.Expression.(*ast.ContextCallExpression)
+		utils.Assert(t, ok, "stmt.Expression is not *ast.ContextCallExpression. got=%T", stmt.Expression)
 	})
 	t.Run("call expression with two args", func(t *testing.T) {
 		input := "foo.bar 3, 5 <=> 13"
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program.Statements does not contain %d statements. got=%d\n",
-				1,
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf(
-				"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-				program.Statements[0],
-			)
-		}
+		utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
-		cce, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf(
-				"stmt.Expression is not %T. got=%T",
-				cce,
-				stmt.Expression,
-			)
-		}
+		_, ok = stmt.Expression.(*ast.ContextCallExpression)
+		utils.Assert(t, ok, "stmt.Expression is not *ast.ContextCallExpression. got=%T", stmt.Expression)
 	})
 	t.Run("complex infix with call expression with just a block", func(t *testing.T) {
 		input := "1 + 21 * 8 - 3 <=> foo { |x| x }"
@@ -1140,14 +612,8 @@ func TestParsingInfixExpressions(t *testing.T) {
 		expr, err := parseExpression(input)
 		checkParserErrors(t, err)
 
-		infix, ok := expr.(*ast.InfixExpression)
-		if !ok {
-			t.Fatalf(
-				"stmt.Expression is not %T. got=%T",
-				infix,
-				expr,
-			)
-		}
+		_, ok := expr.(*ast.InfixExpression)
+		utils.Assert(t, ok, "stmt.Expression is not *ast.InfixExpression. got=%T", expr)
 	})
 	t.Run("easy infix with call expression with just a block", func(t *testing.T) {
 		input := "1 <=> foo { |x| x }"
@@ -1155,14 +621,8 @@ func TestParsingInfixExpressions(t *testing.T) {
 		expr, err := parseExpression(input)
 		checkParserErrors(t, err)
 
-		infix, ok := expr.(*ast.InfixExpression)
-		if !ok {
-			t.Fatalf(
-				"stmt.Expression is not %T. got=%T",
-				infix,
-				expr,
-			)
-		}
+		_, ok := expr.(*ast.InfixExpression)
+		utils.Assert(t, ok, "stmt.Expression is not *ast.InfixExpression. got=%T", expr)
 	})
 }
 
@@ -1313,11 +773,7 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		t.Run(tt.input, func(t *testing.T) {
 			program, err := parseSource(tt.input)
 			checkParserErrors(t, err)
-
-			actual := program.String()
-			if actual != tt.expected {
-				t.Errorf("expected=%q, got=%q", tt.expected, actual)
-			}
+			utils.AssertEqual(t, program.String(), tt.expected)
 		})
 	}
 }
@@ -1343,60 +799,23 @@ func TestBlockExpression(t *testing.T) {
 	for _, tt := range tests {
 		program, err := parseSource(tt.input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program has not enough statements. got=%d",
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf(
-				"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-				program.Statements[0],
-			)
-		}
+		utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		call, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("exp not *ast.ContextCallExpression. got=%T", stmt.Expression)
-		}
+		utils.Assert(t, ok, "stmt.Expression is not *ast.ContextCallExpression. got=%T", stmt.Expression)
 
 		block := call.Block
-		if block == nil {
-			t.Logf("Expected block not to be nil")
-			t.FailNow()
-		}
-
-		if len(block.Parameters) != len(tt.expectedArguments) {
-			t.Logf("Expected %d parameters, got %d", len(tt.expectedArguments), len(block.Parameters))
-			t.Fail()
-		}
+		utils.AssertNotEqual(t, block, nil)
+		utils.AssertEqual(t, len(block.Parameters), len(tt.expectedArguments))
 
 		for i, arg := range block.Parameters {
-			expected := tt.expectedArguments[i]
-			expectedArg := expected.String()
-			actualArg := arg.String()
-
-			if expectedArg != actualArg {
-				t.Logf(
-					"Expected block argument %d to equal\n%s\n\tgot\n%s\n",
-					i,
-					expectedArg,
-					actualArg,
-				)
-				t.Fail()
-			}
+			utils.AssertEqual(t, arg.String(), tt.expectedArguments[i].String())
 		}
 
-		body := block.Body.String()
-		expectedBody := tt.expectedBody
-		if expectedBody != body {
-			t.Logf("Expected body to equal\n%s\n\tgot\n%s\n", expectedBody, body)
-			t.Fail()
-		}
+		utils.AssertEqual(t, block.Body.String(), tt.expectedBody)
 	}
 }
 
@@ -1412,32 +831,14 @@ func TestBooleanExpression(t *testing.T) {
 	for _, tt := range tests {
 		program, err := parseSource(tt.input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program has not enough statements. got=%d",
-				len(program.Statements),
-			)
-		}
+		utils.Assert(t, len(program.Statements) == 1, "program has not enough statements. got=%d", len(program.Statements))
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf(
-				"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-				program.Statements[0],
-			)
-		}
+		utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		boolean, ok := stmt.Expression.(*ast.SymbolLiteral)
-		if !ok {
-			t.Fatalf("exp not *ast.Boolean. got=%T", stmt.Expression)
-		}
-		if boolean.String() != tt.expectedBoolean {
-			t.Errorf(
-				"boolean.Value not %s. got=%s",
-				tt.expectedBoolean,
-				boolean.Value)
-		}
+		utils.Assert(t, ok, "expression not *ast.Boolean. got=%T", stmt.Expression)
+		utils.AssertEqual(t, boolean.String(), tt.expectedBoolean)
 	}
 }
 
@@ -1446,28 +847,14 @@ func TestNilExpression(t *testing.T) {
 
 	program, err := parseSource(input)
 	checkParserErrors(t, err)
-
-	if len(program.Statements) != 1 {
-		t.Fatalf(
-			"program has not enough statements. got=%d",
-			len(program.Statements),
-		)
-	}
+	utils.AssertEqual(t, len(program.Statements), 1)
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf(
-			"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-			program.Statements[0],
-		)
-	}
+	utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 	nil_node, ok := stmt.Expression.(*ast.SymbolLiteral)
-	if !ok {
-		t.Fatalf("exp not *ast.Nil. got=%T", stmt.Expression)
-	}
-	if nil_node.String() != ":nil" {
-		t.Errorf("nil.Value not %s. got=%s", ":nil", nil_node.Value)
-	}
+	utils.Assert(t, ok, "expression not *ast.Nil. got=%T", stmt.Expression)
+	utils.AssertEqual(t, nil_node.String(), ":nil")
+	utils.AssertEqual(t, nil_node.Value, "nil")
 }
 
 func TestConditionalExpression(t *testing.T) {
@@ -1525,67 +912,32 @@ func TestConditionalExpression(t *testing.T) {
 			t.Run("expression "+tt.input, func(t *testing.T) {
 				program, err := parseSource(tt.input)
 				checkParserErrors(t, err)
-
-				if len(program.Statements) != 1 {
-					t.Fatalf(
-						"program.Body does not contain %d statements. got=%d\n",
-						1,
-						len(program.Statements),
-					)
-				}
+				utils.Assert(t, len(program.Statements) == 1, "program has not enough statements. got=%d", len(program.Statements))
 
 				stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-				if !ok {
-					t.Fatalf(
-						"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-						program.Statements[0],
-					)
-				}
+				utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 				exp, ok := stmt.Expression.(*ast.ConditionalExpression)
-				if !ok {
-					t.Fatalf(
-						"stmt.Expression is not %T. got=%T",
-						exp,
-						stmt.Expression,
-					)
-				}
+				utils.Assert(t, ok, "stmt.Expression is not %T. got=%T", stmt.Expression)
 
-				if !testInfixExpression(
+				testInfixExpression(
 					t,
 					exp.Condition,
 					tt.expectedConditionLeft,
 					tt.expectedConditionOperator,
 					tt.expectedConditionRight,
-				) {
-					return
-				}
+				)
 
 				consequenceBody := ""
 				for _, stmt := range exp.Consequence.Statements {
 					consequence, ok := stmt.(*ast.ExpressionStatement)
-					if !ok {
-						t.Fatalf(
-							"Statements[0] is not ast.ExpressionStatement. got=%T",
-							exp.Consequence.Statements[0],
-						)
-					}
+					utils.Assert(t, ok, "Statements[0] is not ast.ExpressionStatement. got=%T", exp.Consequence.Statements[0])
 
 					consequenceBody += consequence.Expression.String()
 				}
 
-				if consequenceBody != tt.expectedConsequenceExpression {
-					t.Logf(
-						"Expected consequence to equal %q, got %q\n",
-						tt.expectedConsequenceExpression,
-						consequenceBody,
-					)
-					t.Fail()
-				}
-
-				// if exp.Alternative != nil {
-				// 	t.Errorf("exp.Alternative.Statements was not nil. got=%+v", exp.Alternative)
-				// }
+				utils.AssertEqual(t, consequenceBody, tt.expectedConsequenceExpression)
+				// utils.AssertEqual(t, exp.Alternative, nil)
 			})
 		}
 	})
@@ -1599,108 +951,50 @@ func TestConditionalExpression(t *testing.T) {
 		}{
 			{`unless x.exist? :y
 			x
-			end`, "x", "exist?", "y", "x"},
+			end`, "x", "exist?", ":y", "x"},
 			{`unless x.exist? :y
 			x = Object x
-			end`, "x", "exist?", "y", "x = Object x"},
+			end`, "x", "exist?", ":y", "x = Object(x)"},
 			{`unless x.exist? :y
 			x
-			end`, "x", "exist?", "y", "x"},
+			end`, "x", "exist?", ":y", "x"},
 			{`unless x.exist? :y
 			x = Object x
-			end`, "x", "exist?", "y", "x = Object x"},
+			end`, "x", "exist?", ":y", "x = Object(x)"},
 		}
 
 		for _, tt := range tests {
 			program, err := parseSource(tt.input)
 			checkParserErrors(t, err)
-
-			if len(program.Statements) != 1 {
-				t.Fatalf(
-					"program.Body does not contain %d statements. got=%d\n",
-					1,
-					len(program.Statements),
-				)
-			}
+			utils.AssertEqual(t, len(program.Statements), 1)
 
 			stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-			if !ok {
-				t.Fatalf(
-					"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-					program.Statements[0],
-				)
-			}
+			utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 			exp, ok := stmt.Expression.(*ast.ConditionalExpression)
-			if !ok {
-				t.Fatalf(
-					"stmt.Expression is not %T. got=%T",
-					exp,
-					stmt.Expression,
-				)
-			}
+			utils.Assert(t, ok, "stmt.Expression is not ast.ConditionalExpression. got=%T", stmt.Expression)
 
 			call, ok := exp.Condition.(*ast.ContextCallExpression)
-			if !ok {
-				t.Fatalf(
-					"exp.Condition is not %T. got=%T",
-					call,
-					exp.Condition,
-				)
-			}
-
-			if call.Function.String() != tt.condMethod {
-				t.Logf(
-					"Expected condition call method to equal %q, got %q\n",
-					tt.condMethod,
-					call.Function.String(),
-				)
-			}
+			utils.Assert(t, ok, "exp.Condition is not ast.ContextCallExpression. got=%T", exp.Condition)
+			utils.AssertEqual(t, call.Function.String(), tt.condMethod)
 
 			args := []string{}
 			for _, a := range call.Arguments {
 				args = append(args, a.String())
 			}
-			if strings.Join(args, " ") != tt.condArg {
-				t.Logf(
-					"Expected condition call args to equal %q, got %q\n",
-					tt.condArg,
-					strings.Join(args, " "),
-				)
-			}
-
-			if call.Context.String() != tt.condContext {
-				t.Logf(
-					"Expected condition call context to equal %q, got %q\n",
-					tt.condContext,
-					call.Context.String(),
-				)
-			}
+			utils.AssertEqual(t, strings.Join(args, " "), tt.condArg)
+			utils.AssertEqual(t, call.Context.String(), tt.condContext)
 
 			consequenceBody := ""
 			for _, stmt := range exp.Consequence.Statements {
 				consequence, ok := stmt.(*ast.ExpressionStatement)
-				if !ok {
-					t.Fatalf(
-						"Statements[0] is not ast.ExpressionStatement. got=%T",
-						exp.Consequence.Statements[0],
-					)
-				}
+				utils.Assert(t, ok, "Statements[0] is not ast.ExpressionStatement. got=%T", exp.Consequence.Statements[0])
 
 				consequenceBody += consequence.Expression.String()
 			}
 
-			if consequenceBody != tt.consequence {
-				t.Logf(
-					"Expected consequence to equal %q, got %q\n",
-					tt.consequence,
-					consequenceBody,
-				)
-			}
-
-			if exp.Alternative != nil {
-				t.Errorf("exp.Alternative.Statements was not nil. got=%+v", exp.Alternative)
-			}
+			utils.AssertEqual(t, consequenceBody, tt.consequence)
+			utils.AssertEqual(t, exp.Alternative, nil)
 		}
 	})
 }
@@ -1762,56 +1056,24 @@ func TestConditionalExpressionWithAlternative(t *testing.T) {
 		t.Run(fmt.Sprintf("%d/%s", i, tt.name), func(t *testing.T) {
 			program, err := parseSource(tt.input)
 			checkParserErrors(t, err)
-
-			if len(program.Statements) != 1 {
-				t.Fatalf("program.Body does not contain %d statements. got=%d\n",
-					1, len(program.Statements))
-			}
+			utils.AssertEqual(t, len(program.Statements), 1)
 
 			stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-			if !ok {
-				t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
-					program.Statements[0])
-			}
+			utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 			exp, ok := stmt.Expression.(*ast.ConditionalExpression)
-			if !ok {
-				t.Fatalf("stmt.Expression is not ast.IfExpression. got=%T", stmt.Expression)
-			}
-
-			if !testInfixExpression(t, exp.Condition, tt.condition_left, tt.condition_operator, tt.condition_right) {
-				return
-			}
-
-			if len(exp.Consequence.Statements) != 1 {
-				t.Errorf("consequence is not 1 statements. got=%d\n",
-					len(exp.Consequence.Statements))
-			}
+			utils.Assert(t, ok, "stmt.Expression is not ast.ConditionalExpression. got=%T", stmt.Expression)
+			testInfixExpression(t, exp.Condition, tt.condition_left, tt.condition_operator, tt.condition_right)
+			utils.AssertEqual(t, len(exp.Consequence.Statements), 1)
 
 			consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
-			if !ok {
-				t.Fatalf("Statements[0] is not ast.ExpressionStatement. got=%T",
-					exp.Consequence.Statements[0])
-			}
-
-			if !testLiteralExpression(t, consequence.Expression, tt.consequence) {
-				return
-			}
-
-			if len(exp.Alternative.Statements) != 1 {
-				t.Errorf("exp.Alternative.Statements does not contain 1 statements. got=%d\n",
-					len(exp.Alternative.Statements))
-			}
+			utils.Assert(t, ok, "Statements[0] is not ast.ExpressionStatement. got=%T", exp.Consequence.Statements[0])
+			testLiteralExpression(t, consequence.Expression, tt.consequence)
+			utils.AssertEqual(t, len(exp.Alternative.Statements), 1)
 
 			alternative, ok := exp.Alternative.Statements[0].(*ast.ExpressionStatement)
-			if !ok {
-				t.Fatalf("Statements[0] is not ast.ExpressionStatement. got=%T",
-					exp.Alternative.Statements[0])
-			}
-
-			if !testLiteralExpression(t, alternative.Expression, tt.alternative) {
-				return
-			}
+			utils.Assert(t, ok, "Statements[0] is not ast.ExpressionStatement. got=%T", exp.Alternative.Statements[0])
+			testLiteralExpression(t, alternative.Expression, tt.alternative)
 		})
 	}
 	t.Run("ternary if with call as consequence", func(t *testing.T) {
@@ -1830,57 +1092,25 @@ func TestConditionalExpressionWithAlternative(t *testing.T) {
 		}
 		program, err := parseSource(tt.input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf("program.Body does not contain %d statements. got=%d\n",
-				1, len(program.Statements))
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
-				program.Statements[0])
-		}
+		utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.ConditionalExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.IfExpression. got=%T", stmt.Expression)
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.ConditionalExpression. got=%T", stmt.Expression)
 
-		if !testInfixExpression(t, exp.Condition, tt.condition_left, tt.condition_operator, tt.condition_right) {
-			return
-		}
-
-		if len(exp.Consequence.Statements) != 1 {
-			t.Errorf("consequence is not 1 statements. got=%d\n",
-				len(exp.Consequence.Statements))
-		}
+		testInfixExpression(t, exp.Condition, tt.condition_left, tt.condition_operator, tt.condition_right)
+		utils.AssertEqual(t, len(exp.Consequence.Statements), 1)
 
 		consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("Statements[0] is not ast.ExpressionStatement. got=%T",
-				exp.Consequence.Statements[0])
-		}
-
-		if consequence.String() != tt.consequence {
-			t.Logf("Expected consequence to equal %s, got %s", tt.consequence, consequence.String())
-			t.Fail()
-		}
-
-		if len(exp.Alternative.Statements) != 1 {
-			t.Errorf("exp.Alternative.Statements does not contain 1 statements. got=%d\n",
-				len(exp.Alternative.Statements))
-		}
+		utils.Assert(t, ok, "Statements[0] is not ast.ExpressionStatement. got=%T", exp.Consequence.Statements[0])
+		utils.AssertEqual(t, consequence.String(), tt.consequence)
+		utils.AssertEqual(t, len(exp.Alternative.Statements), 1)
 
 		alternative, ok := exp.Alternative.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("Statements[0] is not ast.ExpressionStatement. got=%T",
-				exp.Alternative.Statements[0])
-		}
-
-		if !testLiteralExpression(t, alternative.Expression, tt.alternative) {
-			return
-		}
+		utils.Assert(t, ok, "Statements[0] is not ast.ExpressionStatement. got=%T", exp.Alternative.Statements[0])
+		testLiteralExpression(t, alternative.Expression, tt.alternative)
 	})
 }
 
@@ -1995,74 +1225,25 @@ func TestFunctionLiteralParsing(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			program, err := parseSource(tt.input)
 			checkParserErrors(t, err)
-
-			if len(program.Statements) != 1 {
-				t.Fatalf(
-					"program.Body does not contain %d statements. got=%d\n",
-					1,
-					len(program.Statements),
-				)
-			}
+			utils.AssertEqual(t, len(program.Statements), 1)
 
 			stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-			if !ok {
-				t.Fatalf(
-					"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-					program.Statements[0],
-				)
-			}
+			utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 			function, ok := stmt.Expression.(*ast.FunctionLiteral)
-			if !ok {
-				t.Fatalf(
-					"stmt.Expression is not ast.FunctionLiteral. got=%T",
-					stmt.Expression,
-				)
-			}
-
-			functionName := function.Name.Value
-			if functionName != tt.name {
-				t.Logf("function name wrong, want %q, got %q", tt.name, functionName)
-				t.Fail()
-			}
-
-			if len(function.Parameters) != len(tt.parameters) {
-				t.Fatalf(
-					"function literal parameters wrong. want %d, got=%d\n",
-					len(tt.parameters),
-					len(function.Parameters),
-				)
-			}
+			utils.Assert(t, ok, "stmt.Expression is not ast.FunctionLiteral. got=%T", stmt.Expression)
+			utils.AssertEqual(t, function.Name.Value, tt.name)
+			utils.AssertEqual(t, len(function.Parameters), len(tt.parameters))
 
 			for i, param := range function.Parameters {
 				testLiteralExpression(t, param.Name, tt.parameters[i].name)
 				testLiteralExpression(t, param.Default, tt.parameters[i].defaultValue)
 			}
-
-			if len(function.Body.Statements) != 1 {
-				t.Fatalf(
-					"function.Body.Statements has not 1 statements. got=%d\n",
-					len(function.Body.Statements),
-				)
-			}
+			utils.AssertEqual(t, len(function.Body.Statements), 1)
 
 			bodyStmt, ok := function.Body.Statements[0].(*ast.ExpressionStatement)
-			if !ok {
-				t.Fatalf(
-					"function body stmt is not ast.ExpressionStatement. got=%T",
-					function.Body.Statements[0],
-				)
-			}
-
-			statement := bodyStmt.String()
-			if statement != tt.bodyStatement {
-				t.Logf(
-					"Expected body statement to equal\n%q\n\tgot\n%q\n",
-					tt.bodyStatement,
-					statement,
-				)
-				t.Fail()
-			}
+			utils.Assert(t, ok, "function body stmt is not ast.ExpressionStatement. got=%T", function.Body.Statements[0])
+			utils.AssertEqual(t, bodyStmt.String(), tt.bodyStatement)
 		})
 	}
 }
@@ -2113,77 +1294,26 @@ func TestBlockExpressionParsing(t *testing.T) {
 		t.Run(tt.input, func(t *testing.T) {
 			program, err := parseSource(tt.input)
 			checkParserErrors(t, err)
-
-			if len(program.Statements) != 1 {
-				t.Fatalf(
-					"program.Body does not contain %d statements. got=%d\n",
-					1,
-					len(program.Statements),
-				)
-			}
+			utils.AssertEqual(t, len(program.Statements), 1)
 
 			stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-			if !ok {
-				t.Logf(
-					"program.Statements[0] is not ast.ExpressionStatement. got=%T",
-					program.Statements[0],
-				)
-				t.Log(program.Statements)
-				t.FailNow()
-			}
+			utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 			call, ok := stmt.Expression.(*ast.ContextCallExpression)
-			if !ok {
-				t.Logf(
-					"stmt.Expression is not *ast.ContextCallExpression. got=%T",
-					stmt.Expression,
-				)
-				t.Fail()
-			}
+			utils.Assert(t, ok, "stmt.Expression is not *ast.ContextCallExpression. got=%T", stmt.Expression)
 
 			block := call.Block
-
-			if block == nil {
-				t.Logf("Expected block not to be nil")
-				t.FailNow()
-			}
-
-			if len(block.Parameters) != len(tt.parameters) {
-				t.Fatalf(
-					"block literal parameters wrong. want %d, got=%d\n",
-					len(tt.parameters),
-					len(block.Parameters),
-				)
-			}
+			utils.AssertNotEqual(t, block, nil)
+			utils.AssertEqual(t, len(block.Parameters), len(tt.parameters))
 
 			for i, param := range block.Parameters {
 				testLiteralExpression(t, param.Name, tt.parameters[i])
 			}
-
-			if len(block.Body.Statements) != 1 {
-				t.Fatalf(
-					"block.Body.Statements has not 1 statements. got=%d\n",
-					len(block.Body.Statements),
-				)
-			}
+			utils.AssertEqual(t, len(block.Body.Statements), 1)
 
 			bodyStmt, ok := block.Body.Statements[0].(*ast.ExpressionStatement)
-			if !ok {
-				t.Fatalf(
-					"block body stmt is not ast.ExpressionStatement. got=%T",
-					block.Body.Statements[0],
-				)
-			}
-
-			statement := bodyStmt.String()
-			if statement != tt.bodyStatement {
-				t.Logf(
-					"Expected body statement to equal\n%q\n\tgot\n%q\n",
-					tt.bodyStatement,
-					statement,
-				)
-				t.Fail()
-			}
+			utils.Assert(t, ok, "block body stmt is not ast.ExpressionStatement. got=%T", block.Body.Statements[0])
+			utils.AssertEqual(t, bodyStmt.String(), tt.bodyStatement)
 		})
 	}
 }
@@ -2248,13 +1378,7 @@ func TestFunctionParameterParsing(t *testing.T) {
 			stmt := program.Statements[0].(*ast.ExpressionStatement)
 			function := stmt.Expression.(*ast.FunctionLiteral)
 
-			if len(function.Parameters) != len(tt.expectedParams) {
-				t.Errorf(
-					"length parameters wrong. want %d, got=%d\n",
-					len(tt.expectedParams),
-					len(function.Parameters),
-				)
-			}
+			utils.AssertEqual(t, len(function.Parameters), len(tt.expectedParams))
 
 			for i, ident := range tt.expectedParams {
 				testLiteralExpression(t, function.Parameters[i].Name, ident.name)
@@ -2318,28 +1442,11 @@ func TestBlockParameterParsing(t *testing.T) {
 
 			stmt := program.Statements[0].(*ast.ExpressionStatement)
 			call, ok := stmt.Expression.(*ast.ContextCallExpression)
-			if !ok {
-				t.Logf(
-					"stmt.Expression is not *ast.ContextCallExpression. got=%T",
-					stmt.Expression,
-				)
-				t.Fail()
-			}
+			utils.Assert(t, ok, "stmt.Expression is not *ast.ContextCallExpression. got=%T", stmt.Expression)
 
 			block := call.Block
-
-			if block == nil {
-				t.Logf("Expected block not to be nil")
-				t.FailNow()
-			}
-
-			if len(block.Parameters) != len(tt.expectedParams) {
-				t.Errorf(
-					"length parameters wrong. want %d, got=%d\n",
-					len(tt.expectedParams),
-					len(block.Parameters),
-				)
-			}
+			utils.AssertNotEqual(t, block, nil)
+			utils.AssertEqual(t, len(block.Parameters), len(tt.expectedParams))
 
 			for i, ident := range tt.expectedParams {
 				testLiteralExpression(t, block.Parameters[i].Name, ident.name)
@@ -2410,70 +1517,25 @@ func TestCallExpressionParsing(t *testing.T) {
 			checkParserErrors(t, err)
 
 			call, ok := expr.(*ast.ContextCallExpression)
-			if !ok {
-				t.Fatalf(
-					"expression is not %T, got=%T",
-					call,
-					expr,
-				)
+			utils.Assert(t, ok, "expression is not ast.ContextCallExpression. got=%T", expr)
+
+			testIdentifier(t, call.Function, tt.funcName)
+
+			if tt.context != "" {
+				testIdentifier(t, call.Context, tt.context)
 			}
 
-			if !testIdentifier(t, call.Function, tt.funcName) {
-				return
-			}
-
-			if tt.context != "" && !testIdentifier(t, call.Context, tt.context) {
-				return
-			}
-
-			if len(call.Arguments) != len(tt.arguments) {
-				t.Logf(
-					"wrong length of arguments. want %d, got=%d",
-					len(tt.arguments),
-					len(call.Arguments),
-				)
-				t.Fail()
-				for len(call.Arguments) > len(tt.arguments) {
-					tt.arguments = append(tt.arguments, "<unexpected>")
-				}
-			}
+			utils.AssertEqual(t, len(call.Arguments), len(tt.arguments))
 
 			for i, arg := range call.Arguments {
-				t.Logf("argument %d", i+1)
 				testExpression(t, arg, tt.arguments[i])
 			}
 
 			if tt.hasBlock {
-				if call.Block == nil {
-					t.Logf("Expected function block not to be nil")
-					t.FailNow()
-				}
-
-				if len(call.Block.Parameters) != len(tt.blockParams) {
-					t.Logf(
-						"wrong length of block parameters. want %d, got=%d",
-						len(tt.blockParams),
-						len(call.Block.Parameters),
-					)
-					t.Fail()
-					for len(call.Block.Parameters) > len(tt.blockParams) {
-						tt.blockParams = append(tt.blockParams, "<unexpected>")
-					}
-				}
-
+				utils.AssertNotEqual(t, call.Block, nil)
+				utils.AssertEqual(t, len(call.Block.Parameters), len(tt.blockParams))
 				for i, param := range call.Block.Parameters {
-					expected := tt.blockParams[i]
-					actual := param.String()
-
-					if expected != actual {
-						t.Logf(
-							"Expected block param %d to equal\n%s\n\tgot\n%s\n",
-							i,
-							expected,
-							actual,
-						)
-						t.Fail()
-					}
+					utils.AssertEqual(t, param.String(), tt.blockParams[i])
 				}
 			}
 		})
@@ -2488,52 +1550,32 @@ func TestCallExpressionParsing(t *testing.T) {
 	})
 }
 
-// puts [1, 2][0]
-
 func TestCallExpressionWithoutParens(t *testing.T) {
-	t.Skip("This is broken and need a significant lexer/parser rewrite")
 	tests := []struct {
-		input string
+		input         string
+		expectedIdent string
 	}{
 		{
-			input: "puts([1][0])",
+			input:         "puts([1][0])",
+			expectedIdent: "puts",
 		},
 		{
-			input: "puts [1][0]",
+			input:         "puts [1][0]",
+			expectedIdent: "puts",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			program, err := parseSource(tt.input, p.Trace)
+			program, err := parseSource(tt.input)
 			checkParserErrors(t, err)
 
 			stmt := program.Statements[0].(*ast.ExpressionStatement)
-			// exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-			// if !ok {
-			// 	t.Fatalf(
-			// 		"stmt.Expression is not ast.ContextCallExpression. got=%T",
-			// 		stmt.Expression,
-			// 	)
-			// }
-
-			fmt.Println(stmt.Expression.String())
-
-			// if !testIdentifier(t, exp.Function, tt.expectedIdent) {
-			// 	return
-			// }
-
-			// if len(exp.Arguments) != len(tt.expectedArgs) {
-			// 	t.Fatalf("wrong number of arguments. want=%d, got=%d",
-			// 		len(tt.expectedArgs), len(exp.Arguments))
-			// }
-
-			// for i, arg := range tt.expectedArgs {
-			// 	if exp.Arguments[i].String() != arg {
-			// 		t.Errorf("argument %d wrong. want=%q, got=%q", i,
-			// 			arg, exp.Arguments[i].String())
-			// 	}
-			// }
+			exp, ok := stmt.Expression.(*ast.ContextCallExpression)
+			utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
+			utils.AssertNotEqual(t, stmt.Expression, nil)
+			utils.AssertEqual(t, stmt.Expression.String(), "puts(([1][0]))")
+			testIdentifier(t, exp.Function, tt.expectedIdent)
 		})
 	}
 }
@@ -2582,27 +1624,13 @@ func TestCallExpressionParameterParsing(t *testing.T) {
 
 			stmt := program.Statements[0].(*ast.ExpressionStatement)
 			exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-			if !ok {
-				t.Fatalf(
-					"stmt.Expression is not ast.ContextCallExpression. got=%T",
-					stmt.Expression,
-				)
-			}
+			utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 
-			if !testIdentifier(t, exp.Function, tt.expectedIdent) {
-				return
-			}
-
-			if len(exp.Arguments) != len(tt.expectedArgs) {
-				t.Fatalf("wrong number of arguments. want=%d, got=%d",
-					len(tt.expectedArgs), len(exp.Arguments))
-			}
+			testIdentifier(t, exp.Function, tt.expectedIdent)
+			utils.AssertEqual(t, len(exp.Arguments), len(tt.expectedArgs))
 
 			for i, arg := range tt.expectedArgs {
-				if exp.Arguments[i].String() != arg {
-					t.Errorf("argument %d wrong. want=%q, got=%q", i,
-						arg, exp.Arguments[i].String())
-				}
+				utils.AssertEqual(t, exp.Arguments[i].String(), arg)
 			}
 		})
 	}
@@ -2614,36 +1642,16 @@ func TestContextCallExpression(t *testing.T) {
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-				1, len(program.Statements))
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0])
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
-
-		if !testIdentifier(t, exp.Context, "foo") {
-			return
-		}
-
-		if !testIdentifier(t, exp.Function, "add") {
-			return
-		}
-
-		if len(exp.Arguments) != 3 {
-			t.Fatalf("wrong length of arguments. got=%d", len(exp.Arguments))
-		}
-
+		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
+		testIdentifier(t, exp.Context, "foo")
+		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, len(exp.Arguments), 3)
 		testLiteralExpression(t, exp.Arguments[0], 1)
 		testInfixExpression(t, exp.Arguments[1], 2, infix.ASTERISK, 3)
 		testInfixExpression(t, exp.Arguments[2], 4, infix.PLUS, 5)
@@ -2653,81 +1661,36 @@ func TestContextCallExpression(t *testing.T) {
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Logf("Input: %s\n", input)
-			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-				1, len(program.Statements))
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0])
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
-
-		if !testIdentifier(t, exp.Context, "foo") {
-			return
-		}
-
-		if !testIdentifier(t, exp.Function, "add") {
-			return
-		}
-
-		if len(exp.Arguments) != 3 {
-			t.Fatalf("wrong length of arguments. got=%d", len(exp.Arguments))
-		}
-
+		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
+		testIdentifier(t, exp.Context, "foo")
+		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, len(exp.Arguments), 3)
 		testLiteralExpression(t, exp.Arguments[0], 1)
 		testInfixExpression(t, exp.Arguments[1], 2, infix.ASTERISK, 3)
 		testInfixExpression(t, exp.Arguments[2], 4, infix.PLUS, 5)
-
-		if exp.Block == nil {
-			t.Logf("Expected block not to be nil")
-			t.Fail()
-		}
+		utils.AssertNotEqual(t, exp.Block, nil)
 	})
 	t.Run("context call with multiple args no parens", func(t *testing.T) {
 		input := "foo.add 1, 2 * 3, 4 + 5;"
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-				1, len(program.Statements))
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0])
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
-
-		if !testIdentifier(t, exp.Context, "foo") {
-			return
-		}
-
-		if !testIdentifier(t, exp.Function, "add") {
-			return
-		}
-
-		if len(exp.Arguments) != 3 {
-			t.Fatalf("wrong length of arguments. got=%d", len(exp.Arguments))
-		}
-
+		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
+		testIdentifier(t, exp.Context, "foo")
+		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, len(exp.Arguments), 3)
 		testLiteralExpression(t, exp.Arguments[0], 1)
 		testInfixExpression(t, exp.Arguments[1], 2, infix.ASTERISK, 3)
 		testInfixExpression(t, exp.Arguments[2], 4, infix.PLUS, 5)
@@ -2737,503 +1700,215 @@ func TestContextCallExpression(t *testing.T) {
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-				1, len(program.Statements))
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0])
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
-
-		if !testIdentifier(t, exp.Context, "foo") {
-			return
-		}
-
-		if !testIdentifier(t, exp.Function, "add") {
-			return
-		}
-
-		if len(exp.Arguments) != 3 {
-			t.Fatalf("wrong length of arguments. got=%d", len(exp.Arguments))
-		}
-
+		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
+		testIdentifier(t, exp.Context, "foo")
+		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, len(exp.Arguments), 3)
 		testLiteralExpression(t, exp.Arguments[0], 1)
 		testInfixExpression(t, exp.Arguments[1], 2, infix.ASTERISK, 3)
 		testInfixExpression(t, exp.Arguments[2], 4, infix.PLUS, 5)
-
-		if exp.Block == nil {
-			t.Logf("Expected block not to be nil")
-			t.Fail()
-		}
+		utils.AssertNotEqual(t, exp.Block, nil)
 	})
 	t.Run("context call with no args", func(t *testing.T) {
 		input := "foo.add;"
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-				1, len(program.Statements))
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0])
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
-
-		if !testIdentifier(t, exp.Context, "foo") {
-			return
-		}
-
-		if !testIdentifier(t, exp.Function, "add") {
-			return
-		}
-
-		if len(exp.Arguments) != 0 {
-			t.Fatalf("wrong length of arguments. got=%d", len(exp.Arguments))
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
+		testIdentifier(t, exp.Context, "foo")
+		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, len(exp.Arguments), 0)
 	})
 	t.Run("context call on nonident with no dot", func(t *testing.T) {
 		input := "1 add;"
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program.Statements does not contain %d statements. got=%d\n",
-				1,
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf(
-				"stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0],
-			)
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
-
-		if !testIntegerLiteral(t, exp.Context, 1) {
-			return
-		}
-
-		if !testIdentifier(t, exp.Function, "add") {
-			return
-		}
-
-		if len(exp.Arguments) != 0 {
-			t.Fatalf("wrong length of arguments. got=%d", len(exp.Arguments))
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
+		testIntegerLiteral(t, exp.Context, 1)
+		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, len(exp.Arguments), 0)
 	})
 	t.Run("context call on nonident with dot", func(t *testing.T) {
 		input := "1.add"
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program.Statements does not contain %d statements. got=%d\n",
-				1,
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf(
-				"stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0],
-			)
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
-
-		if !testIntegerLiteral(t, exp.Context, 1) {
-			return
-		}
-
-		if !testIdentifier(t, exp.Function, "add") {
-			return
-		}
-
-		if len(exp.Arguments) != 0 {
-			t.Fatalf("wrong length of arguments. got=%d", len(exp.Arguments))
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
+		testIntegerLiteral(t, exp.Context, 1)
+		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, len(exp.Arguments), 0)
 	})
 	t.Run("context call on nonident with no dot multiargs", func(t *testing.T) {
 		input := "1 add 1"
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program.Statements does not contain %d statements. got=%d\n",
-				1,
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf(
-				"stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0],
-			)
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
-
-		if !testIntegerLiteral(t, exp.Context, 1) {
-			return
-		}
-
-		if !testIdentifier(t, exp.Function, "add") {
-			return
-		}
-
-		if len(exp.Arguments) != 1 {
-			t.Fatalf(
-				"wrong length of arguments. got=%d",
-				len(exp.Arguments),
-			)
-		}
-
-		if !testIntegerLiteral(t, exp.Arguments[0], 1) {
-			return
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
+		testIntegerLiteral(t, exp.Context, 1)
+		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, len(exp.Arguments), 1)
+		testIntegerLiteral(t, exp.Arguments[0], 1)
 	})
 	t.Run("context call on ident with no dot", func(t *testing.T) {
 		input := "foo add;"
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-				1, len(program.Statements))
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0])
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
-
-		if !testIdentifier(t, exp.Function, "foo") {
-			return
-		}
-
-		if len(exp.Arguments) != 1 {
-			t.Fatalf("wrong length of arguments. got=%d", len(exp.Arguments))
-		}
-
-		if !testIdentifier(t, exp.Arguments[0], "add") {
-			return
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
+		testIdentifier(t, exp.Function, "foo")
+		utils.AssertEqual(t, len(exp.Arguments), 1)
+		testIdentifier(t, exp.Arguments[0], "add")
 	})
 	t.Run("context call on const with no dot", func(t *testing.T) {
 		input := "Integer add;"
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-				1, len(program.Statements))
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0])
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
-
-		if !testIdentifier(t, exp.Function, "Integer") {
-			return
-		}
-
-		if len(exp.Arguments) != 1 {
-			t.Fatalf("wrong length of arguments. got=%d", len(exp.Arguments))
-		}
-
-		if !testIdentifier(t, exp.Arguments[0], "add") {
-			return
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
+		testIdentifier(t, exp.Function, "Integer")
+		utils.AssertEqual(t, len(exp.Arguments), 1)
+		testIdentifier(t, exp.Arguments[0], "add")
 	})
 	t.Run("context call on ident with no dot Const as arg", func(t *testing.T) {
 		input := "add Integer;"
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-				1, len(program.Statements))
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0])
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 
-		if !testIdentifier(t, exp.Function, "add") {
-			return
-		}
+		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, len(exp.Arguments), 1)
 
-		if len(exp.Arguments) != 1 {
-			t.Fatalf("wrong length of arguments. got=%d", len(exp.Arguments))
-		}
-
-		if !testIdentifier(t, exp.Arguments[0], "Integer") {
-			return
-		}
+		testIdentifier(t, exp.Arguments[0], "Integer")
 	})
 	t.Run("chained context call with dot without parens", func(t *testing.T) {
 		input := "foo.add.bar;"
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program.Statements does not contain %d statements. got=%d\n",
-				1,
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0])
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 
 		context, ok := exp.Context.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf(
-				"expr.Context is not ast.ContextCallExpression. got=%T",
-				exp.Context,
-			)
-		}
+		utils.Assert(t, ok, "expr.Context is not ast.ContextCallExpression. got=%T", exp.Context)
 
-		if !testIdentifier(t, context.Context, "foo") {
-			return
-		}
+		testIdentifier(t, context.Context, "foo")
+		testIdentifier(t, context.Function, "add")
+		utils.AssertEqual(t, len(context.Arguments), 0)
 
-		if !testIdentifier(t, context.Function, "add") {
-			return
-		}
-
-		if len(context.Arguments) != 0 {
-			t.Fatalf("wrong length of arguments. got=%d", len(context.Arguments))
-		}
-
-		if !testIdentifier(t, exp.Function, "bar") {
-			return
-		}
-
-		if len(exp.Arguments) != 0 {
-			t.Fatalf("wrong length of arguments. got=%d", len(exp.Arguments))
-		}
+		testIdentifier(t, exp.Function, "bar")
+		utils.AssertEqual(t, len(exp.Arguments), 0)
 	})
 	t.Run("chained context call with dot without parens", func(t *testing.T) {
 		input := "1.add.bar;"
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program.Statements does not contain %d statements. got=%d\n",
-				1,
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0])
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 
 		context, ok := exp.Context.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf(
-				"expr.Context is not ast.ContextCallExpression. got=%T",
-				exp.Context,
-			)
-		}
+		utils.Assert(t, ok, "expr.Context is not ast.ContextCallExpression. got=%T", exp.Context)
 
-		if !testIntegerLiteral(t, context.Context, 1) {
-			return
-		}
-
-		if !testIdentifier(t, context.Function, "add") {
-			return
-		}
-
-		if len(context.Arguments) != 0 {
-			t.Fatalf("wrong length of arguments. got=%d", len(context.Arguments))
-		}
-
-		if !testIdentifier(t, exp.Function, "bar") {
-			return
-		}
-
-		if len(exp.Arguments) != 0 {
-			t.Fatalf("wrong length of arguments. got=%d", len(exp.Arguments))
-		}
+		testIntegerLiteral(t, context.Context, 1)
+		testIdentifier(t, context.Function, "add")
+		utils.AssertEqual(t, len(context.Arguments), 0)
+		testIdentifier(t, exp.Function, "bar")
+		utils.AssertEqual(t, len(exp.Arguments), 0)
 	})
 	t.Run("chained context call with dot with parens", func(t *testing.T) {
 		input := "foo.add().bar();"
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program.Statements does not contain %d statements. got=%d\n",
-				1,
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0])
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 
 		context, ok := exp.Context.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf(
-				"expr.Context is not ast.ContextCallExpression. got=%T",
-				exp.Context,
-			)
-		}
-
-		if !testIdentifier(t, context.Function, "add") {
-			return
-		}
-
-		if len(context.Arguments) != 0 {
-			t.Fatalf("wrong length of arguments. got=%d", len(context.Arguments))
-		}
-
-		if !testIdentifier(t, exp.Function, "bar") {
-			return
-		}
-
-		if len(exp.Arguments) != 0 {
-			t.Fatalf("wrong length of arguments. got=%d", len(exp.Arguments))
-		}
+		utils.Assert(t, ok, "expr.Context is not ast.ContextCallExpression. got=%T", exp.Context)
+		testIdentifier(t, context.Function, "add")
+		utils.AssertEqual(t, len(context.Arguments), 0)
+		testIdentifier(t, exp.Function, "bar")
+		utils.AssertEqual(t, len(exp.Arguments), 0)
 	})
 	t.Run("allow operators as method name", func(t *testing.T) {
 		input := "foo.<=>;"
 
 		program, err := parseSource(input)
 		checkParserErrors(t, err)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf(
-				"program.Statements does not contain %d statements. got=%d\n",
-				1,
-				len(program.Statements),
-			)
-		}
+		utils.AssertEqual(t, len(program.Statements), 1)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T",
-				program.Statements[0])
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		expr, ok := stmt.Expression.(*ast.ContextCallExpression)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ContextCallExpression. got=%T",
-				stmt.Expression)
-		}
-
-		if !testIdentifier(t, expr.Context, "foo") {
-			return
-		}
-
-		if !testIdentifier(t, expr.Function, "<=>") {
-			return
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
+		testIdentifier(t, expr.Context, "foo")
+		testIdentifier(t, expr.Function, "<=>")
 	})
 }
 
@@ -3245,13 +1920,8 @@ func TestStringLiteralExpression(t *testing.T) {
 
 	stmt := program.Statements[0].(*ast.ExpressionStatement)
 	literal, ok := stmt.Expression.(*ast.StringLiteral)
-	if !ok {
-		t.Fatalf("exp not *ast.StringLiteral. got=%T", stmt.Expression)
-	}
-
-	if literal.Value != "hello world" {
-		t.Errorf("literal.Value not %q. got=%q", "hello world", literal.Value)
-	}
+	utils.Assert(t, ok, "stmt.Expression is not ast.StringLiteral. got=%T", stmt.Expression)
+	utils.AssertEqual(t, literal.Value, "hello world")
 }
 
 func TestSymbolExpression(t *testing.T) {
@@ -3275,13 +1945,8 @@ func TestSymbolExpression(t *testing.T) {
 
 		stmt := program.Statements[0].(*ast.ExpressionStatement)
 		literal, ok := stmt.Expression.(*ast.SymbolLiteral)
-		if !ok {
-			t.Fatalf("exp not *ast.SymbolLiteral. got=%T", stmt.Expression)
-		}
-
-		if literal.Value != tt.value {
-			t.Errorf("literal.Value not %q. got=%q", tt.value, literal.Value)
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.SymbolLiteral. got=%T", stmt.Expression)
+		utils.AssertEqual(t, literal.Value, tt.value)
 	}
 }
 
@@ -3289,24 +1954,14 @@ func TestParsingArrayLiterals(t *testing.T) {
 	input := "[1, 2 * 2, 3 + 3, {'foo'=>2}]"
 	program, err := parseSource(input)
 	checkParserErrors(t, err)
-
-	if len(program.Statements) != 1 {
-		t.Logf("Expected only one statement, got %d\n", len(program.Statements))
-		t.Fail()
-	}
+	utils.AssertEqual(t, len(program.Statements), 1)
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf("stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
-	}
-	array, ok := stmt.Expression.(*ast.ArrayLiteral)
-	if !ok {
-		t.Fatalf("exp not ast.ArrayLiteral. got=%T", stmt.Expression)
-	}
+	utils.Assert(t, ok, "stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
 
-	if len(array.Elements) != 4 {
-		t.Fatalf("len(array.Elements) not 4. got=%d", len(array.Elements))
-	}
+	array, ok := stmt.Expression.(*ast.ArrayLiteral)
+	utils.Assert(t, ok, "stmt.Expression is not ast.ArrayLiteral. got=%T", stmt.Expression)
+	utils.AssertEqual(t, len(array.Elements), 4)
 	testIntegerLiteral(t, array.Elements[0], 1)
 	testInfixExpression(t, array.Elements[1], 2, infix.ASTERISK, 2)
 	testInfixExpression(t, array.Elements[2], 3, infix.PLUS, 3)
@@ -3320,21 +1975,11 @@ func TestParsingIndexExpressions(t *testing.T) {
 		checkParserErrors(t, err)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
-		}
+		utils.Assert(t, ok, "stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
 		indexExp, ok := stmt.Expression.(*ast.IndexExpression)
-		if !ok {
-			t.Fatalf("exp not *ast.IndexExpression. got=%T", stmt.Expression)
-		}
-
-		if !testIdentifier(t, indexExp.Left, "myArray") {
-			return
-		}
-
-		if !testInfixExpression(t, indexExp.Index, 1, infix.PLUS, 1) {
-			return
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.IndexExpression. got=%T", stmt.Expression)
+		testIdentifier(t, indexExp.Left, "myArray")
+		testInfixExpression(t, indexExp.Index, 1, infix.PLUS, 1)
 	})
 	t.Run("two args as index", func(t *testing.T) {
 		t.Run("integers", func(t *testing.T) {
@@ -3343,42 +1988,25 @@ func TestParsingIndexExpressions(t *testing.T) {
 			checkParserErrors(t, err)
 
 			stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-			if !ok {
-				t.Fatalf("stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
-			}
+			utils.Assert(t, ok, "stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
 			indexExp, ok := stmt.Expression.(*ast.IndexExpression)
-			if !ok {
-				t.Fatalf("exp not *ast.IndexExpression. got=%T", stmt.Expression)
-			}
+			utils.Assert(t, ok, "stmt.Expression is not ast.IndexExpression. got=%T", stmt.Expression)
 
-			if !testIdentifier(t, indexExp.Left, "myArray") {
-				return
-			}
+			testIdentifier(t, indexExp.Left, "myArray")
 
 			index, ok := indexExp.Index.(ast.ExpressionList)
-			if !ok {
-				t.Fatalf("indexExp.Index not ast.ExpressionList. got=%T", indexExp.Index)
-			}
+			utils.Assert(t, ok, "indexExp.Index not ast.ExpressionList. got=%T", indexExp.Index)
 
-			if len(index) != 2 {
-				t.Fatalf("indexExp.Index len not 2. got=%d", len(index))
-			}
+			utils.AssertEqual(t, len(index), 2)
 
-			if i0, ok := index[0].(*ast.IntegerLiteral); !ok {
-				t.Fatalf("indexExp.Index[0] not ast.IntegerLiteral. got=%T", index[0])
-			} else {
-				if i0.Value != 1 {
-					t.Fatalf("indexExp.Index[0] not 1. got=%d", i0.Value)
-				}
-			}
+			i0, ok := index[0].(*ast.IntegerLiteral)
+			utils.Assert(t, ok, "indexExp.Index[0] not ast.IntegerLiteral. got=%T", index[0])
 
-			if i1, ok := index[1].(*ast.IntegerLiteral); !ok {
-				t.Fatalf("indexExp.Index[1] not ast.IntegerLiteral. got=%T", index[1])
-			} else {
-				if i1.Value != 1 {
-					t.Fatalf("indexExp.Index[1] not 1. got=%d", i1.Value)
-				}
-			}
+			utils.AssertEqual(t, i0.Value, 1)
+
+			i1, ok := index[1].(*ast.IntegerLiteral)
+			utils.Assert(t, ok, "indexExp.Index[1] not ast.IntegerLiteral. got=%T", index[1])
+			utils.AssertEqual(t, i1.Value, 1)
 		})
 		t.Run("method calls as index", func(t *testing.T) {
 			input := "myArray[foo.bar, 1]"
@@ -3386,23 +2014,12 @@ func TestParsingIndexExpressions(t *testing.T) {
 			checkParserErrors(t, err)
 
 			stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-			if !ok {
-				t.Fatalf("stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
-			}
+			utils.Assert(t, ok, "stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
+
 			indexExp, ok := stmt.Expression.(*ast.IndexExpression)
-			if !ok {
-				t.Fatalf("exp not *ast.IndexExpression. got=%T", stmt.Expression)
-			}
-
-			if !testIdentifier(t, indexExp.Left, "myArray") {
-				return
-			}
-
-			index := indexExp.Index.String()
-			if index != "foo.bar(), 1" {
-				t.Logf("Expected index arg to equal '%s', got '%s'", "foo.bar()", index)
-				t.Fail()
-			}
+			utils.Assert(t, ok, "stmt.Expression is not ast.IndexExpression. got=%T", stmt.Expression)
+			testIdentifier(t, indexExp.Left, "myArray")
+			utils.AssertEqual(t, indexExp.Index.String(), "foo.bar(), 1")
 		})
 		t.Run("method calls as length", func(t *testing.T) {
 			input := "myArray[1, foo.bar]"
@@ -3410,23 +2027,12 @@ func TestParsingIndexExpressions(t *testing.T) {
 			checkParserErrors(t, err)
 
 			stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-			if !ok {
-				t.Fatalf("stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
-			}
+			utils.Assert(t, ok, "stmt not ast.ExpressionStatement. got=%T", program.Statements[0])
+
 			indexExp, ok := stmt.Expression.(*ast.IndexExpression)
-			if !ok {
-				t.Fatalf("exp not *ast.IndexExpression. got=%T", stmt.Expression)
-			}
-
-			if !testIdentifier(t, indexExp.Left, "myArray") {
-				return
-			}
-
-			index := indexExp.Index.String()
-			if index != "1, foo.bar()" {
-				t.Logf("Expected index arg to equal '%s', got '%s'", "1, foo.bar()", index)
-				t.Fail()
-			}
+			utils.Assert(t, ok, "stmt.Expression is not ast.IndexExpression. got=%T", stmt.Expression)
+			testIdentifier(t, indexExp.Left, "myArray")
+			utils.AssertEqual(t, indexExp.Index.String(), "1, foo.bar()")
 		})
 	})
 }
@@ -3491,10 +2097,7 @@ func TestParseHash(t *testing.T) {
 		checkParserErrors(t, err)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Logf("Expected first statement to be *ast.ExpressionStatement, got %T\n", stmt)
-			t.FailNow()
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		testHashLiteral(t, stmt.Expression, tt.hashMap)
 	}
@@ -3524,79 +2127,10 @@ func TestRangeLiteral(t *testing.T) {
 		checkParserErrors(t, err)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", stmt)
-			t.FailNow()
-		}
-
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", stmt)
 		testRangeLiteral(t, stmt.Expression, tt.ranges[0], tt.ranges[1], tt.inclusive)
 	}
 }
-
-// func TestProcLiteral(t *testing.T) {
-// 	type funcParam struct {
-// 		name         string
-// 		defaultValue interface{}
-// 		splat        bool
-// 	}
-// 	tests := []struct {
-// 		input      string
-// 		parameters []funcParam
-// 	}{
-// 		{
-// 			input: "-> (a, b) { a }",
-// 			parameters: []funcParam{
-// 				{
-// 					name: "a",
-// 				},
-// 				{
-// 					name: "b",
-// 				},
-// 			},
-// 		},
-// 		{
-// 			input: "-> (*a) {}",
-// 			parameters: []funcParam{
-// 				{
-// 					name:  "a",
-// 					splat: true,
-// 				},
-// 			},
-// 		},
-// 	}
-
-// 	for _, tt := range tests {
-// 		// program, err := parseSource(tt.input, p.Trace)
-// 		program, err := parseSource(tt.input)
-// 		checkParserErrors(t, err)
-
-// 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-// 		if !ok {
-// 			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", stmt)
-// 			t.FailNow()
-// 		}
-
-// 		procLit, ok := stmt.Expression.(*ast.ProcedureLiteral)
-// 		if !ok {
-// 			t.Fatalf("stmt.Expression is not ast.ProcedureLiteral. got=%T", stmt.Expression)
-// 			t.FailNow()
-// 		}
-
-// 		if len(procLit.Parameters) != len(tt.parameters) {
-// 			t.Fatalf("wrong number of parameters. got=%d", len(procLit.Parameters))
-// 		}
-
-// 		for i, param := range procLit.Parameters {
-// 			testLiteralExpression(t, param.Name, tt.parameters[i].name)
-// 			testLiteralExpression(t, param.Default, tt.parameters[i].defaultValue)
-// 			if tt.parameters[i].splat != param.Splat {
-// 				t.Errorf("param.Splat not %t. got=%t", tt.parameters[i].splat, param.Splat)
-// 			}
-
-// 		}
-
-// 	}
-// }
 
 func TestRegexLiteral(t *testing.T) {
 	tests := []struct {
@@ -3611,25 +2145,15 @@ func TestRegexLiteral(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		// _, err := parseSource(tt.input, p.Trace)
-		// checkParserErrors(t, err)
-
 		program, err := parseSource(tt.input)
 		checkParserErrors(t, err)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", stmt)
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", stmt)
 
 		regexLit, ok := stmt.Expression.(*ast.StringLiteral)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.RegexLiteral. got=%T", stmt.Expression)
-		}
-
-		if regexLit.Value != tt.expected {
-			t.Errorf("regexLit.Value not %q. got=%q", tt.expected, regexLit.Value)
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.RegexLiteral. got=%T", stmt.Expression)
+		utils.AssertEqual(t, regexLit.Value, tt.expected)
 
 	}
 }
@@ -3689,18 +2213,11 @@ func TestArraySplat(t *testing.T) {
 		checkParserErrors(t, err)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		if !ok {
-			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", stmt)
-		}
+		utils.Assert(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		arrayLit, ok := stmt.Expression.(*ast.ArrayLiteral)
-		if !ok {
-			t.Fatalf("stmt.Expression is not ast.ArrayLiteral. got=%T", stmt.Expression)
-		}
-
-		if len(arrayLit.Elements) != tt.length {
-			t.Fatalf("wrong number of elements. got=%d", len(arrayLit.Elements))
-		}
+		utils.Assert(t, ok, "stmt.Expression is not ast.ArrayLiteral. got=%T", stmt.Expression)
+		utils.AssertEqual(t, len(arrayLit.Elements), tt.length)
 
 		for i, expected := range tt.expected {
 			element := arrayLit.Elements[i]
@@ -3708,13 +2225,9 @@ func TestArraySplat(t *testing.T) {
 				expected_expr := &ast.Identifier{
 					Value: expected.name,
 				}
-				if !testSplat(t, element, expected_expr) {
-					return
-				}
+				testSplat(t, element, expected_expr)
 			} else {
-				if !testIdentifier(t, element, expected.name) {
-					return
-				}
+				testIdentifier(t, element, expected.name)
 			}
 
 		}
@@ -3751,33 +2264,22 @@ func testRangeLiteral(
 	exp ast.Expression,
 	start, end int,
 	inclusive bool,
-) bool {
+) {
 	t.Helper()
 	rangeLit, ok := exp.(*ast.RangeLiteral)
-	if !ok {
-		t.Errorf("exp not *ast.RangeLiteral. got=%T", exp)
-		return false
-	}
-	if !testIntegerLiteral(t, rangeLit.Left, int64(start)) {
-		return false
-	}
-	if !testIntegerLiteral(t, rangeLit.Right, int64(end)) {
-		return false
-	}
-	if rangeLit.Inclusive != inclusive {
-		t.Errorf("rangeLit.Inclusive not %t. got=%t", inclusive, rangeLit.Inclusive)
-		return false
-	}
-
-	return true
+	utils.Assert(t, ok, "exp not *ast.RangeLiteral. got=%T", exp)
+	testIntegerLiteral(t, rangeLit.Left, int64(start))
+	testIntegerLiteral(t, rangeLit.Right, int64(end))
+	utils.AssertEqual(t, rangeLit.Inclusive, inclusive)
 }
 
-func testExpression(t *testing.T, exp ast.Expression, expected interface{}) bool {
+func testExpression(t *testing.T, exp ast.Expression, expected interface{}) {
 	t.Helper()
 	if inf, ok := expected.(testInfix); ok {
-		return testInfixExpression(t, exp, inf.left, inf.operator, inf.right)
+		testInfixExpression(t, exp, inf.left, inf.operator, inf.right)
+	} else {
+		testLiteralExpression(t, exp, expected)
 	}
-	return testLiteralExpression(t, exp, expected)
 }
 
 type testInfix struct {
@@ -3792,159 +2294,93 @@ func testInfixExpression(
 	left interface{},
 	operator infix.Infix,
 	right interface{},
-) bool {
+) {
 	t.Helper()
 	opExp, ok := exp.(*ast.InfixExpression)
-	if !ok {
-		t.Errorf("exp is not ast.OperatorExpression. got=%T(%s)", exp, exp)
-		return false
-	}
-
-	if !testLiteralExpression(t, opExp.Left, left) {
-		return false
-	}
-
-	if opExp.Operator != operator {
-		t.Errorf("exp.Operator is not '%s'. got=%q", operator, opExp.Operator)
-		return false
-	}
-
-	if !testLiteralExpression(t, opExp.Right, right) {
-		return false
-	}
-
-	return true
+	utils.Assert(t, ok, "exp is not ast.OperatorExpression. got=%T", exp)
+	testLiteralExpression(t, opExp.Left, left)
+	utils.AssertEqual(t, opExp.Operator, operator)
+	testLiteralExpression(t, opExp.Right, right)
 }
 
 func testLiteralExpression(
 	t *testing.T,
 	exp ast.Expression,
 	expected interface{},
-) bool {
+) {
 	t.Helper()
 	switch v := expected.(type) {
 	case int:
-		return testIntegerLiteral(t, exp, int64(v))
+		testIntegerLiteral(t, exp, int64(v))
 	case int64:
-		return testIntegerLiteral(t, exp, v)
+		testIntegerLiteral(t, exp, v)
 	case string:
 		if strings.HasPrefix(v, ":") {
-			return testSymbol(t, exp, strings.TrimPrefix(v, ":"))
+			testSymbol(t, exp, strings.TrimPrefix(v, ":"))
+		} else {
+			testIdentifier(t, exp, v)
 		}
-		return testIdentifier(t, exp, v)
 	case bool:
-		return testBooleanLiteral(t, exp, v)
+		testBooleanLiteral(t, exp, v)
 	case map[string]string:
-		return testHashLiteral(t, exp, v)
+		testHashLiteral(t, exp, v)
 	case []string:
-		return testArrayLiteral(t, exp, v)
+		testArrayLiteral(t, exp, v)
 	case nil:
-		return true
+		//
+	default:
+		t.Errorf("type of expression not handled. got=%T", exp)
 	}
-	t.Errorf("type of expression not handled. got=%T", exp)
-	return false
 }
 
-func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
+func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) {
 	t.Helper()
 	if prefix, ok := il.(*ast.PrefixExpression); ok {
-		if _, ok := prefix.Right.(*ast.IntegerLiteral); !ok {
-			t.Errorf("expression not *ast.IntegerLiteral. got=%T", il)
-			return false
-		}
-		if !strings.ContainsAny(prefix.Operator, "+-") {
-			t.Errorf("unsupported prefix: %q", prefix.Operator)
-			return false
-		}
+		_, ok := prefix.Right.(*ast.IntegerLiteral)
+		utils.Assert(t, ok, "prefix.Right not *ast.IntegerLiteral. got=%T", prefix.Right)
+		utils.AssertEqual(t, prefix.Operator, "+")
 		prefixedInt := fmt.Sprintf("%s%s", prefix.Operator, prefix.Right.String())
 		i, err := strconv.ParseInt(prefixedInt, 10, 64)
-		if err != nil {
-			t.Errorf("could not parse prefix: %v", err)
-			return false
-		}
+		utils.AssertNoError(t, err)
 		il = &ast.IntegerLiteral{Value: i}
 	}
 	integ, ok := il.(*ast.IntegerLiteral)
-	if !ok {
-		t.Errorf("expression not *ast.IntegerLiteral. got=%T", il)
-		return false
-	}
-
-	if integ.Value != value {
-		t.Errorf("integer.Value not %d. got=%d", value, integ.Value)
-		return false
-	}
-
-	return true
+	utils.Assert(t, ok, "expression not *ast.IntegerLiteral. got=%T", il)
+	utils.AssertEqual(t, integ.Value, value)
 }
 
-func testGlobal(t *testing.T, exp ast.Expression, value string) bool {
+func testGlobal(t *testing.T, exp ast.Expression, value string) {
 	t.Helper()
 	global, ok := exp.(*ast.Global)
-	if !ok {
-		t.Errorf("exp not *ast.Identifier. got=%T", exp)
-		return false
-	}
-
-	if global.Value != value {
-		t.Errorf("global.Value not %s. got=%s", value, global.Value)
-		return false
-	}
-
-	return true
+	utils.Assert(t, ok, "exp not *ast.Global. got=%T", exp)
+	utils.AssertEqual(t, global.Value, value)
 }
 
-func testSymbol(t *testing.T, exp ast.Expression, value string) bool {
+func testSymbol(t *testing.T, exp ast.Expression, value string) {
 	t.Helper()
 	symbol, ok := exp.(*ast.SymbolLiteral)
-	if !ok {
-		t.Errorf("exp not %T. got=%T", symbol, exp)
-		return false
-	}
-
-	if symbol.Value != value {
-		t.Errorf("symbol.Value not %s. got=%s", value, symbol.Value)
-		return false
-	}
-
-	return true
+	utils.Assert(t, ok, "exp not *ast.SymbolLiteral. got=%T", exp)
+	utils.AssertEqual(t, symbol.Value, value)
 }
 
-func testIdentifier(t *testing.T, exp ast.Expression, value string) bool {
+func testIdentifier(t *testing.T, exp ast.Expression, value string) {
 	t.Helper()
 	ident, ok := exp.(*ast.Identifier)
-	if !ok {
-		t.Errorf("exp not *ast.Identifier. got=%T", exp)
-		return false
-	}
-
-	if ident.Value != value {
-		t.Errorf("ident.Value not %s. got=%s", value, ident.Value)
-		return false
-	}
-	return true
+	utils.Assert(t, ok, "exp not *ast.Identifier. got=%T", exp)
+	utils.AssertEqual(t, ident.Value, value)
 }
 
-func testSplat(t *testing.T, exp ast.Expression, value ast.Expression) bool {
+func testSplat(t *testing.T, exp ast.Expression, value ast.Expression) {
 	t.Helper()
 	splat, ok := exp.(*ast.Splat)
-	if !ok {
-		t.Errorf("exp not *ast.Splat. got=%T", exp)
-		return false
-	}
-	if !testIdentifier(t, splat.Value, value.String()) {
-		return false
-	}
-	return true
+	utils.Assert(t, ok, "exp not *ast.Splat. got=%T", exp)
+	testIdentifier(t, splat.Value, value.String())
 }
 
-func testBooleanLiteral(t *testing.T, exp ast.Expression, value bool) bool {
+func testBooleanLiteral(t *testing.T, exp ast.Expression, value bool) {
 	t.Helper()
 	bo, ok := exp.(*ast.SymbolLiteral)
-	if !ok {
-		t.Errorf("exp not *ast.SymbolLiteral. got=%T", exp)
-		return false
-	}
+	utils.Assert(t, ok, "exp not *ast.SymbolLiteral. got=%T", exp)
 
 	var expected string
 	if value {
@@ -3952,54 +2388,36 @@ func testBooleanLiteral(t *testing.T, exp ast.Expression, value bool) bool {
 	} else {
 		expected = "false"
 	}
-	if bo.Value != expected {
-		t.Errorf("bo.Value not %s. got=%s", expected, bo.Value)
-		return false
-	}
-
-	return true
+	utils.AssertEqual(t, bo.Value, expected)
 }
 
-func testArrayLiteral(t *testing.T, expr ast.Expression, value []string) bool {
+func testArrayLiteral(t *testing.T, expr ast.Expression, value []string) {
 	t.Helper()
 	array, ok := expr.(*ast.ArrayLiteral)
-	if !ok {
-		t.Fatalf("expr not *ast.ArrayLiteral. got=%T", expr)
-		return false
-	}
+	utils.Assert(t, ok, "expr not *ast.ArrayLiteral. got=%T", expr)
 
-	if len(array.Elements) != len(value) {
-		t.Fatalf("len(array.Elements) not %d. got=%d", len(value), len(array.Elements))
-	}
-
+	utils.AssertEqual(t, len(array.Elements), len(value))
 	arr := make([]string, len(array.Elements))
 	for i, v := range array.Elements {
 		arr[i] = v.String()
 	}
-	if !reflect.DeepEqual(arr, value) {
-		t.Logf("Expected array to equal\n%q\n\tgot\n%q\n", value, array)
-		return false
-	}
-	return true
+	utils.AssertEqualCmp(t, arr, value, utils.CompareArrays)
 }
 
-func testHashLiteral(t *testing.T, expr ast.Expression, value map[string]string) bool {
+func testHashLiteral(t *testing.T, expr ast.Expression, value map[string]string) {
 	t.Helper()
 	hash, ok := expr.(*ast.HashLiteral)
-	if !ok {
-		t.Errorf("expr not *ast.HashLiteral. got=%T", expr)
-		return false
-	}
+	utils.Assert(t, ok, "expr not *ast.HashLiteral. got=%T", expr)
 	hashMap := make(map[string]string)
 	for k, v := range hash.Map {
 		hashMap[k.String()] = v.String()
 	}
 
-	if !reflect.DeepEqual(hashMap, value) {
-		t.Logf("Expected hash to equal\n%q\n\tgot\n%q\n", value, hashMap)
-		return false
-	}
-	return true
+	// if !reflect.DeepEqual(hashMap, value) {
+	// 	t.Logf("Expected hash to equal\n%q\n\tgot\n%q\n", value, hashMap)
+	// 	return false
+	// }
+	utils.AssertEqualCmp(t, hashMap, value, utils.CompareMaps)
 }
 
 func parseSource(src string, modes ...p.Mode) (*ast.Program, *p.Errors) {
@@ -4041,10 +2459,7 @@ func checkParserErrors(t *testing.T, err error, withStack ...bool) {
 	if parserErrors == nil {
 		return
 	}
-	if !ok {
-		t.Logf("Unexpected parser error: %T:%v\n", err, err)
-		t.FailNow()
-	}
+	utils.Assert(t, ok, "Unexpected parser error: %T:%v\n", err, err)
 
 	type stackTracer interface {
 		StackTrace() errors.StackTrace

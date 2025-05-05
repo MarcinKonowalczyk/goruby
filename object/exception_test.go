@@ -46,23 +46,14 @@ func TestExceptionException(t *testing.T) {
 		result, err := exceptionException(context)
 
 		utils.AssertNoError(t, err)
-
-		if contextObject != result {
-			t.Logf("Expected result to pointer equal context\n")
-			t.Fail()
-		}
+		utils.AssertEqualCmpAny(t, result, contextObject, CompareRubyObjectsForTests)
 		utils.AssertEqualCmpAny(t, result, &Exception{message: "x"}, CompareRubyObjectsForTests)
 	})
 	t.Run("with arg", func(t *testing.T) {
 		result, err := exceptionException(context, NewString("x"))
 
 		utils.AssertNoError(t, err)
-
-		if contextObject != result {
-			t.Logf("Expected result to pointer equal context\n")
-			t.Fail()
-		}
-
+		utils.AssertEqualCmpAny(t, result, contextObject, CompareRubyObjectsForTests)
 		utils.AssertEqualCmpAny(t, result, &Exception{message: "x"}, CompareRubyObjectsForTests)
 	})
 	t.Run("with arg but different message", func(t *testing.T) {

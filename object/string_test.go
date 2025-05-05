@@ -12,31 +12,16 @@ func TestString_hashKey(t *testing.T) {
 	diff1 := NewString("My name is johnny")
 	diff2 := NewString("My name is johnny")
 
-	if hello1.HashKey() != hello2.HashKey() {
-		t.Errorf("strings with same content have different hash keys")
-	}
-
-	if diff1.HashKey() != diff2.HashKey() {
-		t.Errorf("strings with same content have different hash keys")
-	}
-
-	if hello1.HashKey() == diff1.HashKey() {
-		t.Errorf("strings with different content have same hash keys")
-	}
+	utils.AssertEqual(t, hello1.HashKey(), hello2.HashKey())
+	utils.AssertEqual(t, diff1.HashKey(), diff2.HashKey())
+	utils.AssertNotEqual(t, hello1.HashKey(), diff1.HashKey())
 }
 
 func Test_stringify(t *testing.T) {
 	t.Run("object with regular `to_s`", func(t *testing.T) {
-		obj := NewSymbol("sym")
-
-		res, err := stringify(obj)
-
+		res, err := stringify(NewSymbol("sym"))
 		utils.AssertNoError(t, err)
-
-		if res != "sym" {
-			t.Logf("Expected stringify to return 'sym', got %q\n", res)
-			t.Fail()
-		}
+		utils.AssertEqual(t, res, "sym")
 	})
 	t.Run("object without `to_s`", func(t *testing.T) {
 		_, err := stringify(nil)

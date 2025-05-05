@@ -14,11 +14,21 @@ func getParentInfo(N int) (string, int) {
 	return file, line
 }
 
-func Assert(t *testing.T, predicate bool, msg string, args ...any) {
+func Assert(t *testing.T, predicate bool, args ...any) {
 	t.Helper()
 	if !predicate {
 		file, line := getParentInfo(0)
-		msg = fmt.Sprintf(msg, args...)
+		var msg string
+		if len(args) == 0 {
+			msg = "assertion failed"
+		}
+		switch args[0].(type) {
+		case string:
+			msg = args[0].(string)
+			msg = fmt.Sprintf(msg, args...)
+		default:
+			msg = fmt.Sprintf("%v", args)
+		}
 		t.Errorf(msg+" in %s:%d", file, line)
 	}
 }
@@ -27,7 +37,7 @@ func AssertEqual[T comparable](t *testing.T, a T, b T) {
 	t.Helper()
 	if a != b {
 		file, line := getParentInfo(0)
-		t.Errorf("expected %v == %v (%T) in %s:%d", a, b, a, file, line)
+		t.Errorf("expected '%v' (%T) == '%v' (%T) in %s:%d", a, a, b, b, file, line)
 	}
 }
 
@@ -43,7 +53,7 @@ func AssertNotEqual[T comparable](t *testing.T, a T, b T) {
 	t.Helper()
 	if a == b {
 		file, line := getParentInfo(0)
-		t.Errorf("expected %v != %v (%T) in %s:%d", a, b, a, file, line)
+		t.Errorf("expected %v (%T) != %v (%T) in %s:%d", a, a, b, b, file, line)
 	}
 }
 

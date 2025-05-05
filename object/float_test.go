@@ -11,18 +11,9 @@ func TestFloat_hashKey(t *testing.T) {
 	hello2 := NewFloat(1)
 	diff1 := NewFloat(3)
 	diff2 := NewFloat(3)
-
-	if hello1.HashKey() != hello2.HashKey() {
-		t.Errorf("strings with same content have different hash keys")
-	}
-
-	if diff1.HashKey() != diff2.HashKey() {
-		t.Errorf("strings with same content have different hash keys")
-	}
-
-	if hello1.HashKey() == diff1.HashKey() {
-		t.Errorf("strings with different content have same hash keys")
-	}
+	utils.AssertEqual(t, hello1.HashKey(), hello2.HashKey())
+	utils.AssertEqual(t, diff1.HashKey(), diff2.HashKey())
+	utils.AssertNotEqual(t, hello1.HashKey(), diff1.HashKey())
 }
 
 func TestFloatDiv(t *testing.T) {
