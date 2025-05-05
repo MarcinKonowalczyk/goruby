@@ -38,7 +38,6 @@ var bottomMethodSet = map[string]RubyMethod{
 	"class":   withArity(0, newMethod(bottomClassMethod)),
 	"puts":    newMethod(bottomPuts),
 	"print":   newMethod(bottomPrint),
-	"tap":     newMethod(bottomTap),
 	"raise":   newMethod(bottomRaise),
 	"==":      withArity(1, newMethod(bottomEqual)),
 	"!=":      withArity(1, newMethod(bottomNotEqual)),
@@ -167,25 +166,6 @@ func bottomClassMethod(context CallContext, args ...RubyObject) (RubyObject, err
 		return nil, nil
 	}
 	return receiver.Class().(RubyClassObject), nil
-}
-
-func bottomTap(context CallContext, args ...RubyObject) (RubyObject, error) {
-	block := args[0]
-	proc, ok := block.(*Symbol)
-	if !ok {
-		return nil, NewArgumentError("map requires a block")
-	}
-	self, _ := context.Env().Get("self")
-	self_class := self.Class()
-	fn, ok := self_class.GetMethod(proc.Value)
-	if !ok {
-		return nil, NewNoMethodError(self, proc.Value)
-	}
-	_, err := fn.Call(context, context.Receiver())
-	if err != nil {
-		return nil, err
-	}
-	return context.Receiver(), nil
 }
 
 func bottomRaise(context CallContext, args ...RubyObject) (RubyObject, error) {
