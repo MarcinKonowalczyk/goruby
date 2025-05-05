@@ -3,6 +3,8 @@ package object
 import (
 	"reflect"
 	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func TestHashSet(t *testing.T) {
@@ -13,30 +15,16 @@ func TestHashSet(t *testing.T) {
 		value := NewInteger(42)
 
 		result := hash.Set(key, value)
-
-		if len(hash.Map) != 1 {
-			t.Logf("Expected hashMap to contain 1 item, got %d\n", len(hash.Map))
-			t.Fail()
-		}
+		utils.AssertEqual(t, len(hash.Map), 1)
 
 		var values []hashPair
 		for _, v := range hash.Map {
 			values = append(values, v)
 		}
 
-		if !reflect.DeepEqual(values[0].Key, key) {
-			t.Logf("Expect hashPair Key to equal\n%v\n\tgot\n%v\n", key, values[0].Key)
-			t.Fail()
-		}
-		if !reflect.DeepEqual(values[0].Value, value) {
-			t.Logf("Expect hashPair Value to equal\n%v\n\tgot\n%v\n", value, values[0].Value)
-			t.Fail()
-		}
-
-		if !reflect.DeepEqual(result, value) {
-			t.Logf("Expect returned value to equal\n%v\n\tgot\n%v\n", value, result)
-			t.Fail()
-		}
+		utils.AssertEqualCmpAny(t, values[0].Key, key, CompareRubyObjectsForTests)
+		utils.AssertEqualCmpAny(t, values[0].Value, value, CompareRubyObjectsForTests)
+		utils.AssertEqualCmpAny(t, result, value, CompareRubyObjectsForTests)
 	})
 	t.Run("Set on uninitialized hash", func(t *testing.T) {
 		var hash Hash
@@ -45,30 +33,16 @@ func TestHashSet(t *testing.T) {
 		value := NewInteger(42)
 
 		result := hash.Set(key, value)
-
-		if len(hash.Map) != 1 {
-			t.Logf("Expected hashMap to contain 1 item, got %d\n", len(hash.Map))
-			t.Fail()
-		}
+		utils.AssertEqual(t, len(hash.Map), 1)
 
 		var values []hashPair
 		for _, v := range hash.Map {
 			values = append(values, v)
 		}
 
-		if !reflect.DeepEqual(values[0].Key, key) {
-			t.Logf("Expect hashPair Key to equal\n%v\n\tgot\n%v\n", key, values[0].Key)
-			t.Fail()
-		}
-		if !reflect.DeepEqual(values[0].Value, value) {
-			t.Logf("Expect hashPair Value to equal\n%v\n\tgot\n%v\n", value, values[0].Value)
-			t.Fail()
-		}
-
-		if !reflect.DeepEqual(result, value) {
-			t.Logf("Expect returned value to equal\n%v\n\tgot\n%v\n", value, result)
-			t.Fail()
-		}
+		utils.AssertEqualCmpAny(t, values[0].Key, key, CompareRubyObjectsForTests)
+		utils.AssertEqualCmpAny(t, values[0].Value, value, CompareRubyObjectsForTests)
+		utils.AssertEqualCmpAny(t, result, value, CompareRubyObjectsForTests)
 	})
 }
 
@@ -83,15 +57,8 @@ func TestHashGet(t *testing.T) {
 
 		result, ok := hash.Get(key)
 
-		if !ok {
-			t.Logf("Expected returned bool to be true, got false")
-			t.Fail()
-		}
-
-		if !reflect.DeepEqual(result, value) {
-			t.Logf("Expect returned value to equal\n%v\n\tgot\n%v\n", value, result)
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected returned bool to be true, got false")
+		utils.AssertEqualCmpAny(t, result, value, CompareRubyObjectsForTests)
 	})
 	t.Run("value not found", func(t *testing.T) {
 		key := NewString("foo")
@@ -100,15 +67,8 @@ func TestHashGet(t *testing.T) {
 
 		result, ok := hash.Get(key)
 
-		if ok {
-			t.Logf("Expected returned bool to be false, got true")
-			t.Fail()
-		}
-
-		if result != nil {
-			t.Logf("Expect returned value to be nil\n")
-			t.Fail()
-		}
+		utils.Assert(t, !ok, "Expected returned bool to be false, got true")
+		utils.AssertEqual(t, result, nil)
 	})
 	t.Run("on uninitalized hash", func(t *testing.T) {
 		key := NewString("foo")
@@ -117,15 +77,8 @@ func TestHashGet(t *testing.T) {
 
 		result, ok := hash.Get(key)
 
-		if ok {
-			t.Logf("Expected returned bool to be false, got true")
-			t.Fail()
-		}
-
-		if result != nil {
-			t.Logf("Expect returned value to be nil\n")
-			t.Fail()
-		}
+		utils.Assert(t, !ok, "Expected returned bool to be false, got true")
+		utils.AssertEqual(t, result, nil)
 	})
 }
 
@@ -148,10 +101,7 @@ func TestHashMap(t *testing.T) {
 			actual[k.Inspect()] = v
 		}
 
-		if !reflect.DeepEqual(expected, actual) {
-			t.Logf("Expected hash to equal\n%s\n\tgot\n%s\n", expected, actual)
-			t.Fail()
-		}
+		utils.Assert(t, reflect.DeepEqual(expected, actual), "Expected hash to equal\n%s\n\tgot\n%s\n", expected, actual)
 	})
 	t.Run("on uninitialized hash", func(t *testing.T) {
 		var hash Hash
@@ -164,9 +114,6 @@ func TestHashMap(t *testing.T) {
 			actual[k.Inspect()] = v
 		}
 
-		if !reflect.DeepEqual(expected, actual) {
-			t.Logf("Expected hash to equal\n%s\n\tgot\n%s\n", expected, actual)
-			t.Fail()
-		}
+		utils.Assert(t, reflect.DeepEqual(expected, actual), "Expected hash to equal\n%s\n\tgot\n%s\n", expected, actual)
 	})
 }

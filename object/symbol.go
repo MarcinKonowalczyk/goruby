@@ -12,9 +12,12 @@ var (
 		symbolClassMethods,
 		notInstantiatable, // not instantiatable through new
 	)
-	TRUE  RubyObject = NewSymbol("true")
-	FALSE RubyObject = NewSymbol("false")
-	NIL   RubyObject = NewSymbol("nil")
+	// TRUE  RubyObject = NewSymbol("true")
+	// FALSE RubyObject = NewSymbol("false")
+	// NIL   RubyObject = NewSymbol("nil")
+	TRUE  RubyObject = &Symbol{Value: "true"}
+	FALSE RubyObject = &Symbol{Value: "false"}
+	NIL   RubyObject = &Symbol{Value: "nil"}
 )
 
 func init() {
@@ -22,7 +25,16 @@ func init() {
 }
 
 func NewSymbol(value string) *Symbol {
-	return &Symbol{Value: value}
+	switch value {
+	case "true":
+		return TRUE.(*Symbol)
+	case "false":
+		return FALSE.(*Symbol)
+	case "nil":
+		return NIL.(*Symbol)
+	default:
+		return &Symbol{Value: value}
+	}
 }
 
 type Symbol struct {
@@ -87,7 +99,6 @@ func SymbolToBool(o RubyObject) (val bool, ok bool) {
 		} else if sym.Value == "false" {
 			return false, true
 		} else {
-			fmt.Println("SymbolToBool: unknown symbol value:", sym.Value)
 			return false, false
 		}
 	}

@@ -9,16 +9,6 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
-func mustCall(t *testing.T) func(obj RubyObject, err error) RubyObject {
-	return func(obj RubyObject, err error) RubyObject {
-		if err != nil {
-			t.Logf("Expected no error, got %T:%v\n", err, err)
-			t.FailNow()
-		}
-		return obj
-	}
-}
-
 func TestFunctionCall(t *testing.T) {
 	t.Run("calls CallContext#Eval with its Body", func(t *testing.T) {
 		functionBody := &ast.BlockStatement{
@@ -42,13 +32,11 @@ func TestFunctionCall(t *testing.T) {
 			},
 		}
 
-		mustCall(t)(function.Call(context))
+		_, err := function.Call(context)
+		utils.AssertNoError(t, err)
 
 		var expected ast.Node = functionBody
-		if !reflect.DeepEqual(expected, actualEvalNode) {
-			t.Logf("Expected Eval argument to equal\n%v\n\tgot\n%v\n", expected, actualEvalNode)
-			t.Fail()
-		}
+		utils.Assert(t, reflect.DeepEqual(expected, actualEvalNode), "Expected Eval argument to equal\n%v\n\tgot\n%v\n", expected, actualEvalNode)
 	})
 	t.Run("returns any error returned by CallContext#Eval", func(t *testing.T) {
 		evalErr := fmt.Errorf("An error")
@@ -63,11 +51,7 @@ func TestFunctionCall(t *testing.T) {
 		}
 
 		_, err := function.Call(context)
-
-		if !reflect.DeepEqual(evalErr, err) {
-			t.Logf("Expected error to equal\n%v\n\tgot\n%v\n", evalErr, err)
-			t.Fail()
-		}
+		utils.Assert(t, reflect.DeepEqual(evalErr, err), "Expected error to equal\n%v\n\tgot\n%v\n", evalErr, err)
 	})
 	t.Run("uses the function env as env for CallContext#Eval", func(t *testing.T) {
 		contextEnv := NewEnvironment()
@@ -89,7 +73,8 @@ func TestFunctionCall(t *testing.T) {
 			Env:        functionEnv,
 		}
 
-		mustCall(t)(function.Call(context))
+		_, err := function.Call(context)
+		utils.AssertNoError(t, err)
 
 		{
 			expected := NewSymbol("bar")
@@ -123,35 +108,20 @@ func TestFunctionCall(t *testing.T) {
 				},
 			}
 
-			mustCall(t)(function.Call(context, NewInteger(300), NewString("sym")))
+			_, err := function.Call(context, NewInteger(300), NewString("sym"))
+			utils.AssertNoError(t, err)
 
 			{
 				expected := NewInteger(300)
 				actual, ok := evalEnv.Get("foo")
-
-				if !ok {
-					t.Logf("Expected function parameter %q to be in Eval env", "foo")
-					t.FailNow()
-				}
-
-				if !reflect.DeepEqual(expected, actual) {
-					t.Logf("Expected result to equal\n%v\n\tgot\n%v\n", expected, actual)
-					t.Fail()
-				}
+				utils.Assert(t, ok, "Expected function parameter %q to be in Eval env", "foo")
+				utils.AssertEqualCmpAny(t, expected, actual, CompareRubyObjectsForTests)
 			}
 			{
 				expected := NewString("sym")
 				actual, ok := evalEnv.Get("bar")
-
-				if !ok {
-					t.Logf("Expected function parameter %q to be in Eval env", "bar")
-					t.FailNow()
-				}
-
-				if !reflect.DeepEqual(expected, actual) {
-					t.Logf("Expected result to equal\n%v\n\tgot\n%v\n", expected, actual)
-					t.Fail()
-				}
+				utils.Assert(t, ok, "Expected function parameter %q to be in Eval env", "bar")
+				utils.AssertEqualCmpAny(t, expected, actual, CompareRubyObjectsForTests)
 			}
 		})
 		t.Run("with default params", func(t *testing.T) {
@@ -164,49 +134,23 @@ func TestFunctionCall(t *testing.T) {
 				},
 			}
 
-			mustCall(t)(function.Call(context, NewInteger(300), NewSymbol("sym")))
+			_, err := function.Call(context, NewInteger(300), NewSymbol("sym"))
+			utils.AssertNoError(t, err)
 
 			{
-				expected := NewInteger(12)
 				actual, ok := evalEnv.Get("foo")
-
-				if !ok {
-					t.Logf("Expected function parameter %q to be in Eval env", "foo")
-					t.FailNow()
-				}
-
-				if !reflect.DeepEqual(expected, actual) {
-					t.Logf("Expected result to equal\n%v\n\tgot\n%v\n", expected, actual)
-					t.Fail()
-				}
+				utils.Assert(t, ok, "Expected function parameter %q to be in Eval env", "foo")
+				utils.AssertEqualCmpAny(t, NewInteger(12), actual, CompareRubyObjectsForTests)
 			}
 			{
-				expected := NewInteger(300)
 				actual, ok := evalEnv.Get("bar")
-
-				if !ok {
-					t.Logf("Expected function parameter %q to be in Eval env", "bar")
-					t.FailNow()
-				}
-
-				if !reflect.DeepEqual(expected, actual) {
-					t.Logf("Expected result to equal\n%v\n\tgot\n%v\n", expected, actual)
-					t.Fail()
-				}
+				utils.Assert(t, ok, "Expected function parameter %q to be in Eval env", "bar")
+				utils.AssertEqualCmpAny(t, NewInteger(300), actual, CompareRubyObjectsForTests)
 			}
 			{
-				expected := NewSymbol("sym")
 				actual, ok := evalEnv.Get("qux")
-
-				if !ok {
-					t.Logf("Expected function parameter %q to be in Eval env", "qux")
-					t.FailNow()
-				}
-
-				if !reflect.DeepEqual(expected, actual) {
-					t.Logf("Expected result to equal\n%v\n\tgot\n%v\n", expected, actual)
-					t.Fail()
-				}
+				utils.Assert(t, ok, "Expected function parameter %q to be in Eval env", "qux")
+				utils.AssertEqualCmpAny(t, NewSymbol("sym"), actual, CompareRubyObjectsForTests)
 			}
 		})
 	})
@@ -220,13 +164,7 @@ func TestFunctionCall(t *testing.T) {
 			function := &Function{}
 
 			result, _ := function.Call(context)
-
-			expected := NewInteger(8)
-
-			if !reflect.DeepEqual(expected, result) {
-				t.Logf("Expected result to equal\n%v\n\tgot\n%v\n", expected, result)
-				t.Fail()
-			}
+			utils.AssertEqualCmpAny(t, NewInteger(8), result, CompareRubyObjectsForTests)
 		})
 		t.Run("wrapped into a return value", func(t *testing.T) {
 			context := &callContext{
@@ -237,13 +175,7 @@ func TestFunctionCall(t *testing.T) {
 			function := &Function{}
 
 			result, _ := function.Call(context)
-
-			expected := NewInteger(8)
-
-			if !reflect.DeepEqual(expected, result) {
-				t.Logf("Expected result to equal\n%v\n\tgot\n%v\n", expected, result)
-				t.Fail()
-			}
+			utils.AssertEqualCmpAny(t, NewInteger(8), result, CompareRubyObjectsForTests)
 		})
 	})
 	t.Run("validates that the arguments match the function parameters", func(t *testing.T) {
@@ -257,14 +189,8 @@ func TestFunctionCall(t *testing.T) {
 		}
 
 		t.Run("without block argument", func(t *testing.T) {
-			expected := NewWrongNumberOfArgumentsError(0, 1)
-
 			_, err := function.Call(context, NewString("foo"))
-
-			if !reflect.DeepEqual(expected, err) {
-				t.Logf("Expected error to equal\n%v\n\tgot\n%v\n", expected, err)
-				t.Fail()
-			}
+			utils.AssertError(t, err, NewWrongNumberOfArgumentsError(0, 1))
 		})
 
 		t.Run("with default arguments", func(t *testing.T) {
@@ -274,11 +200,7 @@ func TestFunctionCall(t *testing.T) {
 			}
 
 			_, err := function.Call(context, NewInteger(8))
-
-			if err != nil {
-				t.Logf("Expected no error, got %T:%v\n", err, err)
-				t.Fail()
-			}
+			utils.AssertNoError(t, err)
 		})
 	})
 }

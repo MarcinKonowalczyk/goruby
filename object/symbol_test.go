@@ -12,17 +12,9 @@ func TestSymbol_hashKey(t *testing.T) {
 	diff1 := NewSymbol("My name is johnny")
 	diff2 := NewSymbol("My name is johnny")
 
-	if hello1.HashKey() != hello2.HashKey() {
-		t.Errorf("strings with same content have different hash keys")
-	}
-
-	if diff1.HashKey() != diff2.HashKey() {
-		t.Errorf("strings with same content have different hash keys")
-	}
-
-	if hello1.HashKey() == diff1.HashKey() {
-		t.Errorf("strings with different content have same hash keys")
-	}
+	utils.AssertEqual(t, hello1.HashKey(), hello2.HashKey())
+	utils.AssertEqual(t, diff1.HashKey(), diff2.HashKey())
+	utils.AssertNotEqual(t, hello1.HashKey(), diff1.HashKey())
 }
 
 func TestSymbolToS(t *testing.T) {
@@ -40,47 +32,40 @@ func TestSymbolToS(t *testing.T) {
 }
 
 func TestSymbolToBool(t *testing.T) {
-	val, ok := SymbolToBool(TRUE)
-	if !ok {
-		t.Errorf("Expected true, got false")
-	}
-	if val != true {
-		t.Errorf("Expected true, got false")
-	}
-	val, ok = SymbolToBool(FALSE)
-	if !ok {
-		t.Errorf("Expected false, got true")
-	}
-	if val != false {
-		t.Errorf("Expected false, got true")
-	}
-	val, ok = SymbolToBool(NewSymbol("foo"))
-	if ok {
-		t.Errorf("Expected false, got true")
-	}
-	if val {
-		t.Errorf("Expected false, got true")
-	}
-	val, ok = SymbolToBool(NewString("foo"))
-	if ok {
-		t.Errorf("Expected false, got true")
-	}
-	if val {
-		t.Errorf("Expected false, got true")
-	}
-	val, ok = SymbolToBool(nil)
-	if ok {
-		t.Errorf("Expected false, got true")
-	}
-	if val {
-		t.Errorf("Expected false, got true")
-	}
-	var b *Symbol = nil
-	val, ok = SymbolToBool(b)
-	if ok {
-		t.Errorf("Expected false, got true")
-	}
-	if val {
-		t.Errorf("Expected false, got true")
-	}
+	t.Run("true object", func(t *testing.T) {
+		val, ok := SymbolToBool(TRUE)
+		utils.Assert(t, ok)
+		utils.Assert(t, val)
+	})
+
+	t.Run("false object", func(t *testing.T) {
+		val, ok := SymbolToBool(FALSE)
+		utils.Assert(t, ok)
+		utils.Assert(t, !val)
+	})
+
+	t.Run("some other symbol", func(t *testing.T) {
+		val, ok := SymbolToBool(NewSymbol("foo"))
+		utils.Assert(t, !ok)
+		utils.Assert(t, !val)
+	})
+
+	t.Run("some non-symbol object", func(t *testing.T) {
+		val, ok := SymbolToBool(NewString("foo"))
+		utils.Assert(t, !ok)
+		utils.Assert(t, !val)
+	})
+
+	t.Run("nil", func(t *testing.T) {
+		val, ok := SymbolToBool(nil)
+		utils.Assert(t, !ok)
+		utils.Assert(t, !val)
+	})
+
+	t.Run("nil pointer", func(t *testing.T) {
+		var b *Symbol = nil
+		val, ok := SymbolToBool(b)
+		utils.Assert(t, !ok)
+		utils.Assert(t, !val)
+	})
 }

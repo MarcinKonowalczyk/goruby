@@ -5,6 +5,7 @@ import (
 
 	"github.com/MarcinKonowalczyk/goruby/interpreter"
 	"github.com/MarcinKonowalczyk/goruby/object"
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func TestInterpreterInterpret(t *testing.T) {
@@ -30,14 +31,7 @@ func TestInterpreterInterpret(t *testing.T) {
 		}
 
 		res, ok := out.(*object.Integer)
-		if !ok {
-			t.Logf("Expected *object.Integer, got %T\n", out)
-			t.Fail()
-		}
-
-		if res.Value != 8 {
-			t.Logf("Expected result to equal 8, got %d\n", res.Value)
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected *object.Integer, got %T\n", out)
+		utils.AssertEqual(t, res.Value, 8)
 	})
 }

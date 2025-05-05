@@ -95,10 +95,7 @@ func TestAddMethod(t *testing.T) {
 		newContext, _ := AddMethod(context, "foo", fn)
 
 		_, ok := newContext.Class().Methods().Get("foo")
-		if !ok {
-			t.Logf("Expected object to have method foo")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected object to have method foo")
 	})
 	t.Run("class object", func(t *testing.T) {
 		context := &class{
@@ -117,16 +114,10 @@ func TestAddMethod(t *testing.T) {
 		newContext, _ := AddMethod(context, "foo", fn)
 
 		class, ok := newContext.(*class)
-		if !ok {
-			t.Logf("Expected returned object to be a class, got %T", newContext)
-			t.FailNow()
-		}
+		utils.Assert(t, ok, "Expected returned object to be a class, got %T", newContext)
 
 		_, ok = class.Methods().Get("foo")
-		if !ok {
-			t.Logf("Expected object to have method foo")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected object to have method foo")
 	})
 	t.Run("extended object", func(t *testing.T) {
 		context := newExtendedObject(
@@ -153,16 +144,10 @@ func TestAddMethod(t *testing.T) {
 		newContext, _ := AddMethod(context, "foo", fn)
 
 		_, ok := newContext.Class().Methods().Get("foo")
-		if !ok {
-			t.Logf("Expected object to have method foo")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected object to have method foo")
 
 		_, ok = newContext.Class().Methods().Get("bar")
-		if !ok {
-			t.Logf("Expected object to have method bar")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected object to have method bar")
 	})
 	t.Run("vanilla self object", func(t *testing.T) {
 		vanillaObject := &testRubyObject{
@@ -185,34 +170,15 @@ func TestAddMethod(t *testing.T) {
 		newContext, extended := AddMethod(context, "foo", fn)
 
 		_, ok := newContext.Class().Methods().Get("foo")
-		if !ok {
-			t.Logf("Expected object to have method foo")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected object to have method foo")
+		utils.Assert(t, extended, "Expected object to be extended")
 
 		returnPointer := reflect.ValueOf(newContext).Pointer()
 		contextPointer := reflect.ValueOf(context).Pointer()
-
-		if !extended {
-			t.Logf("Expected object to be extended")
-			t.Fail()
-		}
-
-		if returnPointer == contextPointer {
-			t.Logf("Expected input and return context to be different")
-			t.Fail()
-		}
+		utils.AssertNotEqual(t, returnPointer, contextPointer)
 
 		extendedRubyObject := newContext.(*extendedObject).RubyObject
-
-		if !reflect.DeepEqual(vanillaObject, extendedRubyObject) {
-			t.Logf(
-				"Expected wrapped extended object to equal\n%+#v\n\tgot\n%+#v\n",
-				vanillaObject,
-				extendedRubyObject,
-			)
-			t.Fail()
-		}
+		utils.AssertEqualCmpAny(t, vanillaObject, extendedRubyObject, CompareRubyObjectsForTests)
 	})
 	t.Run("extended self object", func(t *testing.T) {
 		context := newExtendedObject(
@@ -239,28 +205,15 @@ func TestAddMethod(t *testing.T) {
 		newContext, extended := AddMethod(context, "foo", fn)
 
 		_, ok := newContext.Class().Methods().Get("foo")
-		if !ok {
-			t.Logf("Expected object to have method foo")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected object to have method foo")
 
 		_, ok = newContext.Class().Methods().Get("bar")
-		if !ok {
-			t.Logf("Expected object to have method bar")
-			t.Fail()
-		}
+		utils.Assert(t, ok, "Expected object to have method bar")
 
 		returnPointer := reflect.ValueOf(newContext).Pointer()
 		contextPointer := reflect.ValueOf(context).Pointer()
 
-		if extended {
-			t.Logf("Expected object not to be extended")
-			t.Fail()
-		}
-
-		if returnPointer != contextPointer {
-			t.Logf("Expected input and return context to be the same")
-			t.Fail()
-		}
+		utils.Assert(t, !extended, "Expected object not to be extended")
+		utils.AssertEqual(t, returnPointer, contextPointer)
 	})
 }
