@@ -165,7 +165,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, mode M
 	p.registerPrefix(token.NIL, p.parseNilLiteral)
 	p.registerPrefix(token.LBRACE, p.parseHash)
 	p.registerPrefix(token.GLOBAL, p.parseGlobal)
-	p.registerPrefix(token.KEYWORD__FILE__, p.parseKeyword__FILE__)
 	p.registerPrefix(token.LAMBDAROCKET, p.parseLambdaLiteral)
 	p.registerPrefix(token.ASTERISK, p.parseSplat)
 
@@ -629,11 +628,6 @@ func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
 	case *ast.Global:
 	case *ast.IndexExpression:
 	case ast.ExpressionList:
-	case *ast.Keyword__FILE__:
-		epos := p.file.Position(p.pos)
-		msg := fmt.Errorf("%s: Can't assign to __FILE__", epos.String())
-		p.errors = append(p.errors, msg)
-		return nil
 	default:
 		p.Error(p.curToken.Type, "", token.EOF)
 		return nil
@@ -710,16 +704,6 @@ func (p *parser) parseGlobal() ast.Expression {
 		defer un(trace(p, "parseGlobal"))
 	}
 	return &ast.Global{Value: p.curToken.Literal}
-}
-
-func (p *parser) parseKeyword__FILE__() ast.Expression {
-	if p.trace {
-		defer un(trace(p, "parseKeyword__FILE__"))
-	}
-	file := &ast.Keyword__FILE__{
-		Filename: p.file.Name(),
-	}
-	return file
 }
 
 var integerLiteralReplacer = strings.NewReplacer("_", "")

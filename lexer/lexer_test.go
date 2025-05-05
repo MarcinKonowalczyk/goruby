@@ -502,7 +502,7 @@ func TestLex(t *testing.T) {
 				NL,
 				expect(t)("LAMBDAROCKET", "->"),
 				NL,
-				expect(t)("KEYWORD__FILE__", "__FILE__"),
+				expect(t)("IDENT", "__FILE__"),
 				NL,
 				expect(t)("IDENT", "self"),
 				NL,

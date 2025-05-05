@@ -187,20 +187,6 @@ var (
 	_ Expression = &MultiAssignment{}
 )
 
-// Keyword__FILE__ represents __FILE__ in the AST
-type Keyword__FILE__ struct {
-	Filename string
-}
-
-func (f *Keyword__FILE__) node()           {}
-func (f *Keyword__FILE__) expressionNode() {}
-func (f *Keyword__FILE__) String() string  { return "__FILE__" }
-
-var (
-	_ Node       = &Keyword__FILE__{}
-	_ Expression = &Keyword__FILE__{}
-)
-
 // An Identifier represents an identifier in the program
 type Identifier struct {
 	Constant bool // true if the identifier is a constant

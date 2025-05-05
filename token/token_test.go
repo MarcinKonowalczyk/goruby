@@ -114,7 +114,6 @@ func TestTypeSting(t *testing.T) {
 		{tk: WHILE, str: "WHILE", repr: "while"},
 		{tk: LOOP, str: "LOOP", repr: "loop"},
 		{tk: BREAK, str: "BREAK", repr: "break"},
-		{tk: KEYWORD__FILE__, str: "KEYWORD__FILE__", repr: "__FILE__"},
 	}
 
 	seen := make(map[Type]bool)

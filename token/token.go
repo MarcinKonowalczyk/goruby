@@ -99,7 +99,6 @@ const (
 	WHILE
 	LOOP
 	BREAK
-	KEYWORD__FILE__
 	keyword_end
 	types_end
 )
@@ -200,21 +199,20 @@ var type_strings = [...]string{
 	SQMARK: "SQMARK",
 	SYMBOL: "SYMBOL",
 
-	DEF:             "DEF",
-	END:             "END",
-	UNLESS:          "UNLESS",
-	IF:              "IF",
-	THEN:            "THEN",
-	ELSE:            "ELSE",
-	ELSIF:           "ELSIF",
-	TRUE:            "TRUE",
-	FALSE:           "FALSE",
-	RETURN:          "RETURN",
-	NIL:             "NIL",
-	WHILE:           "WHILE",
-	LOOP:            "LOOP",
-	BREAK:           "BREAK",
-	KEYWORD__FILE__: "KEYWORD__FILE__",
+	DEF:    "DEF",
+	END:    "END",
+	UNLESS: "UNLESS",
+	IF:     "IF",
+	THEN:   "THEN",
+	ELSE:   "ELSE",
+	ELSIF:  "ELSIF",
+	TRUE:   "TRUE",
+	FALSE:  "FALSE",
+	RETURN: "RETURN",
+	NIL:    "NIL",
+	WHILE:  "WHILE",
+	LOOP:   "LOOP",
+	BREAK:  "BREAK",
 }
 
 var type_reprs = [...]string{
@@ -281,21 +279,20 @@ var type_reprs = [...]string{
 	SQMARK: "_?",
 	SYMBOL: ":",
 
-	DEF:             "def",
-	END:             "end",
-	UNLESS:          "unless",
-	IF:              "if",
-	THEN:            "then",
-	ELSE:            "else",
-	ELSIF:           "elsif",
-	TRUE:            "true",
-	FALSE:           "false",
-	RETURN:          "return",
-	NIL:             "nil",
-	WHILE:           "while", // to remove?
-	LOOP:            "loop",
-	BREAK:           "break",
-	KEYWORD__FILE__: "__FILE__",
+	DEF:    "def",
+	END:    "end",
+	UNLESS: "unless",
+	IF:     "if",
+	THEN:   "then",
+	ELSE:   "else",
+	ELSIF:  "elsif",
+	TRUE:   "true",
+	FALSE:  "false",
+	RETURN: "return",
+	NIL:    "nil",
+	WHILE:  "while", // to remove?
+	LOOP:   "loop",
+	BREAK:  "break",
 }
 
 // String returns the string corresponding to the token tok.

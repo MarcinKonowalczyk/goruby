@@ -814,20 +814,6 @@ func TestHashIndexExpressions(t *testing.T) {
 	}
 }
 
-func TestKeyword__File__(t *testing.T) {
-	input := "__FILE__"
-
-	env := object.NewEnvironment()
-	program, err := parser.ParseFile(token.NewFileSet(), "some_file.rb", input, 0)
-	utils.AssertNoError(t, err)
-	evaluated, err := evaluator.Eval(program, env)
-	utils.AssertNoError(t, err)
-
-	str, ok := evaluated.(*object.String)
-	utils.Assert(t, ok, "Expected evaluated to be *object.String, got %T\n", evaluated)
-	utils.AssertEqual(t, str.Value, "some_file.rb")
-}
-
 func testNilObject(t *testing.T, obj object.RubyObject) bool {
 	t.Helper()
 	utils.AssertEqualCmpAny(t, obj, object.NIL, object.CompareRubyObjectsForTests)

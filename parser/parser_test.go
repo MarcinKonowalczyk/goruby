@@ -439,31 +439,6 @@ func TestGlobalExpressionWithIndex(t *testing.T) {
 	testLiteralExpression(t, index.Index, 1)
 }
 
-func TestKeyword__FILE__(t *testing.T) {
-	t.Run("keyword found", func(t *testing.T) {
-		input := "__FILE__;"
-
-		program, err := p.ParseFile(gotoken.NewFileSet(), "a_filename.rb", input, 0)
-		checkParserErrors(t, err)
-		utils.AssertEqual(t, len(program.Statements), 1)
-		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
-
-		file, ok := stmt.Expression.(*ast.Keyword__FILE__)
-		utils.Assert(t, ok, "expression not *ast.Keyword__FILE__. got=%T", stmt.Expression)
-		utils.AssertEqual(t, file.Filename, "a_filename.rb")
-	})
-	t.Run("assignment to keyword", func(t *testing.T) {
-		input := "__FILE__ = 42;"
-
-		_, err := parseSource(input)
-
-		parserErrors := err.Errors
-		utils.AssertEqual(t, len(parserErrors), 1)
-		utils.AssertEqual(t, parserErrors[0].Error(), "1:9: Can't assign to __FILE__")
-	})
-}
-
 func TestIntegerLiteralExpression(t *testing.T) {
 	input := "5;"
 

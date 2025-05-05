@@ -84,9 +84,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		return object.NewFloat(node.Value), nil
 	// case (*ast.Boolean):
 	// 	return nativeBoolToBooleanObject(node.Value), nil
-	case (*ast.Keyword__FILE__):
-		my_debug_panic_("case (*ast.Keyword__FILE__):")
-		return &object.String{Value: node.Filename}, nil
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
 	case *ast.Global:
