@@ -39,11 +39,6 @@ func expandToArrayIfNeeded(obj object.RubyObject) object.RubyObject {
 	return object.NewArray(arr...)
 }
 
-func my_debug_panic_(msg string) {
-	// fmt.Println("my_debug_panic", msg)
-	// panic(msg)
-}
-
 // Eval evaluates the given node and traverses recursive over its children
 func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 	// fmt.Println("Eval", node, fmt.Sprintf("%T", node))
@@ -76,48 +71,22 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		return &object.BreakValue{Value: val}, nil
 	case *ast.BlockStatement:
 		return evalBlockStatement(node, env)
-
 	// Literals
-	case (*ast.IntegerLiteral):
+	case *ast.IntegerLiteral:
 		return object.NewInteger(node.Value), nil
-	case (*ast.FloatLiteral):
+	case *ast.FloatLiteral:
 		return object.NewFloat(node.Value), nil
-	// case (*ast.Boolean):
-	// 	return nativeBoolToBooleanObject(node.Value), nil
 	case *ast.Identifier:
-		if node.IsGlobal() {
-			val, ok := env.Get(node.Value)
-			if !ok {
-				return object.NIL, nil
-			}
-			return val, nil
-		} else {
-			return evalIdentifier(node, env)
-		}
-	// case *ast.Global:
-	// 	val, ok := env.Get(node.Value)
-	// 	if !ok {
-	// 		return object.NIL, nil
-	// 	}
-	// 	return val, nil
+		return evalIdentifier(node, env)
 	case *ast.StringLiteral:
 		value := unescapeStringLiteral(node)
 		value, err := evaluateFormatDirectives(env, value)
 		if err != nil {
 			return nil, errors.WithMessage(err, "eval string literal")
 		}
-		return &object.String{Value: value}, nil
+		return object.NewString(value), nil
 	case *ast.SymbolLiteral:
-		switch node.Value {
-		case "true":
-			return object.TRUE, nil
-		case "false":
-			return object.FALSE, nil
-		case "nil":
-			return object.NIL, nil
-		default:
-			return &object.Symbol{Value: node.Value}, nil
-		}
+		return object.NewSymbol(node.Value), nil
 	case *ast.FunctionLiteral:
 		context, _ := env.Get("self")
 		// construct a function object and stick it onto self
@@ -147,7 +116,7 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			return nil, errors.WithMessage(err, "eval array literal")
 		}
 		// TODO: If any of the elements is a splat, we need to flatten them
-		return &object.Array{Elements: elements}, nil
+		return object.NewArray(elements...), nil
 	case *ast.HashLiteral:
 		var hash object.Hash
 		for k, v := range node.Map {
@@ -163,7 +132,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		}
 		return &hash, nil
 	case ast.ExpressionList:
-		my_debug_panic_("case ast.ExpressionList:")
 		var objects []object.RubyObject
 		for _, e := range node {
 			obj, err := Eval(e, env)
@@ -204,12 +172,10 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			var values rubyObjects
 			switch right := right.(type) {
 			case rubyObjects:
-				my_debug_panic_("case rubyObjects:")
 				values = right
 			case *object.Array:
 				values = right.Elements
 			default:
-				my_debug_panic_("case default: (2)")
 				values = []object.RubyObject{right}
 			}
 			if len(left) > len(values) {
@@ -238,7 +204,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			}
 			return expandToArrayIfNeeded(right), nil
 		default:
-			my_debug_panic_("case default: (3)")
 			return nil, errors.WithStack(
 				object.NewSyntaxError(fmt.Errorf("assignment not supported to %T", node.Left)),
 			)
@@ -360,30 +325,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 				object.NewSyntaxError(fmt.Errorf("range end is not an integer: %T", right)),
 			)
 		}
-
-		// left_int := leftInt.Value
-		// right_int := rightInt.Value
-
-		// flip := false
-		// if left_int > right_int {
-		// 	flip = true
-		// 	left_int, right_int = right_int, left_int
-		// }
-
-		// if node.Inclusive {
-		// 	right_int++
-		// }
-
-		// elements := make(rubyObjects, right_int-left_int)
-		// for i := left_int; i < right_int; i++ {
-		// 	elements[i-left_int] = &object.Integer{Value: i}
-		// }
-
-		// if flip {
-		// 	// reverse the elements
-		// 	slices.Reverse(elements)
-		// }
-
 		return &object.Range{
 			Left:      leftInt,
 			Right:     rightInt,
@@ -391,7 +332,6 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 		}, nil
 
 	case *ast.Splat:
-		my_debug_panic_("case *ast.Splat:")
 
 		val, err := Eval(node.Value, env)
 		if err != nil {
@@ -405,23 +345,19 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 
 		switch val := val.(type) {
 		case *object.Array:
-			my_debug_panic_("case *object.Array:")
 			return &object.Array{
 				Elements: val.Elements,
 			}, nil
 		default:
-			my_debug_panic_("case default: (5)")
 			return &object.Array{
 				Elements: []object.RubyObject{val},
 			}, nil
 		}
 
 	case *ast.LoopExpression:
-
 		return evalLoopExpression(node, env)
 
 	default:
-		my_debug_panic_("case default: (6)")
 		err := object.NewException("Unknown AST: %T", node)
 		return nil, errors.WithStack(err)
 	}
@@ -943,6 +879,10 @@ func evalIdentifier(node *ast.Identifier, env object.Environment) (object.RubyOb
 		)
 	}
 
+	if node.IsGlobal() {
+		return object.NIL, nil
+	}
+
 	self, _ := env.Get("self")
 	context := &callContext{object.NewCallContext(env, self)}
 	val, err := object.Send(context, node.Value)
@@ -955,12 +895,6 @@ func evalIdentifier(node *ast.Identifier, env object.Environment) (object.RubyOb
 	return val, nil
 }
 
-//	func unwrapReturnValue(obj object.RubyObject) object.RubyObject {
-//		if returnValue, ok := obj.(*object.ReturnValue); ok {
-//			return returnValue.Value
-//		}
-//		return obj
-//	}
 func isTruthy(obj object.RubyObject) bool {
 	switch obj {
 	case object.NIL:
@@ -971,15 +905,6 @@ func isTruthy(obj object.RubyObject) bool {
 		return false
 	default:
 		switch obj := obj.(type) {
-		case *object.Symbol:
-			val, ok := object.SymbolToBool(obj)
-			if ok {
-				// Special boolean symbols are their respective values
-				return val
-			} else {
-				// Other symbols are truthy
-				return true
-			}
 		case *object.Integer:
 			return obj.Value != 0
 		case *object.Float:
@@ -990,6 +915,9 @@ func isTruthy(obj object.RubyObject) bool {
 			return len(obj.Elements) > 0
 		case *object.Hash:
 			return len(obj.Map) > 0
+		case *object.Symbol:
+			// NOTE: we've checked special symbols above already. other symbols are truthy.
+			return true
 		default:
 			return true
 		}

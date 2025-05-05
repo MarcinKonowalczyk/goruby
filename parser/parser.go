@@ -295,38 +295,6 @@ func (p *parser) Error(actual token.Type, description string, expected ...token.
 	p.errors = append(p.errors, errors.WithStack(err))
 }
 
-// func (p *parser) peekErrorDesc(desc string, t ...token.Type) {
-// 	epos := p.file.Position(p.pos)
-// 	err := &UnexpectedTokenError{
-// 		Pos:            epos,
-// 		ExpectedTokens: t,
-// 		ActualToken:    p.peekToken.Type,
-// 		Description:    desc,
-// 	}
-// 	p.errors = append(p.errors, errors.WithStack(err))
-// }
-
-// func (p *parser) expectError(t ...token.Type) {
-// 	epos := p.file.Position(p.pos)
-// 	err := &UnexpectedTokenError{
-// 		Pos:            epos,
-// 		ExpectedTokens: t,
-// 		ActualToken:    p.curToken.Type,
-// 	}
-// 	p.errors = append(p.errors, errors.WithStack(err))
-// }
-
-// func (p *parser) expectErrorDesc(desc string, t ...token.Type) {
-// 	epos := p.file.Position(p.pos)
-// 	err := &UnexpectedTokenError{
-// 		Pos:            epos,
-// 		ExpectedTokens: t,
-// 		ActualToken:    p.curToken.Type,
-// 		Description:    desc,
-// 	}
-// 	p.errors = append(p.errors, errors.WithStack(err))
-// }
-
 func (p *parser) noPrefixParseFnError(t token.Type) {
 	msg := fmt.Sprintf("no prefix parse function for type %s found", t)
 	epos := p.file.Position(p.pos)
