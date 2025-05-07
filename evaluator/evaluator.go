@@ -345,13 +345,9 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 
 		switch val := val.(type) {
 		case *object.Array:
-			return &object.Array{
-				Elements: val.Elements,
-			}, nil
+			return object.NewArray(val.Elements...), nil
 		default:
-			return &object.Array{
-				Elements: []object.RubyObject{val},
-			}, nil
+			return object.NewArray(val), nil
 		}
 
 	case *ast.LoopExpression:
@@ -552,7 +548,7 @@ func evalBangOperatorExpression(right object.RubyObject) object.RubyObject {
 func evalMinusPrefixOperatorExpression(right object.RubyObject) (object.RubyObject, error) {
 	switch right := right.(type) {
 	case *object.Integer:
-		return &object.Integer{Value: -right.Value}, nil
+		return object.NewInteger(-right.Value), nil
 	default:
 		return nil, errors.WithStack(object.NewException("unknown operator: -%s", object.RubyObjectToTypeString(right)))
 	}
@@ -697,7 +693,7 @@ func evalArrayIndexExpression(arrayObject *object.Array, index object.RubyObject
 		if out_of_bounds {
 			return object.NIL, nil
 		}
-		return &object.Array{Elements: arrayObject.Elements[left:(left + length)]}, nil
+		return object.NewArray(arrayObject.Elements[left:(left + length)]...), nil
 	case *object.Range:
 		left, right, out_of_bounds, err := objectRangeToIndex(index, len)
 		if err != nil {
@@ -706,7 +702,7 @@ func evalArrayIndexExpression(arrayObject *object.Array, index object.RubyObject
 		if out_of_bounds {
 			return object.NIL, nil
 		}
-		return &object.Array{Elements: arrayObject.Elements[left:right]}, nil
+		return object.NewArray(arrayObject.Elements[left:right]...), nil
 	case rubyObjects:
 		// we got a bunch of objects as the index
 		index_array := object.NewArray(index...)
@@ -806,7 +802,7 @@ func evalStringIndexExpression(stringObject *object.String, index object.RubyObj
 		if out_of_bounds {
 			return object.NIL, nil
 		}
-		return &object.String{Value: string(stringObject.Value[idx])}, nil
+		return object.NewString(string(stringObject.Value[idx])), nil
 	case *object.Array:
 		left, length, out_if_bounds, err := objectArrayToIndex(index, int64(len(stringObject.Value)))
 		if err != nil {
@@ -815,7 +811,7 @@ func evalStringIndexExpression(stringObject *object.String, index object.RubyObj
 		if out_if_bounds {
 			return object.NIL, nil
 		}
-		return &object.String{Value: string(stringObject.Value[left:(left + length)])}, nil
+		return object.NewString(string(stringObject.Value[left:(left + length)])), nil
 	case *object.Range:
 		left, right, out_if_bounds, err := objectRangeToIndex(index, int64(len(stringObject.Value)))
 		if err != nil {
@@ -824,7 +820,7 @@ func evalStringIndexExpression(stringObject *object.String, index object.RubyObj
 		if out_if_bounds {
 			return object.NIL, nil
 		}
-		return &object.String{Value: string(stringObject.Value[left:right])}, nil
+		return object.NewString(string(stringObject.Value[left:right])), nil
 	case rubyObjects:
 		// we got a bunch of objects as the index
 		index_array := object.NewArray(index...)

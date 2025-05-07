@@ -19,7 +19,7 @@ func NewInterpreterEx(argv []string) Interpreter {
 
 	argvArr := object.NewArray()
 	for _, arg := range argv {
-		argvArr.Elements = append(argvArr.Elements, &object.String{Value: arg})
+		argvArr.Elements = append(argvArr.Elements, object.NewString(arg))
 	}
 	env.SetGlobal("ARGV", argvArr)
 	return Interpreter{environment: env}

@@ -388,37 +388,37 @@ func TestMultiAssignment(t *testing.T) {
 		{
 			name:  "evenly distributed sides",
 			input: "x, y, z = 1, 2, 3; [x, y, z]",
-			output: &object.Array{Elements: []object.RubyObject{
+			output: object.NewArray(
 				object.NewInteger(1),
 				object.NewInteger(2),
 				object.NewInteger(3),
-			}},
+			),
 		},
 		{
 			name:  "value side one less",
 			input: "x, y, z = 1, 2; [x, y, z]",
-			output: &object.Array{Elements: []object.RubyObject{
+			output: object.NewArray(
 				object.NewInteger(1),
 				object.NewInteger(2),
 				object.NIL,
-			}},
+			),
 		},
 		{
 			name:  "value side two less",
 			input: "x, y, z = 1; [x, y, z]",
-			output: &object.Array{Elements: []object.RubyObject{
+			output: object.NewArray(
 				object.NewInteger(1),
 				object.NIL,
 				object.NIL,
-			}},
+			),
 		},
 		{
 			name:  "lhs with global and const",
 			input: "$x, Y = 1, 2; [$x, Y]",
-			output: &object.Array{Elements: []object.RubyObject{
-				&object.Integer{Value: 1},
-				&object.Integer{Value: 2},
-			}},
+			output: object.NewArray(
+				object.NewInteger(1),
+				object.NewInteger(2),
+			),
 		},
 	}
 
@@ -497,7 +497,7 @@ func TestFunctionObject(t *testing.T) {
 			},
 			{
 				"def foo x = 4; 2; end",
-				[]funcParam{{name: "x", defaultValue: &object.Integer{Value: 4}}},
+				[]funcParam{{name: "x", defaultValue: object.NewInteger(4)}},
 				"2",
 			},
 		}
