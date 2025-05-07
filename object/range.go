@@ -1,6 +1,7 @@
 package object
 
 import (
+	"fmt"
 	"hash/fnv"
 	"strings"
 )
@@ -17,20 +18,20 @@ func init() {
 }
 
 type Range struct {
-	Left      *Integer
-	Right     *Integer
+	Left      int64
+	Right     int64
 	Inclusive bool
 }
 
 func (a *Range) Inspect() string {
 	var out strings.Builder
-	out.WriteString(a.Left.Inspect())
+	out.WriteString(fmt.Sprintf("%d", a.Left))
 	if a.Inclusive {
 		out.WriteString("..")
 	} else {
 		out.WriteString("...")
 	}
-	out.WriteString(a.Right.Inspect())
+	out.WriteString(fmt.Sprintf("%d", a.Right))
 	return out.String()
 }
 
@@ -38,8 +39,8 @@ func (a *Range) Class() RubyClass { return rangeClass }
 
 func (a *Range) HashKey() HashKey {
 	h := fnv.New64a()
-	h.Write([]byte(a.Left.Inspect()))
-	h.Write([]byte(a.Right.Inspect()))
+	h.Write([]byte(fmt.Sprintf("%d", a.Left)))
+	h.Write([]byte(fmt.Sprintf("%d", a.Right)))
 	if a.Inclusive {
 		h.Write([]byte("1"))
 	} else {
@@ -55,7 +56,7 @@ var rangeMethods = map[string]RubyMethod{
 
 func (rang *Range) ToArray() *Array {
 	result := NewArray()
-	left, right := rang.Left.Value, rang.Right.Value
+	left, right := rang.Left, rang.Right
 	if rang.Inclusive {
 		right++
 	}

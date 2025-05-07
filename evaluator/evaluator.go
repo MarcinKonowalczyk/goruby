@@ -326,8 +326,8 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			)
 		}
 		return &object.Range{
-			Left:      leftInt,
-			Right:     rightInt,
+			Left:      leftInt.Value,
+			Right:     rightInt.Value,
 			Inclusive: node.Inclusive,
 		}, nil
 
@@ -724,8 +724,7 @@ func evalHashIndexExpression(hash *object.Hash, index object.RubyObject) (object
 	return result, nil
 }
 
-func objectIntegerToIndex(index *object.Integer, len int64) (int64, bool) {
-	idx := index.Value
+func int64ToIndex(idx int64, len int64) (int64, bool) {
 	max_negative := -len
 	max_positive := max_negative*-1 - 1
 	if max_positive < 0 {
@@ -745,6 +744,10 @@ func objectIntegerToIndex(index *object.Integer, len int64) (int64, bool) {
 		return 0, true
 	}
 	return idx, false
+}
+
+func objectIntegerToIndex(index *object.Integer, len int64) (int64, bool) {
+	return int64ToIndex(index.Value, len)
 }
 
 func objectArrayToIndex(index *object.Array, length int64) (int64, int64, bool, error) {
@@ -776,14 +779,11 @@ func objectArrayToIndex(index *object.Array, length int64) (int64, int64, bool, 
 }
 
 func objectRangeToIndex(index *object.Range, length int64) (int64, int64, bool, error) {
-	left := index.Left
-	right := index.Right
-
-	left_idx, out_of_bounds := objectIntegerToIndex(left, length)
+	left_idx, out_of_bounds := int64ToIndex(index.Left, length)
 	if out_of_bounds {
 		return 0, 0, true, nil
 	}
-	right_idx, out_of_bounds := objectIntegerToIndex(right, length)
+	right_idx, out_of_bounds := int64ToIndex(index.Right, length)
 	if out_of_bounds {
 		return 0, 0, true, nil
 	}
