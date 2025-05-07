@@ -68,12 +68,12 @@ func (rang *Range) ToArray() *Array {
 func rangeFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 	rng, _ := context.Receiver().(*Range)
 	if len(args) == 0 {
-		return nil, NewArgumentError("find_all requires a block")
+		return nil, NewArgumentError("(1) range find_all requires a block")
 	}
 	block := args[0]
 	proc, ok := block.(*Symbol)
 	if !ok {
-		return nil, NewArgumentError("find_all requires a block")
+		return nil, NewArgumentError("(2) range find_all requires a block")
 	}
 	self, _ := context.Env().Get("self")
 	self_class := self.Class()

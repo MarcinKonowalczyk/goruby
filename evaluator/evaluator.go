@@ -108,7 +108,7 @@ func Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 			// we've just extended the context. set it in the env. this should not normally fire
 			env.Set("self", newContext)
 		}
-		return &object.Symbol{Value: node.Name.Value}, nil
+		return object.NewSymbol(node.Name.Value), nil
 
 	case *ast.ArrayLiteral:
 		elements, err := evalArrayElements(node.Elements, env)
@@ -532,7 +532,7 @@ func evalPrefixExpression(operator string, right object.RubyObject) (object.Ruby
 	case "-":
 		return evalMinusPrefixOperatorExpression(right)
 	default:
-		return nil, errors.WithStack(object.NewException("unknown operator: %s%T", operator, right))
+		return nil, errors.WithStack(object.NewException("unknown operator: %s%s", operator, object.RubyObjectToTypeString(right)))
 	}
 }
 
@@ -554,7 +554,7 @@ func evalMinusPrefixOperatorExpression(right object.RubyObject) (object.RubyObje
 	case *object.Integer:
 		return &object.Integer{Value: -right.Value}, nil
 	default:
-		return nil, errors.WithStack(object.NewException("unknown operator: -%T", right))
+		return nil, errors.WithStack(object.NewException("unknown operator: -%s", object.RubyObjectToTypeString(right)))
 	}
 }
 

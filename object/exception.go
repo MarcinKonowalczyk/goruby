@@ -3,7 +3,6 @@ package object
 import (
 	"fmt"
 	"hash/fnv"
-	"reflect"
 	"strings"
 )
 
@@ -23,7 +22,7 @@ func init() {
 }
 
 func formatException(exception RubyObject, message string) string {
-	return fmt.Sprintf("%s: %s", reflect.TypeOf(exception).Elem().Name(), message)
+	return fmt.Sprintf("%s: %s", RubyObjectToTypeString(exception), message)
 }
 
 type exception interface {
@@ -115,7 +114,7 @@ func exceptionToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func hashException(exception RubyObject) HashKey {
 	h := fnv.New64a()
-	h.Write([]byte(reflect.TypeOf(exception).Elem().Name()))
+	h.Write([]byte(fmt.Sprintf("%T", exception)))
 	if err, ok := exception.(error); ok {
 		h.Write([]byte(err.Error()))
 	}
@@ -281,33 +280,28 @@ var (
 	_ exception  = &NoMethodError{}
 )
 
+func RubyObjectToTypeString(rubyType RubyObject) string {
+	ts := fmt.Sprintf("%T", rubyType)
+	ts = strings.TrimPrefix(ts, "*object.")
+	ts = strings.TrimPrefix(ts, "object.")
+	return ts
+}
+
 func NewWrongArgumentTypeError(expected, actual RubyObject) *TypeError {
 	return &TypeError{
-		Message: fmt.Sprintf(
-			"wrong argument type %s (expected %s)",
-			reflect.TypeOf(actual).Elem().Name(),
-			reflect.TypeOf(expected).Elem().Name(),
-		),
+		Message: fmt.Sprintf("wrong argument type %s (expected %s)", actual, expected),
 	}
 }
 
 func NewCoercionTypeError(expected, actual RubyObject) *TypeError {
 	return &TypeError{
-		Message: fmt.Sprintf(
-			"%s can't be coerced into %s",
-			reflect.TypeOf(actual).Elem().Name(),
-			reflect.TypeOf(expected).Elem().Name(),
-		),
+		Message: fmt.Sprintf("%s can't be coerced into %s", RubyObjectToTypeString(actual), RubyObjectToTypeString(expected)),
 	}
 }
 
 func NewImplicitConversionTypeError(expected, actual RubyObject) *TypeError {
 	return &TypeError{
-		Message: fmt.Sprintf(
-			"no implicit conversion of %s into %s",
-			reflect.TypeOf(actual).Elem().Name(),
-			reflect.TypeOf(expected).Elem().Name(),
-		),
+		Message: fmt.Sprintf("no implicit conversion of %s into %s", RubyObjectToTypeString(actual), RubyObjectToTypeString(expected)),
 	}
 }
 
@@ -320,13 +314,13 @@ func NewImplicitConversionTypeErrorMany(actual RubyObject, expected ...RubyObjec
 	}
 	types := make([]string, len(expected))
 	for i, e := range expected {
-		types[i] = reflect.TypeOf(e).Elem().Name()
+		types[i] = RubyObjectToTypeString(e)
 	}
 
 	return &TypeError{
 		Message: fmt.Sprintf(
 			"no implicit conversion of %s into one of [%s]",
-			reflect.TypeOf(actual).Elem().Name(),
+			RubyObjectToTypeString(actual),
 			strings.Join(types, ", "),
 		),
 	}

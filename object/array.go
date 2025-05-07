@@ -93,12 +93,12 @@ func arraySize(context CallContext, args ...RubyObject) (RubyObject, error) {
 func arrayFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 	array, _ := context.Receiver().(*Array)
 	if len(args) == 0 {
-		return nil, NewArgumentError("find_all requires a block")
+		return nil, NewArgumentError("(1) array find_all requires a block")
 	}
 	block := args[0]
 	proc, ok := block.(*Symbol)
 	if !ok {
-		return nil, NewArgumentError("find_all requires a block")
+		return nil, NewArgumentError("(2) array find_all requires a block")
 	}
 	self, _ := context.Env().Get("self")
 	self_class := self.Class()
