@@ -13,9 +13,13 @@ import (
 )
 
 // // Interpreter defines the methods of an interpreter
-// type Interpreter interface {
-// 	Interpret(filename string, input interface{}) (object.RubyObject, error)
-// }
+type Interpreter interface {
+	Interpret(filename string, input interface{}) (object.RubyObject, error)
+	// SetTraceParse sets the trace_parse flag
+	SetTraceParse(trace_parse bool)
+	// SetTraceEval sets the trace_eval flag
+	SetTraceEval(trace_eval bool)
+}
 
 func NewInterpreterEx(argv []string) Interpreter {
 	env := object.NewMainEnvironment()
@@ -25,7 +29,7 @@ func NewInterpreterEx(argv []string) Interpreter {
 		argvArr.Elements = append(argvArr.Elements, object.NewString(arg))
 	}
 	env.SetGlobal("ARGV", argvArr)
-	return Interpreter{environment: env}
+	return &interpreter{environment: env}
 }
 
 // NewInterpreter returns an Interpreter ready to use and with the environment set to
@@ -34,21 +38,15 @@ func NewInterpreter() Interpreter {
 	return NewInterpreterEx(os.Args[1:])
 }
 
-type Interpreter struct {
+type interpreter struct {
 	environment object.Environment
-	Trace       bool
+	trace_parse bool
+	trace_eval  bool
 }
 
-func (i *Interpreter) Interpret(filename string, input interface{}) (object.RubyObject, error) {
-	node, tracer, err := parser.ParseFileEx(token.NewFileSet(), filename, input)
-	if i.Trace {
-		// if len(tracer_messages) > 0 {
-		// 	fmt.Println("Tracer messages:")
-		// 	for _, message := range tracer_messages {
-		// 		fmt.Println(message)
-		// 	}
-		// 	fmt.Println("End of tracer messages")
-		// }
+func (i *interpreter) Interpret(filename string, input interface{}) (object.RubyObject, error) {
+	node, tracer, err := parser.ParseFileEx(token.NewFileSet(), filename, input, i.trace_parse)
+	if tracer != nil {
 		walkable, err := tracer.ToWalkable()
 		if err != nil {
 			panic(err)
@@ -74,5 +72,38 @@ func (i *Interpreter) Interpret(filename string, input interface{}) (object.Ruby
 	if err != nil {
 		return nil, object.NewSyntaxError(err)
 	}
-	return evaluator.Eval(node, i.environment)
+	res, tracer, err := evaluator.EvalEx(node, i.environment, i.trace_eval)
+	if tracer != nil {
+		walkable, err := tracer.ToWalkable()
+		if err != nil {
+			panic(err)
+		}
+		indent := 0
+		walkable.Walk(func(n trace.Node) error {
+			if n.Name() == trace.START_NODE || n.Name() == trace.END_NODE {
+				// ignore start and end nodes
+				return nil
+			}
+			switch n.(type) {
+			case *trace.Enter:
+				fmt.Printf("%s > %s\n", strings.Repeat(".", indent*2), n.Name())
+				indent++
+			case *trace.Exit:
+				indent--
+				fmt.Printf("%s < %s\n", strings.Repeat(".", indent*2), n.Name())
+				//
+			}
+			return nil
+		})
+	}
+	return res, err
 }
+
+func (i *interpreter) SetTraceParse(trace_parse bool) {
+	i.trace_parse = trace_parse
+}
+func (i *interpreter) SetTraceEval(trace_eval bool) {
+	i.trace_eval = trace_eval
+}
+
+var _ Interpreter = &interpreter{}

@@ -28,6 +28,7 @@ func (m *multiString) Set(s string) error {
 
 var onelineScripts multiString
 var trace_parse bool
+var trace_eval bool
 var cpuprofile string = ""
 
 func printError(err error) {
@@ -39,6 +40,7 @@ func main() {
 	flag.StringVar(&cpuprofile, "cpuprofile", "", "write cpu profile to file")
 	flag.Var(&onelineScripts, "e", "one line of script. Several -e's allowed. Omit [programfile]")
 	flag.BoolVar(&trace_parse, "trace-parse", false, "trace parsing")
+	flag.BoolVar(&trace_eval, "trace-eval", false, "trace parsing")
 	version := flag.Bool("version", false, "print version")
 	flag.Parse()
 	if *version {
@@ -66,7 +68,12 @@ func main() {
 		os.Exit(1)
 	}
 	interpreter := interpreter.NewInterpreterEx(args[1:])
-	interpreter.Trace = trace_parse
+	if trace_parse {
+		interpreter.SetTraceParse(true)
+	}
+	if trace_eval {
+		interpreter.SetTraceEval(true)
+	}
 	if len(onelineScripts) != 0 {
 		input := strings.Join(onelineScripts, "\n")
 		_, err := interpreter.Interpret("", input)

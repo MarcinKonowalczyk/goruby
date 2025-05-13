@@ -70,7 +70,7 @@ func readSource(filename string, src interface{}) ([]byte, error) {
 // If the source couldn't be read or the source was read but syntax
 // errors were found, the returned AST is nil and the error
 // indicates the specific failure.
-func ParseFileEx(fset *gotoken.FileSet, filename string, src interface{}) (*ast.Program, trace.Tracer, error) {
+func ParseFileEx(fset *gotoken.FileSet, filename string, src interface{}, trace_parse bool) (*ast.Program, trace.Tracer, error) {
 	if fset == nil {
 		panic("parser.ParseFile: no token.FileSet provided (fset == nil)")
 	}
@@ -82,15 +82,17 @@ func ParseFileEx(fset *gotoken.FileSet, filename string, src interface{}) (*ast.
 	}
 
 	var p parser
-	p.init(fset, filename, text)
+	p.init(fset, filename, text, trace_parse)
 
 	program, err := p.ParseProgram()
-	p.tracer.Done()
+	if p.tracer != nil {
+		p.tracer.Done()
+	}
 	return program, p.tracer, err
 }
 
 func ParseFile(fset *gotoken.FileSet, filename string, src interface{}) (*ast.Program, error) {
-	parser, _, err := ParseFileEx(fset, filename, src)
+	parser, _, err := ParseFileEx(fset, filename, src, false)
 	return parser, err
 }
 
@@ -110,7 +112,7 @@ func ParseExprFrom(fset *gotoken.FileSet, filename string, src interface{}) (ast
 	}
 
 	var p parser
-	p.init(fset, filename, text)
+	p.init(fset, filename, text, false)
 
 	program, err := p.ParseProgram()
 	if err != nil {

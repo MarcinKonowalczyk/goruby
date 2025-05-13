@@ -129,13 +129,15 @@ type parser struct {
 	infixParseFns  map[token.Type]infixParseFn
 }
 
-func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte) {
+func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, trace_parse bool) {
 	p.file = fset.AddFile(filename, -1, len(src))
 
 	p.l = lexer.New(string(src))
 	p.errors = []error{}
 
-	p.tracer = trace.NewTracer()
+	if trace_parse {
+		p.tracer = trace.NewTracer()
+	}
 
 	p.prefixParseFns = make(map[token.Type]prefixParseFn)
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
@@ -258,7 +260,9 @@ func (p *parser) nextToken() {
 }
 
 func (p *parser) parseIdentifier() ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	return &ast.Identifier{Value: p.curToken.Literal}
 }
 
@@ -317,7 +321,9 @@ func (p *parser) ParseProgram() (*ast.Program, error) {
 }
 
 func (p *parser) parseStatement() ast.Statement {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	switch p.curToken.Type {
 	case token.ILLEGAL:
 		msg := p.curToken.Literal
@@ -344,7 +350,9 @@ func (p *parser) parseStatement() ast.Statement {
 }
 
 func (p *parser) parseReturnStatement() *ast.ReturnStatement {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	stmt := &ast.ReturnStatement{}
 	p.nextToken()
 
@@ -385,7 +393,9 @@ func (p *parser) parseReturnStatement() *ast.ReturnStatement {
 }
 
 func (p *parser) parseExpressionStatement() *ast.ExpressionStatement {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	stmt := &ast.ExpressionStatement{}
 	stmt.Expression = p.parseExpression(precLowest)
 	if p.peekIs(token.SEMICOLON, token.NEWLINE) {
@@ -395,7 +405,9 @@ func (p *parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *parser) parseExpression(precedence int) ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
 		p.noPrefixParseFnError(p.curToken.Type)
@@ -420,7 +432,9 @@ func (p *parser) parseExpression(precedence int) ast.Expression {
 }
 
 func (p *parser) parseComment() ast.Statement {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	comment := &ast.Comment{}
 	comment.Value = p.curToken.Literal
 	if !p.peekIs(token.NEWLINE, token.EOF) {
@@ -456,7 +470,9 @@ func newAnonymousName(prefix string) string {
 }
 
 func (p *parser) parseLambdaLiteral() ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	proc := &ast.FunctionLiteral{
 		Name: &ast.Identifier{Value: newAnonymousName("lambda")},
 	}
@@ -477,7 +493,9 @@ func (p *parser) parseLambdaLiteral() ast.Expression {
 }
 
 func (p *parser) parseSplat() ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	splat := &ast.Splat{}
 	// p.nextToken()
 	// if p.curToken.Type != token.IDENT {
@@ -498,7 +516,9 @@ func (p *parser) parseSplat() ast.Expression {
 }
 
 func (p *parser) parseExpressions(left ast.Expression) ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	p.nextToken()
 	elements := []ast.Expression{left}
 	next := p.parseExpression(precAssignment)
@@ -512,7 +532,9 @@ func (p *parser) parseExpressions(left ast.Expression) ast.Expression {
 }
 
 func (p *parser) parseAssignmentOperator(left ast.Expression) ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	assignIndex := strings.LastIndexByte(p.curToken.Literal, '=')
 	if assignIndex < 0 {
 		return nil
@@ -539,7 +561,9 @@ func (p *parser) parseAssignmentOperator(left ast.Expression) ast.Expression {
 }
 
 func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	switch left.(type) {
 	case *ast.Identifier:
 	case *ast.IndexExpression:
@@ -609,14 +633,18 @@ func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
 }
 
 func (p *parser) parseNilLiteral() ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	return &ast.SymbolLiteral{Value: "nil"}
 }
 
 var integerLiteralReplacer = strings.NewReplacer("_", "")
 
 func (p *parser) parseIntegerLiteral() ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	// p.tracer.Message("hello sailor!")
 	lit := &ast.IntegerLiteral{}
 	value, err := strconv.ParseInt(integerLiteralReplacer.Replace(p.curToken.Literal), 0, 64)
@@ -630,7 +658,9 @@ func (p *parser) parseIntegerLiteral() ast.Expression {
 }
 
 func (p *parser) parseFloatLiteral() ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	lit := &ast.FloatLiteral{}
 	value, err := strconv.ParseFloat(p.curToken.Literal, 64)
 	if err != nil {
@@ -643,20 +673,26 @@ func (p *parser) parseFloatLiteral() ast.Expression {
 
 }
 func (p *parser) parseStringLiteral() ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	return &ast.StringLiteral{
 		Value: p.curToken.Literal}
 }
 
 func (p *parser) parseSymbolLiteral() ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	return &ast.SymbolLiteral{
 		Value: strings.TrimPrefix(p.curToken.Literal, ":"),
 	}
 }
 
 func (p *parser) parseArrayLiteral() ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	array := &ast.ArrayLiteral{}
 
 	p.nextToken()
@@ -665,7 +701,9 @@ func (p *parser) parseArrayLiteral() ast.Expression {
 }
 
 func (p *parser) parseBoolean() ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	if p.currentIs(token.FALSE) {
 		return &ast.SymbolLiteral{Value: "false"}
 	} else if p.currentIs(token.TRUE) {
@@ -693,7 +731,9 @@ func (p *parser) consumeNewlineOrComment() {
 	}
 }
 func (p *parser) parseHash() ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	hash := &ast.HashLiteral{Map: make(map[ast.Expression]ast.Expression)}
 	p.nextToken()
 
@@ -740,11 +780,15 @@ func (p *parser) parseHash() ast.Expression {
 }
 
 // func (p *parser) debugPrintState() {
+// if p.tracer != nil {
 // defer p.tracer.Un(p.tracer.Trace())
+// }
 // }
 
 func (p *parser) parseKeyValue() (ast.Expression, ast.Expression, bool) {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	key := p.parseExpression(precAssignment)
 	if !p.consume(token.HASHROCKET) {
 		return nil, nil, false
@@ -754,7 +798,9 @@ func (p *parser) parseKeyValue() (ast.Expression, ast.Expression, bool) {
 }
 
 func (p *parser) parseBlock() *ast.FunctionLiteral {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	block := &ast.FunctionLiteral{
 		Name: &ast.Identifier{Value: newAnonymousName("block")},
 	}
@@ -774,7 +820,9 @@ func (p *parser) parseBlock() *ast.FunctionLiteral {
 }
 
 func (p *parser) parsePrefixExpression() ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	expression := &ast.PrefixExpression{
 		Operator: p.curToken.Literal,
 	}
@@ -784,7 +832,9 @@ func (p *parser) parsePrefixExpression() ast.Expression {
 }
 
 func (p *parser) parseInfixExpression(left ast.Expression) ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 
 	op := infix.InfixFromToken(p.curToken)
 	if op == infix.ILLEGAL {
@@ -803,7 +853,9 @@ func (p *parser) parseInfixExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *parser) parseRangeLiteral(left ast.Expression) ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	expression := &ast.RangeLiteral{
 		Left:      left,
 		Inclusive: p.curToken.Type == token.DDOT,
@@ -815,7 +867,9 @@ func (p *parser) parseRangeLiteral(left ast.Expression) ast.Expression {
 }
 
 func (p *parser) parseIndexExpression(left ast.Expression) ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	exp := &ast.IndexExpression{Left: left}
 
 	p.nextToken()
@@ -838,7 +892,9 @@ func (p *parser) parseIndexExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *parser) parseGroupedExpression() ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	p.nextToken()
 	exp := p.parseExpression(precLowest)
 	if !p.accept(token.RPAREN) {
@@ -848,7 +904,9 @@ func (p *parser) parseGroupedExpression() ast.Expression {
 }
 
 func (p *parser) parseIfExpression() ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	expression := &ast.ConditionalExpression{Unless: p.currentIs(token.UNLESS)}
 	p.nextToken()
 	expression.Condition = p.parseExpression(precLowest)
@@ -899,7 +957,9 @@ func (p *parser) parseIfExpression() ast.Expression {
 }
 
 func (p *parser) parseTernaryIfExpression(condition ast.Expression) ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	expression := &ast.ConditionalExpression{Unless: p.currentIs(token.UNLESS)}
 	p.nextToken()
 	expression.Condition = condition
@@ -922,7 +982,9 @@ func (p *parser) parseTernaryIfExpression(condition ast.Expression) ast.Expressi
 }
 
 func (p *parser) parseModifierConditionalExpression(left ast.Expression) ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	expression := &ast.ConditionalExpression{Unless: p.currentIs(token.UNLESS)}
 	p.nextToken()
 	expression.Condition = p.parseExpression(precLowest)
@@ -936,7 +998,9 @@ func (p *parser) parseModifierConditionalExpression(left ast.Expression) ast.Exp
 }
 
 func (p *parser) parseLoopExpression() ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	loop := &ast.LoopExpression{}
 	if p.curToken.Type == token.WHILE {
 		p.nextToken()
@@ -959,7 +1023,9 @@ func (p *parser) parseLoopExpression() ast.Expression {
 }
 
 func (p *parser) parseBreakStatement() *ast.BreakStatement {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	stmt := &ast.BreakStatement{}
 	if p.peekIs(token.IF) {
 		p.accept(token.IF)
@@ -975,7 +1041,9 @@ func (p *parser) parseBreakStatement() *ast.BreakStatement {
 }
 
 func (p *parser) parseFunctionLiteral() ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	lit := &ast.FunctionLiteral{}
 
 	if !p.peekIs(token.IDENT) && !p.peekToken.Type.IsOperator() {
@@ -1033,7 +1101,9 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 }
 
 func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast.FunctionParameter {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	hasDelimiters := false
 	if p.peekIs(startToken) {
 		hasDelimiters = true
@@ -1106,7 +1176,9 @@ func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast
 }
 
 func (p *parser) parseBlockStatement(t ...token.Type) *ast.BlockStatement {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	terminatorTokens := append(
 		[]token.Type{
 			token.END,
@@ -1132,7 +1204,9 @@ func (p *parser) parseBlockStatement(t ...token.Type) *ast.BlockStatement {
 }
 
 func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	contextCallExpression := &ast.ContextCallExpression{Context: context}
 
 	p.nextToken()
@@ -1174,7 +1248,9 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 }
 
 func (p *parser) parseContextCallExpression(context ast.Expression) ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	contextCallExpression := &ast.ContextCallExpression{Context: context}
 	if p.currentIs(token.DOT) {
 		p.nextToken()
@@ -1218,7 +1294,9 @@ func (p *parser) parseContextCallExpression(context ast.Expression) ast.Expressi
 }
 
 func (p *parser) parseCallArgument(function ast.Expression) ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	ident, ok := function.(*ast.Identifier)
 	if !ok {
 		// method call on any other object
@@ -1239,7 +1317,9 @@ func (p *parser) parseCallArgument(function ast.Expression) ast.Expression {
 }
 
 func (p *parser) parseCallBlock(function ast.Expression) ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 
 	exp := &ast.ContextCallExpression{}
 	exp.Block = p.parseBlock()
@@ -1264,7 +1344,9 @@ func (p *parser) parseCallBlock(function ast.Expression) ast.Expression {
 // func (p *parser) parseCallExpression(function ast.Expression) ast.Expression {
 
 func (p *parser) parseCallExpressionWithParens(function ast.Expression) ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	ident, ok := function.(*ast.Identifier)
 	if !ok {
 		msg := fmt.Errorf("could not parse call expression: expected identifier, got token '%T'", function)
@@ -1282,7 +1364,9 @@ func (p *parser) parseCallExpressionWithParens(function ast.Expression) ast.Expr
 }
 
 func (p *parser) parseCallArguments(end ...token.Type) []ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	list := []ast.Expression{}
 	if p.currentIs(end...) {
 		return list
@@ -1303,7 +1387,9 @@ func (p *parser) parseCallArguments(end ...token.Type) []ast.Expression {
 }
 
 func (p *parser) parseExpressionList(end ...token.Type) []ast.Expression {
-	defer p.tracer.Un(p.tracer.Trace())
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace())
+	}
 	list := []ast.Expression{}
 	if p.currentIs(end...) {
 		return list
