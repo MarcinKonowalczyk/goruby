@@ -54,6 +54,7 @@ var rangeMethods = map[string]RubyMethod{
 	"all?":     newMethod(rangeAll),
 }
 
+// Actually create an array of integers from the range
 func (rang *Range) ToArray() *Array {
 	result := NewArray()
 	left, right := rang.Left, rang.Right

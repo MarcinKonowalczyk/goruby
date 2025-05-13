@@ -1,12 +1,15 @@
 package interpreter
 
 import (
+	"fmt"
 	"go/token"
 	"os"
+	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/evaluator"
 	"github.com/MarcinKonowalczyk/goruby/object"
 	"github.com/MarcinKonowalczyk/goruby/parser"
+	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 // // Interpreter defines the methods of an interpreter
@@ -37,11 +40,37 @@ type Interpreter struct {
 }
 
 func (i *Interpreter) Interpret(filename string, input interface{}) (object.RubyObject, error) {
-	var mode parser.Mode
+	node, tracer, err := parser.ParseFileEx(token.NewFileSet(), filename, input)
 	if i.Trace {
-		mode = parser.Trace
+		// if len(tracer_messages) > 0 {
+		// 	fmt.Println("Tracer messages:")
+		// 	for _, message := range tracer_messages {
+		// 		fmt.Println(message)
+		// 	}
+		// 	fmt.Println("End of tracer messages")
+		// }
+		walkable, err := tracer.ToWalkable()
+		if err != nil {
+			panic(err)
+		}
+		indent := 0
+		walkable.Walk(func(n trace.Node) error {
+			if n.Name() == trace.START_NODE || n.Name() == trace.END_NODE {
+				// ignore start and end nodes
+				return nil
+			}
+			switch n.(type) {
+			case *trace.Enter:
+				fmt.Printf("%s > %s\n", strings.Repeat(".", indent*2), n.Name())
+				indent++
+			case *trace.Exit:
+				indent--
+				fmt.Printf("%s < %s\n", strings.Repeat(".", indent*2), n.Name())
+				//
+			}
+			return nil
+		})
 	}
-	node, err := parser.ParseFile(token.NewFileSet(), filename, input, mode)
 	if err != nil {
 		return nil, object.NewSyntaxError(err)
 	}

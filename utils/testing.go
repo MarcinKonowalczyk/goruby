@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"runtime"
 	"testing"
 )
@@ -80,21 +81,52 @@ func CompareErrors(a error, b error) bool {
 }
 
 // Assert that an error is not nil.
-func AssertError(t *testing.T, err error, expected error) {
+func AssertError(t *testing.T, err error, expected any) {
 	t.Helper()
 	var msg = ""
-	if expected == nil {
+	switch expected := expected.(type) {
+	case string:
+		if err == nil {
+			if expected != "" {
+				msg = fmt.Sprintf("expected no error, got '%s'", expected)
+			}
+		} else {
+			re := regexp.MustCompile(expected)
+			if !re.MatchString(err.Error()) {
+				msg = fmt.Sprintf("expected error to match '%s', got '%v' (%T)", expected, err, err)
+			}
+		}
+
+	case error:
+		if expected == nil {
+			if err != nil {
+				msg = fmt.Sprintf("expected no error, got '%v' (%T)", err, err)
+			}
+		} else {
+			if err == nil {
+				msg = fmt.Sprintf("expected error '%v' (%T), got no error (nil)", expected, expected)
+			} else {
+				if !CompareErrors(err, expected) {
+					msg = fmt.Sprintf("expected error '%v' (%T), got '%v' (%T)", expected, expected, err, err)
+				}
+			}
+		}
+	case nil:
 		if err != nil {
 			msg = fmt.Sprintf("expected no error, got '%v' (%T)", err, err)
 		}
-	} else {
+	case *regexp.Regexp:
 		if err == nil {
 			msg = fmt.Sprintf("expected error '%v' (%T), got no error (nil)", expected, expected)
 		} else {
-			if !CompareErrors(err, expected) {
-				msg = fmt.Sprintf("expected error '%v' (%T), got '%v' (%T)", expected, expected, err, err)
+			re := regexp.MustCompile(expected.String())
+			if !re.MatchString(err.Error()) {
+				msg = fmt.Sprintf("expected error to match '%s', got '%v' (%T)", expected, err, err)
 			}
 		}
+	default:
+		panic("expected type is not an error or string")
+
 	}
 
 	if msg != "" {

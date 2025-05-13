@@ -1,7 +1,6 @@
 package parser_test
 
 import (
-	"flag"
 	"fmt"
 	gotoken "go/token"
 	"os"
@@ -17,17 +16,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var parseMode p.Mode = p.ParseComments
-
 func TestMain(m *testing.M) {
-	mode := flag.String("parser.mode", "ParseComments", "parser.mode=ParseComments")
-	flag.Parse()
-	var ok bool
-	parseMode, ok = p.ParseModes[*mode]
-	if !ok {
-		fmt.Printf("Unknown parse mode %s\n", *mode)
-		os.Exit(1)
-	}
 	os.Exit(m.Run())
 }
 
@@ -2394,12 +2383,8 @@ func testHashLiteral(t *testing.T, expr ast.Expression, value map[string]string)
 	utils.AssertEqualCmp(t, hashMap, value, utils.CompareMaps)
 }
 
-func parseSource(src string, modes ...p.Mode) (*ast.Program, *p.Errors) {
-	mode := parseMode
-	for _, m := range modes {
-		mode = mode | m
-	}
-	prog, err := p.ParseFile(gotoken.NewFileSet(), "", src, mode)
+func parseSource(src string) (*ast.Program, *p.Errors) {
+	prog, err := p.ParseFile(gotoken.NewFileSet(), "", src)
 	var parserErrors *p.Errors
 	if err != nil {
 		parserErrors = err.(*p.Errors)
@@ -2407,12 +2392,8 @@ func parseSource(src string, modes ...p.Mode) (*ast.Program, *p.Errors) {
 	return prog, parserErrors
 }
 
-func parseExpression(src string, modes ...p.Mode) (ast.Expression, *p.Errors) {
-	mode := parseMode
-	for _, m := range modes {
-		mode = mode | m
-	}
-	expr, err := p.ParseExprFrom(gotoken.NewFileSet(), "", src, mode)
+func parseExpression(src string) (ast.Expression, *p.Errors) {
+	expr, err := p.ParseExprFrom(gotoken.NewFileSet(), "", src)
 	var parserErrors *p.Errors
 	if err != nil {
 		parserErrors = err.(*p.Errors)

@@ -25,14 +25,14 @@ func main() {
 		log.Printf("Error while opening program file: %T:%v\n", err, err)
 		os.Exit(1)
 	}
-	program, err := parser.ParseFile(token.NewFileSet(), args[0], fileBytes, 0)
+	program, err := parser.ParseFile(token.NewFileSet(), args[0], fileBytes)
 
 	if err != nil {
 		log.Printf("Error while interpreting program file: %T:%v\n", err, err)
 		os.Exit(1)
 	}
 
-	for i, statement := range program.Statements {
-		fmt.Println(i, statement)
+	for _, statement := range program.Statements {
+		fmt.Println(statement)
 	}
 }
