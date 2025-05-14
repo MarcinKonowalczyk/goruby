@@ -15,7 +15,7 @@ func TestArrayPush(t *testing.T) {
 			env:      env,
 		}
 
-		result, err := arrayPush(context, NewInteger(17))
+		result, err := arrayPush(context, nil, NewInteger(17))
 
 		utils.AssertNoError(t, err)
 		utils.AssertEqualCmpAny(t, result, NewArray(NewInteger(17)), CompareRubyObjectsForTests)
@@ -29,7 +29,7 @@ func TestArrayPush(t *testing.T) {
 			env:      env,
 		}
 
-		result, err := arrayPush(context, NewInteger(17), NIL, TRUE, FALSE)
+		result, err := arrayPush(context, nil, NewInteger(17), NIL, TRUE, FALSE)
 
 		utils.AssertNoError(t, err)
 		utils.AssertEqualCmpAny(t, result, NewArray(NewInteger(17), NIL, TRUE, FALSE), CompareRubyObjectsForTests)
@@ -45,7 +45,7 @@ func TestArrayUnshift(t *testing.T) {
 			env:      env,
 		}
 
-		result, err := arrayUnshift(context, NewInteger(17))
+		result, err := arrayUnshift(context, nil, NewInteger(17))
 
 		utils.AssertNoError(t, err)
 		utils.AssertEqualCmpAny(t, result, NewArray(NewInteger(17), NewString("first element")), CompareRubyObjectsForTests)
@@ -58,7 +58,7 @@ func TestArrayUnshift(t *testing.T) {
 			env:      env,
 		}
 
-		result, err := arrayUnshift(context, NewInteger(17), NIL, TRUE, FALSE)
+		result, err := arrayUnshift(context, nil, NewInteger(17), NIL, TRUE, FALSE)
 
 		utils.AssertNoError(t, err)
 		utils.AssertEqualCmpAny(t, result, NewArray(NewInteger(17), NIL, TRUE, FALSE, NewString("first element")), CompareRubyObjectsForTests)

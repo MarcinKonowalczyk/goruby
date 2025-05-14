@@ -8,7 +8,7 @@ import (
 
 func TestBottomIsNil(t *testing.T) {
 	context := &callContext{receiver: TRUE}
-	result, err := bottomIsNil(context)
+	result, err := bottomIsNil(context, nil)
 
 	utils.AssertNoError(t, err)
 
@@ -20,14 +20,14 @@ func TestBottomIsNil(t *testing.T) {
 func TestBottomToS(t *testing.T) {
 	t.Run("object as receiver", func(t *testing.T) {
 		context := &callContext{receiver: &Bottom{}}
-		result, err := bottomToS(context)
+		result, err := bottomToS(context, nil)
 		utils.AssertNoError(t, err)
 		utils.AssertEqualCmpAny(t, result, NewStringf("#<Bottom:%p>", context.receiver), CompareRubyObjectsForTests)
 	})
 	t.Run("self object as receiver", func(t *testing.T) {
 		self := &Bottom{}
 		context := &callContext{receiver: self}
-		result, err := bottomToS(context)
+		result, err := bottomToS(context, nil)
 		utils.AssertNoError(t, err)
 		utils.AssertEqualCmpAny(t, result, NewStringf("#<Bottom:%p>", self), CompareRubyObjectsForTests)
 	})
@@ -42,20 +42,20 @@ func TestBottomRaise(t *testing.T) {
 	}
 
 	t.Run("without args", func(t *testing.T) {
-		result, err := bottomRaise(context)
+		result, err := bottomRaise(context, nil)
 		utils.AssertEqualCmpAny(t, result, nil, CompareRubyObjectsForTests)
 		utils.AssertError(t, err, NewRuntimeError(""))
 	})
 
 	t.Run("with 1 arg", func(t *testing.T) {
 		t.Run("string argument", func(t *testing.T) {
-			result, err := bottomRaise(context, NewString("ouch"))
+			result, err := bottomRaise(context, nil, NewString("ouch"))
 			utils.AssertEqualCmpAny(t, result, nil, CompareRubyObjectsForTests)
 			utils.AssertError(t, err, NewRuntimeError("ouch"))
 		})
 		t.Run("integer argument", func(t *testing.T) {
 			obj := NewInteger(5)
-			result, err := bottomRaise(context, obj)
+			result, err := bottomRaise(context, nil, obj)
 			utils.AssertEqualCmpAny(t, result, nil, CompareRubyObjectsForTests)
 			utils.AssertError(t, err, NewRuntimeError("%s", obj.Inspect()))
 		})

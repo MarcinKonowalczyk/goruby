@@ -22,7 +22,7 @@ func TestSymbolToS(t *testing.T) {
 		receiver: NewSymbol("foo"),
 	}
 
-	result, err := symbolToS(context)
+	result, err := symbolToS(context, nil)
 
 	utils.AssertNoError(t, err)
 

@@ -42,7 +42,7 @@ func TestFloatDiv(t *testing.T) {
 	for _, testCase := range tests {
 		context := &callContext{receiver: NewFloat(4)}
 
-		result, err := floatDiv(context, testCase.arguments...)
+		result, err := floatDiv(context, nil, testCase.arguments...)
 
 		utils.AssertError(t, err, testCase.err)
 
@@ -71,7 +71,7 @@ func TestFloatMul(t *testing.T) {
 	for _, testCase := range tests {
 		context := &callContext{receiver: NewFloat(4)}
 
-		result, err := floatMul(context, testCase.arguments...)
+		result, err := floatMul(context, nil, testCase.arguments...)
 
 		utils.AssertError(t, err, testCase.err)
 
@@ -100,7 +100,7 @@ func TestFloatAdd(t *testing.T) {
 	for _, testCase := range tests {
 		context := &callContext{receiver: NewFloat(2)}
 
-		result, err := floatAdd(context, testCase.arguments...)
+		result, err := floatAdd(context, nil, testCase.arguments...)
 
 		utils.AssertError(t, err, testCase.err)
 
@@ -129,7 +129,7 @@ func TestFloatSub(t *testing.T) {
 	for _, testCase := range tests {
 		context := &callContext{receiver: NewFloat(4)}
 
-		result, err := floatSub(context, testCase.arguments...)
+		result, err := floatSub(context, nil, testCase.arguments...)
 
 		utils.AssertError(t, err, testCase.err)
 
@@ -192,7 +192,7 @@ func TestFloatLt(t *testing.T) {
 	for _, testCase := range tests {
 		context := &callContext{receiver: NewFloat(4)}
 
-		result, _ := floatLt(context, testCase.arguments...)
+		result, _ := floatLt(context, nil, testCase.arguments...)
 
 		// utils.AssertError(t, err, testCase.err)
 
@@ -226,7 +226,7 @@ func TestFloatGt(t *testing.T) {
 	for _, testCase := range tests {
 		context := &callContext{receiver: NewFloat(4)}
 
-		result, _ := floatGt(context, testCase.arguments...)
+		result, _ := floatGt(context, nil, testCase.arguments...)
 
 		// utils.AssertError(t, err, testCase.err)
 
@@ -333,7 +333,7 @@ func TestFloatGte(t *testing.T) {
 	for _, testCase := range tests {
 		context := &callContext{receiver: NewFloat(4)}
 
-		result, _ := floatGte(context, testCase.arguments...)
+		result, _ := floatGte(context, nil, testCase.arguments...)
 
 		// utils.AssertError(t, err, testCase.err)
 
@@ -372,7 +372,7 @@ func TestFloatLte(t *testing.T) {
 	for _, testCase := range tests {
 		context := &callContext{receiver: NewFloat(4)}
 
-		result, _ := floatLte(context, testCase.arguments...)
+		result, _ := floatLte(context, nil, testCase.arguments...)
 
 		// utils.AssertError(t, err, testCase.err)
 
@@ -411,7 +411,7 @@ func TestFloatSpaceship(t *testing.T) {
 	for _, testCase := range tests {
 		context := &callContext{receiver: NewFloat(4)}
 
-		result, _ := floatSpaceship(context, testCase.arguments...)
+		result, _ := floatSpaceship(context, nil, testCase.arguments...)
 
 		// utils.AssertError(t, err, testCase.err)
 
