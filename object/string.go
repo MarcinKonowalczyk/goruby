@@ -91,10 +91,10 @@ var stringMethods = map[string]RubyMethod{
 
 func stringToS(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	str := context.Receiver().(*String)
 	return NewString(str.Value), nil
@@ -102,10 +102,10 @@ func stringToS(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ru
 
 func stringAdd(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	s := context.Receiver().(*String)
 	add, ok := args[0].(*String)
@@ -117,7 +117,7 @@ func stringAdd(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ru
 
 func stringGsub(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	s := context.Receiver().(*String)
 	pattern, ok := args[0].(*String)
@@ -143,7 +143,7 @@ func stringGsub(context CallContext, tracer trace.Tracer, args ...RubyObject) (R
 
 func stringLength(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	s := context.Receiver().(*String)
 	return NewInteger(int64(len(s.Value))), nil
@@ -151,7 +151,7 @@ func stringLength(context CallContext, tracer trace.Tracer, args ...RubyObject) 
 
 func stringLines(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	s := context.Receiver().(*String)
 	lines := strings.Split(s.Value, "\n")
@@ -166,7 +166,7 @@ var FLOAT_RE = regexp.MustCompile(`[-+]?\d*\.?\d+`)
 
 func stringToF(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	s := context.Receiver().(*String)
 	if s.Value == "" {

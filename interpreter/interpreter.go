@@ -61,7 +61,7 @@ func newTracePrinter() func(trace.Node) error {
 			indent--
 			fmt.Printf("%s < %s\n", strings.Repeat(".", indent*2), n.Name)
 		case *trace.Message:
-			fmt.Printf("%s %s\n", strings.Repeat(".", indent*2), n.Message)
+			fmt.Printf("%s @ %s\n", strings.Repeat(".", indent*2), n.Message)
 		default:
 			panic(fmt.Sprintf("unknown node type: %T", n))
 		}

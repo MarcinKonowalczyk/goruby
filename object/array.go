@@ -77,7 +77,7 @@ var arrayMethods = map[string]RubyMethod{
 
 func arrayPush(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	array, _ := context.Receiver().(*Array)
 	array.Elements = append(array.Elements, args...)
@@ -86,7 +86,7 @@ func arrayPush(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ru
 
 func arrayUnshift(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	array, _ := context.Receiver().(*Array)
 	array.Elements = append(args, array.Elements...)
@@ -95,7 +95,7 @@ func arrayUnshift(context CallContext, tracer trace.Tracer, args ...RubyObject) 
 
 func arraySize(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	array, _ := context.Receiver().(*Array)
 	return NewInteger(int64(len(array.Elements))), nil
@@ -103,7 +103,7 @@ func arraySize(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ru
 
 func arrayFindAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	array, _ := context.Receiver().(*Array)
 	if len(args) == 0 {
@@ -142,7 +142,7 @@ func arrayFindAll(context CallContext, tracer trace.Tracer, args ...RubyObject) 
 
 func arrayFirst(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	array, _ := context.Receiver().(*Array)
 	if len(args) == 0 {
@@ -173,7 +173,7 @@ func arrayFirst(context CallContext, tracer trace.Tracer, args ...RubyObject) (R
 
 func arrayMap(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	array, _ := context.Receiver().(*Array)
 	if len(args) == 0 {
@@ -203,7 +203,7 @@ func arrayMap(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 
 func arrayAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	array, _ := context.Receiver().(*Array)
 	if len(args) == 0 {
@@ -238,7 +238,7 @@ func arrayAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 
 func arrayJoin(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	array, _ := context.Receiver().(*Array)
 	if len(args) == 0 {
@@ -258,7 +258,7 @@ func arrayJoin(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ru
 
 func arrayInclude(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	array, _ := context.Receiver().(*Array)
 	if len(args) == 0 {
@@ -298,7 +298,7 @@ func arrayInclude(context CallContext, tracer trace.Tracer, args ...RubyObject) 
 
 func arrayEach(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	array, _ := context.Receiver().(*Array)
 	if len(args) == 0 {
@@ -326,7 +326,7 @@ func arrayEach(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ru
 
 func arrayReject(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	array, _ := context.Receiver().(*Array)
 	if len(args) == 0 {
@@ -365,7 +365,7 @@ func arrayReject(context CallContext, tracer trace.Tracer, args ...RubyObject) (
 
 func arrayPop(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	array, _ := context.Receiver().(*Array)
 	if len(array.Elements) == 0 {
@@ -378,7 +378,7 @@ func arrayPop(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 
 func arrayMinus(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	array, _ := context.Receiver().(*Array)
 	if len(args) == 0 {
@@ -415,7 +415,7 @@ func arrayMinus(context CallContext, tracer trace.Tracer, args ...RubyObject) (R
 
 func arrayPlus(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	array, _ := context.Receiver().(*Array)
 	if len(args) == 0 {
@@ -433,7 +433,7 @@ func arrayPlus(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ru
 
 func arrayAst(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	array, _ := context.Receiver().(*Array)
 	if len(args) == 0 {

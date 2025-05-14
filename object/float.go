@@ -66,10 +66,10 @@ var floatMethods = map[string]RubyMethod{
 
 func floatDiv(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Float)
 	var divisor float64
@@ -89,10 +89,10 @@ func floatDiv(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 
 func floatMul(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Float)
 	var factor float64
@@ -110,7 +110,7 @@ func floatMul(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 
 func floatAdd(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Float)
 	add, ok := args[0].(*Float)
@@ -122,7 +122,7 @@ func floatAdd(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 
 func floatSub(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Float)
 	sub, ok := args[0].(*Float)
@@ -173,7 +173,7 @@ func floatCmpHelper(args []RubyObject) (float64, error) {
 }
 func floatLt(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
@@ -188,7 +188,7 @@ func floatLt(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ruby
 
 func floatGt(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
@@ -203,7 +203,7 @@ func floatGt(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ruby
 
 func floatSpaceship(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
@@ -224,7 +224,7 @@ func floatSpaceship(context CallContext, tracer trace.Tracer, args ...RubyObject
 
 func floatGte(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
@@ -239,7 +239,7 @@ func floatGte(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 
 func floatLte(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
@@ -254,7 +254,7 @@ func floatLte(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 
 func floatToI(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Float)
 	return NewInteger(int64(i.Value)), nil
@@ -262,7 +262,7 @@ func floatToI(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 
 func floatPow(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Float)
 	if len(args) != 1 {

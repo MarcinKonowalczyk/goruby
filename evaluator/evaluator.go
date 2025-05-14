@@ -89,7 +89,7 @@ type evaluator struct {
 
 func (e *evaluator) Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
 	if e.tracer != nil {
-		defer e.tracer.Un(e.tracer.Trace(trace.Here()))
+		defer e.tracer.Un(e.tracer.Trace("evaluator.Eval"))
 	}
 	switch node := node.(type) {
 	// Statements
@@ -113,7 +113,7 @@ func (e *evaluator) Eval(node ast.Node, env object.Environment) (object.RubyObje
 	case *ast.StringLiteral:
 		return e.evalStringLiteral(node, env)
 	case *ast.SymbolLiteral:
-		return object.NewSymbol(node.Value), nil
+		return e.evalSymbolLiteral(node, env)
 	case *ast.FunctionLiteral:
 		return e.evalFunctionLiteral(node, env)
 	case *ast.ArrayLiteral:
@@ -140,9 +140,11 @@ func (e *evaluator) Eval(node ast.Node, env object.Environment) (object.RubyObje
 	case *ast.ConditionalExpression:
 		return e.evalConditionalExpression(node, env)
 	case *ast.Comment:
+		e.tracer.Message("comment")
 		// ignore comments
 		return nil, nil
 	case nil:
+		e.tracer.Message("nil")
 		return nil, nil
 	case *ast.RangeLiteral:
 		return e.evalRangeLiteral(node, env)
@@ -835,6 +837,7 @@ func (e *evaluator) evalFunctionLiteral(node *ast.FunctionLiteral, env object.En
 		params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def, Splat: param.Splat}
 	}
 	function := &object.Function{
+		Name:       node.Name.Value,
 		Parameters: params,
 		Env:        env,
 		Body:       node.Body,
@@ -967,6 +970,7 @@ func (e *evaluator) evalAssignment(node *ast.Assignment, env object.Environment)
 func (e *evaluator) evalContextCallExpression(node *ast.ContextCallExpression, env object.Environment) (object.RubyObject, error) {
 	if e.tracer != nil {
 		defer e.tracer.Un(e.tracer.Trace(trace.Here()))
+		e.tracer.Message(node.Function.Value)
 	}
 	context, err := e.Eval(node.Context, env)
 	if err != nil {
@@ -1123,4 +1127,12 @@ func (e *evaluator) evalFloatLiteral(node *ast.FloatLiteral, _ object.Environmen
 		defer e.tracer.Un(e.tracer.Trace(trace.Here()))
 	}
 	return object.NewFloat(node.Value), nil
+}
+
+func (e *evaluator) evalSymbolLiteral(node *ast.SymbolLiteral, _ object.Environment) (object.RubyObject, error) {
+	if e.tracer != nil {
+		defer e.tracer.Un(e.tracer.Trace(trace.Here()))
+		// e.tracer.Message(node.Value)
+	}
+	return object.NewSymbol(node.Value), nil
 }

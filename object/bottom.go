@@ -47,7 +47,7 @@ var bottomMethodSet = map[string]RubyMethod{
 
 func bottomToS(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	receiver := context.Receiver()
 	val := fmt.Sprintf("#<%s:%p>", receiver.Class().Name(), receiver)
@@ -56,7 +56,7 @@ func bottomToS(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ru
 
 func bottomIsA(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	receiver_class := context.Receiver().Class()
 	switch arg := args[0].(type) {
@@ -85,7 +85,7 @@ func print(lines []string, delimiter string) {
 
 func bottomPuts(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	var lines []string
 	for _, arg := range args {
@@ -114,7 +114,7 @@ func bottomPuts(context CallContext, tracer trace.Tracer, args ...RubyObject) (R
 
 func bottomPrint(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	var lines []string
 	for _, arg := range args {
@@ -144,7 +144,7 @@ func bottomPrint(context CallContext, tracer trace.Tracer, args ...RubyObject) (
 
 func bottomMethods(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	showSuperMethods := true
 	if len(args) == 1 {
@@ -171,7 +171,7 @@ func bottomMethods(context CallContext, tracer trace.Tracer, args ...RubyObject)
 
 func bottomIsNil(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	receiver := context.Receiver()
 	if receiver == NIL {
@@ -182,7 +182,7 @@ func bottomIsNil(context CallContext, tracer trace.Tracer, args ...RubyObject) (
 
 func bottomClassMethod(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	receiver := context.Receiver()
 	if _, ok := receiver.(RubyClassObject); ok {
@@ -193,7 +193,7 @@ func bottomClassMethod(context CallContext, tracer trace.Tracer, args ...RubyObj
 
 func bottomRaise(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	switch len(args) {
 	case 1:
@@ -382,7 +382,7 @@ func RubyObjectsEqual(left, right RubyObject) bool {
 
 func bottomEqual(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	if RubyObjectsEqual(context.Receiver(), args[0]) {
 		return TRUE, nil
@@ -392,7 +392,7 @@ func bottomEqual(context CallContext, tracer trace.Tracer, args ...RubyObject) (
 
 func bottomNotEqual(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	if RubyObjectsEqual(context.Receiver(), args[0]) {
 		return FALSE, nil
