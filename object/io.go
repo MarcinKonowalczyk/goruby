@@ -3,6 +3,8 @@ package object
 import (
 	"bufio"
 	"os"
+
+	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 var IoClass RubyClassObject = newClass(
@@ -20,7 +22,10 @@ var ioClassMethods = map[string]RubyMethod{
 	"gets": withArity(0, newMethod(ioClassGets)),
 }
 
-func ioClassGets(context CallContext, args ...RubyObject) (RubyObject, error) {
+func ioClassGets(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	// read a string from stdin
 	reader := bufio.NewReader(os.Stdin)
 	text, err := reader.ReadString('\n')

@@ -3,11 +3,12 @@ package object
 import (
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/trace"
 	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func TestWithArity(t *testing.T) {
-	wrappedMethod := newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+	wrappedMethod := newMethod(func(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 		return NewInteger(1), nil
 	})
 

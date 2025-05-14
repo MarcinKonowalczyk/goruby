@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/MarcinKonowalczyk/goruby/trace"
 	"github.com/pkg/errors"
 )
 
@@ -56,7 +57,10 @@ var integerMethods = map[string]RubyMethod{
 	"chr":  withArity(0, newMethod(integerChr)),
 }
 
-func integerDiv(context CallContext, args ...RubyObject) (RubyObject, error) {
+func integerDiv(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Integer)
 	divisor, ok := args[0].(*Integer)
 	if !ok {
@@ -68,7 +72,10 @@ func integerDiv(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return NewInteger(i.Value / divisor.Value), nil
 }
 
-func integerMul(context CallContext, args ...RubyObject) (RubyObject, error) {
+func integerMul(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Integer)
 	factor, ok := args[0].(*Integer)
 	if !ok {
@@ -77,7 +84,10 @@ func integerMul(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return NewInteger(i.Value * factor.Value), nil
 }
 
-func integerAdd(context CallContext, args ...RubyObject) (RubyObject, error) {
+func integerAdd(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Integer)
 	add, ok := args[0].(*Integer)
 	if !ok {
@@ -86,7 +96,10 @@ func integerAdd(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return NewInteger(i.Value + add.Value), nil
 }
 
-func integerSub(context CallContext, args ...RubyObject) (RubyObject, error) {
+func integerSub(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Integer)
 	sub, ok := args[0].(*Integer)
 	if !ok {
@@ -127,7 +140,10 @@ func integerCmpHelper(args []RubyObject) (int64, error) {
 	return right, nil
 }
 
-func integerModulo(context CallContext, args ...RubyObject) (RubyObject, error) {
+func integerModulo(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
 	if err != nil {
@@ -136,7 +152,10 @@ func integerModulo(context CallContext, args ...RubyObject) (RubyObject, error) 
 	return NewInteger(i.Value % right), nil
 }
 
-func integerLt(context CallContext, args ...RubyObject) (RubyObject, error) {
+func integerLt(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
 	if err != nil {
@@ -148,7 +167,10 @@ func integerLt(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-func integerGt(context CallContext, args ...RubyObject) (RubyObject, error) {
+func integerGt(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
 	if err != nil {
@@ -160,7 +182,10 @@ func integerGt(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-func integerSpaceship(context CallContext, args ...RubyObject) (RubyObject, error) {
+func integerSpaceship(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
 	if err != nil {
@@ -178,7 +203,10 @@ func integerSpaceship(context CallContext, args ...RubyObject) (RubyObject, erro
 	}
 }
 
-func integerGte(context CallContext, args ...RubyObject) (RubyObject, error) {
+func integerGte(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
 	if err != nil {
@@ -190,7 +218,10 @@ func integerGte(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-func integerLte(context CallContext, args ...RubyObject) (RubyObject, error) {
+func integerLte(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
 	if err != nil {
@@ -202,12 +233,18 @@ func integerLte(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-func integerToI(context CallContext, args ...RubyObject) (RubyObject, error) {
+func integerToI(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Integer)
 	return i, nil
 }
 
-func integerPow(context CallContext, args ...RubyObject) (RubyObject, error) {
+func integerPow(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Integer)
 	switch arg := args[0].(type) {
 	case *Integer:
@@ -224,7 +261,10 @@ func integerPow(context CallContext, args ...RubyObject) (RubyObject, error) {
 	}
 }
 
-func integerChr(context CallContext, args ...RubyObject) (RubyObject, error) {
+func integerChr(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Integer)
 	if i.Value < 0 || i.Value > 255 {
 		return nil, NewArgumentError("chr out of range")

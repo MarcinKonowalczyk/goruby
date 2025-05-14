@@ -3,6 +3,8 @@ package object
 import (
 	"fmt"
 	"hash/fnv"
+
+	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 var (
@@ -61,21 +63,30 @@ var symbolMethods = map[string]RubyMethod{
 	"size": withArity(0, newMethod(symbolSize)),
 }
 
-func symbolToS(context CallContext, args ...RubyObject) (RubyObject, error) {
+func symbolToS(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	if sym, ok := context.Receiver().(*Symbol); ok {
 		return NewString(sym.Value), nil
 	}
 	return nil, nil
 }
 
-func symbolSize(context CallContext, args ...RubyObject) (RubyObject, error) {
+func symbolSize(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	if sym, ok := context.Receiver().(*Symbol); ok {
 		return NewInteger(int64(len(sym.Value))), nil
 	}
 	return nil, nil
 }
 
-func symbolToI(context CallContext, args ...RubyObject) (RubyObject, error) {
+func symbolToI(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	if boolean, ok := SymbolToBool(context.Receiver()); ok {
 		if boolean {
 			return NewInteger(1), nil

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"hash/fnv"
 	"strings"
+
+	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 var hashClass RubyClassObject = newClass(
@@ -89,7 +91,10 @@ var hashMethods = map[string]RubyMethod{
 	"has_key?": newMethod(hashHasKey),
 }
 
-func hashHasKey(context CallContext, args ...RubyObject) (RubyObject, error) {
+func hashHasKey(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	hash, _ := context.Receiver().(*Hash)
 	if len(args) != 1 {
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))

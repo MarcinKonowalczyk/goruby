@@ -21,8 +21,10 @@ type CallContext interface {
 // NewCallContext returns a new CallContext with a stubbed eval function
 func NewCallContext(env Environment, receiver RubyObject) CallContext {
 	return &callContext{
-		env:      env,
-		eval:     func(node ast.Node, env Environment) (RubyObject, error) { return nil, fmt.Errorf("no eval present") },
+		env: env,
+		eval: func(node ast.Node, env Environment) (RubyObject, error) {
+			return nil, fmt.Errorf("no eval present")
+		},
 		receiver: receiver,
 	}
 }

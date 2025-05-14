@@ -3,6 +3,8 @@ package object
 import (
 	"fmt"
 	"strings"
+
+	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 var (
@@ -43,13 +45,19 @@ var bottomMethodSet = map[string]RubyMethod{
 	"!=":      withArity(1, newMethod(bottomNotEqual)),
 }
 
-func bottomToS(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomToS(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	receiver := context.Receiver()
 	val := fmt.Sprintf("#<%s:%p>", receiver.Class().Name(), receiver)
 	return NewString(val), nil
 }
 
-func bottomIsA(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomIsA(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	receiver_class := context.Receiver().Class()
 	switch arg := args[0].(type) {
 	case RubyClassObject:
@@ -75,7 +83,10 @@ func print(lines []string, delimiter string) {
 	fmt.Print(out.String())
 }
 
-func bottomPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomPuts(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	var lines []string
 	for _, arg := range args {
 		if arr, ok := arg.(*Array); ok {
@@ -101,7 +112,10 @@ func bottomPuts(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return NIL, nil
 }
 
-func bottomPrint(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomPrint(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	var lines []string
 	for _, arg := range args {
 		if arr, ok := arg.(*Array); ok {
@@ -128,7 +142,10 @@ func bottomPrint(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return NIL, nil
 }
 
-func bottomMethods(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomMethods(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	showSuperMethods := true
 	if len(args) == 1 {
 		if val, ok := SymbolToBool(args[0]); ok {
@@ -152,7 +169,10 @@ func bottomMethods(context CallContext, args ...RubyObject) (RubyObject, error) 
 	return getMethods(class, showSuperMethods), nil
 }
 
-func bottomIsNil(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomIsNil(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	receiver := context.Receiver()
 	if receiver == NIL {
 		return TRUE, nil
@@ -160,7 +180,10 @@ func bottomIsNil(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-func bottomClassMethod(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomClassMethod(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	receiver := context.Receiver()
 	if _, ok := receiver.(RubyClassObject); ok {
 		return nil, nil
@@ -168,7 +191,10 @@ func bottomClassMethod(context CallContext, args ...RubyObject) (RubyObject, err
 	return receiver.Class().(RubyClassObject), nil
 }
 
-func bottomRaise(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomRaise(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	switch len(args) {
 	case 1:
 		switch arg := args[0].(type) {
@@ -354,14 +380,20 @@ func RubyObjectsEqual(left, right RubyObject) bool {
 	return rubyObjectsEqual(left, right, false)
 }
 
-func bottomEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomEqual(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	if RubyObjectsEqual(context.Receiver(), args[0]) {
 		return TRUE, nil
 	}
 	return FALSE, nil
 }
 
-func bottomNotEqual(context CallContext, args ...RubyObject) (RubyObject, error) {
+func bottomNotEqual(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	if RubyObjectsEqual(context.Receiver(), args[0]) {
 		return FALSE, nil
 	}

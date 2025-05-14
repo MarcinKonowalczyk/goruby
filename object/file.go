@@ -3,6 +3,8 @@ package object
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 var fileClass RubyClassObject = newClass(
@@ -22,7 +24,10 @@ var fileClassMethods = map[string]RubyMethod{
 	"read":        newMethod(fileRead),
 }
 
-func fileExpandPath(context CallContext, args ...RubyObject) (RubyObject, error) {
+func fileExpandPath(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	switch len(args) {
 	case 1:
 		str, ok := args[0].(*String)
@@ -57,7 +62,10 @@ func fileExpandPath(context CallContext, args ...RubyObject) (RubyObject, error)
 	}
 }
 
-func fileDirname(context CallContext, args ...RubyObject) (RubyObject, error) {
+func fileDirname(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	if len(args) != 1 {
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))
 	}
@@ -71,7 +79,10 @@ func fileDirname(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return NewString(dirname), nil
 }
 
-func fileRead(context CallContext, args ...RubyObject) (RubyObject, error) {
+func fileRead(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	if len(args) != 1 {
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))
 	}

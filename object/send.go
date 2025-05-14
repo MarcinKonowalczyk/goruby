@@ -1,9 +1,16 @@
 package object
 
-import "hash/fnv"
+import (
+	"hash/fnv"
+
+	"github.com/MarcinKonowalczyk/goruby/trace"
+)
 
 // Send sends message method with args to context and returns its result
-func Send(context CallContext, method string, args ...RubyObject) (RubyObject, error) {
+func Send(context CallContext, method string, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		defer tracer.Un(tracer.Trace())
+	}
 	receiver := context.Receiver()
 	class := receiver.Class()
 
@@ -19,7 +26,7 @@ func Send(context CallContext, method string, args ...RubyObject) (RubyObject, e
 			continue
 		}
 
-		return fn.Call(context, args...)
+		return fn.Call(context, tracer, args...)
 	}
 
 	return nil, NewNoMethodError(receiver, method)

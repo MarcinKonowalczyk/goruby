@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"unsafe"
 
+	"github.com/MarcinKonowalczyk/goruby/trace"
 	"github.com/pkg/errors"
 )
 
@@ -63,7 +64,13 @@ var floatMethods = map[string]RubyMethod{
 	"**":   withArity(1, newMethod(floatPow)),
 }
 
-func floatDiv(context CallContext, args ...RubyObject) (RubyObject, error) {
+func floatDiv(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Float)
 	var divisor float64
 	switch arg := args[0].(type) {
@@ -80,7 +87,13 @@ func floatDiv(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return NewFloat(i.Value / divisor), nil
 }
 
-func floatMul(context CallContext, args ...RubyObject) (RubyObject, error) {
+func floatMul(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Float)
 	var factor float64
 	switch arg := args[0].(type) {
@@ -95,7 +108,10 @@ func floatMul(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return NewFloat(i.Value * factor), nil
 }
 
-func floatAdd(context CallContext, args ...RubyObject) (RubyObject, error) {
+func floatAdd(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Float)
 	add, ok := args[0].(*Float)
 	if !ok {
@@ -104,7 +120,10 @@ func floatAdd(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return NewFloat(i.Value + add.Value), nil
 }
 
-func floatSub(context CallContext, args ...RubyObject) (RubyObject, error) {
+func floatSub(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Float)
 	sub, ok := args[0].(*Float)
 	if !ok {
@@ -152,7 +171,10 @@ func floatCmpHelper(args []RubyObject) (float64, error) {
 	}
 	return right, nil
 }
-func floatLt(context CallContext, args ...RubyObject) (RubyObject, error) {
+func floatLt(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
 	if err != nil {
@@ -164,7 +186,10 @@ func floatLt(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-func floatGt(context CallContext, args ...RubyObject) (RubyObject, error) {
+func floatGt(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
 	if err != nil {
@@ -176,7 +201,10 @@ func floatGt(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-func floatSpaceship(context CallContext, args ...RubyObject) (RubyObject, error) {
+func floatSpaceship(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
 	if err != nil {
@@ -194,7 +222,10 @@ func floatSpaceship(context CallContext, args ...RubyObject) (RubyObject, error)
 	}
 }
 
-func floatGte(context CallContext, args ...RubyObject) (RubyObject, error) {
+func floatGte(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
 	if err != nil {
@@ -206,7 +237,10 @@ func floatGte(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-func floatLte(context CallContext, args ...RubyObject) (RubyObject, error) {
+func floatLte(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
 	if err != nil {
@@ -218,12 +252,18 @@ func floatLte(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-func floatToI(context CallContext, args ...RubyObject) (RubyObject, error) {
+func floatToI(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Float)
 	return NewInteger(int64(i.Value)), nil
 }
 
-func floatPow(context CallContext, args ...RubyObject) (RubyObject, error) {
+func floatPow(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	i := context.Receiver().(*Float)
 	if len(args) != 1 {
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))

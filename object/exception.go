@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"hash/fnv"
 	"strings"
+
+	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 var (
@@ -59,7 +61,10 @@ var exceptionMethods = map[string]RubyMethod{
 	"to_s":       withArity(0, newMethod(exceptionToS)),
 }
 
-func exceptionInitialize(context CallContext, args ...RubyObject) (RubyObject, error) {
+func exceptionInitialize(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	receiver := context.Receiver()
 	var message string
 	message = receiver.Class().Name()
@@ -76,7 +81,10 @@ func exceptionInitialize(context CallContext, args ...RubyObject) (RubyObject, e
 	return receiver, nil
 }
 
-func exceptionException(context CallContext, args ...RubyObject) (RubyObject, error) {
+func exceptionException(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	receiver := context.Receiver()
 	if len(args) == 0 {
 		return receiver, nil
@@ -104,7 +112,10 @@ func exceptionException(context CallContext, args ...RubyObject) (RubyObject, er
 	return receiver, nil
 }
 
-func exceptionToS(context CallContext, args ...RubyObject) (RubyObject, error) {
+func exceptionToS(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	receiver := context.Receiver()
 	if err, ok := receiver.(exception); ok {
 		return NewString(err.Error()), nil

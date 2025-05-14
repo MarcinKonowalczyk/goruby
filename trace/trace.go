@@ -13,8 +13,8 @@ type walkable interface {
 
 type Tracer interface {
 	// add the function to the tracing stack
-	Trace() trace_out
-	Un(trace_out)
+	Trace(args ...string) Exit
+	Un(Exit)
 	// add a message to the trace
 	Message(args ...any)
 	// get all the messages
@@ -220,27 +220,37 @@ func callerName(N int) FunctionName {
 }
 
 // passes any information to the corresponding Un
-type trace_out struct {
-	parent *Enter
-}
+// type trace_out struct {
+// 	callers_name FunctionName
+// 	parent       *Enter
+// }
 
 // func random_node_id() node_id {
 // 	return node_id(rand.Int63())
 // }
 
-func (t *tracer) Trace() trace_out {
-	n := &Enter{name: callerName(1)}
+func (t *tracer) Trace(args ...string) Exit {
+	var callers_name FunctionName
+	switch len(args) {
+	case 0:
+		callers_name = callerName(1)
+	case 1:
+		callers_name = FunctionName(args[0])
+	default:
+		panic("too many arguments to Trace")
+	}
+	n := &Enter{name: callers_name}
 	t.append(n)
 	debug("> entering", t.where.Name())
-	return trace_out{parent: n}
+	return Exit{
+		name:   callers_name,
+		parent: n,
+	}
 }
 
 // Usage pattern: defer t.Un(t.Trace(p, "..."))
-func (t *tracer) Un(to trace_out) {
-	t.append(&Exit{
-		name:   callerName(1),
-		parent: to.parent,
-	})
+func (t *tracer) Un(exit Exit) {
+	t.append(&exit)
 	debug("< exiting", t.where.Name())
 }
 

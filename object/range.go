@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"hash/fnv"
 	"strings"
+
+	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 var rangeClass RubyClassObject = newClass(
@@ -67,7 +69,10 @@ func (rang *Range) ToArray() *Array {
 	return result
 }
 
-func rangeFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {
+func rangeFindAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	rng, _ := context.Receiver().(*Range)
 	if len(args) == 0 {
 		return nil, NewArgumentError("(1) range find_all requires a block")
@@ -86,7 +91,7 @@ func rangeFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 	// evaluate the range
 	result := NewArray()
 	for _, elem := range rng.ToArray().Elements {
-		ret, err := fn.Call(context, elem)
+		ret, err := fn.Call(context, tracer, elem)
 		if err != nil {
 			return nil, err
 		}
@@ -104,7 +109,10 @@ func rangeFindAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 	return result, nil
 }
 
-func rangeAll(context CallContext, args ...RubyObject) (RubyObject, error) {
+func rangeAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace())
+	}
 	rng, _ := context.Receiver().(*Range)
 	if len(args) == 0 {
 		return nil, NewArgumentError("all? requires a block")
@@ -121,7 +129,7 @@ func rangeAll(context CallContext, args ...RubyObject) (RubyObject, error) {
 		return nil, NewNoMethodError(self, proc.Value)
 	}
 	for _, elem := range rng.ToArray().Elements {
-		ret, err := fn.Call(context, elem)
+		ret, err := fn.Call(context, tracer, elem)
 		if err != nil {
 			return nil, err
 		}

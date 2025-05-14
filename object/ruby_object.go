@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 type inspectable interface {
@@ -137,7 +138,10 @@ func (f *Function) String() string {
 }
 
 // Call implements the RubyMethod interface. It evaluates f.Body and returns its result
-func (f *Function) Call(context CallContext, args ...RubyObject) (RubyObject, error) {
+func (f *Function) Call(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		tracer.Un(tracer.Trace("Function.Call"))
+	}
 	// TODO: Handle tail splats
 	if len(f.Parameters) == 1 && f.Parameters[0].Splat {
 		// Only one splat parameter.
