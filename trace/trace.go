@@ -13,7 +13,7 @@ type walkable interface {
 
 type Tracer interface {
 	// add the function to the tracing stack
-	Trace(args ...string) Exit
+	Trace(where FunctionName) Exit
 	Un(Exit)
 	// add a message to the trace
 	Message(args ...any)
@@ -49,11 +49,11 @@ func debug(args ...any) {
 	}
 }
 
-func debugf(format string, args ...any) {
-	if dEBUG {
-		fmt.Printf(format, args...)
-	}
-}
+// func debugf(format string, args ...any) {
+// 	if dEBUG {
+// 		fmt.Printf(format, args...)
+// 	}
+// }
 
 //////////
 
@@ -68,34 +68,20 @@ func (f FunctionName) IsUntraced() bool {
 	return strings.HasPrefix(string(f), "*")
 }
 
-type Message struct {
-	Message string
-	Stack   []FunctionName
-}
-
-func (m Message) String() string {
-	var out strings.Builder
-	for j := len(m.Stack) - 1; j >= 0; j-- {
-		out.WriteString(fmt.Sprintf("%s:", m.Stack[j]))
-	}
-	out.WriteString(fmt.Sprintf(" %s", m.Message))
-	return out.String()
-}
-
 type linked interface {
 	Next() Node
 	Prev() Node
 }
+
 type Node interface {
 	linked
 	Name() FunctionName
-	Message(args ...any)
-	Messages() []string
+	// Message(args ...any)
+	// Messages() []string
 }
 
 type Enter struct {
-	name     FunctionName
-	messages []string
+	name FunctionName
 	// next/prev nodes in the chain
 	next Node
 	prev Node
@@ -114,21 +100,7 @@ func (n Enter) String() string {
 		out.WriteString(" -> ")
 	}
 	out.WriteString(string(n.name))
-	if len(n.messages) > 0 {
-		out.WriteString(fmt.Sprintf(" (#%d)", len(n.messages)))
-	}
 	return out.String()
-}
-
-func (n *Enter) Message(args ...any) {
-	if n.messages == nil {
-		n.messages = make([]string, 0)
-	}
-	n.messages = append(n.messages, fmt.Sprint(args...))
-}
-
-func (n Enter) Messages() []string {
-	return n.messages
 }
 
 func (n *Enter) Next() Node {
@@ -182,10 +154,60 @@ var (
 	_ linked = (*Exit)(nil)
 )
 
+type Message struct {
+	Message string
+	// next/prev nodes in the chain
+	next Node
+	prev Node
+	// parent node -- the enter node at which we are messaging
+	parent *Enter
+}
+
+func (m Message) String() string {
+	var out strings.Builder
+	stack := m.Stack()
+	for j := len(stack) - 1; j >= 0; j-- {
+		out.WriteString(fmt.Sprintf("%s:", stack[j]))
+	}
+	out.WriteString(fmt.Sprintf(" %s", m.Message))
+	return out.String()
+}
+
+func (m *Message) Stack() []FunctionName {
+	stack := make([]FunctionName, 0)
+	for n := m.parent; n != nil; n = n.parent {
+		if n.Name() == START_NODE {
+			break
+		}
+		stack = append(stack, n.Name())
+	}
+	// reverse the stack
+	// for i, j := 0, len(stack)-1; i < j; i, j = i+1, j-1 {
+	// 	stack[i], stack[j] = stack[j], stack[i]
+	// }
+	return stack
+}
+
+func (m *Message) Name() FunctionName {
+	return m.parent.Name() + " message"
+}
+
+func (m *Message) Next() Node {
+	return m.next
+}
+func (m *Message) Prev() Node {
+	return m.prev
+}
+
+var (
+	_ Node   = (*Message)(nil)
+	_ linked = (*Message)(nil)
+)
+
 type tracer struct {
 	stack []Node
 	// pointer to the enter node of the current function
-	where Node
+	where *Enter
 }
 
 // Append any number of nodes to the chain
@@ -198,10 +220,12 @@ func (t *tracer) append(node ...Node) {
 		// if we've added an new enter node, set the parent
 		switch n := n.(type) {
 		case *Enter:
-			n.parent = t.where.(*Enter)
+			n.parent = t.where
 			t.where = n // and update the where pointer
 		case *Exit:
 			t.where = n.parent.parent
+		case *Message:
+			// nothing to do for message nodes
 		default:
 			panic("unknown node type")
 		}
@@ -210,10 +234,15 @@ func (t *tracer) append(node ...Node) {
 	}
 }
 
-func callerName(N int) FunctionName {
+func callerName(N int) string {
 	parent, _, _, _ := runtime.Caller(N + 1)
 	info := runtime.FuncForPC(parent)
 	name := info.Name()
+	return name
+}
+
+func Here() FunctionName {
+	name := callerName(1)
 	// strip everything before the last . to get just the function name
 	name = name[strings.LastIndex(name, ".")+1:]
 	return FunctionName(name)
@@ -229,21 +258,12 @@ func callerName(N int) FunctionName {
 // 	return node_id(rand.Int63())
 // }
 
-func (t *tracer) Trace(args ...string) Exit {
-	var callers_name FunctionName
-	switch len(args) {
-	case 0:
-		callers_name = callerName(1)
-	case 1:
-		callers_name = FunctionName(args[0])
-	default:
-		panic("too many arguments to Trace")
-	}
-	n := &Enter{name: callers_name}
+func (t *tracer) Trace(where FunctionName) Exit {
+	n := &Enter{name: where}
 	t.append(n)
 	debug("> entering", t.where.Name())
 	return Exit{
-		name:   callers_name,
+		name:   where,
 		parent: n,
 	}
 }
@@ -255,37 +275,10 @@ func (t *tracer) Un(exit Exit) {
 }
 
 func (t *tracer) Message(args ...any) {
-	debug("  messaging", t.where.Name())
-	callers_name := callerName(1)
-	if len(t.stack) == 0 {
-		panic("call stack is empty")
-	}
-	// var top_node tracer_node = t.chain[len(t.chain)-1]
-	if t.where.Name() == callers_name {
-		// we are tracing the current function. Pass it the message
-		t.where.Message(args...)
-	} else {
-		debug("!", t.where.Name(), callers_name)
-
-		callers_callers_name := callerName(2)
-		if t.where.Name() == callers_callers_name {
-			// we are tracing the parent function. we can recover one-deep mishap
-			n0 := &Enter{name: "*" + callers_name}
-			n1 := &Exit{name: "*" + callers_name, parent: n0}
-			n0.Message(args...) // pass the message
-			t.append(n0, n1)
-		} else {
-			// we are not tracing the current function, nor the parent function
-			n0 := &Enter{name: "..."}
-			n1 := &Enter{name: "*" + callers_callers_name}
-			n2 := &Enter{name: "*" + callers_name}
-			n3 := &Exit{name: "*" + callers_name, parent: n2}
-			n4 := &Exit{name: "*" + callers_callers_name, parent: n1}
-			n5 := &Exit{name: "...", parent: n0}
-			n2.Message(args...) // pass the message
-			t.stack = append(t.stack, n0, n1, n2, n3, n4, n5)
-		}
-	}
+	t.append(&Message{
+		Message: fmt.Sprint(args...),
+		parent:  t.where,
+	})
 }
 
 type settable_next interface {
@@ -312,11 +305,20 @@ func (t *Exit) SetPrev(n Node) {
 	t.prev = n
 }
 
+func (t *Message) SetNext(n Node) {
+	t.next = n
+}
+func (t *Message) SetPrev(n Node) {
+	t.prev = n
+}
+
 var (
 	_ settable_next = (*Enter)(nil)
 	_ settable_next = (*Exit)(nil)
 	_ settable_prev = (*Enter)(nil)
 	_ settable_prev = (*Exit)(nil)
+	_ settable_next = (*Message)(nil)
+	_ settable_prev = (*Message)(nil)
 )
 
 func (t *tracer) Done() {
@@ -352,7 +354,7 @@ func (t *tracer) ToWalkable() (walkable, error) {
 
 func (t *tracer) Messages() []Message {
 	messages := make([]Message, 0)
-	stack := make([]*Enter, 0)
+	// stack := make([]*Enter, 0)
 	walkable, err := t.ToWalkable()
 	if err != nil {
 		return nil
@@ -360,42 +362,10 @@ func (t *tracer) Messages() []Message {
 
 	walkable.Walk(func(n Node) error {
 		switch n := n.(type) {
-		case *Enter:
-			if n.Name() == START_NODE {
-				// skip the first node
-			} else {
-				stack = append(stack, n)
-			}
-		case *Exit:
-			if len(stack) == 0 {
-				return fmt.Errorf("unmatched exit node: %s", n.Name())
-			}
-			if stack[len(stack)-1].Name() != n.Name() {
-				return fmt.Errorf("unmatched exit node: %s", n.Name())
-			}
-			stack = stack[:len(stack)-1]
+		case *Message:
+			messages = append(messages, *n)
 		default:
-			return fmt.Errorf("unknown node type: %T", n)
-		}
-		if n.Name() == END_NODE {
-			// skip the last node
-			return nil
-		}
-
-		node_messages := n.Messages()
-		if node_messages == nil {
-			return nil
-		}
-
-		stack_copy := make([]FunctionName, len(stack))
-		for i := 0; i < len(stack); i++ {
-			stack_copy[i] = stack[i].Name()
-		}
-		for _, m := range node_messages {
-			messages = append(messages, Message{
-				Message: m,
-				Stack:   stack_copy,
-			})
+			// do nothing
 		}
 		return nil
 	})

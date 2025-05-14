@@ -49,13 +49,14 @@ func prettyPrintOneline(message trace.Message) string {
 
 func prettyPrintMultiline(message trace.Message) string {
 	var out strings.Builder
-	for j := 0; j < len(message.Stack); j++ {
+	stack := message.Stack()
+	for j := 0; j < len(stack); j++ {
 		out.WriteString(strings.Repeat(" ", max(j-1, 0))) // indent
 		if j > 0 {
 			out.WriteString("\u2514") // down-right angle
 		}
-		out.WriteString(string(message.Stack[j]))
-		if j < len(message.Stack)-1 {
+		out.WriteString(string(stack[j]))
+		if j < len(stack)-1 {
 			out.WriteString("\n")
 		}
 	}

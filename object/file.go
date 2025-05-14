@@ -26,7 +26,7 @@ var fileClassMethods = map[string]RubyMethod{
 
 func fileExpandPath(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace())
+		tracer.Un(tracer.Trace(trace.Here()))
 	}
 	switch len(args) {
 	case 1:
@@ -64,7 +64,7 @@ func fileExpandPath(context CallContext, tracer trace.Tracer, args ...RubyObject
 
 func fileDirname(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace())
+		tracer.Un(tracer.Trace(trace.Here()))
 	}
 	if len(args) != 1 {
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))
@@ -81,7 +81,7 @@ func fileDirname(context CallContext, tracer trace.Tracer, args ...RubyObject) (
 
 func fileRead(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace())
+		tracer.Un(tracer.Trace(trace.Here()))
 	}
 	if len(args) != 1 {
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))

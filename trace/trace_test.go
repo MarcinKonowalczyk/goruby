@@ -18,20 +18,20 @@ func TestNewTracer(t *testing.T) {
 
 // called third
 func third(tr trace.Tracer) {
-	defer tr.Un(tr.Trace())
+	defer tr.Un(tr.Trace(trace.Here()))
 	tr.Message("Second")
 }
 
 // called second
 func second(tr trace.Tracer) {
-	defer tr.Un(tr.Trace())
+	defer tr.Un(tr.Trace(trace.Here()))
 	third(tr)
 	tr.Message("Third") // third since _third is called before
 }
 
 // called first
 func first(tr trace.Tracer) {
-	defer tr.Un(tr.Trace())
+	defer tr.Un(tr.Trace(trace.Here()))
 	tr.Message("First")
 	second(tr)
 }
@@ -50,7 +50,7 @@ func TestTraceNormal(t *testing.T) {
 ////////////////////////////////////////////////////////////////////////////////
 
 func first_gap(tr trace.Tracer) {
-	defer tr.Un(tr.Trace())
+	defer tr.Un(tr.Trace(trace.Here()))
 	tr.Message("First")
 	second_gap(tr)
 }
@@ -75,8 +75,8 @@ func TestTraceGap(t *testing.T) {
 	messages := tracer.Messages()
 	utils.AssertEqual(t, len(messages), 3)
 	for _, message := range messages {
-		// fmt.Printf("%s\n", message)
-		printer.PrettyPrint(message, printer.MULTILINE)
+		fmt.Printf("%s\n", message)
+		// printer.PrettyPrint(message, printer.MULTILINE)
 	}
 }
 

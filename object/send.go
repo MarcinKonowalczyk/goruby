@@ -9,7 +9,7 @@ import (
 // Send sends message method with args to context and returns its result
 func Send(context CallContext, method string, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		defer tracer.Un(tracer.Trace())
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	receiver := context.Receiver()
 	class := receiver.Class()

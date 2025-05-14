@@ -93,7 +93,7 @@ var hashMethods = map[string]RubyMethod{
 
 func hashHasKey(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace())
+		tracer.Un(tracer.Trace(trace.Here()))
 	}
 	hash, _ := context.Receiver().(*Hash)
 	if len(args) != 1 {

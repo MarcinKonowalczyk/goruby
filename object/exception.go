@@ -63,7 +63,7 @@ var exceptionMethods = map[string]RubyMethod{
 
 func exceptionInitialize(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace())
+		tracer.Un(tracer.Trace(trace.Here()))
 	}
 	receiver := context.Receiver()
 	var message string
@@ -83,7 +83,7 @@ func exceptionInitialize(context CallContext, tracer trace.Tracer, args ...RubyO
 
 func exceptionException(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace())
+		tracer.Un(tracer.Trace(trace.Here()))
 	}
 	receiver := context.Receiver()
 	if len(args) == 0 {
@@ -114,7 +114,7 @@ func exceptionException(context CallContext, tracer trace.Tracer, args ...RubyOb
 
 func exceptionToS(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace())
+		tracer.Un(tracer.Trace(trace.Here()))
 	}
 	receiver := context.Receiver()
 	if err, ok := receiver.(exception); ok {

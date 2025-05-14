@@ -71,7 +71,7 @@ func (rang *Range) ToArray() *Array {
 
 func rangeFindAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace())
+		tracer.Un(tracer.Trace(trace.Here()))
 	}
 	rng, _ := context.Receiver().(*Range)
 	if len(args) == 0 {
@@ -111,7 +111,7 @@ func rangeFindAll(context CallContext, tracer trace.Tracer, args ...RubyObject) 
 
 func rangeAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace())
+		tracer.Un(tracer.Trace(trace.Here()))
 	}
 	rng, _ := context.Receiver().(*Range)
 	if len(args) == 0 {
