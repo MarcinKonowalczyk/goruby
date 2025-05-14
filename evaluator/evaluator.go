@@ -61,6 +61,7 @@ func EvalEx(node ast.Node, env object.Environment, trace_eval bool) (object.Ruby
 	if trace_eval {
 		e.tracer = trace.NewTracer()
 	}
+
 	res, err := e.Eval(node, env)
 	if e.tracer != nil {
 		e.tracer.Done()

@@ -134,7 +134,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, trace_
 
 	p.l = lexer.New(string(src))
 	p.errors = []error{}
-
 	if trace_parse {
 		p.tracer = trace.NewTracer()
 	}

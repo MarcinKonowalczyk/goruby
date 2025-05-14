@@ -44,6 +44,31 @@ type interpreter struct {
 	trace_eval  bool
 }
 
+func newTracePrinter() func(trace.Node) error {
+	indent := 0
+	return func(n trace.Node) error {
+		switch n := n.(type) {
+		case *trace.Enter:
+			if n.Name == trace.START_NODE {
+				return nil
+			}
+			fmt.Printf("%s > %s\n", strings.Repeat(".", indent*2), n.Name)
+			indent++
+		case *trace.Exit:
+			if n.Name == trace.END_NODE {
+				return nil
+			}
+			indent--
+			fmt.Printf("%s < %s\n", strings.Repeat(".", indent*2), n.Name)
+		case *trace.Message:
+			fmt.Printf("%s %s\n", strings.Repeat(".", indent*2), n.Message)
+		default:
+			panic(fmt.Sprintf("unknown node type: %T", n))
+		}
+		return nil
+	}
+}
+
 func (i *interpreter) Interpret(filename string, input interface{}) (object.RubyObject, error) {
 	node, tracer, err := parser.ParseFileEx(token.NewFileSet(), filename, input, i.trace_parse)
 	if tracer != nil {
@@ -51,23 +76,7 @@ func (i *interpreter) Interpret(filename string, input interface{}) (object.Ruby
 		if err != nil {
 			panic(err)
 		}
-		indent := 0
-		walkable.Walk(func(n trace.Node) error {
-			if n.Name() == trace.START_NODE || n.Name() == trace.END_NODE {
-				// ignore start and end nodes
-				return nil
-			}
-			switch n.(type) {
-			case *trace.Enter:
-				fmt.Printf("%s > %s\n", strings.Repeat(".", indent*2), n.Name())
-				indent++
-			case *trace.Exit:
-				indent--
-				fmt.Printf("%s < %s\n", strings.Repeat(".", indent*2), n.Name())
-				//
-			}
-			return nil
-		})
+		walkable.Walk(newTracePrinter())
 	}
 	if err != nil {
 		return nil, object.NewSyntaxError(err)
@@ -78,23 +87,7 @@ func (i *interpreter) Interpret(filename string, input interface{}) (object.Ruby
 		if err != nil {
 			panic(err)
 		}
-		indent := 0
-		walkable.Walk(func(n trace.Node) error {
-			if n.Name() == trace.START_NODE || n.Name() == trace.END_NODE {
-				// ignore start and end nodes
-				return nil
-			}
-			switch n.(type) {
-			case *trace.Enter:
-				fmt.Printf("%s > %s\n", strings.Repeat(".", indent*2), n.Name())
-				indent++
-			case *trace.Exit:
-				indent--
-				fmt.Printf("%s < %s\n", strings.Repeat(".", indent*2), n.Name())
-				//
-			}
-			return nil
-		})
+		walkable.Walk(newTracePrinter())
 	}
 	return res, err
 }
