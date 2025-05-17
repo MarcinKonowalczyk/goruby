@@ -174,6 +174,7 @@ func arrayFirst(context CallContext, tracer trace.Tracer, args ...RubyObject) (R
 func arrayMap(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
 		defer tracer.Un(tracer.Trace(trace.Here()))
+		tracer.Message(context.Receiver().Inspect())
 	}
 	array, _ := context.Receiver().(*Array)
 	if len(args) == 0 {

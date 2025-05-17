@@ -144,7 +144,9 @@ func (e *evaluator) Eval(node ast.Node, env object.Environment) (object.RubyObje
 		// ignore comments
 		return nil, nil
 	case nil:
-		e.tracer.Message("nil")
+		if e.tracer != nil {
+			e.tracer.Message("nil")
+		}
 		return nil, nil
 	case *ast.RangeLiteral:
 		return e.evalRangeLiteral(node, env)
@@ -712,6 +714,7 @@ func (e *evaluator) evalBlockStatement(block *ast.BlockStatement, env object.Env
 func (e *evaluator) evalIdentifier(node *ast.Identifier, env object.Environment) (object.RubyObject, error) {
 	if e.tracer != nil {
 		defer e.tracer.Un(e.tracer.Trace(trace.Here()))
+		e.tracer.Message(node.Value)
 	}
 	val, ok := env.Get(node.Value)
 	if ok {

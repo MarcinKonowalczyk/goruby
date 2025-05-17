@@ -59,7 +59,7 @@ var integerMethods = map[string]RubyMethod{
 
 func integerDiv(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Integer)
 	divisor, ok := args[0].(*Integer)
@@ -74,7 +74,7 @@ func integerDiv(context CallContext, tracer trace.Tracer, args ...RubyObject) (R
 
 func integerMul(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Integer)
 	factor, ok := args[0].(*Integer)
@@ -86,7 +86,7 @@ func integerMul(context CallContext, tracer trace.Tracer, args ...RubyObject) (R
 
 func integerAdd(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Integer)
 	add, ok := args[0].(*Integer)
@@ -98,7 +98,7 @@ func integerAdd(context CallContext, tracer trace.Tracer, args ...RubyObject) (R
 
 func integerSub(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Integer)
 	sub, ok := args[0].(*Integer)
@@ -142,7 +142,7 @@ func integerCmpHelper(args []RubyObject) (int64, error) {
 
 func integerModulo(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
@@ -154,7 +154,7 @@ func integerModulo(context CallContext, tracer trace.Tracer, args ...RubyObject)
 
 func integerLt(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
@@ -169,7 +169,7 @@ func integerLt(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ru
 
 func integerGt(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
@@ -184,7 +184,7 @@ func integerGt(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ru
 
 func integerSpaceship(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
@@ -205,7 +205,7 @@ func integerSpaceship(context CallContext, tracer trace.Tracer, args ...RubyObje
 
 func integerGte(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
@@ -220,7 +220,7 @@ func integerGte(context CallContext, tracer trace.Tracer, args ...RubyObject) (R
 
 func integerLte(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
@@ -235,7 +235,7 @@ func integerLte(context CallContext, tracer trace.Tracer, args ...RubyObject) (R
 
 func integerToI(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Integer)
 	return i, nil
@@ -243,7 +243,7 @@ func integerToI(context CallContext, tracer trace.Tracer, args ...RubyObject) (R
 
 func integerPow(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Integer)
 	switch arg := args[0].(type) {
@@ -263,7 +263,7 @@ func integerPow(context CallContext, tracer trace.Tracer, args ...RubyObject) (R
 
 func integerChr(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
-		tracer.Un(tracer.Trace(trace.Here()))
+		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	i := context.Receiver().(*Integer)
 	if i.Value < 0 || i.Value > 255 {

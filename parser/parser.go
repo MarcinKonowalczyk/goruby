@@ -778,12 +778,6 @@ func (p *parser) parseHash() ast.Expression {
 	return hash
 }
 
-// func (p *parser) debugPrintState() {
-// if p.tracer != nil {
-// defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-// }
-// }
-
 func (p *parser) parseKeyValue() (ast.Expression, ast.Expression, bool) {
 	if p.tracer != nil {
 		defer p.tracer.Un(p.tracer.Trace(trace.Here()))

@@ -10,6 +10,7 @@ import (
 func Send(context CallContext, method string, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 	if tracer != nil {
 		defer tracer.Un(tracer.Trace(trace.Here()))
+		tracer.Message(method)
 	}
 	receiver := context.Receiver()
 	class := receiver.Class()

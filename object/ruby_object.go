@@ -143,6 +143,7 @@ func (f *Function) Call(context CallContext, tracer trace.Tracer, args ...RubyOb
 	if tracer != nil {
 		defer tracer.Un(tracer.Trace("Function.Call"))
 		tracer.Message(f.Name)
+		tracer.Message(f.String())
 	}
 	// TODO: Handle tail splats
 	if len(f.Parameters) == 1 && f.Parameters[0].Splat {
