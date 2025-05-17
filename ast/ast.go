@@ -124,9 +124,13 @@ func (bs *BreakStatement) statementNode() {}
 
 func (bs *BreakStatement) String() string {
 	var out strings.Builder
-	out.WriteString("break")
-	out.WriteString(" ")
-	out.WriteString(bs.Condition.String())
+	out.WriteString("break ")
+	if bs.Unless {
+		out.WriteString("unless ")
+	}
+	if bs.Condition != nil {
+		out.WriteString(bs.Condition.String())
+	}
 	return out.String()
 }
 
