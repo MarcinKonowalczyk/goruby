@@ -237,17 +237,6 @@ func NewUninitializedConstantNameError(name string) *NameError {
 	}
 }
 
-func NewUndefinedLocalVariableOrMethodNameError(context RubyObject, name string) *NameError {
-	return &NameError{
-		message: fmt.Sprintf(
-			"undefined local variable or method `%s' for %s:%s",
-			name,
-			context.Inspect(),
-			context.Class().(RubyObject).Inspect(),
-		),
-	}
-}
-
 type NameError struct {
 	message string
 }

@@ -473,7 +473,7 @@ func (p *parser) parseLambdaLiteral() ast.Expression {
 		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
 	}
 	proc := &ast.FunctionLiteral{
-		Name: &ast.Identifier{Value: newAnonymousName("lambda")},
+		Name: newAnonymousName("lambda"),
 	}
 	if p.peekIs(token.LPAREN) {
 		proc.Parameters = p.parseFunctionParameters(token.LPAREN, token.RPAREN)
@@ -795,7 +795,7 @@ func (p *parser) parseBlock() *ast.FunctionLiteral {
 		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
 	}
 	block := &ast.FunctionLiteral{
-		Name: &ast.Identifier{Value: newAnonymousName("block")},
+		Name: newAnonymousName("block"),
 	}
 	if p.peekIs(token.PIPE) {
 		block.Parameters = p.parseFunctionParameters(token.PIPE, token.PIPE)
@@ -1037,7 +1037,7 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 	if p.tracer != nil {
 		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
 	}
-	lit := &ast.FunctionLiteral{}
+	fl := &ast.FunctionLiteral{}
 
 	if !p.peekIs(token.IDENT) && !p.peekToken.Type.IsOperator() {
 		p.Error(p.peekToken.Type, "", token.IDENT)
@@ -1049,15 +1049,15 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 	} else {
 		p.nextToken()
 	}
-	lit.Name = &ast.Identifier{Value: p.curToken.Literal}
+	fl.Name = p.curToken.Literal
 
-	lit.Parameters = p.parseFunctionParameters(token.LPAREN, token.RPAREN)
+	fl.Parameters = p.parseFunctionParameters(token.LPAREN, token.RPAREN)
 
 	if !p.accept(token.NEWLINE, token.SEMICOLON) {
 		return nil
 	}
 
-	lit.Body = p.parseBlockStatement(token.END)
+	fl.Body = p.parseBlockStatement(token.END)
 	if !p.accept(token.END) {
 		return nil
 	}
@@ -1088,9 +1088,9 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 		}
 		return true
 	}
-	ast.Inspect(lit.Body, inspect)
+	ast.Inspect(fl.Body, inspect)
 
-	return lit
+	return fl
 }
 
 func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast.FunctionParameter {
@@ -1126,7 +1126,7 @@ func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast
 	}
 	p.accept(token.IDENT)
 
-	ident := &ast.FunctionParameter{Name: &ast.Identifier{Value: p.curToken.Literal}}
+	ident := &ast.FunctionParameter{Name: p.curToken.Literal}
 	if got_splat {
 		ident.Splat = true
 		got_splat = false
@@ -1144,7 +1144,7 @@ func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast
 			p.accept(token.ASTERISK)
 		}
 		p.accept(token.IDENT)
-		ident := &ast.FunctionParameter{Name: &ast.Identifier{Value: p.curToken.Literal}}
+		ident := &ast.FunctionParameter{Name: p.curToken.Literal}
 		if got_splat {
 			ident.Splat = true
 			got_splat = false
@@ -1209,7 +1209,7 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 		return nil
 	}
 
-	contextCallExpression.Function = &ast.Identifier{Value: p.curToken.Literal}
+	contextCallExpression.Function = p.curToken.Literal
 
 	if p.peekIs(token.SEMICOLON, token.NEWLINE, token.EOF, token.DOT, token.RPAREN, token.QMARK) {
 		contextCallExpression.Arguments = []ast.Expression{}
@@ -1254,9 +1254,8 @@ func (p *parser) parseContextCallExpression(context ast.Expression) ast.Expressi
 		return nil
 	}
 
-	function := p.parseIdentifier()
-	ident := function.(*ast.Identifier)
-	contextCallExpression.Function = ident
+	// ident := p.parseIdentifier().(*ast.Identifier)
+	contextCallExpression.Function = p.curToken.Literal
 
 	if p.peekIs(token.SEMICOLON, token.NEWLINE, token.DOT) {
 		contextCallExpression.Arguments = []ast.Expression{}
@@ -1295,7 +1294,7 @@ func (p *parser) parseCallArgument(function ast.Expression) ast.Expression {
 		// method call on any other object
 		return p.parseContextCallExpression(function)
 	}
-	exp := &ast.ContextCallExpression{Function: ident}
+	exp := &ast.ContextCallExpression{Function: ident.Value}
 	if p.currentIs(token.LBRACE) {
 		exp.Block = p.parseBlock()
 		return exp
@@ -1318,14 +1317,14 @@ func (p *parser) parseCallBlock(function ast.Expression) ast.Expression {
 	exp.Block = p.parseBlock()
 	switch fn := function.(type) {
 	case *ast.Identifier:
-		exp.Function = fn
+		exp.Function = fn.Value
 		return exp
 	case *ast.InfixExpression:
 		ident, ok := fn.Right.(*ast.Identifier)
 		if !ok {
 			break
 		}
-		exp.Function = ident
+		exp.Function = ident.Value
 		fn.Right = exp
 		return fn
 	}
@@ -1346,7 +1345,7 @@ func (p *parser) parseCallExpressionWithParens(function ast.Expression) ast.Expr
 		p.errors = append(p.errors, msg)
 		return nil
 	}
-	exp := &ast.ContextCallExpression{Function: ident}
+	exp := &ast.ContextCallExpression{Function: ident.Value}
 	p.nextToken()
 	exp.Arguments = p.parseExpressionList(token.RPAREN)
 	if p.peekIs(token.LBRACE) {

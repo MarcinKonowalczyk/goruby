@@ -30,6 +30,8 @@ func Send(context CallContext, method string, tracer trace.Tracer, args ...RubyO
 		return fn.Call(context, tracer, args...)
 	}
 
+	// fmt.Printf("receiver: %v(%T)\n", receiver, receiver)
+	// fmt.Printf("method: %v(%T)\n", method, method)
 	return nil, NewNoMethodError(receiver, method)
 }
 
@@ -101,20 +103,39 @@ type extendedObject struct {
 }
 
 func newExtendedObject(object RubyObject) *extendedObject {
-	return &extendedObject{
-		RubyObject: object,
-		eigenclass: newEigenclass(object.Class()),
+	if object == nil {
+		return &extendedObject{
+			RubyObject: nil,
+			eigenclass: newEigenclass(nil),
+		}
+	} else {
+		return &extendedObject{
+			RubyObject: object,
+			eigenclass: newEigenclass(object.Class()),
+		}
 	}
 }
 
 func (e *extendedObject) Class() RubyClass { return e.eigenclass }
 func (e *extendedObject) Inspect() string {
-	return e.RubyObject.Inspect()
+	if e.RubyObject != nil {
+		return e.RubyObject.Inspect()
+	}
+	return "extendedObject"
 }
 
 // func (e *extendedObject) String() string { return "hello" }
 func (e *extendedObject) addMethod(name string, method RubyMethod) {
 	e.eigenclass.addMethod(name, method)
+}
+
+// func (e *extendedObject) GetMethod(
+func (e *extendedObject) GetMethod(name string) (RubyMethod, bool) {
+	if e.RubyObject != nil {
+		// what to call here??
+		panic("GetMethod for extended object not implemented yet")
+	}
+	return e.eigenclass.GetMethod(name)
 }
 
 var (

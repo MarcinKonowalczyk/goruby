@@ -41,15 +41,9 @@ type class struct {
 	Environment
 }
 
-func (c *class) Inspect() string {
-	return c.name
-}
-func (c *class) Class() RubyClass {
-	return c.class
-}
-func (c *class) Methods() MethodSet {
-	return c.instanceMethods
-}
+func (c *class) Inspect() string    { return c.name }
+func (c *class) Class() RubyClass   { return c.class }
+func (c *class) Methods() MethodSet { return c.instanceMethods }
 
 func (c *class) GetMethod(name string) (RubyMethod, bool) {
 	method, ok := c.instanceMethods.Get(name)

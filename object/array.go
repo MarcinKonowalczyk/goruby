@@ -114,11 +114,9 @@ func arrayFindAll(context CallContext, tracer trace.Tracer, args ...RubyObject) 
 	if !ok {
 		return nil, NewArgumentError("(2) array find_all requires a block")
 	}
-	self, _ := context.Env().Get("self")
-	self_class := self.Class()
-	fn, ok := self_class.GetMethod(proc.Value)
+	fn, ok := FUNCS.GetMethod(proc.Value)
 	if !ok {
-		return nil, NewNoMethodError(self, proc.Value)
+		return nil, NewNoMethodError(FUNCS, proc.Value)
 	}
 	result := NewArray()
 	for _, element := range array.Elements {
@@ -185,11 +183,9 @@ func arrayMap(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 	if !ok {
 		return nil, NewArgumentError("map requires a block")
 	}
-	self, _ := context.Env().Get("self")
-	self_class := self.Class()
-	fn, ok := self_class.GetMethod(proc.Value)
+	fn, ok := FUNCS.GetMethod(proc.Value)
 	if !ok {
-		return nil, NewNoMethodError(self, proc.Value)
+		return nil, NewNoMethodError(FUNCS, proc.Value)
 	}
 	result := NewArray()
 	for _, elem := range array.Elements {
@@ -215,11 +211,9 @@ func arrayAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 	if !ok {
 		return nil, NewArgumentError("all? requires a block")
 	}
-	self, _ := context.Env().Get("self")
-	self_class := self.Class()
-	fn, ok := self_class.GetMethod(proc.Value)
+	fn, ok := FUNCS.GetMethod(proc.Value)
 	if !ok {
-		return nil, NewNoMethodError(self, proc.Value)
+		return nil, NewNoMethodError(FUNCS, proc.Value)
 	}
 	for _, elem := range array.Elements {
 		ret, err := fn.Call(context, tracer, elem)
@@ -310,11 +304,11 @@ func arrayEach(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ru
 	if !ok {
 		return nil, NewArgumentError("map requires a block")
 	}
-	self, _ := context.Env().Get("self")
-	self_class := self.Class()
-	fn, ok := self_class.GetMethod(proc.Value)
+	// self, _ := context.Env().Get("self")
+	// self_class := self.Class()
+	fn, ok := FUNCS.GetMethod(proc.Value)
 	if !ok {
-		return nil, NewNoMethodError(self, proc.Value)
+		return nil, NewNoMethodError(FUNCS, proc.Value)
 	}
 	for _, elem := range array.Elements {
 		_, err := fn.Call(context, tracer, elem)
@@ -338,11 +332,11 @@ func arrayReject(context CallContext, tracer trace.Tracer, args ...RubyObject) (
 	if !ok {
 		return nil, NewArgumentError("map requires a block")
 	}
-	self, _ := context.Env().Get("self")
-	self_class := self.Class()
-	fn, ok := self_class.GetMethod(proc.Value)
+	// self, _ := context.Env().Get("self")
+	// self_class := self.Class()
+	fn, ok := FUNCS.GetMethod(proc.Value)
 	if !ok {
-		return nil, NewNoMethodError(self, proc.Value)
+		return nil, NewNoMethodError(FUNCS, proc.Value)
 	}
 	result := NewArray()
 	for _, elem := range array.Elements {

@@ -55,7 +55,6 @@ func TestFunctionCall(t *testing.T) {
 	})
 	t.Run("uses the function env as env for CallContext#Eval", func(t *testing.T) {
 		contextEnv := NewEnvironment()
-		contextEnv.Set("self", NewInteger(42))
 		contextEnv.Set("bar", NewString("not reachable in Eval"))
 		var evalEnv Environment
 		context := &callContext{
@@ -90,7 +89,6 @@ func TestFunctionCall(t *testing.T) {
 	})
 	t.Run("puts the Call args into the env for CallContext#Eval", func(t *testing.T) {
 		contextEnv := NewEnvironment()
-		contextEnv.Set("self", NewInteger(42))
 		var evalEnv Environment
 		context := &callContext{
 			env: contextEnv,

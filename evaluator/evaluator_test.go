@@ -220,7 +220,8 @@ end
 		},
 		{
 			"foobar",
-			"NameError: undefined local variable or method `foobar' for :Bottom",
+			// TODO: Ugly message
+			"NoMethodError: undefined method `foobar' for extendedObject:(singleton class)",
 		},
 		{
 			"Foobar",
@@ -239,8 +240,6 @@ end
 
 	for _, tt := range tests {
 		env := object.NewEnvironment()
-		obj := &object.Bottom{}
-		env.Set("self", obj)
 		_, err := testEval(tt.input, env)
 		utils.AssertNotEqual(t, err, nil)
 
@@ -504,15 +503,13 @@ func TestFunctionObject(t *testing.T) {
 
 		for _, tt := range tests {
 			env := object.NewEnvironment()
-			env.Set("self", &object.Bottom{})
 			evaluated, err := testEval(tt.input, env)
 			utils.AssertNoError(t, err)
 			sym, ok := evaluated.(*object.Symbol)
 			utils.Assert(t, ok, "object is not Symbol. got=%T (%+v)", evaluated, evaluated)
 			utils.AssertEqual(t, sym.Value, "foo")
 
-			self, _ := env.Get("self")
-			method, ok := self.Class().Methods().Get("foo")
+			method, ok := object.FUNCS.Class().Methods().Get("foo")
 			utils.Assert(t, ok, "Expected method to be added to self")
 			fn, ok := method.(*object.Function)
 			utils.Assert(t, ok, "Expected method to be a function. got=%T (%+v)", method, method)
@@ -546,7 +543,6 @@ func TestFunctionApplication(t *testing.T) {
 
 	for _, tt := range tests {
 		env := object.NewEnvironment()
-		env.Set("self", &object.Bottom{})
 		evaluated, err := testEval(tt.input, env)
 		utils.AssertNoError(t, err)
 		testIntegerObject(t, evaluated, tt.expected)

@@ -7,13 +7,15 @@ import (
 
 var (
 	CLASSES = NewEnvironment()
+	FUNCS   = newExtendedObject(nil)
 )
 
 // NewMainEnvironment returns a new Environment populated with all Ruby classes
 // and the Kernel functions
 func NewMainEnvironment() Environment {
 	env := CLASSES.Clone()
-	env.Set("self", BOTTOM)
+	env.Set("bottom", BOTTOM)
+	// env.Set("funcs", FUNCS)
 	env.SetGlobal("$LOADED_FEATURES", NewArray())
 	env.SetGlobal("$stdin", IoClass)
 	return env

@@ -53,6 +53,7 @@ func (s *Symbol) HashKey() HashKey {
 
 var (
 	_ RubyObject = &Symbol{}
+	_ RubyClass  = symbolClass
 )
 
 var symbolClassMethods = map[string]RubyMethod{}

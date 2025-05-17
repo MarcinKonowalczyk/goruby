@@ -52,7 +52,7 @@ func (a *Range) HashKey() HashKey {
 }
 
 var rangeMethods = map[string]RubyMethod{
-	"find_all": newMethod(rangeFindAll),
+	"find_all": withArity(1, newMethod(rangeFindAll)),
 	"all?":     newMethod(rangeAll),
 }
 
@@ -74,19 +74,15 @@ func rangeFindAll(context CallContext, tracer trace.Tracer, args ...RubyObject) 
 		defer tracer.Un(tracer.Trace(trace.Here()))
 	}
 	rng, _ := context.Receiver().(*Range)
-	if len(args) == 0 {
-		return nil, NewArgumentError("(1) range find_all requires a block")
-	}
-	block := args[0]
-	proc, ok := block.(*Symbol)
+	proc, ok := args[0].(*Symbol)
 	if !ok {
 		return nil, NewArgumentError("(2) range find_all requires a block")
 	}
-	self, _ := context.Env().Get("self")
-	self_class := self.Class()
-	fn, ok := self_class.GetMethod(proc.Value)
+	// self, _ := context.Env().Get( "funcs")
+	// self_class := self.Class()
+	fn, ok := FUNCS.Class().GetMethod(proc.Value)
 	if !ok {
-		return nil, NewNoMethodError(self, proc.Value)
+		return nil, NewNoMethodError(FUNCS, proc.Value)
 	}
 	// evaluate the range
 	result := NewArray()
@@ -122,11 +118,11 @@ func rangeAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 	if !ok {
 		return nil, NewArgumentError("all? requires a block")
 	}
-	self, _ := context.Env().Get("self")
-	self_class := self.Class()
-	fn, ok := self_class.GetMethod(proc.Value)
+	// self, _ := context.Env().Get("self")
+	// self_class := self.Class()
+	fn, ok := FUNCS.GetMethod(proc.Value)
 	if !ok {
-		return nil, NewNoMethodError(self, proc.Value)
+		return nil, NewNoMethodError(FUNCS, proc.Value)
 	}
 	for _, elem := range rng.ToArray().Elements {
 		ret, err := fn.Call(context, tracer, elem)

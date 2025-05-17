@@ -50,12 +50,6 @@ func EvalEx(node ast.Node, env object.Environment, trace_eval bool) (object.Ruby
 			object.NewSyntaxError(fmt.Errorf("env is nil")),
 		)
 	}
-	// _, ok := env.Get("self")
-	// if !ok {
-	// 	return nil, errors.WithStack(
-	// 		object.NewSyntaxError(fmt.Errorf("env does not have self")),
-	// 	)
-	// }
 
 	e := NewEvaluator().(*evaluator)
 	if trace_eval {
@@ -492,19 +486,7 @@ func (e *evaluator) evalSymbolIndexExpression(env object.Environment, target *ob
 				printable_args[i] = e.Inspect()
 			}
 		}
-		self, _ := env.Get("self")
-		callContext := &callContext{object.NewCallContext(env, self), e}
-		// value, err := target.Call(callContext, args...)
-
-		// get the method from the env
-		// method, ok := env.Get(target.Value)
-		// if !ok {
-		// 	return nil, errors.WithStack(
-		// 		object.NewException("method not found: %s", target.Value),
-		// 	)
-		// }
-		// call the method
-		// fmt.Println(target.Value, "(", strings.Join(printable_args, ", "), ")")
+		callContext := &callContext{object.NewCallContext(env, object.FUNCS), e}
 		value, err := object.Send(callContext, target.Value, e.tracer, args...)
 		return value, err
 	default:
@@ -718,6 +700,7 @@ func (e *evaluator) evalIdentifier(node *ast.Identifier, env object.Environment)
 		defer e.tracer.Un(e.tracer.Trace(trace.Here()))
 		e.tracer.Message(node.Value)
 	}
+
 	val, ok := env.Get(node.Value)
 	if ok {
 		return val, nil
@@ -734,12 +717,13 @@ func (e *evaluator) evalIdentifier(node *ast.Identifier, env object.Environment)
 		return object.NIL, nil
 	}
 
-	self, _ := env.Get("self")
-	context := &callContext{object.NewCallContext(env, self), e}
+	// maybe a function
+	// fmt.Println("ident", node)
+	context := &callContext{object.NewCallContext(env, object.FUNCS), e}
 	val, err := object.Send(context, node.Value, e.tracer)
 	if err != nil {
 		return nil, errors.Wrap(
-			object.NewUndefinedLocalVariableOrMethodNameError(self, node.Value),
+			object.NewNoMethodError(object.FUNCS, node.Value),
 			"eval ident as method call",
 		)
 	}
@@ -831,7 +815,7 @@ func (e *evaluator) evalFunctionLiteral(node *ast.FunctionLiteral, env object.En
 	if e.tracer != nil {
 		defer e.tracer.Un(e.tracer.Trace(trace.Here()))
 	}
-	context, _ := env.Get("self")
+	// context, _ := env.Get("bottom")
 	// construct a function object and stick it onto self
 	params := make([]*object.FunctionParameter, len(node.Parameters))
 	for i, param := range node.Parameters {
@@ -839,20 +823,23 @@ func (e *evaluator) evalFunctionLiteral(node *ast.FunctionLiteral, env object.En
 		if err != nil {
 			return nil, errors.WithMessage(err, "eval function literal param")
 		}
-		params[i] = &object.FunctionParameter{Name: param.Name.Value, Default: def, Splat: param.Splat}
+		params[i] = &object.FunctionParameter{Name: param.Name, Default: def, Splat: param.Splat}
 	}
 	function := &object.Function{
-		Name:       node.Name.Value,
+		Name:       node.Name,
 		Parameters: params,
 		Env:        env,
 		Body:       node.Body,
 	}
-	newContext, extended := object.AddMethod(context, node.Name.Value, function)
+	_, extended := object.AddMethod(object.FUNCS, node.Name, function)
 	if extended {
-		// we've just extended the context. set it in the env. this should not normally fire
-		env.Set("self", newContext)
+		panic("we should not be extending FUNCS. they already should be extended")
 	}
-	return object.NewSymbol(node.Name.Value), nil
+	// if extended {
+	// 	// we've just extended the context. set it in the env. this should not normally fire
+	// 	env.Set("bottom", newContext)
+	// }
+	return object.NewSymbol(node.Name), nil
 }
 
 func (e *evaluator) evalArrayLiteral(node *ast.ArrayLiteral, env object.Environment) (object.RubyObject, error) {
@@ -975,14 +962,19 @@ func (e *evaluator) evalAssignment(node *ast.Assignment, env object.Environment)
 func (e *evaluator) evalContextCallExpression(node *ast.ContextCallExpression, env object.Environment) (object.RubyObject, error) {
 	if e.tracer != nil {
 		defer e.tracer.Un(e.tracer.Trace(trace.Here()))
-		e.tracer.Message(node.Function.Value)
+		e.tracer.Message(node.Function)
 	}
 	context, err := e.Eval(node.Context, env)
 	if err != nil {
 		return nil, errors.WithMessage(err, "eval method call receiver")
 	}
 	if context == nil {
-		context, _ = env.Get("self")
+		// var ok bool
+		// context, ok = env.Get("bottom")
+		// if !ok {
+		// 	panic("no bottom class in the env")
+		// }
+		context = object.FUNCS
 	}
 	args, err := e.evalExpressions(node.Arguments, env)
 	if err != nil {
@@ -996,7 +988,7 @@ func (e *evaluator) evalContextCallExpression(node *ast.ContextCallExpression, e
 		args = append(args, block)
 	}
 	callContext := &callContext{object.NewCallContext(env, context), e}
-	return object.Send(callContext, node.Function.Value, e.tracer, args...)
+	return object.Send(callContext, node.Function, e.tracer, args...)
 }
 
 func (e *evaluator) evalIndexExpression(node *ast.IndexExpression, env object.Environment) (object.RubyObject, error) {

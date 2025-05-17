@@ -156,12 +156,12 @@ func Walk(v Visitor, node Node) {
 		// nothing to do
 
 	case *FunctionLiteral:
-		Walk(v, n.Name)
+		// Walk(v, n.Name)
 		walkParameterList(v, n.Parameters)
 		Walk(v, n.Body)
 
 	case *FunctionParameter:
-		Walk(v, n.Name)
+		// Walk(v, n.Name)
 		Walk(v, n.Default)
 
 	case *IndexExpression:
@@ -170,7 +170,6 @@ func Walk(v Visitor, node Node) {
 
 	case *ContextCallExpression:
 		Walk(v, n.Context)
-		Walk(v, n.Function)
 		walkExprList(v, n.Arguments)
 		// TODO: examine why it is not working
 		// Walk(v, n.Block)

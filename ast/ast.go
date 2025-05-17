@@ -271,7 +271,12 @@ type Comment struct {
 func (c *Comment) node()          {}
 func (c *Comment) statementNode() {}
 
-func (c *Comment) String() string { return "#" + c.Value }
+func (c *Comment) String() string {
+	if strings.HasPrefix(c.Value, "#") {
+		return c.Value
+	}
+	return "# " + strings.TrimLeft(c.Value, " ")
+}
 
 var (
 	_ Node      = &Comment{}
@@ -454,7 +459,7 @@ var (
 
 // A FunctionLiteral represents a function definition in the AST
 type FunctionLiteral struct {
-	Name       *Identifier
+	Name       string
 	Parameters []*FunctionParameter
 	Body       *BlockStatement
 }
@@ -464,10 +469,10 @@ func (fl *FunctionLiteral) expressionNode() {}
 
 func (fl *FunctionLiteral) String() string {
 	var out strings.Builder
-	if !strings.HasPrefix(fl.Name.Value, "__") {
-		// write name only if it is not an anonymous function
-		out.WriteString(fl.Name.Value)
-	}
+	// if !strings.HasPrefix(fl.Name.Value, "__") {
+	// 	// write name only if it is not an anonymous function
+	// 	out.WriteString(fl.Name.Value)
+	// }
 	out.WriteString("{")
 	if len(fl.Parameters) != 0 {
 		args := []string{}
@@ -483,6 +488,13 @@ func (fl *FunctionLiteral) String() string {
 	return out.String()
 }
 
+func (fl *FunctionLiteral) Code() string {
+	var out strings.Builder
+	out.WriteString("def ")
+	// out.WriteString(fl)
+	return out.String()
+}
+
 var (
 	_ Node       = &FunctionLiteral{}
 	_ Expression = &FunctionLiteral{}
@@ -490,7 +502,7 @@ var (
 
 // A FunctionParameter represents a parameter in a function literal
 type FunctionParameter struct {
-	Name    *Identifier
+	Name    string
 	Default Expression
 	Splat   bool
 }
@@ -503,7 +515,7 @@ func (f *FunctionParameter) String() string {
 	if f.Splat {
 		out.WriteString("*")
 	}
-	out.WriteString(f.Name.String())
+	out.WriteString(f.Name)
 	if f.Default != nil {
 		out.WriteString(" = ")
 		out.WriteString(encloseInParensIfNeeded(f.Default))
@@ -563,7 +575,7 @@ var (
 // A ContextCallExpression represents a method call on a given Context
 type ContextCallExpression struct {
 	Context   Expression       // The left-hand side expression
-	Function  *Identifier      // The function to call
+	Function  string           // The function to call
 	Arguments []Expression     // The function arguments
 	Block     *FunctionLiteral // The function block
 }
@@ -581,7 +593,7 @@ func (ce *ContextCallExpression) String() string {
 	for _, a := range ce.Arguments {
 		args = append(args, a.String())
 	}
-	out.WriteString(ce.Function.String())
+	out.WriteString(ce.Function)
 	out.WriteString("(")
 	out.WriteString(strings.Join(args, ", "))
 	out.WriteString(")")
