@@ -140,7 +140,9 @@ func (e *evaluator) Eval(node ast.Node, env object.Environment) (object.RubyObje
 	case *ast.ConditionalExpression:
 		return e.evalConditionalExpression(node, env)
 	case *ast.Comment:
-		e.tracer.Message("comment")
+		if e.tracer != nil {
+			e.tracer.Message("comment")
+		}
 		// ignore comments
 		return nil, nil
 	case nil:
