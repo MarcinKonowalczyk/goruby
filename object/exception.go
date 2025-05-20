@@ -259,7 +259,7 @@ func NewNoMethodError(context RubyObject, method string) *NoMethodError {
 			"undefined method `%s' for %s:%s",
 			method,
 			context.Inspect(),
-			context.Class().(RubyObject).Inspect(),
+			context.Class().Inspect(),
 		),
 	}
 }

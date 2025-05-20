@@ -486,7 +486,7 @@ func (e *evaluator) evalSymbolIndexExpression(env object.Environment, target *ob
 				printable_args[i] = e.Inspect()
 			}
 		}
-		callContext := &callContext{object.NewCallContext(env, object.FUNCS), e}
+		callContext := &callContext{object.NewCallContext(env, object.FUNCS_STORE), e}
 		value, err := object.Send(callContext, target.Value, e.tracer, args...)
 		return value, err
 	default:
@@ -719,11 +719,11 @@ func (e *evaluator) evalIdentifier(node *ast.Identifier, env object.Environment)
 
 	// maybe a function
 	// fmt.Println("ident", node)
-	context := &callContext{object.NewCallContext(env, object.FUNCS), e}
+	context := &callContext{object.NewCallContext(env, object.FUNCS_STORE), e}
 	val, err := object.Send(context, node.Value, e.tracer)
 	if err != nil {
 		return nil, errors.Wrap(
-			object.NewNoMethodError(object.FUNCS, node.Value),
+			object.NewNoMethodError(object.FUNCS_STORE, node.Value),
 			"eval ident as method call",
 		)
 	}
@@ -831,7 +831,7 @@ func (e *evaluator) evalFunctionLiteral(node *ast.FunctionLiteral, env object.En
 		Env:        env,
 		Body:       node.Body,
 	}
-	_, extended := object.AddMethod(object.FUNCS, node.Name, function)
+	_, extended := object.AddMethod(object.FUNCS_STORE, node.Name, function)
 	if extended {
 		panic("we should not be extending FUNCS. they already should be extended")
 	}
@@ -974,7 +974,7 @@ func (e *evaluator) evalContextCallExpression(node *ast.ContextCallExpression, e
 		// if !ok {
 		// 	panic("no bottom class in the env")
 		// }
-		context = object.FUNCS
+		context = object.FUNCS_STORE
 	}
 	args, err := e.evalExpressions(node.Arguments, env)
 	if err != nil {

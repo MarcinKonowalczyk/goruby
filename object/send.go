@@ -48,17 +48,17 @@ type eigenclass struct {
 }
 
 func (e *eigenclass) Inspect() string {
-	if e.wrappedClass != nil {
-		return e.wrappedClass.(RubyClassObject).Inspect()
+	if e.wrappedClass == nil_class {
+		return "(eigenclass of nil)"
 	}
-	return "(singleton class)"
+	if e.wrappedClass == nil {
+		return "(singleton class)"
+	}
+	return e.wrappedClass.(RubyObject).Inspect()
 }
 
 func (e *eigenclass) Class() RubyClass {
-	if e.wrappedClass != nil {
-		return e.wrappedClass
-	}
-	return nil
+	return e.wrappedClass
 }
 func (e *eigenclass) Methods() MethodSet { return e.methods }
 func (e *eigenclass) GetMethod(name string) (RubyMethod, bool) {
@@ -103,26 +103,22 @@ type extendedObject struct {
 }
 
 func newExtendedObject(object RubyObject) *extendedObject {
-	if object == nil {
-		return &extendedObject{
-			RubyObject: nil,
-			eigenclass: newEigenclass(nil),
-		}
-	} else {
-		return &extendedObject{
-			RubyObject: object,
-			eigenclass: newEigenclass(object.Class()),
-		}
+	object_class := object.Class()
+	if object_class == nil {
+		panic("object_class is nil")
+	}
+	if object_class == nil_class {
+		panic("object_class is nil_class")
+	}
+
+	return &extendedObject{
+		RubyObject: object,
+		eigenclass: newEigenclass(object_class),
 	}
 }
 
 func (e *extendedObject) Class() RubyClass { return e.eigenclass }
-func (e *extendedObject) Inspect() string {
-	if e.RubyObject != nil {
-		return e.RubyObject.Inspect()
-	}
-	return "extendedObject"
-}
+func (e *extendedObject) Inspect() string  { return e.RubyObject.Inspect() }
 
 // func (e *extendedObject) String() string { return "hello" }
 func (e *extendedObject) addMethod(name string, method RubyMethod) {
@@ -131,9 +127,8 @@ func (e *extendedObject) addMethod(name string, method RubyMethod) {
 
 // func (e *extendedObject) GetMethod(
 func (e *extendedObject) GetMethod(name string) (RubyMethod, bool) {
-	if e.RubyObject != nil {
-		// what to call here??
-		panic("GetMethod for extended object not implemented yet")
+	if method, ok := e.RubyObject.Class().GetMethod(name); ok {
+		return method, true
 	}
 	return e.eigenclass.GetMethod(name)
 }

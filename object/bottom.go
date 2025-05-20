@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	bottomClass *class = nil
-	BOTTOM             = newExtendedObject(&Bottom{})
+	nil_class   *class          = nil
+	bottomClass *class          = nil_class
+	BOTTOM      *extendedObject = nil
 )
 
 // TODO: make sure we don't collide with other hash keys
@@ -23,7 +24,10 @@ func init() {
 		nil,
 		notInstantiatable, // not instantiatable through new
 	)
+	bottomClass.class = bottomClass
 	CLASSES.Set("Bottom", bottomClass)
+
+	BOTTOM = newExtendedObject(&Bottom{})
 }
 
 type Bottom struct{}

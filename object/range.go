@@ -80,9 +80,9 @@ func rangeFindAll(context CallContext, tracer trace.Tracer, args ...RubyObject) 
 	}
 	// self, _ := context.Env().Get( "funcs")
 	// self_class := self.Class()
-	fn, ok := FUNCS.Class().GetMethod(proc.Value)
+	fn, ok := FUNCS_STORE.Class().GetMethod(proc.Value)
 	if !ok {
-		return nil, NewNoMethodError(FUNCS, proc.Value)
+		return nil, NewNoMethodError(FUNCS_STORE, proc.Value)
 	}
 	// evaluate the range
 	result := NewArray()
@@ -118,11 +118,9 @@ func rangeAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 	if !ok {
 		return nil, NewArgumentError("all? requires a block")
 	}
-	// self, _ := context.Env().Get("self")
-	// self_class := self.Class()
-	fn, ok := FUNCS.GetMethod(proc.Value)
+	fn, ok := FUNCS_STORE.GetMethod(proc.Value)
 	if !ok {
-		return nil, NewNoMethodError(FUNCS, proc.Value)
+		return nil, NewNoMethodError(FUNCS_STORE, proc.Value)
 	}
 	for _, elem := range rng.ToArray().Elements {
 		ret, err := fn.Call(context, tracer, elem)

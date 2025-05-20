@@ -8,21 +8,30 @@ import (
 )
 
 var (
-	symbolClass RubyClassObject = newClass(
+	symbolClass RubyClassObject = nil_class
+	// TRUE  RubyObject = NewSymbol("true")
+	// FALSE RubyObject = NewSymbol("false")
+	// NIL   RubyObject = NewSymbol("nil")
+
+	// unique symbols
+	TRUE  RubyObject = &Symbol{Value: "true"}
+	FALSE RubyObject = &Symbol{Value: "false"}
+	NIL   RubyObject = &Symbol{Value: "nil"}
+	FUNCS RubyObject = &Symbol{Value: "funcs"}
+)
+
+// instantiate the symbol class
+func initSymbolClass() {
+	symbolClass = newClass(
 		"Symbol",
 		symbolMethods,
 		symbolClassMethods,
 		notInstantiatable, // not instantiatable through new
 	)
-	// TRUE  RubyObject = NewSymbol("true")
-	// FALSE RubyObject = NewSymbol("false")
-	// NIL   RubyObject = NewSymbol("nil")
-	TRUE  RubyObject = &Symbol{Value: "true"}
-	FALSE RubyObject = &Symbol{Value: "false"}
-	NIL   RubyObject = &Symbol{Value: "nil"}
-)
+}
 
 func init() {
+	initSymbolClass()
 	CLASSES.Set("Symbol", symbolClass)
 }
 
@@ -34,6 +43,8 @@ func NewSymbol(value string) *Symbol {
 		return FALSE.(*Symbol)
 	case "nil":
 		return NIL.(*Symbol)
+	case "funcs":
+		return FUNCS.(*Symbol)
 	default:
 		return &Symbol{Value: value}
 	}
@@ -43,8 +54,21 @@ type Symbol struct {
 	Value string
 }
 
-func (s *Symbol) Inspect() string  { return ":" + s.Value }
-func (s *Symbol) Class() RubyClass { return symbolClass }
+func (s *Symbol) Inspect() string { return ":" + s.Value }
+
+func (s *Symbol) Class() RubyClass {
+	if symbolClass == nil {
+		panic("symbolClass is nil")
+	}
+	if symbolClass == nil_class {
+		initSymbolClass()
+		if symbolClass == nil_class {
+			panic("symbolClass is *still* nil_class")
+		}
+	}
+	return symbolClass
+}
+
 func (s *Symbol) HashKey() HashKey {
 	h := fnv.New64a()
 	h.Write([]byte(s.Value))

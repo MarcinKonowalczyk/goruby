@@ -29,6 +29,9 @@ func newClass(
 		Environment:     NewEnclosedEnvironment(nil),
 	}
 	cls.class.(*eigenclass).methods = NewMethodSet(classMethods)
+	if cls == nil_class {
+		panic("newClass tried to return is nil_class")
+	}
 	return cls
 }
 

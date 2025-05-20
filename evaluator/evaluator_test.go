@@ -221,7 +221,7 @@ end
 		{
 			"foobar",
 			// TODO: Ugly message
-			"NoMethodError: undefined method `foobar' for extendedObject:(singleton class)",
+			"NoMethodError: undefined method `foobar' for :funcs:Symbol",
 		},
 		{
 			"Foobar",
@@ -509,7 +509,7 @@ func TestFunctionObject(t *testing.T) {
 			utils.Assert(t, ok, "object is not Symbol. got=%T (%+v)", evaluated, evaluated)
 			utils.AssertEqual(t, sym.Value, "foo")
 
-			method, ok := object.FUNCS.Class().Methods().Get("foo")
+			method, ok := object.FUNCS_STORE.Class().Methods().Get("foo")
 			utils.Assert(t, ok, "Expected method to be added to self")
 			fn, ok := method.(*object.Function)
 			utils.Assert(t, ok, "Expected method to be a function. got=%T (%+v)", method, method)
