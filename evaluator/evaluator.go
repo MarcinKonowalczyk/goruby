@@ -917,6 +917,21 @@ func (e *evaluator) evalAssignment(node *ast.Assignment, env object.Environment)
 		}
 		return right, nil
 	case ast.ExpressionList:
+
+		// // make sure all the left hand side expressions are identifiers
+		// // this might not end up being true int he future. -MK
+
+		// left_ids := make([]*ast.Identifier, len(left))
+		// for i, exp := range left {
+		// 	if id, ok := exp.(*ast.Identifier); !ok {
+		// 		return nil, errors.WithStack(
+		// 			object.NewSyntaxError(fmt.Errorf("assignment not supported to %T", exp)),
+		// 		)
+		// 	} else {
+		// 		left_ids[i] = id
+		// 	}
+		// }
+
 		var values rubyObjects
 		switch right := right.(type) {
 		case rubyObjects:
@@ -933,12 +948,17 @@ func (e *evaluator) evalAssignment(node *ast.Assignment, env object.Environment)
 			}
 		}
 		for i, exp := range left {
-			if indexExp, ok := exp.(*ast.IndexExpression); ok {
-				indexLeft, err := e.Eval(indexExp.Left, env)
+			switch exp := exp.(type) {
+			case *ast.Identifier:
+				env.Set(exp.Value, values[i])
+			case *ast.Splat:
+				panic("splat in assignment not implemented yet")
+			case *ast.IndexExpression:
+				indexLeft, err := e.Eval(exp.Left, env)
 				if err != nil {
 					return nil, errors.WithMessage(err, "eval left hand Assignment side: eval left side of IndexExpression")
 				}
-				index, err := e.Eval(indexExp.Index, env)
+				index, err := e.Eval(exp.Index, env)
 				if err != nil {
 					return nil, errors.WithMessage(err, "eval left hand Assignment side: eval right side of IndexExpression")
 				}
@@ -947,8 +967,9 @@ func (e *evaluator) evalAssignment(node *ast.Assignment, env object.Environment)
 					return nil, errors.WithMessage(err, "eval left hand Assignment side: eval right side of IndexExpression")
 				}
 				continue
+			default:
+				panic("unexpected expression in assignment: " + fmt.Sprintf("%T", exp))
 			}
-			env.Set(exp.String(), values[i])
 		}
 		return expandToArrayIfNeeded(right), nil
 	default:
