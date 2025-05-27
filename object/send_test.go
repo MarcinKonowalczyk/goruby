@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/trace"
 	"github.com/MarcinKonowalczyk/goruby/utils"
 	"github.com/pkg/errors"
 )
@@ -27,10 +28,10 @@ func (t *testRubyObject) HashKey() HashKey {
 func TestSend(t *testing.T) {
 	// }
 	methods := map[string]RubyMethod{
-		"a_method": newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+		"a_method": newMethod(func(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 			return TRUE, nil
 		}),
-		"another_method": newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+		"another_method": newMethod(func(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 			return FALSE, nil
 		}),
 	}
@@ -67,7 +68,7 @@ func TestSend(t *testing.T) {
 		}
 
 		for _, testCase := range tests {
-			result, err := Send(context, testCase.method)
+			result, err := Send(context, testCase.method, nil)
 
 			utils.AssertError(t, errors.Cause(err), testCase.expectedError)
 			utils.AssertEqualCmpAny(t, result, testCase.expectedResult, CompareRubyObjectsForTests)
@@ -129,7 +130,7 @@ func TestAddMethod(t *testing.T) {
 			},
 		)
 
-		context.eigenclass.addMethod("bar", newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+		context.eigenclass.addMethod("bar", newMethod(func(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 			return NIL, nil
 		}))
 
@@ -190,7 +191,7 @@ func TestAddMethod(t *testing.T) {
 			},
 		)
 
-		context.eigenclass.addMethod("bar", newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+		context.eigenclass.addMethod("bar", newMethod(func(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 			return NIL, nil
 		}))
 

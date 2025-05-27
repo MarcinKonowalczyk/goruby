@@ -3,11 +3,12 @@ package object
 import (
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/trace"
 	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func TestWithArity(t *testing.T) {
-	wrappedMethod := newMethod(func(context CallContext, args ...RubyObject) (RubyObject, error) {
+	wrappedMethod := newMethod(func(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
 		return NewInteger(1), nil
 	})
 
@@ -41,7 +42,7 @@ func TestWithArity(t *testing.T) {
 		fn := withArity(testCase.arity, wrappedMethod)
 		context := &callContext{receiver: NIL}
 
-		result, err := fn.Call(context, testCase.arguments...)
+		result, err := fn.Call(context, nil, testCase.arguments...)
 
 		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 

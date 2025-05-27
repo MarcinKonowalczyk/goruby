@@ -138,7 +138,7 @@ func startLexer(l *Lexer) StateFn {
 		switch l.peek() {
 		case '?':
 			l.next() // consume the whitespace
-			l.emit(token.SQMARK)
+			l.emit(token.QMARK)
 		case '[':
 			l.next() // consume the whitespace
 			l.emit(token.SLBRACKET)
@@ -382,13 +382,6 @@ const LEGAL_IDENT_CHARS = "?!"
 func lexIdentifierOrKeywordCore(l *Lexer) rune {
 	r := l.next()
 	for {
-		// if unicode.IsSpace(r) || strings.ContainsRune(OPERATOR_CHARS, r) || r == eof {
-		// 	if bytes.ContainsRune([]byte(LEGAL_IDENT_CHARS), r) {
-		// 		l.next()
-		// 		break
-		// 	}
-		// 	break
-		// }
 		if strings.ContainsRune(IDENT_CHARS, r) {
 			r = l.next()
 		} else {
@@ -504,25 +497,8 @@ func lexString(end rune) StateFn {
 }
 
 func lexGlobal(l *Lexer) StateFn {
-	r := l.next() // consume the '$'
-
-	if r == '.' {
-		return l.errorf("Illegal character: '%c'", r)
-	}
-
-	if isExpressionDelimiter(r) {
-		return l.errorf("Illegal character: '%c'", r)
-	}
-
-	if isWhitespace(r) {
-		return l.errorf("Illegal character: '%c'", r)
-	}
-
-	for !isWhitespace(r) && !isExpressionDelimiter(r) && r != '.' && r != ',' && r != '=' && r != '>' && r != '<' && r != '(' && r != ')' && r != '{' && r != '}' && r != '[' && r != ']' && r != ';' {
-		r = l.next()
-	}
-	l.backup()
-	l.emit(token.GLOBAL)
+	_ = lexIdentifierOrKeywordCore(l)
+	l.emit(token.IDENT)
 	return startLexer
 }
 

@@ -32,7 +32,7 @@ func TestFunctionCall(t *testing.T) {
 			},
 		}
 
-		_, err := function.Call(context)
+		_, err := function.Call(context, nil)
 		utils.AssertNoError(t, err)
 
 		var expected ast.Node = functionBody
@@ -50,12 +50,11 @@ func TestFunctionCall(t *testing.T) {
 			Parameters: []*FunctionParameter{},
 		}
 
-		_, err := function.Call(context)
+		_, err := function.Call(context, nil)
 		utils.Assert(t, reflect.DeepEqual(evalErr, err), "Expected error to equal\n%v\n\tgot\n%v\n", evalErr, err)
 	})
 	t.Run("uses the function env as env for CallContext#Eval", func(t *testing.T) {
 		contextEnv := NewEnvironment()
-		contextEnv.Set("self", NewInteger(42))
 		contextEnv.Set("bar", NewString("not reachable in Eval"))
 		var evalEnv Environment
 		context := &callContext{
@@ -73,7 +72,7 @@ func TestFunctionCall(t *testing.T) {
 			Env:        functionEnv,
 		}
 
-		_, err := function.Call(context)
+		_, err := function.Call(context, nil)
 		utils.AssertNoError(t, err)
 
 		{
@@ -90,7 +89,6 @@ func TestFunctionCall(t *testing.T) {
 	})
 	t.Run("puts the Call args into the env for CallContext#Eval", func(t *testing.T) {
 		contextEnv := NewEnvironment()
-		contextEnv.Set("self", NewInteger(42))
 		var evalEnv Environment
 		context := &callContext{
 			env: contextEnv,
@@ -108,7 +106,7 @@ func TestFunctionCall(t *testing.T) {
 				},
 			}
 
-			_, err := function.Call(context, NewInteger(300), NewString("sym"))
+			_, err := function.Call(context, nil, NewInteger(300), NewString("sym"))
 			utils.AssertNoError(t, err)
 
 			{
@@ -134,7 +132,7 @@ func TestFunctionCall(t *testing.T) {
 				},
 			}
 
-			_, err := function.Call(context, NewInteger(300), NewSymbol("sym"))
+			_, err := function.Call(context, nil, NewInteger(300), NewSymbol("sym"))
 			utils.AssertNoError(t, err)
 
 			{
@@ -163,7 +161,7 @@ func TestFunctionCall(t *testing.T) {
 
 			function := &Function{}
 
-			result, _ := function.Call(context)
+			result, _ := function.Call(context, nil)
 			utils.AssertEqualCmpAny(t, NewInteger(8), result, CompareRubyObjectsForTests)
 		})
 		t.Run("wrapped into a return value", func(t *testing.T) {
@@ -174,7 +172,7 @@ func TestFunctionCall(t *testing.T) {
 
 			function := &Function{}
 
-			result, _ := function.Call(context)
+			result, _ := function.Call(context, nil)
 			utils.AssertEqualCmpAny(t, NewInteger(8), result, CompareRubyObjectsForTests)
 		})
 	})
@@ -189,7 +187,7 @@ func TestFunctionCall(t *testing.T) {
 		}
 
 		t.Run("without block argument", func(t *testing.T) {
-			_, err := function.Call(context, NewString("foo"))
+			_, err := function.Call(context, nil, NewString("foo"))
 			utils.AssertError(t, err, NewWrongNumberOfArgumentsError(0, 1))
 		})
 
@@ -199,7 +197,7 @@ func TestFunctionCall(t *testing.T) {
 				{Name: "y"},
 			}
 
-			_, err := function.Call(context, NewInteger(8))
+			_, err := function.Call(context, nil, NewInteger(8))
 			utils.AssertNoError(t, err)
 		})
 	})

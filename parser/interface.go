@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/trace"
 	"github.com/pkg/errors"
 )
 
@@ -38,25 +39,20 @@ func readSource(filename string, src interface{}) ([]byte, error) {
 	return os.ReadFile(filename)
 }
 
-// A Mode value is a set of flags (or 0).
-// They control the amount of source code parsed and other optional
-// parser functionality.
-type Mode uint
+// // A Mode value is a set of flags (or 0).
+// // They control the amount of source code parsed and other optional
+// // parser functionality.
+// type Mode uint
 
-// parser modes
-const (
-	None          Mode = 0         // no extra modes
-	ParseComments Mode = 1 << iota // parse comments and add them to AST
-	Trace                          // print a trace of parsed productions
-	AllErrors                      // report all errors (not just the first 10 on different lines)
-)
+// const (
+// 	None  Mode = iota
+// 	Trace Mode = iota
+// )
 
-var ParseModes = map[string]Mode{
-	"None":          0,
-	"ParseComments": ParseComments,
-	"Trace":         Trace,
-	"AllErrors":     AllErrors,
-}
+// var ParseModes = map[string]Mode{
+// 	"None":  0,
+// 	"Trace": Trace,
+// }
 
 // ParseFile parses the source code of a single Ruby source file and returns
 // the corresponding ast.Program node. The source code may be provided via
@@ -74,7 +70,7 @@ var ParseModes = map[string]Mode{
 // If the source couldn't be read or the source was read but syntax
 // errors were found, the returned AST is nil and the error
 // indicates the specific failure.
-func ParseFile(fset *gotoken.FileSet, filename string, src interface{}, mode Mode) (*ast.Program, error) {
+func ParseFileEx(fset *gotoken.FileSet, filename string, src interface{}, trace_parse bool) (*ast.Program, trace.Tracer, error) {
 	if fset == nil {
 		panic("parser.ParseFile: no token.FileSet provided (fset == nil)")
 	}
@@ -82,20 +78,29 @@ func ParseFile(fset *gotoken.FileSet, filename string, src interface{}, mode Mod
 	// get source
 	text, err := readSource(filename, src)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var p parser
-	p.init(fset, filename, text, mode)
+	p.init(fset, filename, text, trace_parse)
 
-	return p.ParseProgram()
+	program, err := p.ParseProgram()
+	if p.tracer != nil {
+		p.tracer.Done()
+	}
+	return program, p.tracer, err
+}
+
+func ParseFile(fset *gotoken.FileSet, filename string, src interface{}) (*ast.Program, error) {
+	parser, _, err := ParseFileEx(fset, filename, src, false)
+	return parser, err
 }
 
 // ParseExprFrom is a convenience function for parsing an expression.
 // The arguments have the same meaning as for ParseFile, but the source must
 // be a valid Go (type or value) expression. Specifically, fset must not
 // be nil.
-func ParseExprFrom(fset *gotoken.FileSet, filename string, src interface{}, mode Mode) (ast.Expression, error) {
+func ParseExprFrom(fset *gotoken.FileSet, filename string, src interface{}) (ast.Expression, error) {
 	if fset == nil {
 		panic("parser.ParseExprFrom: no token.FileSet provided (fset == nil)")
 	}
@@ -107,7 +112,7 @@ func ParseExprFrom(fset *gotoken.FileSet, filename string, src interface{}, mode
 	}
 
 	var p parser
-	p.init(fset, filename, text, mode)
+	p.init(fset, filename, text, false)
 
 	program, err := p.ParseProgram()
 	if err != nil {
@@ -131,5 +136,5 @@ func ParseExprFrom(fset *gotoken.FileSet, filename string, src interface{}, mode
 // The position information recorded in the AST is undefined. The filename used
 // in error messages is the empty string.
 func ParseExpr(x string) (ast.Expression, error) {
-	return ParseExprFrom(gotoken.NewFileSet(), "", []byte(x), 0)
+	return ParseExprFrom(gotoken.NewFileSet(), "", []byte(x))
 }

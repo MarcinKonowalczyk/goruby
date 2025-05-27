@@ -12,7 +12,7 @@ func TestExceptionInitialize(t *testing.T) {
 		env:      NewMainEnvironment(),
 	}
 	t.Run("without args", func(t *testing.T) {
-		result, err := exceptionInitialize(context)
+		result, err := exceptionInitialize(context, nil)
 
 		utils.AssertNoError(t, err)
 
@@ -20,14 +20,14 @@ func TestExceptionInitialize(t *testing.T) {
 	})
 	t.Run("with arg", func(t *testing.T) {
 		t.Run("string", func(t *testing.T) {
-			result, err := exceptionInitialize(context, NewString("err"))
+			result, err := exceptionInitialize(context, nil, NewString("err"))
 
 			utils.AssertNoError(t, err)
 
 			utils.AssertEqualCmpAny(t, result, &Exception{message: "err"}, CompareRubyObjectsForTests)
 		})
 		t.Run("other object", func(t *testing.T) {
-			result, err := exceptionInitialize(context, NewSymbol("symbol"))
+			result, err := exceptionInitialize(context, nil, NewSymbol("symbol"))
 
 			utils.AssertNoError(t, err)
 
@@ -43,21 +43,21 @@ func TestExceptionException(t *testing.T) {
 		env:      NewMainEnvironment(),
 	}
 	t.Run("without args", func(t *testing.T) {
-		result, err := exceptionException(context)
+		result, err := exceptionException(context, nil)
 
 		utils.AssertNoError(t, err)
 		utils.AssertEqualCmpAny(t, result, contextObject, CompareRubyObjectsForTests)
 		utils.AssertEqualCmpAny(t, result, &Exception{message: "x"}, CompareRubyObjectsForTests)
 	})
 	t.Run("with arg", func(t *testing.T) {
-		result, err := exceptionException(context, NewString("x"))
+		result, err := exceptionException(context, nil, NewString("x"))
 
 		utils.AssertNoError(t, err)
 		utils.AssertEqualCmpAny(t, result, contextObject, CompareRubyObjectsForTests)
 		utils.AssertEqualCmpAny(t, result, &Exception{message: "x"}, CompareRubyObjectsForTests)
 	})
 	t.Run("with arg but different message", func(t *testing.T) {
-		result, err := exceptionException(context, NewString("err"))
+		result, err := exceptionException(context, nil, NewString("err"))
 
 		utils.AssertNoError(t, err)
 
@@ -72,7 +72,7 @@ func TestExceptionToS(t *testing.T) {
 		env:      NewMainEnvironment(),
 	}
 
-	result, err := exceptionToS(context)
+	result, err := exceptionToS(context, nil)
 
 	utils.AssertNoError(t, err)
 

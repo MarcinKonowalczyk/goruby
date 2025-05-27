@@ -1,267 +1,142 @@
-# a = [1, 2, 3]
-# b1 = [*a]
-# b2 = [99, *a]
-# b3 = [*a, 99]
-# puts("b1:", b1)
-# puts("b2:", b2)
-# puts("b3:", b3)
+def indices(str, chr)
+    (0 ... str.length).find_all { |i| str[i] == chr }
+end
 
-# a = [1, 2, 3]
-# b1 = [*a]
-
-
-# # puts("zoo:", zoo["?"][3])
-# $zoo = {
-#     "?" => [0,1,2,3,4,5],
-#     "/" => -> (a, b) { 1.0 * a / b }
-# }
-# def call_zoo(args)
-#     return $zoo["/"][*args]
-# end
-# args = [355, 113]
-# puts("zoo:", $zoo["/"][*args])
-# puts("zoo:", call_zoo(args))
-
-# def foo()
-#     return 0
-# end
-
-# a = *foo()
-# puts(a, *foo())
-# puts("$LOADED_FEATURES", $LOADED_FEATURES)
-# puts("ARGV.size", ARGV.size, ARGV)
-
-# this_file = __FILE__
-# content = File.read(this_file)
-# puts("this_file:", this_file)
-# puts("content:", content)
-
-# x = 0
-# while x < 20
-#     x += 1
-#     puts("x:", x)
-#     break if x == 10
-#     puts("past break")
-# end
-# loop {
-#     x += 1
-#     puts("x:", x)
-#     break unless x < 10
-#     puts("past break")
-#     # raise "my little exception" if false or x == 5
-# }
-
-# $R_SIDE = "\\"
-# puts("R_SIDE:", $R_SIDE, $R_SIDE.length) 
-
-# $L_SIDE = "/"
-
-# if "/" != $L_SIDE
-#     puts("not equal")
-# else
-#     puts("equal")
-# end
-
-# puts([0, 1, 2, 3, 4, 5][2, 3])
-# puts()
-# puts([0, 1, 2, 3, 4, 5][2..-1])
-# puts("hello"[2, 3])
-# puts("hello"[2..3])
-# puts("hello"[3..-1])
-# puts([1, 2, 3].is_a?(Array))
-# puts([1, 2, 3].is_a?(String))
-
-# puts([0,1,2,3,4,5,6,7].all? { |e| e < 8 })
-# puts([0,1,2,3,4,5,6,7].join(","))
-# puts(*(0..3))
-# puts(*(1..-1))
-
-# raise "bzzzz"
-
-
-# $zoo = {
-#     "?" => [0,1,2,3,4,5],
-#     "/" => -> (a, b) { 1.0 * a / b }
-# }
-
-# op = []
-# puts("undefined operation `#{op}`")
-
-# chain = ['set', 'v', 312312]
-# op, args = chain
-# puts("> chain", chain, "> op", op, "> args", args)
-
-# if false then
-#     puts("1")
-# elsif false then
-#     puts("2")
-# elsif true then
-#     puts("3")
-# else
-#     puts("4")
-# end
-
-# foo = [2, 16.0]
-# bar = -> (a, b) {a ** b}
-# puts(bar[*foo])
-# puts("".to_f)
-
-# $UNDEF = :UNDEF
-
-# def falsey(val)
-#     [0, [], "", $UNDEF, "\x00", nil, 123].include?(val)
-# end
-
-# # puts(0 == false)
-# # puts(0.0 == false)
-# # puts([] == false)
-# # puts ("" == false)
-# # puts($UNDEF == false)
-# # puts("\x00" == false)
-# # puts(nil == false)
-# # puts(123 == false)
-# # puts(false == 0)
-# # puts(false == 0.0)
-# # puts(false == [])
-# # puts(false == "")
-# # puts(false == $UNDEF)
-# # puts(false == "\x00")
-# # puts(false == nil)
-# # puts(false == 123)
-# # puts([0, [], "", $UNDEF, "\x00", nil, 123].include?(false))
-
-# # puts(falsey(false))
-# # puts(falsey(true))
-# # puts(falsey(0))
-# # puts(falsey([]))
-# # puts(falsey(""))
-# # puts(falsey($UNDEF))
-# # puts(falsey("\x00"))
-# puts(falsey(nil))
-# puts(falsey(1))
-# puts(falsey(1.0))
-# puts(falsey([1, 2, 3]))
-# puts(falsey("hello"))
-# puts(falsey(0.0))
-# puts(falsey(0.1))
-# puts(falsey(123))
-# puts(falsey(123.0))
-
-# puts(0.0 == 0)
+puts indices("hello", "l") # => [2, 3]
 
 # def unwrap(t)
 #     t.size == 1 ? t[0] : t
 # end
 
-# $zoo = {
-#     "" => -> (*a) { unwrap(a) }
+# $TOP    = "^"
+# $BOTTOM = "-"
+# $L_SIDE = "/"
+# $R_SIDE = "\\"
+
+# def triangle_from(lines, ptr_inds = nil)
+#     raise "no triangle found" if !lines.first
+#     ptr_inds = ptr_inds || indices(lines.first, $TOP)
+#     row = ""
+#     ptr_inds.map { |pt|
+#         x1 = x2 = pt    # left and right sides
+#         y = 0
+#         data = []
+#         loop {
+#             x1 -= 1
+#             x2 += 1
+#             y += 1
+#             row = lines[y]
+#             raise "unexpected triangle end" if !row or x2 > row.size
+#             # are we done?
+#             if row[x1] != $L_SIDE
+#                 # look for end
+#                 if row[x2] == $R_SIDE # mismatched!
+#                     raise "left side too short"
+#                 else
+#                     # both sides are exhausted--look for a bottom
+#                     # p (x1 + 1 .. x2 - 1).map { |e| row[e] }
+#                     # p [x1, x2, pt]
+#                     if (x1 + 1 .. x2 - 1).all? { |x| row[x] == $BOTTOM }
+#                         break
+#                     else
+#                         raise "malformed bottom"
+#                     end
+#                 end
+#             elsif row[x2] != $R_SIDE
+#                 # look for end
+#                 if row[x1] == $L_SIDE # mismatched!
+#                     raise "right side too short"
+#                 else
+#                     # both sides are exhausted--look for a bottom
+#                     if (x1 + 1 .. x2 - 1).all? { |x| row[x] == $BOTTOM }
+#                         break
+#                     else
+#                         raise "malformed bottom"
+#                     end
+#                 end
+#             # elsif x1 == 0   # we must have found our bottom...
+#             end
+#             #todo: do for other side
+#             # we aren't done.
+#             data.push row[x1 + 1 .. x2 - 1]
+#         }
+#         op = data.join("").gsub(/\s+/, "")
+#         args = []
+#         if row[x1] == $TOP or row[x2] == $TOP
+#             next_inds = [x1, x2].find_all { |x| row[x] == $TOP }
+#             args.push triangle_from(lines[y..-1], next_inds)
+#         end
+#         unwrap [op, *args]
+#     }
+# end
+
+# $vars = {"eps" => ""}
+# $UNDEF = :UNDEF
+
+# def parse(str)
+#     # find ^s on first line
+#     lns = str.lines
+#     triangle_from(lns)
+# end
+
+# # converts a string to a pyramid value
+# def str_to_val(str)
+#     # todo: expand
+#     if $vars.has_key? str
+#         $vars[str]
+#     elsif str == "line" or str == "stdin" or str == "readline"
+#         $stdin.gets
+#     else
+#         str.to_f
+#     end
+# end
+
+# def val_to_str(val)
+#     sanatize(val).to_s
+# end
+
+# def falsey(val)
+#     [0, [], "", $UNDEF, "\x00", nil].include? val
+# end
+
+# def truthy(val)
+#     !falsey val
+# end
+
+# class TrueClass;  def to_i; 1; end; end
+# class FalseClass; def to_i; 0; end; end
+
+# $outted = false
+
+# $uneval_ops = {
+#     "set" => -> (left, right) {
+#         $vars[left] = eval_chain right
+#         $UNDEF
+#     },
+#     # condition: left
+#     # body: right
+#     "do" => -> (left, right) {
+#         loop {
+#             eval_chain right
+#             break unless truthy eval_chain left
+#         }
+#         $UNDEF
+#     },
+#     # condition: left
+#     # body: right
+#     "loop" => -> (left, right) {
+#         loop {
+#             break unless truthy eval_chain left
+#             eval_chain right
+#         }
+#         $UNDEF
+#     },
+#     # condition: left
+#     # body: right
+#     "?" => -> (left, right) {
+#         truthy(eval_chain left) ? eval_chain(right) : 0
+#     }
 # }
-
-# arg = [$UNDEF, $UNDEF]
-# # puts($zoo[""][*arg])
-# puts(unwrap(arg))
-# puts($zoo[""][*arg])
-# puts($UNDEF.size)
-
-# b = arg.each { |e| print(1) }
-# puts(b)
-
-# a = [1, 2, 3]
-# puts(a.pop)
-# puts(a.pop)
-# puts(a.pop)
-# puts(a.pop)
-# puts(nil)
-# print(nil)
-
-# plop = nil
-
-# if plop && plop[1] == "d"
-#     puts("plop")
-# else
-#     puts("no plop")
-# end
-
-# puts([])
-# print([])
-# puts()
-# # puts([], 1)
-# # print([], 1)
-# # puts(*[])
-# # print(*[])
-
-# print([1, 2, 3] - [])
-# puts()
-# print([1, 2, 3] - [1])
-# puts()
-# print([1, 2, 3] - [2])
-# puts()
-# print([1, 2, 3] - [3])
-# puts()
-# print([1, 2, 3] - [4])
-# puts()
-# print([1, 2, 3] - [1, 2])
-
-
-# print([1, 2, 3] + [])
-# puts()
-# print([1, 2, 3] + [1])
-# puts()
-# print([1, 2, 3] + [2])
-# puts()
-# print([1, 2, 3] + [3])
-# puts()
-# print([1, 2, 3] + [4])
-# puts()
-# print([1, 2, 3] + [1, 2])
-# puts()
-
-# print([1, 2, 3] * 1)
-# puts()
-# print([1, 2, 3] * 2)
-# puts()
-# print([1, 2, 3] * 3.999)
-# puts()
-# print([1, 2, 3] * ',')
-# puts()
-
-# puts("hello", 1)
-# print("hello", 1)
-# puts(["hello", 1])
-# print(["hello", 1])
-# puts()
-
-# puts(0.1+0.2)
-
-# Still not working:
-# - favourite_number
-# - golf_pyramid_scheme_negation
-# - xor
-
-# def foo(a)
-#     return a
-# end
-# def bar(a)
-#     return foo a
-# end
-
-# puts foo 'a'
-# puts bar('a')
-# puts bar 'a'
-# puts 'a'
-# puts [1,2,3]
-
-# if true || false 
-#     puts("true")
-# else
-#     puts("false")
-# end
-
-# a = (b = 99)
-
-# puts("a:", a)
-# puts("b:", b)
-
 
 # $ops = {
 #     "+" => -> (a, b) { a + b },
@@ -282,19 +157,41 @@
 #     "]" => -> (a, b) { b },
 # }
 
-# args = [1, 2]
-# print $ops["+"][*args]
-# print $ops["out"][*args]
+# def eval_chain(chain)
+#     if chain.is_a? String
+#         return str_to_val chain
+#     else
+#         op, args = chain
+#         if $uneval_ops.has_key? op
+#             return $uneval_ops[op][*args]
+#         end
+#         raise "undefined operation `#{op}`" unless $ops.has_key? op
+#         return sanatize $ops[op][*sanatize(args.map { |ch| eval_chain ch })]
+#     end
+# end
 
-# puts
-# print [1, 2, 3].find_all { |e| e < 2 }
+# def sanatize(arg)
+#     if arg.is_a? Array
+#         arg.map { |e| sanatize e }
+#     elsif arg.is_a? Float
+#         arg == arg.to_i ? arg.to_i : arg
+#     else
+#         arg
+#     end
+# end
 
-# x = []
-# x.tap {|z|z.push(true)}
-# print x
+# prog = File.read(ARGV[0]).gsub(/\r/, "")
+# parsed = parse(prog)
+# res = parsed.map { |ch| eval_chain ch }
+# res = res.reject { |e| e == $UNDEF } if res.is_a? Array
+# res = res.is_a?(Array) && res.length == 1 ? res.pop : res
+# to_print = sanatize(res)
+# unless $outted
+#     if ARGV[1] && ARGV[1][1] == "d"
+#         p to_print
+#     else
+#         puts to_print
+#     end
+# end
 
-# a = :hello
-# print(a)
-
-res = false ? 1 : 2
-puts("res:", res)
+# # p $vars

@@ -3,8 +3,9 @@ package object
 import (
 	"fmt"
 	"hash/fnv"
-	"reflect"
 	"strings"
+
+	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 var (
@@ -23,7 +24,7 @@ func init() {
 }
 
 func formatException(exception RubyObject, message string) string {
-	return fmt.Sprintf("%s: %s", reflect.TypeOf(exception).Elem().Name(), message)
+	return fmt.Sprintf("%s: %s", RubyObjectToTypeString(exception), message)
 }
 
 type exception interface {
@@ -60,7 +61,10 @@ var exceptionMethods = map[string]RubyMethod{
 	"to_s":       withArity(0, newMethod(exceptionToS)),
 }
 
-func exceptionInitialize(context CallContext, args ...RubyObject) (RubyObject, error) {
+func exceptionInitialize(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		defer tracer.Un(tracer.Trace(trace.Here()))
+	}
 	receiver := context.Receiver()
 	var message string
 	message = receiver.Class().Name()
@@ -77,7 +81,10 @@ func exceptionInitialize(context CallContext, args ...RubyObject) (RubyObject, e
 	return receiver, nil
 }
 
-func exceptionException(context CallContext, args ...RubyObject) (RubyObject, error) {
+func exceptionException(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		defer tracer.Un(tracer.Trace(trace.Here()))
+	}
 	receiver := context.Receiver()
 	if len(args) == 0 {
 		return receiver, nil
@@ -105,7 +112,10 @@ func exceptionException(context CallContext, args ...RubyObject) (RubyObject, er
 	return receiver, nil
 }
 
-func exceptionToS(context CallContext, args ...RubyObject) (RubyObject, error) {
+func exceptionToS(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		defer tracer.Un(tracer.Trace(trace.Here()))
+	}
 	receiver := context.Receiver()
 	if err, ok := receiver.(exception); ok {
 		return NewString(err.Error()), nil
@@ -115,7 +125,7 @@ func exceptionToS(context CallContext, args ...RubyObject) (RubyObject, error) {
 
 func hashException(exception RubyObject) HashKey {
 	h := fnv.New64a()
-	h.Write([]byte(reflect.TypeOf(exception).Elem().Name()))
+	h.Write([]byte(fmt.Sprintf("%T", exception)))
 	if err, ok := exception.(error); ok {
 		h.Write([]byte(err.Error()))
 	}
@@ -227,17 +237,6 @@ func NewUninitializedConstantNameError(name string) *NameError {
 	}
 }
 
-func NewUndefinedLocalVariableOrMethodNameError(context RubyObject, name string) *NameError {
-	return &NameError{
-		message: fmt.Sprintf(
-			"undefined local variable or method `%s' for %s:%s",
-			name,
-			context.Inspect(),
-			context.Class().(RubyObject).Inspect(),
-		),
-	}
-}
-
 type NameError struct {
 	message string
 }
@@ -255,12 +254,13 @@ var (
 )
 
 func NewNoMethodError(context RubyObject, method string) *NoMethodError {
+	// panic("stop here")
 	return &NoMethodError{
 		message: fmt.Sprintf(
 			"undefined method `%s' for %s:%s",
 			method,
 			context.Inspect(),
-			context.Class().(RubyObject).Inspect(),
+			context.Class().Inspect(),
 		),
 	}
 }
@@ -281,33 +281,28 @@ var (
 	_ exception  = &NoMethodError{}
 )
 
+func RubyObjectToTypeString(rubyType RubyObject) string {
+	ts := fmt.Sprintf("%T", rubyType)
+	ts = strings.TrimPrefix(ts, "*object.")
+	ts = strings.TrimPrefix(ts, "object.")
+	return ts
+}
+
 func NewWrongArgumentTypeError(expected, actual RubyObject) *TypeError {
 	return &TypeError{
-		Message: fmt.Sprintf(
-			"wrong argument type %s (expected %s)",
-			reflect.TypeOf(actual).Elem().Name(),
-			reflect.TypeOf(expected).Elem().Name(),
-		),
+		Message: fmt.Sprintf("wrong argument type %s (expected %s)", actual, expected),
 	}
 }
 
 func NewCoercionTypeError(expected, actual RubyObject) *TypeError {
 	return &TypeError{
-		Message: fmt.Sprintf(
-			"%s can't be coerced into %s",
-			reflect.TypeOf(actual).Elem().Name(),
-			reflect.TypeOf(expected).Elem().Name(),
-		),
+		Message: fmt.Sprintf("%s can't be coerced into %s", RubyObjectToTypeString(actual), RubyObjectToTypeString(expected)),
 	}
 }
 
 func NewImplicitConversionTypeError(expected, actual RubyObject) *TypeError {
 	return &TypeError{
-		Message: fmt.Sprintf(
-			"no implicit conversion of %s into %s",
-			reflect.TypeOf(actual).Elem().Name(),
-			reflect.TypeOf(expected).Elem().Name(),
-		),
+		Message: fmt.Sprintf("no implicit conversion of %s into %s", RubyObjectToTypeString(actual), RubyObjectToTypeString(expected)),
 	}
 }
 
@@ -320,13 +315,13 @@ func NewImplicitConversionTypeErrorMany(actual RubyObject, expected ...RubyObjec
 	}
 	types := make([]string, len(expected))
 	for i, e := range expected {
-		types[i] = reflect.TypeOf(e).Elem().Name()
+		types[i] = RubyObjectToTypeString(e)
 	}
 
 	return &TypeError{
 		Message: fmt.Sprintf(
 			"no implicit conversion of %s into one of [%s]",
-			reflect.TypeOf(actual).Elem().Name(),
+			RubyObjectToTypeString(actual),
 			strings.Join(types, ", "),
 		),
 	}

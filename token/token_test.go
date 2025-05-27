@@ -2,6 +2,8 @@ package token
 
 import (
 	"testing"
+
+	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func filterEmpty(arr []string) []string {
@@ -39,8 +41,6 @@ func TestTypeSting(t *testing.T) {
 		{tk: ILLEGAL, str: "ILLEGAL", repr: "ILLEGAL"},
 		{tk: EOF, str: "EOF", repr: "EOF"},
 		{tk: IDENT, str: "IDENT", repr: "IDENT"},
-		{tk: CONST, str: "CONST", repr: "CONST"},
-		{tk: GLOBAL, str: "GLOBAL", repr: "GLOBAL"},
 		{tk: INT, str: "INT", repr: "INT"},
 		{tk: FLOAT, str: "FLOAT", repr: "FLOAT"},
 		{tk: STRING, str: "STRING", repr: "STRING"},
@@ -79,7 +79,6 @@ func TestTypeSting(t *testing.T) {
 		{tk: COMMA, str: "COMMA", repr: ","},
 		{tk: SEMICOLON, str: "SEMICOLON", repr: ";"},
 		{tk: COMMENT, str: "COMMENT", repr: "# ..."},
-		{tk: CLASS, str: "CLASS", repr: "class"},
 		//
 		{tk: DOT, str: "DOT", repr: "."},
 		{tk: DDOT, str: "DDOT", repr: ".."},
@@ -94,7 +93,6 @@ func TestTypeSting(t *testing.T) {
 		{tk: RBRACKET, str: "RBRACKET", repr: "]"},
 		//
 		{tk: QMARK, str: "QMARK", repr: "?"},
-		{tk: SQMARK, str: "SQMARK", repr: "_?"},
 		{tk: SYMBOL, str: "SYMBOL", repr: ":"},
 		{tk: POW, str: "POW", repr: "**"},
 		//
@@ -109,33 +107,21 @@ func TestTypeSting(t *testing.T) {
 		{tk: FALSE, str: "FALSE", repr: "false"},
 		{tk: RETURN, str: "RETURN", repr: "return"},
 		{tk: NIL, str: "NIL", repr: "nil"},
-		{tk: WHILE, str: "WHILE", repr: "while"},
+		// {tk: WHILE, str: "WHILE", repr: "while"},
 		{tk: LOOP, str: "LOOP", repr: "loop"},
 		{tk: BREAK, str: "BREAK", repr: "break"},
-		{tk: KEYWORD__FILE__, str: "KEYWORD__FILE__", repr: "__FILE__"},
 	}
 
 	seen := make(map[Type]bool)
 
 	for _, test := range tests {
-		if seen[test.tk] {
-			t.Errorf("Duplicate token %s in tests!", test.tk)
-		}
+		utils.Assert(t, !seen[test.tk], "Duplicate token %s in tests!", test.tk)
 		seen[test.tk] = true
 
-		if test.tk.String() != test.str {
-			t.Errorf("Expected %s, got %s", test.str, test.tk.String())
-		}
-		if ToType(test.str) != test.tk {
-			t.Errorf("Expected %s, got %s", test.str, ToType(test.str))
-		}
-		if test.repr != "" {
-			if type_reprs[test.tk] != test.repr {
-				t.Errorf("Expected %s, got %s", test.repr, type_reprs[test.tk])
-			}
-		} else {
-			t.Errorf("Expected non-empty repr for %s", test.tk)
-		}
+		utils.AssertEqual(t, test.tk.String(), test.str)
+		utils.AssertEqual(t, ToType(test.str), test.tk)
+		utils.AssertNotEqual(t, test.repr, "")
+		utils.AssertEqual(t, type_reprs[test.tk], test.repr)
 	}
 
 	test_strings := make([]string, 0)
@@ -146,32 +132,21 @@ func TestTypeSting(t *testing.T) {
 	}
 
 	missing := findMissingSkipEmpty(test_reprs, filterEmpty(type_reprs[:]))
-	if len(missing) > 0 {
-		t.Errorf("Missing tokens: %v", missing)
-	}
+	utils.AssertEqual(t, len(missing), 0)
 
 	missing = findMissingSkipEmpty(test_strings, filterEmpty(type_strings[:]))
-	if len(missing) > 0 {
-		t.Errorf("Missing tokens: %v", missing)
-	}
+	utils.AssertEqual(t, len(missing), 0)
 
 }
 
 func TestIllegalTypeIsZero(t *testing.T) {
-	if ILLEGAL != 0 {
-		t.Errorf("Illegal token should be 0 but got %d", ILLEGAL)
-	}
+	utils.AssertEqual(t, ILLEGAL, 0)
 }
 
 func TestTypeCount(t *testing.T) {
 
 	n_type_reprs := len(filterEmpty(type_reprs[:]))
 	n_type_strings := len(filterEmpty(type_strings[:]))
-
-	if type_count != n_type_reprs {
-		t.Errorf("Token count %d does not match type_reprs %d", type_count, n_type_reprs)
-	}
-	if type_count != n_type_strings {
-		t.Errorf("Token count %d does not match type_strings %d", type_count, n_type_strings)
-	}
+	utils.AssertEqual(t, type_count, n_type_reprs)
+	utils.AssertEqual(t, type_count, n_type_strings)
 }

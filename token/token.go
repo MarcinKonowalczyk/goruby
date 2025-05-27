@@ -1,9 +1,7 @@
 package token
 
 import (
-	"bytes"
 	"strconv"
-	"unicode"
 )
 
 //go:generate stringer -type=Type
@@ -16,8 +14,6 @@ const (
 	// Identifier + literals
 	literal_beg
 	IDENT
-	CONST
-	GLOBAL
 	INT
 	FLOAT
 	STRING
@@ -65,7 +61,6 @@ const (
 	COMMA     // ,
 	SEMICOLON // ;
 	COMMENT   // # ...
-	CLASS     // class # NOTE: treated as a comment. classes are not supported
 
 	DOT       // .
 	DDOT      // ..
@@ -80,7 +75,6 @@ const (
 	RBRACKET  // ]
 
 	QMARK  // ?
-	SQMARK // _?
 	SYMBOL // : ...
 
 	// Keywords
@@ -96,10 +90,9 @@ const (
 	FALSE
 	RETURN
 	NIL
-	WHILE
+	// WHILE
 	LOOP
 	BREAK
-	KEYWORD__FILE__
 	keyword_end
 	types_end
 )
@@ -141,8 +134,6 @@ var type_strings = [...]string{
 	EOF:     "EOF",
 
 	IDENT:  "IDENT",
-	CONST:  "CONST",
-	GLOBAL: "GLOBAL",
 	INT:    "INT",
 	FLOAT:  "FLOAT",
 	STRING: "STRING",
@@ -178,7 +169,6 @@ var type_strings = [...]string{
 	COMMA:     "COMMA",
 	SEMICOLON: "SEMICOLON",
 	COMMENT:   "COMMENT",
-	CLASS:     "CLASS",
 
 	DOT:       "DOT",
 	DDOT:      "DDOT",
@@ -197,24 +187,21 @@ var type_strings = [...]string{
 	LAMBDAROCKET: "LAMBDAROCKET",
 
 	QMARK:  "QMARK",
-	SQMARK: "SQMARK",
 	SYMBOL: "SYMBOL",
 
-	DEF:             "DEF",
-	END:             "END",
-	UNLESS:          "UNLESS",
-	IF:              "IF",
-	THEN:            "THEN",
-	ELSE:            "ELSE",
-	ELSIF:           "ELSIF",
-	TRUE:            "TRUE",
-	FALSE:           "FALSE",
-	RETURN:          "RETURN",
-	NIL:             "NIL",
-	WHILE:           "WHILE",
-	LOOP:            "LOOP",
-	BREAK:           "BREAK",
-	KEYWORD__FILE__: "KEYWORD__FILE__",
+	DEF:    "DEF",
+	END:    "END",
+	UNLESS: "UNLESS",
+	IF:     "IF",
+	THEN:   "THEN",
+	ELSE:   "ELSE",
+	ELSIF:  "ELSIF",
+	TRUE:   "TRUE",
+	FALSE:  "FALSE",
+	RETURN: "RETURN",
+	NIL:    "NIL",
+	LOOP:   "LOOP",
+	BREAK:  "BREAK",
 }
 
 var type_reprs = [...]string{
@@ -222,8 +209,6 @@ var type_reprs = [...]string{
 	EOF:     "EOF",
 
 	IDENT:  "IDENT",
-	CONST:  "CONST",
-	GLOBAL: "GLOBAL",
 	INT:    "INT",
 	FLOAT:  "FLOAT",
 	STRING: "STRING",
@@ -259,7 +244,6 @@ var type_reprs = [...]string{
 	COMMA:     ",",
 	SEMICOLON: ";",
 	COMMENT:   "# ...",
-	CLASS:     "class",
 
 	DOT:       ".",
 	DDOT:      "..",
@@ -278,24 +262,22 @@ var type_reprs = [...]string{
 	LAMBDAROCKET: "->",
 
 	QMARK:  "?",
-	SQMARK: "_?",
 	SYMBOL: ":",
 
-	DEF:             "def",
-	END:             "end",
-	UNLESS:          "unless",
-	IF:              "if",
-	THEN:            "then",
-	ELSE:            "else",
-	ELSIF:           "elsif",
-	TRUE:            "true",
-	FALSE:           "false",
-	RETURN:          "return",
-	NIL:             "nil",
-	WHILE:           "while", // to remove?
-	LOOP:            "loop",
-	BREAK:           "break",
-	KEYWORD__FILE__: "__FILE__",
+	DEF:    "def",
+	END:    "end",
+	UNLESS: "unless",
+	IF:     "if",
+	THEN:   "then",
+	ELSE:   "else",
+	ELSIF:  "elsif",
+	TRUE:   "true",
+	FALSE:  "false",
+	RETURN: "return",
+	NIL:    "nil",
+	// WHILE:  "while", // to remove?
+	LOOP:  "loop",
+	BREAK: "break",
 }
 
 // String returns the string corresponding to the token tok.
@@ -356,9 +338,6 @@ func LookupIdent(ident string) Type {
 	}
 	if ident == "class" {
 		return COMMENT
-	}
-	if unicode.IsUpper(bytes.Runes([]byte(ident))[0]) {
-		return CONST
 	}
 	return IDENT
 }

@@ -97,7 +97,7 @@ func TestLex(t *testing.T) {
 				expect(t)("ASSIGN", "="),
 				expect(t)("INT", "5"),
 				NL,
-				expect(t)("CONST", "Ten"),
+				expect(t)("IDENT", "Ten"),
 				expect(t)("ASSIGN", "="),
 				expect(t)("INT", "10"),
 			},
@@ -238,7 +238,7 @@ func TestLex(t *testing.T) {
 				end
 			`,
 			exp: []expected{
-				expect(t)("WHILE", "while"),
+				expect(t)("IDENT", "while"),
 				expect(t)("IDENT", "x"),
 				expect(t)("LT", "<"),
 				expect(t)("IDENT", "y"),
@@ -313,7 +313,7 @@ func TestLex(t *testing.T) {
 				expect(t)("IDENT", "foo"),
 				expect(t)("DOT", "."),
 				expect(t)("IDENT", "bar"),
-				expect(t)("SQMARK", " ?"),
+				expect(t)("QMARK", " ?"),
 				expect(t)("INT", "1"),
 				expect(t)("COLON", ":"),
 				expect(t)("INT", "2"),
@@ -335,21 +335,18 @@ func TestLex(t *testing.T) {
 				$foo;
 				$Foo
 				$dotAfter.
-				$@
 			`,
 			exp: []expected{
-				expect(t)("GLOBAL", "$foo"),
+				expect(t)("IDENT", "$foo"),
 				expect(t)("COMMA", ","),
 				NL,
-				expect(t)("GLOBAL", "$foo"),
+				expect(t)("IDENT", "$foo"),
 				expect(t)("SEMICOLON", ";"),
 				NL,
-				expect(t)("GLOBAL", "$Foo"),
+				expect(t)("IDENT", "$Foo"),
 				NL,
-				expect(t)("GLOBAL", "$dotAfter"),
+				expect(t)("IDENT", "$dotAfter"),
 				expect(t)("DOT", "."),
-				NL,
-				expect(t)("GLOBAL", "$@"),
 			},
 		},
 		{
@@ -394,7 +391,7 @@ func TestLex(t *testing.T) {
 				expect(t)("END", "end"),
 				NL,
 				expect(t)("IDENT", "module"),
-				expect(t)("CONST", "Abc"),
+				expect(t)("IDENT", "Abc"),
 				NL,
 				expect(t)("END", "end"),
 				NL,
@@ -502,7 +499,7 @@ func TestLex(t *testing.T) {
 				NL,
 				expect(t)("LAMBDAROCKET", "->"),
 				NL,
-				expect(t)("KEYWORD__FILE__", "__FILE__"),
+				expect(t)("IDENT", "__FILE__"),
 				NL,
 				expect(t)("IDENT", "self"),
 				NL,

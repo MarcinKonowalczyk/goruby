@@ -181,7 +181,7 @@ func TestErrorHandling(t *testing.T) {
 		},
 		{
 			"-true",
-			"Exception: unknown operator: -*object.Symbol",
+			"Exception: unknown operator: -Symbol",
 		},
 		{
 			"true + false;",
@@ -220,7 +220,7 @@ end
 		},
 		{
 			"foobar",
-			"NameError: undefined local variable or method `foobar' for :Bottom",
+			"NoMethodError: undefined method `foobar' for :funcs:Symbol",
 		},
 		{
 			"Foobar",
@@ -239,8 +239,6 @@ end
 
 	for _, tt := range tests {
 		env := object.NewEnvironment()
-		obj := &object.Bottom{}
-		env.Set("self", obj)
 		_, err := testEval(tt.input, env)
 		utils.AssertNotEqual(t, err, nil)
 
@@ -388,37 +386,37 @@ func TestMultiAssignment(t *testing.T) {
 		{
 			name:  "evenly distributed sides",
 			input: "x, y, z = 1, 2, 3; [x, y, z]",
-			output: &object.Array{Elements: []object.RubyObject{
+			output: object.NewArray(
 				object.NewInteger(1),
 				object.NewInteger(2),
 				object.NewInteger(3),
-			}},
+			),
 		},
 		{
 			name:  "value side one less",
 			input: "x, y, z = 1, 2; [x, y, z]",
-			output: &object.Array{Elements: []object.RubyObject{
+			output: object.NewArray(
 				object.NewInteger(1),
 				object.NewInteger(2),
 				object.NIL,
-			}},
+			),
 		},
 		{
 			name:  "value side two less",
 			input: "x, y, z = 1; [x, y, z]",
-			output: &object.Array{Elements: []object.RubyObject{
+			output: object.NewArray(
 				object.NewInteger(1),
 				object.NIL,
 				object.NIL,
-			}},
+			),
 		},
 		{
 			name:  "lhs with global and const",
 			input: "$x, Y = 1, 2; [$x, Y]",
-			output: &object.Array{Elements: []object.RubyObject{
-				&object.Integer{Value: 1},
-				&object.Integer{Value: 2},
-			}},
+			output: object.NewArray(
+				object.NewInteger(1),
+				object.NewInteger(2),
+			),
 		},
 	}
 
@@ -476,12 +474,12 @@ func TestFunctionObject(t *testing.T) {
 		tests := []struct {
 			input              string
 			expectedParameters []funcParam
-			expectedBody       string
+			expectedCode       string
 		}{
 			{
 				"def foo x; x + 2; end",
 				[]funcParam{{name: "x"}},
-				"(x + 2)",
+				"x + 2",
 			},
 			{
 				`def foo
@@ -497,22 +495,20 @@ func TestFunctionObject(t *testing.T) {
 			},
 			{
 				"def foo x = 4; 2; end",
-				[]funcParam{{name: "x", defaultValue: &object.Integer{Value: 4}}},
+				[]funcParam{{name: "x", defaultValue: object.NewInteger(4)}},
 				"2",
 			},
 		}
 
 		for _, tt := range tests {
 			env := object.NewEnvironment()
-			env.Set("self", &object.Bottom{})
 			evaluated, err := testEval(tt.input, env)
 			utils.AssertNoError(t, err)
 			sym, ok := evaluated.(*object.Symbol)
 			utils.Assert(t, ok, "object is not Symbol. got=%T (%+v)", evaluated, evaluated)
 			utils.AssertEqual(t, sym.Value, "foo")
 
-			self, _ := env.Get("self")
-			method, ok := self.Class().Methods().Get("foo")
+			method, ok := object.FUNCS_STORE.Class().Methods().Get("foo")
 			utils.Assert(t, ok, "Expected method to be added to self")
 			fn, ok := method.(*object.Function)
 			utils.Assert(t, ok, "Expected method to be a function. got=%T (%+v)", method, method)
@@ -524,7 +520,7 @@ func TestFunctionObject(t *testing.T) {
 				utils.AssertEqualCmpAny(t, param.Default, testParam.defaultValue, object.CompareRubyObjectsForTests)
 			}
 
-			utils.AssertEqual(t, fn.Body.String(), tt.expectedBody)
+			utils.AssertEqual(t, fn.Body.Code(), tt.expectedCode)
 		}
 	})
 }
@@ -546,7 +542,6 @@ func TestFunctionApplication(t *testing.T) {
 
 	for _, tt := range tests {
 		env := object.NewEnvironment()
-		env.Set("self", &object.Bottom{})
 		evaluated, err := testEval(tt.input, env)
 		utils.AssertNoError(t, err)
 		testIntegerObject(t, evaluated, tt.expected)
@@ -814,20 +809,6 @@ func TestHashIndexExpressions(t *testing.T) {
 	}
 }
 
-func TestKeyword__File__(t *testing.T) {
-	input := "__FILE__"
-
-	env := object.NewEnvironment()
-	program, err := parser.ParseFile(token.NewFileSet(), "some_file.rb", input, 0)
-	utils.AssertNoError(t, err)
-	evaluated, err := evaluator.Eval(program, env)
-	utils.AssertNoError(t, err)
-
-	str, ok := evaluated.(*object.String)
-	utils.Assert(t, ok, "Expected evaluated to be *object.String, got %T\n", evaluated)
-	utils.AssertEqual(t, str.Value, "some_file.rb")
-}
-
 func testNilObject(t *testing.T, obj object.RubyObject) bool {
 	t.Helper()
 	utils.AssertEqualCmpAny(t, obj, object.NIL, object.CompareRubyObjectsForTests)
@@ -839,7 +820,7 @@ func testEval(input string, context ...object.Environment) (object.RubyObject, e
 	if len(context) > 0 {
 		env = context[0]
 	}
-	program, err := parser.ParseFile(token.NewFileSet(), "", input, parser.ParseComments)
+	program, err := parser.ParseFile(token.NewFileSet(), "", input)
 	if err != nil {
 		return nil, object.NewSyntaxError(err)
 	}

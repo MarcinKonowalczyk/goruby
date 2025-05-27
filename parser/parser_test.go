@@ -1,7 +1,6 @@
 package parser_test
 
 import (
-	"flag"
 	"fmt"
 	gotoken "go/token"
 	"os"
@@ -17,17 +16,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var parseMode p.Mode = p.ParseComments
-
 func TestMain(m *testing.M) {
-	mode := flag.String("parser.mode", "ParseComments", "parser.mode=ParseComments")
-	flag.Parse()
-	var ok bool
-	parseMode, ok = p.ParseModes[*mode]
-	if !ok {
-		fmt.Printf("Unknown parse mode %s\n", *mode)
-		os.Exit(1)
-	}
 	os.Exit(m.Run())
 }
 
@@ -134,7 +123,7 @@ func TestVariableExpression(t *testing.T) {
 			{"x = 5_0;", "x", "50"},
 			{"y = true;", "y", ":true"},
 			{"foobar = y;", "foobar", "y"},
-			{"foobar = (12 + 2 * bar) - x;", "foobar", "((12 + (2 * bar)) - x)"},
+			{"foobar = (12 + 2 * bar) - x;", "foobar", "(12 + (2 * bar)) - x"},
 		}
 
 		for _, tt := range tests {
@@ -147,7 +136,7 @@ func TestVariableExpression(t *testing.T) {
 			variable, ok := stmt.Expression.(*ast.Assignment)
 			utils.Assert(t, ok, "stmt.Expression is not *ast.Assignment. got=%T", stmt.Expression)
 			testIdentifier(t, variable.Left, tt.expectedIdentifier)
-			utils.AssertEqual(t, variable.Right.String(), tt.expectedValue)
+			utils.AssertEqual(t, variable.Right.Code(), tt.expectedValue)
 		}
 	})
 	t.Run("const assignment within function", func(t *testing.T) {
@@ -188,43 +177,6 @@ func TestVariableExpression(t *testing.T) {
 	})
 }
 
-func TestWhileExpression(t *testing.T) {
-	tests := []struct {
-		name  string
-		input string
-	}{
-		{
-			name: "with explicit do",
-			input: `
-			while x < y do
-				x += x
-			end`,
-		},
-		{
-			name: "without explicit do",
-			input: `
-			while x < y
-				x += x
-			end`,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			program, err := parseSource(tt.input)
-			checkParserErrors(t, err)
-
-			utils.AssertEqual(t, len(program.Statements), 1)
-
-			stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-			utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
-
-			exp, ok := stmt.Expression.(*ast.LoopExpression)
-			utils.Assert(t, ok, "stmt.Expression is not %T. got=%T", exp, stmt.Expression)
-		})
-	}
-}
-
 func TestGlobalAssignment(t *testing.T) {
 	input := "$foo = 3"
 
@@ -238,7 +190,7 @@ func TestGlobalAssignment(t *testing.T) {
 	utils.Assert(t, ok, "stmt.Expression is not *ast.Assignment. got=%T", stmt.Expression)
 
 	testGlobal(t, variable.Left, "$foo")
-	utils.AssertEqual(t, variable.Right.String(), "3")
+	utils.AssertEqual(t, variable.Right.Code(), "3")
 }
 
 func TestParseMultiAssignment(t *testing.T) {
@@ -269,7 +221,7 @@ func TestParseMultiAssignment(t *testing.T) {
 		},
 		{
 			input:     "x[0], $y, A = 3, 4, 5;",
-			variables: []string{"(x[0])", "$y", "A"},
+			variables: []string{"x[0]", "$y", "A"},
 			values:    []string{"3", "4", "5"},
 		},
 	}
@@ -287,10 +239,10 @@ func TestParseMultiAssignment(t *testing.T) {
 
 			actualVars := make([]string, len(left))
 			for i, v := range left {
-				actualVars[i] = v.String()
+				actualVars[i] = v.Code()
 			}
 			utils.AssertEqualCmp(t, tt.variables, actualVars, utils.CompareArrays)
-			utils.AssertEqual(t, strings.Join(tt.values, ", "), assign.Right.String())
+			utils.AssertEqual(t, strings.Join(tt.values, ", "), assign.Right.Code())
 		})
 	}
 }
@@ -418,9 +370,10 @@ func TestGlobalExpression(t *testing.T) {
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 	utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
-	global, ok := stmt.Expression.(*ast.Global)
+	global, ok := stmt.Expression.(*ast.Identifier)
 	utils.Assert(t, ok, "expression not *ast.Global. got=%T", stmt.Expression)
 	utils.AssertEqual(t, global.Value, "$foobar")
+	utils.Assert(t, global.IsGlobal(), "global not set to true")
 }
 
 func TestGlobalExpressionWithIndex(t *testing.T) {
@@ -437,31 +390,6 @@ func TestGlobalExpressionWithIndex(t *testing.T) {
 
 	testGlobal(t, index.Left, "$foobar")
 	testLiteralExpression(t, index.Index, 1)
-}
-
-func TestKeyword__FILE__(t *testing.T) {
-	t.Run("keyword found", func(t *testing.T) {
-		input := "__FILE__;"
-
-		program, err := p.ParseFile(gotoken.NewFileSet(), "a_filename.rb", input, 0)
-		checkParserErrors(t, err)
-		utils.AssertEqual(t, len(program.Statements), 1)
-		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
-
-		file, ok := stmt.Expression.(*ast.Keyword__FILE__)
-		utils.Assert(t, ok, "expression not *ast.Keyword__FILE__. got=%T", stmt.Expression)
-		utils.AssertEqual(t, file.Filename, "a_filename.rb")
-	})
-	t.Run("assignment to keyword", func(t *testing.T) {
-		input := "__FILE__ = 42;"
-
-		_, err := parseSource(input)
-
-		parserErrors := err.Errors
-		utils.AssertEqual(t, len(parserErrors), 1)
-		utils.AssertEqual(t, parserErrors[0].Error(), "1:9: Can't assign to __FILE__")
-	})
 }
 
 func TestIntegerLiteralExpression(t *testing.T) {
@@ -633,111 +561,111 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 	}{
 		{
 			"-a * b",
-			"((-a) * b)",
+			"(-a) * b",
 		},
 		{
 			"!-a",
-			"(!(-a))",
+			"!(-a)",
 		},
 		{
 			"a + b + c",
-			"((a + b) + c)",
+			"(a + b) + c",
 		},
 		{
 			"a + b - c",
-			"((a + b) - c)",
+			"(a + b) - c",
 		},
 		{
 			"a * b * c",
-			"((a * b) * c)",
+			"(a * b) * c",
 		},
 		{
 			"a * b / c",
-			"((a * b) / c)",
+			"(a * b) / c",
 		},
 		{
 			"a + b / c",
-			"(a + (b / c))",
+			"a + (b / c)",
 		},
 		{
 			"a + b * c + d / e - f",
-			"(((a + (b * c)) + (d / e)) - f)",
+			"((a + (b * c)) + (d / e)) - f",
 		},
 		{
 			"3 + 4; -5 * 5",
-			"(3 + 4)\n((-5) * 5)",
+			"3 + 4; (-5) * 5",
 		},
 		{
 			"5 > 4 == 3 < 4",
-			"((5 > 4) == (3 < 4))",
+			"(5 > 4) == (3 < 4)",
 		},
 		{
 			"5 < 4 != 3 > 4",
-			"((5 < 4) != (3 > 4))",
+			"(5 < 4) != (3 > 4)",
 		},
 		{
 			"3 + 4 * 5 == 3 * 1 + 4 * 5",
-			"((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+			"(3 + (4 * 5)) == ((3 * 1) + (4 * 5))",
 		},
 		{
 			"3 + 4 * 5 == 3 * 1 + 4 * 5",
-			"((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+			"(3 + (4 * 5)) == ((3 * 1) + (4 * 5))",
 		},
 		{
 			"true | true",
-			"(:true || :true)",
+			":true || :true",
 		},
 		{
 			"true & true",
-			"(:true && :true)",
+			":true && :true",
 		},
 		{
 			"3 > 5 == false",
-			"((3 > 5) == :false)",
+			"(3 > 5) == :false",
 		},
 		{
 			"3 < 5 == true",
-			"((3 < 5) == :true)",
+			"(3 < 5) == :true",
 		},
 		{
 			"1 + (2 + 3) + 4",
-			"((1 + (2 + 3)) + 4)",
+			"(1 + (2 + 3)) + 4",
 		},
 		{
 			"(5 + 5) * 2",
-			"((5 + 5) * 2)",
+			"(5 + 5) * 2",
 		},
 		{
 			"2 / (5 + 5)",
-			"(2 / (5 + 5))",
+			"2 / (5 + 5)",
 		},
 		{
 			"(5 + 5) * 2 * (5 + 5)",
-			"(((5 + 5) * 2) * (5 + 5))",
+			"((5 + 5) * 2) * (5 + 5)",
 		},
 		{
 			"-(5 + 5)",
-			"(-(5 + 5))",
+			"-(5 + 5)",
 		},
 		{
 			"!(true == true)",
-			"(!(:true == :true))",
+			"!(:true == :true)",
 		},
 		{
 			"a + add(b * c) + d",
-			"((a + add((b * c))) + d)",
+			"(a + add(b * c)) + d",
 		},
 		{
 			"add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
-			"add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+			"add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
 		},
 		{
 			"add(a + b + c * d / f + g)",
-			"add((((a + b) + ((c * d) / f)) + g))",
+			"add(((a + b) + ((c * d) / f)) + g)",
 		},
 		{
 			"add(a + b + c * d / f + g)",
-			"add((((a + b) + ((c * d) / f)) + g))",
+			"add(((a + b) + ((c * d) / f)) + g)",
 		},
 		{
 			"x = 12 * 3;",
@@ -757,15 +685,15 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		},
 		{
 			"a = b = 0;",
-			"a = b = 0",
+			"a = (b = 0)",
 		},
 		{
 			"a * [1, 2, 3, 4][b * c] * d",
-			"((a * ([1, 2, 3, 4][(b * c)])) * d)",
+			"(a * [1, 2, 3, 4][b * c]) * d",
 		},
 		{
 			"add(a * b[2], b[1], 2 * [1, 2][1])",
-			"add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))",
+			"add(a * b[2], b[1], 2 * [1, 2][1])",
 		},
 	}
 
@@ -773,7 +701,7 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		t.Run(tt.input, func(t *testing.T) {
 			program, err := parseSource(tt.input)
 			checkParserErrors(t, err)
-			utils.AssertEqual(t, program.String(), tt.expected)
+			utils.AssertEqual(t, program.Code(), tt.expected)
 		})
 	}
 }
@@ -807,15 +735,15 @@ func TestBlockExpression(t *testing.T) {
 		call, ok := stmt.Expression.(*ast.ContextCallExpression)
 		utils.Assert(t, ok, "stmt.Expression is not *ast.ContextCallExpression. got=%T", stmt.Expression)
 
-		block := call.Block
+		block := utils.AssertType[*ast.FunctionLiteral](t, call.Block, "*ast.ContextCallExpression.Block is not *ast.FunctionLiteral. got=%T", call.Block)
 		utils.AssertNotEqual(t, block, nil)
 		utils.AssertEqual(t, len(block.Parameters), len(tt.expectedArguments))
 
 		for i, arg := range block.Parameters {
-			utils.AssertEqual(t, arg.String(), tt.expectedArguments[i].String())
+			utils.AssertEqual(t, arg.Code(), tt.expectedArguments[i].Code())
 		}
 
-		utils.AssertEqual(t, block.Body.String(), tt.expectedBody)
+		utils.AssertEqual(t, block.Body.Code(), tt.expectedBody)
 	}
 }
 
@@ -838,7 +766,7 @@ func TestBooleanExpression(t *testing.T) {
 
 		boolean, ok := stmt.Expression.(*ast.SymbolLiteral)
 		utils.Assert(t, ok, "expression not *ast.Boolean. got=%T", stmt.Expression)
-		utils.AssertEqual(t, boolean.String(), tt.expectedBoolean)
+		utils.AssertEqual(t, boolean.Code(), tt.expectedBoolean)
 	}
 }
 
@@ -853,7 +781,7 @@ func TestNilExpression(t *testing.T) {
 	utils.Assert(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 	nil_node, ok := stmt.Expression.(*ast.SymbolLiteral)
 	utils.Assert(t, ok, "expression not *ast.Nil. got=%T", stmt.Expression)
-	utils.AssertEqual(t, nil_node.String(), ":nil")
+	utils.AssertEqual(t, nil_node.Code(), ":nil")
 	utils.AssertEqual(t, nil_node.Value, "nil")
 }
 
@@ -879,7 +807,7 @@ func TestConditionalExpression(t *testing.T) {
 			y
 			end
 			x
-			end`, "x", infix.LT, "y", "if (x == 3) y endx"},
+			end`, "x", infix.LT, "y", "if x == 3; y endx"},
 			{`if x < y
 			x = Object x
 			end`, "x", infix.LT, "y", "x = Object(x)"},
@@ -898,7 +826,7 @@ func TestConditionalExpression(t *testing.T) {
 			y
 			end
 			x
-			end`, "x", infix.LT, "y", "if (x == 3) y endx"},
+			end`, "x", infix.LT, "y", "if x == 3; y endx"},
 			{`unless x < y
 			x = Object x
 			end`, "x", infix.LT, "y", "x = Object(x)"},
@@ -933,7 +861,7 @@ func TestConditionalExpression(t *testing.T) {
 					consequence, ok := stmt.(*ast.ExpressionStatement)
 					utils.Assert(t, ok, "Statements[0] is not ast.ExpressionStatement. got=%T", exp.Consequence.Statements[0])
 
-					consequenceBody += consequence.Expression.String()
+					consequenceBody += consequence.Expression.Code()
 				}
 
 				utils.AssertEqual(t, consequenceBody, tt.expectedConsequenceExpression)
@@ -976,21 +904,21 @@ func TestConditionalExpression(t *testing.T) {
 
 			call, ok := exp.Condition.(*ast.ContextCallExpression)
 			utils.Assert(t, ok, "exp.Condition is not ast.ContextCallExpression. got=%T", exp.Condition)
-			utils.AssertEqual(t, call.Function.String(), tt.condMethod)
+			utils.AssertEqual(t, call.Function, tt.condMethod)
 
 			args := []string{}
 			for _, a := range call.Arguments {
-				args = append(args, a.String())
+				args = append(args, a.Code())
 			}
 			utils.AssertEqual(t, strings.Join(args, " "), tt.condArg)
-			utils.AssertEqual(t, call.Context.String(), tt.condContext)
+			utils.AssertEqual(t, call.Context.Code(), tt.condContext)
 
 			consequenceBody := ""
 			for _, stmt := range exp.Consequence.Statements {
 				consequence, ok := stmt.(*ast.ExpressionStatement)
 				utils.Assert(t, ok, "Statements[0] is not ast.ExpressionStatement. got=%T", exp.Consequence.Statements[0])
 
-				consequenceBody += consequence.Expression.String()
+				consequenceBody += consequence.Expression.Code()
 			}
 
 			utils.AssertEqual(t, consequenceBody, tt.consequence)
@@ -1087,7 +1015,7 @@ func TestConditionalExpressionWithAlternative(t *testing.T) {
 		}{
 			"x < y ? x.foo : y;",
 			"x", infix.LT, "y",
-			"x.foo()",
+			"x.foo",
 			"y",
 		}
 		program, err := parseSource(tt.input)
@@ -1105,7 +1033,7 @@ func TestConditionalExpressionWithAlternative(t *testing.T) {
 
 		consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
 		utils.Assert(t, ok, "Statements[0] is not ast.ExpressionStatement. got=%T", exp.Consequence.Statements[0])
-		utils.AssertEqual(t, consequence.String(), tt.consequence)
+		utils.AssertEqual(t, consequence.Code(), tt.consequence)
 		utils.AssertEqual(t, len(exp.Alternative.Statements), 1)
 
 		alternative, ok := exp.Alternative.Statements[0].(*ast.ExpressionStatement)
@@ -1136,7 +1064,7 @@ func TestFunctionLiteralParsing(t *testing.T) {
 				{name: "x", defaultValue: nil},
 				{name: "y", defaultValue: nil},
 			},
-			"(x + y)",
+			"x + y",
 		},
 		{
 			"without parens",
@@ -1148,7 +1076,7 @@ func TestFunctionLiteralParsing(t *testing.T) {
 				{name: "x", defaultValue: nil},
 				{name: "y", defaultValue: nil},
 			},
-			"(x + y)",
+			"x + y",
 		},
 		{
 			"without arguments",
@@ -1157,14 +1085,14 @@ func TestFunctionLiteralParsing(t *testing.T) {
           end`,
 			"qux",
 			[]funcParam{},
-			"(x + y)",
+			"x + y",
 		},
 		{
 			"expression separator semicolon no arguments",
 			"def qux; x + y; end",
 			"qux",
 			[]funcParam{},
-			"(x + y)",
+			"x + y",
 		},
 		{
 			"expression separator semicolon two arguments",
@@ -1174,7 +1102,7 @@ func TestFunctionLiteralParsing(t *testing.T) {
 				{name: "x", defaultValue: nil},
 				{name: "y", defaultValue: nil},
 			},
-			"(x + y)",
+			"x + y",
 		},
 		{
 			"expression separator semicolon with parens and two arguments",
@@ -1184,7 +1112,7 @@ func TestFunctionLiteralParsing(t *testing.T) {
 				{name: "x", defaultValue: nil},
 				{name: "y", defaultValue: nil},
 			},
-			"(x + y)",
+			"x + y",
 		},
 		{
 			"upcase function name",
@@ -1194,7 +1122,7 @@ func TestFunctionLiteralParsing(t *testing.T) {
           `,
 			"Qux",
 			[]funcParam{},
-			"(x + y)",
+			"x + y",
 		},
 		{
 			"two arguments with defaults without parens",
@@ -1207,7 +1135,7 @@ func TestFunctionLiteralParsing(t *testing.T) {
 				{name: "x", defaultValue: 2},
 				{name: "y", defaultValue: 3},
 			},
-			"(x + y)",
+			"x + y",
 		},
 		{
 			"operator as function name",
@@ -1217,7 +1145,7 @@ func TestFunctionLiteralParsing(t *testing.T) {
           `,
 			"<=>",
 			[]funcParam{},
-			"(x + y)",
+			"x + y",
 		},
 	}
 
@@ -1232,18 +1160,18 @@ func TestFunctionLiteralParsing(t *testing.T) {
 
 			function, ok := stmt.Expression.(*ast.FunctionLiteral)
 			utils.Assert(t, ok, "stmt.Expression is not ast.FunctionLiteral. got=%T", stmt.Expression)
-			utils.AssertEqual(t, function.Name.Value, tt.name)
+			utils.AssertEqual(t, function.Name, tt.name)
 			utils.AssertEqual(t, len(function.Parameters), len(tt.parameters))
 
 			for i, param := range function.Parameters {
-				testLiteralExpression(t, param.Name, tt.parameters[i].name)
+				utils.AssertEqual(t, param.Name, tt.parameters[i].name)
 				testLiteralExpression(t, param.Default, tt.parameters[i].defaultValue)
 			}
 			utils.AssertEqual(t, len(function.Body.Statements), 1)
 
 			bodyStmt, ok := function.Body.Statements[0].(*ast.ExpressionStatement)
 			utils.Assert(t, ok, "function body stmt is not ast.ExpressionStatement. got=%T", function.Body.Statements[0])
-			utils.AssertEqual(t, bodyStmt.String(), tt.bodyStatement)
+			utils.AssertEqual(t, bodyStmt.Code(), tt.bodyStatement)
 		})
 	}
 }
@@ -1259,29 +1187,29 @@ func TestBlockExpressionParsing(t *testing.T) {
 			  x + y
 			  }`,
 			[]string{"x", "y"},
-			"(x + y)",
+			"x + y",
 		},
 		{
 			`method {
           x + y
           }`,
 			[]string{},
-			"(x + y)",
+			"x + y",
 		},
 		{
 			"method { x + y; }",
 			[]string{},
-			"(x + y)",
+			"x + y",
 		},
 		{
 			"method { |x, y|; x + y; }",
 			[]string{"x", "y"},
-			"(x + y)",
+			"x + y",
 		},
 		{
 			"method { |x, y|; x + y; }",
 			[]string{"x", "y"},
-			"(x + y)",
+			"x + y",
 		},
 		{
 			"method { |x, y|; x.add y }",
@@ -1302,18 +1230,18 @@ func TestBlockExpressionParsing(t *testing.T) {
 			call, ok := stmt.Expression.(*ast.ContextCallExpression)
 			utils.Assert(t, ok, "stmt.Expression is not *ast.ContextCallExpression. got=%T", stmt.Expression)
 
-			block := call.Block
+			block := utils.AssertType[*ast.FunctionLiteral](t, call.Block, "*ast.ContextCallExpression.Block is not *ast.FunctionLiteral. got=%T", call.Block)
 			utils.AssertNotEqual(t, block, nil)
 			utils.AssertEqual(t, len(block.Parameters), len(tt.parameters))
 
 			for i, param := range block.Parameters {
-				testLiteralExpression(t, param.Name, tt.parameters[i])
+				utils.AssertEqual(t, param.Name, tt.parameters[i])
 			}
 			utils.AssertEqual(t, len(block.Body.Statements), 1)
 
 			bodyStmt, ok := block.Body.Statements[0].(*ast.ExpressionStatement)
 			utils.Assert(t, ok, "block body stmt is not ast.ExpressionStatement. got=%T", block.Body.Statements[0])
-			utils.AssertEqual(t, bodyStmt.String(), tt.bodyStatement)
+			utils.AssertEqual(t, bodyStmt.Code(), tt.bodyStatement)
 		})
 	}
 }
@@ -1381,7 +1309,7 @@ func TestFunctionParameterParsing(t *testing.T) {
 			utils.AssertEqual(t, len(function.Parameters), len(tt.expectedParams))
 
 			for i, ident := range tt.expectedParams {
-				testLiteralExpression(t, function.Parameters[i].Name, ident.name)
+				utils.AssertEqual(t, function.Parameters[i].Name, ident.name)
 				testLiteralExpression(t, function.Parameters[i].Default, ident.defaultValue)
 			}
 		})
@@ -1444,12 +1372,12 @@ func TestBlockParameterParsing(t *testing.T) {
 			call, ok := stmt.Expression.(*ast.ContextCallExpression)
 			utils.Assert(t, ok, "stmt.Expression is not *ast.ContextCallExpression. got=%T", stmt.Expression)
 
-			block := call.Block
+			block := utils.AssertType[*ast.FunctionLiteral](t, call.Block, "*ast.ContextCallExpression.Block is not *ast.FunctionLiteral. got=%T", call.Block)
 			utils.AssertNotEqual(t, block, nil)
 			utils.AssertEqual(t, len(block.Parameters), len(tt.expectedParams))
 
 			for i, ident := range tt.expectedParams {
-				testLiteralExpression(t, block.Parameters[i].Name, ident.name)
+				utils.AssertEqual(t, block.Parameters[i].Name, ident.name)
 				testLiteralExpression(t, block.Parameters[i].Default, ident.defaultValue)
 			}
 		})
@@ -1519,7 +1447,7 @@ func TestCallExpressionParsing(t *testing.T) {
 			call, ok := expr.(*ast.ContextCallExpression)
 			utils.Assert(t, ok, "expression is not ast.ContextCallExpression. got=%T", expr)
 
-			testIdentifier(t, call.Function, tt.funcName)
+			utils.AssertEqual(t, call.Function, tt.funcName)
 
 			if tt.context != "" {
 				testIdentifier(t, call.Context, tt.context)
@@ -1532,10 +1460,11 @@ func TestCallExpressionParsing(t *testing.T) {
 			}
 
 			if tt.hasBlock {
-				utils.AssertNotEqual(t, call.Block, nil)
-				utils.AssertEqual(t, len(call.Block.Parameters), len(tt.blockParams))
-				for i, param := range call.Block.Parameters {
-					utils.AssertEqual(t, param.String(), tt.blockParams[i])
+				block := utils.AssertType[*ast.FunctionLiteral](t, call.Block, "*ast.ContextCallExpression.Block is not *ast.FunctionLiteral. got=%T", call.Block)
+				utils.AssertNotEqual(t, block, nil)
+				utils.AssertEqual(t, len(block.Parameters), len(tt.blockParams))
+				for i, param := range block.Parameters {
+					utils.AssertEqual(t, param.Code(), tt.blockParams[i])
 				}
 			}
 		})
@@ -1574,8 +1503,8 @@ func TestCallExpressionWithoutParens(t *testing.T) {
 			exp, ok := stmt.Expression.(*ast.ContextCallExpression)
 			utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 			utils.AssertNotEqual(t, stmt.Expression, nil)
-			utils.AssertEqual(t, stmt.Expression.String(), "puts(([1][0]))")
-			testIdentifier(t, exp.Function, tt.expectedIdent)
+			utils.AssertEqual(t, stmt.Expression.Code(), "puts([1][0])")
+			utils.AssertEqual(t, exp.Function, tt.expectedIdent)
 		})
 	}
 }
@@ -1598,7 +1527,7 @@ func TestCallExpressionParameterParsing(t *testing.T) {
 		{
 			input:         "add(1, 2 * 3, 4 + 5);",
 			expectedIdent: "add",
-			expectedArgs:  []string{"1", "(2 * 3)", "(4 + 5)"},
+			expectedArgs:  []string{"1", "2 * 3", "4 + 5"},
 		},
 		{
 			input:         "add 1;",
@@ -1608,7 +1537,7 @@ func TestCallExpressionParameterParsing(t *testing.T) {
 		{
 			input:         `add "foo";`,
 			expectedIdent: "add",
-			expectedArgs:  []string{"foo"},
+			expectedArgs:  []string{"\"foo\""},
 		},
 		{
 			input:         `add :foo;`,
@@ -1626,11 +1555,11 @@ func TestCallExpressionParameterParsing(t *testing.T) {
 			exp, ok := stmt.Expression.(*ast.ContextCallExpression)
 			utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 
-			testIdentifier(t, exp.Function, tt.expectedIdent)
+			utils.AssertEqual(t, exp.Function, tt.expectedIdent)
 			utils.AssertEqual(t, len(exp.Arguments), len(tt.expectedArgs))
 
 			for i, arg := range tt.expectedArgs {
-				utils.AssertEqual(t, exp.Arguments[i].String(), arg)
+				utils.AssertEqual(t, exp.Arguments[i].Code(), arg)
 			}
 		})
 	}
@@ -1650,7 +1579,7 @@ func TestContextCallExpression(t *testing.T) {
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
 		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 		testIdentifier(t, exp.Context, "foo")
-		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, exp.Function, "add")
 		utils.AssertEqual(t, len(exp.Arguments), 3)
 		testLiteralExpression(t, exp.Arguments[0], 1)
 		testInfixExpression(t, exp.Arguments[1], 2, infix.ASTERISK, 3)
@@ -1669,7 +1598,7 @@ func TestContextCallExpression(t *testing.T) {
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
 		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 		testIdentifier(t, exp.Context, "foo")
-		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, exp.Function, "add")
 		utils.AssertEqual(t, len(exp.Arguments), 3)
 		testLiteralExpression(t, exp.Arguments[0], 1)
 		testInfixExpression(t, exp.Arguments[1], 2, infix.ASTERISK, 3)
@@ -1689,7 +1618,7 @@ func TestContextCallExpression(t *testing.T) {
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
 		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 		testIdentifier(t, exp.Context, "foo")
-		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, exp.Function, "add")
 		utils.AssertEqual(t, len(exp.Arguments), 3)
 		testLiteralExpression(t, exp.Arguments[0], 1)
 		testInfixExpression(t, exp.Arguments[1], 2, infix.ASTERISK, 3)
@@ -1708,7 +1637,7 @@ func TestContextCallExpression(t *testing.T) {
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
 		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 		testIdentifier(t, exp.Context, "foo")
-		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, exp.Function, "add")
 		utils.AssertEqual(t, len(exp.Arguments), 3)
 		testLiteralExpression(t, exp.Arguments[0], 1)
 		testInfixExpression(t, exp.Arguments[1], 2, infix.ASTERISK, 3)
@@ -1728,7 +1657,7 @@ func TestContextCallExpression(t *testing.T) {
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
 		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 		testIdentifier(t, exp.Context, "foo")
-		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, exp.Function, "add")
 		utils.AssertEqual(t, len(exp.Arguments), 0)
 	})
 	t.Run("context call on nonident with no dot", func(t *testing.T) {
@@ -1744,7 +1673,7 @@ func TestContextCallExpression(t *testing.T) {
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
 		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 		testIntegerLiteral(t, exp.Context, 1)
-		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, exp.Function, "add")
 		utils.AssertEqual(t, len(exp.Arguments), 0)
 	})
 	t.Run("context call on nonident with dot", func(t *testing.T) {
@@ -1760,7 +1689,7 @@ func TestContextCallExpression(t *testing.T) {
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
 		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 		testIntegerLiteral(t, exp.Context, 1)
-		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, exp.Function, "add")
 		utils.AssertEqual(t, len(exp.Arguments), 0)
 	})
 	t.Run("context call on nonident with no dot multiargs", func(t *testing.T) {
@@ -1776,7 +1705,7 @@ func TestContextCallExpression(t *testing.T) {
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
 		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 		testIntegerLiteral(t, exp.Context, 1)
-		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, exp.Function, "add")
 		utils.AssertEqual(t, len(exp.Arguments), 1)
 		testIntegerLiteral(t, exp.Arguments[0], 1)
 	})
@@ -1792,7 +1721,7 @@ func TestContextCallExpression(t *testing.T) {
 
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
 		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
-		testIdentifier(t, exp.Function, "foo")
+		utils.AssertEqual(t, exp.Function, "foo")
 		utils.AssertEqual(t, len(exp.Arguments), 1)
 		testIdentifier(t, exp.Arguments[0], "add")
 	})
@@ -1808,7 +1737,7 @@ func TestContextCallExpression(t *testing.T) {
 
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
 		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
-		testIdentifier(t, exp.Function, "Integer")
+		utils.AssertEqual(t, exp.Function, "Integer")
 		utils.AssertEqual(t, len(exp.Arguments), 1)
 		testIdentifier(t, exp.Arguments[0], "add")
 	})
@@ -1825,7 +1754,7 @@ func TestContextCallExpression(t *testing.T) {
 		exp, ok := stmt.Expression.(*ast.ContextCallExpression)
 		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 
-		testIdentifier(t, exp.Function, "add")
+		utils.AssertEqual(t, exp.Function, "add")
 		utils.AssertEqual(t, len(exp.Arguments), 1)
 
 		testIdentifier(t, exp.Arguments[0], "Integer")
@@ -1847,10 +1776,10 @@ func TestContextCallExpression(t *testing.T) {
 		utils.Assert(t, ok, "expr.Context is not ast.ContextCallExpression. got=%T", exp.Context)
 
 		testIdentifier(t, context.Context, "foo")
-		testIdentifier(t, context.Function, "add")
+		utils.AssertEqual(t, context.Function, "add")
 		utils.AssertEqual(t, len(context.Arguments), 0)
 
-		testIdentifier(t, exp.Function, "bar")
+		utils.AssertEqual(t, exp.Function, "bar")
 		utils.AssertEqual(t, len(exp.Arguments), 0)
 	})
 	t.Run("chained context call with dot without parens", func(t *testing.T) {
@@ -1870,9 +1799,9 @@ func TestContextCallExpression(t *testing.T) {
 		utils.Assert(t, ok, "expr.Context is not ast.ContextCallExpression. got=%T", exp.Context)
 
 		testIntegerLiteral(t, context.Context, 1)
-		testIdentifier(t, context.Function, "add")
+		utils.AssertEqual(t, context.Function, "add")
 		utils.AssertEqual(t, len(context.Arguments), 0)
-		testIdentifier(t, exp.Function, "bar")
+		utils.AssertEqual(t, exp.Function, "bar")
 		utils.AssertEqual(t, len(exp.Arguments), 0)
 	})
 	t.Run("chained context call with dot with parens", func(t *testing.T) {
@@ -1890,9 +1819,9 @@ func TestContextCallExpression(t *testing.T) {
 
 		context, ok := exp.Context.(*ast.ContextCallExpression)
 		utils.Assert(t, ok, "expr.Context is not ast.ContextCallExpression. got=%T", exp.Context)
-		testIdentifier(t, context.Function, "add")
+		utils.AssertEqual(t, context.Function, "add")
 		utils.AssertEqual(t, len(context.Arguments), 0)
-		testIdentifier(t, exp.Function, "bar")
+		utils.AssertEqual(t, exp.Function, "bar")
 		utils.AssertEqual(t, len(exp.Arguments), 0)
 	})
 	t.Run("allow operators as method name", func(t *testing.T) {
@@ -1908,7 +1837,7 @@ func TestContextCallExpression(t *testing.T) {
 		expr, ok := stmt.Expression.(*ast.ContextCallExpression)
 		utils.Assert(t, ok, "stmt.Expression is not ast.ContextCallExpression. got=%T", stmt.Expression)
 		testIdentifier(t, expr.Context, "foo")
-		testIdentifier(t, expr.Function, "<=>")
+		utils.AssertEqual(t, expr.Function, "<=>")
 	})
 }
 
@@ -1965,7 +1894,7 @@ func TestParsingArrayLiterals(t *testing.T) {
 	testIntegerLiteral(t, array.Elements[0], 1)
 	testInfixExpression(t, array.Elements[1], 2, infix.ASTERISK, 2)
 	testInfixExpression(t, array.Elements[2], 3, infix.PLUS, 3)
-	testHashLiteral(t, array.Elements[3], map[string]string{"foo": "2"})
+	testHashLiteral(t, array.Elements[3], map[string]string{"\"foo\"": "2"})
 }
 
 func TestParsingIndexExpressions(t *testing.T) {
@@ -2019,7 +1948,7 @@ func TestParsingIndexExpressions(t *testing.T) {
 			indexExp, ok := stmt.Expression.(*ast.IndexExpression)
 			utils.Assert(t, ok, "stmt.Expression is not ast.IndexExpression. got=%T", stmt.Expression)
 			testIdentifier(t, indexExp.Left, "myArray")
-			utils.AssertEqual(t, indexExp.Index.String(), "foo.bar(), 1")
+			utils.AssertEqual(t, indexExp.Index.Code(), "foo.bar, 1")
 		})
 		t.Run("method calls as length", func(t *testing.T) {
 			input := "myArray[1, foo.bar]"
@@ -2032,7 +1961,7 @@ func TestParsingIndexExpressions(t *testing.T) {
 			indexExp, ok := stmt.Expression.(*ast.IndexExpression)
 			utils.Assert(t, ok, "stmt.Expression is not ast.IndexExpression. got=%T", stmt.Expression)
 			testIdentifier(t, indexExp.Left, "myArray")
-			utils.AssertEqual(t, indexExp.Index.String(), "1, foo.bar()")
+			utils.AssertEqual(t, indexExp.Index.Code(), "1, foo.bar")
 		})
 	})
 }
@@ -2044,17 +1973,17 @@ func TestParseHash(t *testing.T) {
 	}{
 		{
 			input:   `{"foo" => 42}`,
-			hashMap: map[string]string{"foo": "42"},
+			hashMap: map[string]string{"\"foo\"": "42"},
 		},
 		{
 			input:   `{"foo" => 42, "bar" => "baz"}`,
-			hashMap: map[string]string{"foo": "42", "bar": "baz"},
+			hashMap: map[string]string{"\"foo\"": "42", "\"bar\"": "\"baz\""},
 		},
 		{
 			input: `{
 				"foo" => 42,
 			}`,
-			hashMap: map[string]string{"foo": "42"},
+			hashMap: map[string]string{"\"foo\"": "42"},
 		},
 		{
 			input: `{
@@ -2067,27 +1996,27 @@ func TestParseHash(t *testing.T) {
 			# comment
 				"foo" => 42,
 			}`,
-			hashMap: map[string]string{"foo": "42"},
+			hashMap: map[string]string{"\"foo\"": "42"},
 		},
 		{
 			input: `{
 			"foo" => 42,
 				# comment
 			}`,
-			hashMap: map[string]string{"foo": "42"},
+			hashMap: map[string]string{"\"foo\"": "42"},
 		},
 		{
 			input: `{ # comment
 				"foo" => 42,
 			}`,
-			hashMap: map[string]string{"foo": "42"},
+			hashMap: map[string]string{"\"foo\"": "42"},
 		},
 		{
 			input: `{
 				"foo" => 42,
 				"bar" => "baz"
 			}`,
-			hashMap: map[string]string{"foo": "42", "bar": "baz"},
+			hashMap: map[string]string{"\"foo\"": "42", "\"bar\"": "\"baz\""},
 		},
 	}
 
@@ -2222,10 +2151,7 @@ func TestArraySplat(t *testing.T) {
 		for i, expected := range tt.expected {
 			element := arrayLit.Elements[i]
 			if expected.is_splat {
-				expected_expr := &ast.Identifier{
-					Value: expected.name,
-				}
-				testSplat(t, element, expected_expr)
+				testSplat(t, element, &ast.Identifier{Value: expected.name})
 			} else {
 				testIdentifier(t, element, expected.name)
 			}
@@ -2339,7 +2265,7 @@ func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) {
 		_, ok := prefix.Right.(*ast.IntegerLiteral)
 		utils.Assert(t, ok, "prefix.Right not *ast.IntegerLiteral. got=%T", prefix.Right)
 		utils.AssertEqual(t, prefix.Operator, "+")
-		prefixedInt := fmt.Sprintf("%s%s", prefix.Operator, prefix.Right.String())
+		prefixedInt := fmt.Sprintf("%s%s", prefix.Operator, prefix.Right.Code())
 		i, err := strconv.ParseInt(prefixedInt, 10, 64)
 		utils.AssertNoError(t, err)
 		il = &ast.IntegerLiteral{Value: i}
@@ -2351,9 +2277,10 @@ func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) {
 
 func testGlobal(t *testing.T, exp ast.Expression, value string) {
 	t.Helper()
-	global, ok := exp.(*ast.Global)
+	global, ok := exp.(*ast.Identifier)
 	utils.Assert(t, ok, "exp not *ast.Global. got=%T", exp)
 	utils.AssertEqual(t, global.Value, value)
+	utils.Assert(t, global.IsGlobal())
 }
 
 func testSymbol(t *testing.T, exp ast.Expression, value string) {
@@ -2374,7 +2301,7 @@ func testSplat(t *testing.T, exp ast.Expression, value ast.Expression) {
 	t.Helper()
 	splat, ok := exp.(*ast.Splat)
 	utils.Assert(t, ok, "exp not *ast.Splat. got=%T", exp)
-	testIdentifier(t, splat.Value, value.String())
+	testIdentifier(t, splat.Value, value.Code())
 }
 
 func testBooleanLiteral(t *testing.T, exp ast.Expression, value bool) {
@@ -2399,18 +2326,17 @@ func testArrayLiteral(t *testing.T, expr ast.Expression, value []string) {
 	utils.AssertEqual(t, len(array.Elements), len(value))
 	arr := make([]string, len(array.Elements))
 	for i, v := range array.Elements {
-		arr[i] = v.String()
+		arr[i] = v.Code()
 	}
 	utils.AssertEqualCmp(t, arr, value, utils.CompareArrays)
 }
 
 func testHashLiteral(t *testing.T, expr ast.Expression, value map[string]string) {
 	t.Helper()
-	hash, ok := expr.(*ast.HashLiteral)
-	utils.Assert(t, ok, "expr not *ast.HashLiteral. got=%T", expr)
+	hash := utils.AssertType[*ast.HashLiteral](t, expr, "expr not *ast.HashLiteral. got=%T", expr)
 	hashMap := make(map[string]string)
 	for k, v := range hash.Map {
-		hashMap[k.String()] = v.String()
+		hashMap[k.Code()] = v.Code()
 	}
 
 	// if !reflect.DeepEqual(hashMap, value) {
@@ -2420,12 +2346,8 @@ func testHashLiteral(t *testing.T, expr ast.Expression, value map[string]string)
 	utils.AssertEqualCmp(t, hashMap, value, utils.CompareMaps)
 }
 
-func parseSource(src string, modes ...p.Mode) (*ast.Program, *p.Errors) {
-	mode := parseMode
-	for _, m := range modes {
-		mode = mode | m
-	}
-	prog, err := p.ParseFile(gotoken.NewFileSet(), "", src, mode)
+func parseSource(src string) (*ast.Program, *p.Errors) {
+	prog, err := p.ParseFile(gotoken.NewFileSet(), "", src)
 	var parserErrors *p.Errors
 	if err != nil {
 		parserErrors = err.(*p.Errors)
@@ -2433,12 +2355,8 @@ func parseSource(src string, modes ...p.Mode) (*ast.Program, *p.Errors) {
 	return prog, parserErrors
 }
 
-func parseExpression(src string, modes ...p.Mode) (ast.Expression, *p.Errors) {
-	mode := parseMode
-	for _, m := range modes {
-		mode = mode | m
-	}
-	expr, err := p.ParseExprFrom(gotoken.NewFileSet(), "", src, mode)
+func parseExpression(src string) (ast.Expression, *p.Errors) {
+	expr, err := p.ParseExprFrom(gotoken.NewFileSet(), "", src)
 	var parserErrors *p.Errors
 	if err != nil {
 		parserErrors = err.(*p.Errors)
@@ -2455,6 +2373,8 @@ func checkParserErrors(t *testing.T, err error, withStack ...bool) {
 	if len(withStack) != 0 {
 		printStack = withStack[0]
 	}
+	// TODO: this breaks with nil-pointer dereference
+	// parserErrors := utils.AssertType[*p.Errors](t, err, "Unexpected error type: %T:%v\n", err, err)
 	parserErrors, ok := err.(*p.Errors)
 	if parserErrors == nil {
 		return

@@ -16,7 +16,7 @@ func TestFileExpandPath(t *testing.T) {
 		}
 		filename := NewString("./fixtures/testfile.rb")
 
-		result, err := fileExpandPath(context, filename)
+		result, err := fileExpandPath(context, nil, filename)
 
 		utils.AssertNoError(t, err)
 
@@ -37,7 +37,7 @@ func TestFileExpandPath(t *testing.T) {
 		filename := NewString("../../main.go")
 		dirname := NewString("object/fixtures/")
 
-		result, err := fileExpandPath(context, filename, dirname)
+		result, err := fileExpandPath(context, nil, filename, dirname)
 
 		utils.AssertNoError(t, err)
 
@@ -58,7 +58,7 @@ func TestFileDirname(t *testing.T) {
 	}
 	filename := NewString("/var/log/foo.log")
 
-	result, err := fileDirname(context, filename)
+	result, err := fileDirname(context, nil, filename)
 
 	utils.AssertNoError(t, err)
 

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"hash/fnv"
 	"strings"
+
+	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 var hashClass RubyClassObject = newClass(
@@ -37,16 +39,6 @@ func (h HashKey) bytes() []byte {
 	bytes[3] = byte(h)
 	return bytes[:]
 }
-
-// func hash(obj RubyObject) HashKey {
-// 	if hashable, ok := obj.(hashable); ok {
-// 		return hashable.HashKey()
-// 	}
-// 	pointer := fmt.Sprintf("%p", obj)
-// 	h := fnv.New64a()
-// 	h.Write([]byte(pointer))
-// 	return HashKey(h.Sum64())
-// }
 
 type hashPair struct {
 	Key   RubyObject
@@ -99,7 +91,10 @@ var hashMethods = map[string]RubyMethod{
 	"has_key?": newMethod(hashHasKey),
 }
 
-func hashHasKey(context CallContext, args ...RubyObject) (RubyObject, error) {
+func hashHasKey(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		defer tracer.Un(tracer.Trace(trace.Here()))
+	}
 	hash, _ := context.Receiver().(*Hash)
 	if len(args) != 1 {
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))

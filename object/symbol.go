@@ -3,24 +3,35 @@ package object
 import (
 	"fmt"
 	"hash/fnv"
+
+	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 var (
-	symbolClass RubyClassObject = newClass(
+	symbolClass RubyClassObject = nil_class
+	// TRUE  RubyObject = NewSymbol("true")
+	// FALSE RubyObject = NewSymbol("false")
+	// NIL   RubyObject = NewSymbol("nil")
+
+	// unique symbols
+	TRUE  RubyObject = &Symbol{Value: "true"}
+	FALSE RubyObject = &Symbol{Value: "false"}
+	NIL   RubyObject = &Symbol{Value: "nil"}
+	FUNCS RubyObject = &Symbol{Value: "funcs"}
+)
+
+// instantiate the symbol class
+func initSymbolClass() {
+	symbolClass = newClass(
 		"Symbol",
 		symbolMethods,
 		symbolClassMethods,
 		notInstantiatable, // not instantiatable through new
 	)
-	// TRUE  RubyObject = NewSymbol("true")
-	// FALSE RubyObject = NewSymbol("false")
-	// NIL   RubyObject = NewSymbol("nil")
-	TRUE  RubyObject = &Symbol{Value: "true"}
-	FALSE RubyObject = &Symbol{Value: "false"}
-	NIL   RubyObject = &Symbol{Value: "nil"}
-)
+}
 
 func init() {
+	initSymbolClass()
 	CLASSES.Set("Symbol", symbolClass)
 }
 
@@ -32,6 +43,8 @@ func NewSymbol(value string) *Symbol {
 		return FALSE.(*Symbol)
 	case "nil":
 		return NIL.(*Symbol)
+	case "funcs":
+		return FUNCS.(*Symbol)
 	default:
 		return &Symbol{Value: value}
 	}
@@ -41,8 +54,21 @@ type Symbol struct {
 	Value string
 }
 
-func (s *Symbol) Inspect() string  { return ":" + s.Value }
-func (s *Symbol) Class() RubyClass { return symbolClass }
+func (s *Symbol) Inspect() string { return ":" + s.Value }
+
+func (s *Symbol) Class() RubyClass {
+	if symbolClass == nil {
+		panic("symbolClass is nil")
+	}
+	if symbolClass == nil_class {
+		initSymbolClass()
+		if symbolClass == nil_class {
+			panic("symbolClass is *still* nil_class")
+		}
+	}
+	return symbolClass
+}
+
 func (s *Symbol) HashKey() HashKey {
 	h := fnv.New64a()
 	h.Write([]byte(s.Value))
@@ -51,6 +77,7 @@ func (s *Symbol) HashKey() HashKey {
 
 var (
 	_ RubyObject = &Symbol{}
+	_ RubyClass  = symbolClass
 )
 
 var symbolClassMethods = map[string]RubyMethod{}
@@ -61,21 +88,30 @@ var symbolMethods = map[string]RubyMethod{
 	"size": withArity(0, newMethod(symbolSize)),
 }
 
-func symbolToS(context CallContext, args ...RubyObject) (RubyObject, error) {
+func symbolToS(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		defer tracer.Un(tracer.Trace(trace.Here()))
+	}
 	if sym, ok := context.Receiver().(*Symbol); ok {
 		return NewString(sym.Value), nil
 	}
 	return nil, nil
 }
 
-func symbolSize(context CallContext, args ...RubyObject) (RubyObject, error) {
+func symbolSize(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		defer tracer.Un(tracer.Trace(trace.Here()))
+	}
 	if sym, ok := context.Receiver().(*Symbol); ok {
 		return NewInteger(int64(len(sym.Value))), nil
 	}
 	return nil, nil
 }
 
-func symbolToI(context CallContext, args ...RubyObject) (RubyObject, error) {
+func symbolToI(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		defer tracer.Un(tracer.Trace(trace.Here()))
+	}
 	if boolean, ok := SymbolToBool(context.Receiver()); ok {
 		if boolean {
 			return NewInteger(1), nil

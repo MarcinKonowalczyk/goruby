@@ -51,7 +51,7 @@ func TestStringAdd(t *testing.T) {
 	for _, testCase := range tests {
 		context := &callContext{receiver: NewString("foo")}
 
-		result, err := stringAdd(context, testCase.arguments...)
+		result, err := stringAdd(context, nil, testCase.arguments...)
 
 		utils.AssertError(t, err, testCase.err)
 		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -74,7 +74,7 @@ func Test_StringGsub(t *testing.T) {
 	for _, testCase := range tests {
 		context := &callContext{receiver: NewString("foobar")}
 
-		result, err := stringGsub(context, testCase.arguments...)
+		result, err := stringGsub(context, nil, testCase.arguments...)
 
 		utils.AssertError(t, err, testCase.err)
 

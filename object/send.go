@@ -1,9 +1,17 @@
 package object
 
-import "hash/fnv"
+import (
+	"hash/fnv"
+
+	"github.com/MarcinKonowalczyk/goruby/trace"
+)
 
 // Send sends message method with args to context and returns its result
-func Send(context CallContext, method string, args ...RubyObject) (RubyObject, error) {
+func Send(context CallContext, method string, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		defer tracer.Un(tracer.Trace(trace.Here()))
+		tracer.Message(method)
+	}
 	receiver := context.Receiver()
 	class := receiver.Class()
 
@@ -19,9 +27,11 @@ func Send(context CallContext, method string, args ...RubyObject) (RubyObject, e
 			continue
 		}
 
-		return fn.Call(context, args...)
+		return fn.Call(context, tracer, args...)
 	}
 
+	// fmt.Printf("receiver: %v(%T)\n", receiver, receiver)
+	// fmt.Printf("method: %v(%T)\n", method, method)
 	return nil, NewNoMethodError(receiver, method)
 }
 
@@ -38,17 +48,17 @@ type eigenclass struct {
 }
 
 func (e *eigenclass) Inspect() string {
-	if e.wrappedClass != nil {
-		return e.wrappedClass.(RubyClassObject).Inspect()
+	if e.wrappedClass == nil_class {
+		return "(eigenclass of nil)"
 	}
-	return "(singleton class)"
+	if e.wrappedClass == nil {
+		return "(singleton class)"
+	}
+	return e.wrappedClass.(RubyObject).Inspect()
 }
 
 func (e *eigenclass) Class() RubyClass {
-	if e.wrappedClass != nil {
-		return e.wrappedClass
-	}
-	return nil
+	return e.wrappedClass
 }
 func (e *eigenclass) Methods() MethodSet { return e.methods }
 func (e *eigenclass) GetMethod(name string) (RubyMethod, bool) {
@@ -93,20 +103,34 @@ type extendedObject struct {
 }
 
 func newExtendedObject(object RubyObject) *extendedObject {
+	object_class := object.Class()
+	if object_class == nil {
+		panic("object_class is nil")
+	}
+	if object_class == nil_class {
+		panic("object_class is nil_class")
+	}
+
 	return &extendedObject{
 		RubyObject: object,
-		eigenclass: newEigenclass(object.Class()),
+		eigenclass: newEigenclass(object_class),
 	}
 }
 
 func (e *extendedObject) Class() RubyClass { return e.eigenclass }
-func (e *extendedObject) Inspect() string {
-	return e.RubyObject.Inspect()
-}
+func (e *extendedObject) Inspect() string  { return e.RubyObject.Inspect() }
 
 // func (e *extendedObject) String() string { return "hello" }
 func (e *extendedObject) addMethod(name string, method RubyMethod) {
 	e.eigenclass.addMethod(name, method)
+}
+
+// func (e *extendedObject) GetMethod(
+func (e *extendedObject) GetMethod(name string) (RubyMethod, bool) {
+	if method, ok := e.RubyObject.Class().GetMethod(name); ok {
+		return method, true
+	}
+	return e.eigenclass.GetMethod(name)
 }
 
 var (

@@ -29,6 +29,9 @@ func newClass(
 		Environment:     NewEnclosedEnvironment(nil),
 	}
 	cls.class.(*eigenclass).methods = NewMethodSet(classMethods)
+	if cls == nil_class {
+		panic("newClass tried to return is nil_class")
+	}
 	return cls
 }
 
@@ -41,15 +44,9 @@ type class struct {
 	Environment
 }
 
-func (c *class) Inspect() string {
-	return c.name
-}
-func (c *class) Class() RubyClass {
-	return c.class
-}
-func (c *class) Methods() MethodSet {
-	return c.instanceMethods
-}
+func (c *class) Inspect() string    { return c.name }
+func (c *class) Class() RubyClass   { return c.class }
+func (c *class) Methods() MethodSet { return c.instanceMethods }
 
 func (c *class) GetMethod(name string) (RubyMethod, bool) {
 	method, ok := c.instanceMethods.Get(name)

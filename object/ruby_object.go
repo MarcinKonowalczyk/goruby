@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 type inspectable interface {
@@ -112,6 +113,7 @@ func (f *FunctionParameter) String() string {
 
 // A Function represents a user defined function. It is no real Ruby object.
 type Function struct {
+	Name       string
 	Parameters []*FunctionParameter
 	Body       *ast.BlockStatement
 	Env        Environment
@@ -137,7 +139,12 @@ func (f *Function) String() string {
 }
 
 // Call implements the RubyMethod interface. It evaluates f.Body and returns its result
-func (f *Function) Call(context CallContext, args ...RubyObject) (RubyObject, error) {
+func (f *Function) Call(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		defer tracer.Un(tracer.Trace("Function.Call"))
+		tracer.Message(f.Name)
+		tracer.Message(f.String())
+	}
 	// TODO: Handle tail splats
 	if len(f.Parameters) == 1 && f.Parameters[0].Splat {
 		// Only one splat parameter.
