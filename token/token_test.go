@@ -107,7 +107,7 @@ func TestTypeSting(t *testing.T) {
 		{tk: FALSE, str: "FALSE", repr: "false"},
 		{tk: RETURN, str: "RETURN", repr: "return"},
 		{tk: NIL, str: "NIL", repr: "nil"},
-		{tk: WHILE, str: "WHILE", repr: "while"},
+		// {tk: WHILE, str: "WHILE", repr: "while"},
 		{tk: LOOP, str: "LOOP", repr: "loop"},
 		{tk: BREAK, str: "BREAK", repr: "break"},
 	}

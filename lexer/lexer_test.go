@@ -238,7 +238,7 @@ func TestLex(t *testing.T) {
 				end
 			`,
 			exp: []expected{
-				expect(t)("WHILE", "while"),
+				expect(t)("IDENT", "while"),
 				expect(t)("IDENT", "x"),
 				expect(t)("LT", "<"),
 				expect(t)("IDENT", "y"),

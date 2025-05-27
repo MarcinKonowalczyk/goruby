@@ -150,7 +150,6 @@ func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, trace_
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.IF, p.parseIfExpression)
 	p.registerPrefix(token.UNLESS, p.parseIfExpression)
-	p.registerPrefix(token.WHILE, p.parseLoopExpression)
 	p.registerPrefix(token.LOOP, p.parseLoopExpression)
 	p.registerPrefix(token.DEF, p.parseFunctionLiteral)
 	p.registerPrefix(token.SYMBOL, p.parseSymbolLiteral)
@@ -261,6 +260,7 @@ func (p *parser) nextToken() {
 func (p *parser) parseIdentifier() ast.Expression {
 	if p.tracer != nil {
 		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
+		p.tracer.Message(p.curToken.Literal)
 	}
 	return &ast.Identifier{Value: p.curToken.Literal}
 }
@@ -270,7 +270,15 @@ func (p *parser) Errors() []error {
 	return p.errors
 }
 
-func (p *parser) Error(actual token.Type, description string, expected ...token.Type) {
+func (p *parser) Error(err error) {
+	if p.tracer != nil {
+		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
+		p.tracer.Message(err)
+	}
+	p.errors = append(p.errors, err)
+}
+
+func (p *parser) unexpectedTokenError(actual token.Type, description string, expected ...token.Type) {
 	epos := p.file.Position(p.pos)
 	err := &UnexpectedTokenError{
 		Pos:            epos,
@@ -278,7 +286,7 @@ func (p *parser) Error(actual token.Type, description string, expected ...token.
 		ActualToken:    actual,
 		Description:    description,
 	}
-	p.errors = append(p.errors, errors.WithStack(err))
+	p.Error(err)
 }
 
 func (p *parser) noPrefixParseFnError(t token.Type) {
@@ -287,8 +295,7 @@ func (p *parser) noPrefixParseFnError(t token.Type) {
 	if epos.Filename != "" || epos.IsValid() {
 		msg = epos.String() + ": " + msg
 	}
-	p.errors = append(p.errors, errors.Errorf("%s", msg))
-
+	p.Error(errors.Errorf("%s", msg))
 }
 
 // ParseProgram returns the parsed program AST and all errors which occurred
@@ -330,10 +337,10 @@ func (p *parser) parseStatement() ast.Statement {
 		if epos.Filename != "" || epos.IsValid() {
 			msg = epos.String() + ": " + msg
 		}
-		p.errors = append(p.errors, fmt.Errorf("%s", msg))
+		p.Error(fmt.Errorf("%s", msg))
 		return nil
 	case token.EOF:
-		p.Error(p.curToken.Type, "", token.NEWLINE)
+		p.unexpectedTokenError(p.curToken.Type, "", token.NEWLINE)
 		return nil
 	case token.NEWLINE:
 		return nil
@@ -374,7 +381,7 @@ func (p *parser) parseReturnStatement() *ast.ReturnStatement {
 	}
 
 	if !p.peekIs(token.COMMA) {
-		p.Error(p.peekToken.Type, "", token.COMMA)
+		p.unexpectedTokenError(p.peekToken.Type, "", token.COMMA)
 		return nil
 	}
 
@@ -438,8 +445,7 @@ func (p *parser) parseComment() ast.Statement {
 	comment.Value = p.curToken.Literal
 	if !p.peekIs(token.NEWLINE, token.EOF) {
 		epos := p.file.Position(p.pos)
-		msg := fmt.Errorf("%s: Expected newline or eof after comment", epos.String())
-		p.errors = append(p.errors, msg)
+		p.Error(fmt.Errorf("%s: Expected newline or eof after comment", epos.String()))
 		return nil
 	}
 
@@ -541,8 +547,7 @@ func (p *parser) parseAssignmentOperator(left ast.Expression) ast.Expression {
 	op := infix.InfixFromAssignmentOperator(p.curToken)
 	if op == infix.ILLEGAL {
 		epos := p.file.Position(p.pos)
-		msg := fmt.Errorf("%s: invalid assignment operator %q", epos.String(), p.curToken.Literal)
-		p.errors = append(p.errors, msg)
+		p.Error(fmt.Errorf("%s: invalid assignment operator %q", epos.String(), p.curToken.Literal))
 		return nil
 	}
 
@@ -568,7 +573,7 @@ func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
 	case *ast.IndexExpression:
 	case ast.ExpressionList:
 	default:
-		p.Error(p.curToken.Type, "", token.EOF)
+		p.unexpectedTokenError(p.curToken.Type, "", token.EOF)
 		return nil
 	}
 
@@ -585,7 +590,7 @@ func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
 	// rewrite to conditional assignment
 	con, ok := right.Consequence.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
-		p.errors = append(p.errors, fmt.Errorf("malformed AST in assignment of the consequence"))
+		p.Error(fmt.Errorf("malformed AST in assignment of the consequence"))
 		return nil
 	}
 
@@ -593,7 +598,7 @@ func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
 	if right.Alternative != nil {
 		alt, ok = right.Alternative.Statements[0].(*ast.ExpressionStatement)
 		if !ok {
-			p.errors = append(p.errors, fmt.Errorf("malformed AST in assignment of the alternative"))
+			p.Error(fmt.Errorf("malformed AST in assignment of the alternative"))
 			return nil
 		}
 	} else {
@@ -648,8 +653,7 @@ func (p *parser) parseIntegerLiteral() ast.Expression {
 	lit := &ast.IntegerLiteral{}
 	value, err := strconv.ParseInt(integerLiteralReplacer.Replace(p.curToken.Literal), 0, 64)
 	if err != nil {
-		msg := fmt.Errorf("could not parse %q as integer", p.curToken.Literal)
-		p.errors = append(p.errors, msg)
+		p.Error(fmt.Errorf("could not parse %q as integer", p.curToken.Literal))
 		return nil
 	}
 	lit.Value = value
@@ -663,8 +667,7 @@ func (p *parser) parseFloatLiteral() ast.Expression {
 	lit := &ast.FloatLiteral{}
 	value, err := strconv.ParseFloat(p.curToken.Literal, 64)
 	if err != nil {
-		msg := fmt.Errorf("could not parse %q as float", p.curToken.Literal)
-		p.errors = append(p.errors, msg)
+		p.Error(fmt.Errorf("could not parse %q as float", p.curToken.Literal))
 		return nil
 	}
 	lit.Value = value
@@ -708,7 +711,7 @@ func (p *parser) parseBoolean() ast.Expression {
 	} else if p.currentIs(token.TRUE) {
 		return &ast.SymbolLiteral{Value: "true"}
 	} else {
-		p.Error(p.curToken.Type, "", token.TRUE, token.FALSE)
+		p.unexpectedTokenError(p.curToken.Type, "", token.TRUE, token.FALSE)
 		return nil
 	}
 }
@@ -794,8 +797,12 @@ func (p *parser) parseBlock() *ast.FunctionLiteral {
 	if p.tracer != nil {
 		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
 	}
+	name := newAnonymousName("block")
+	if p.tracer != nil {
+		p.tracer.Message(name)
+	}
 	block := &ast.FunctionLiteral{
-		Name: newAnonymousName("block"),
+		Name: name,
 	}
 	if p.peekIs(token.PIPE) {
 		block.Parameters = p.parseFunctionParameters(token.PIPE, token.PIPE)
@@ -831,7 +838,7 @@ func (p *parser) parseInfixExpression(left ast.Expression) ast.Expression {
 
 	op := infix.InfixFromToken(p.curToken)
 	if op == infix.ILLEGAL {
-		p.errors = append(p.errors, fmt.Errorf("illegal infix operator %q", p.curToken.Literal))
+		p.Error(fmt.Errorf("illegal infix operator %q", p.curToken.Literal))
 		return nil
 	}
 
@@ -913,7 +920,7 @@ func (p *parser) parseIfExpression() ast.Expression {
 	}
 
 	if !p.peekIs(token.NEWLINE, token.SEMICOLON) {
-		p.Error(p.peekToken.Type, "could not parse if expression", token.NEWLINE, token.SEMICOLON)
+		p.unexpectedTokenError(p.peekToken.Type, "could not parse if expression", token.NEWLINE, token.SEMICOLON)
 		return nil
 	}
 	p.accept(token.NEWLINE, token.SEMICOLON)
@@ -941,7 +948,7 @@ func (p *parser) parseIfExpression() ast.Expression {
 		// don't expect the END, since it has been gobbled up by the innermost
 		// if expression. check that it's there, though.
 		if !p.currentIs(token.END) {
-			p.Error(p.curToken.Type, "expected END after elsif", token.END)
+			p.unexpectedTokenError(p.curToken.Type, "expected END after elsif", token.END)
 		}
 	} else {
 		p.accept(token.END)
@@ -995,20 +1002,14 @@ func (p *parser) parseLoopExpression() ast.Expression {
 		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
 	}
 	loop := &ast.LoopExpression{}
-	if p.curToken.Type == token.WHILE {
-		p.nextToken()
-		loop.Condition = p.parseExpression(precLowest)
-		loop.Block = p.parseBlockStatement(token.END)
-		p.nextToken()
-	} else if p.curToken.Type == token.LOOP {
-		loop.Condition = &ast.SymbolLiteral{Value: "true"}
+	if p.curToken.Type == token.LOOP {
 		if p.peekIs(token.LBRACE) {
 			p.accept(token.LBRACE)
 			loop.Block = p.parseBlockStatement(token.RBRACE)
 			p.nextToken()
 		}
 	} else {
-		p.Error(p.curToken.Type, "unexpected loop start", token.WHILE, token.LOOP)
+		p.unexpectedTokenError(p.curToken.Type, "unexpected loop start", token.LOOP)
 		return nil
 	}
 
@@ -1040,7 +1041,7 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 	fl := &ast.FunctionLiteral{}
 
 	if !p.peekIs(token.IDENT) && !p.peekToken.Type.IsOperator() {
-		p.Error(p.peekToken.Type, "", token.IDENT)
+		p.unexpectedTokenError(p.peekToken.Type, "", token.IDENT)
 		return nil
 	}
 
@@ -1106,7 +1107,7 @@ func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast
 	identifiers := []*ast.FunctionParameter{}
 
 	if !hasDelimiters && p.peekIs(endToken) {
-		p.Error(p.peekToken.Type, "", token.NEWLINE, token.SEMICOLON)
+		p.unexpectedTokenError(p.peekToken.Type, "", token.NEWLINE, token.SEMICOLON)
 		return nil
 	}
 
@@ -1157,7 +1158,7 @@ func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast
 	}
 
 	if !hasDelimiters && p.peekIs(endToken) {
-		p.Error(p.peekToken.Type, "no delimiters but end delimiter found", endToken)
+		p.unexpectedTokenError(p.peekToken.Type, "no delimiters but end delimiter found", endToken)
 		return nil
 	}
 
@@ -1183,7 +1184,7 @@ func (p *parser) parseBlockStatement(t ...token.Type) *ast.BlockStatement {
 
 	for !p.peekIs(terminatorTokens...) {
 		if p.peekIs(token.EOF) {
-			p.Error(p.peekToken.Type, "", token.EOF)
+			p.unexpectedTokenError(p.peekToken.Type, "", token.EOF)
 			return block
 		}
 		p.nextToken()
@@ -1205,11 +1206,15 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 	p.nextToken()
 
 	if !p.currentIs(token.IDENT) && !p.curToken.Type.IsOperator() {
-		p.Error(p.curToken.Type, "", token.IDENT)
+		p.unexpectedTokenError(p.curToken.Type, "", token.IDENT)
 		return nil
 	}
 
-	contextCallExpression.Function = p.curToken.Literal
+	name := p.curToken.Literal
+	if p.tracer != nil {
+		p.tracer.Message(name)
+	}
+	contextCallExpression.Function = name
 
 	if p.peekIs(token.SEMICOLON, token.NEWLINE, token.EOF, token.DOT, token.RPAREN, token.QMARK) {
 		contextCallExpression.Arguments = []ast.Expression{}
@@ -1250,7 +1255,7 @@ func (p *parser) parseContextCallExpression(context ast.Expression) ast.Expressi
 	}
 
 	if !p.currentIs(token.IDENT) {
-		p.Error(p.curToken.Type, "", token.IDENT)
+		p.unexpectedTokenError(p.curToken.Type, "", token.IDENT)
 		return nil
 	}
 
@@ -1328,8 +1333,7 @@ func (p *parser) parseCallBlock(function ast.Expression) ast.Expression {
 		fn.Right = exp
 		return fn
 	}
-	msg := fmt.Errorf("could not parse call expression: expected identifier, got token '%T'", function)
-	p.errors = append(p.errors, msg)
+	p.Error(fmt.Errorf("could not parse call expression: expected identifier, got token '%T'", function))
 	return nil
 }
 
@@ -1341,8 +1345,7 @@ func (p *parser) parseCallExpressionWithParens(function ast.Expression) ast.Expr
 	}
 	ident, ok := function.(*ast.Identifier)
 	if !ok {
-		msg := fmt.Errorf("could not parse call expression: expected identifier, got token '%T'", function)
-		p.errors = append(p.errors, msg)
+		p.Error(fmt.Errorf("could not parse call expression: expected identifier, got token '%T'", function))
 		return nil
 	}
 	exp := &ast.ContextCallExpression{Function: ident.Value}
@@ -1436,7 +1439,7 @@ func (p *parser) accept(t ...token.Type) bool {
 		return true
 	}
 
-	p.Error(p.peekToken.Type, "", t...)
+	p.unexpectedTokenError(p.peekToken.Type, "", t...)
 	return false
 }
 
