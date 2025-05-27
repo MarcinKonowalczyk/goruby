@@ -54,6 +54,7 @@ func (a *Range) HashKey() HashKey {
 var rangeMethods = map[string]RubyMethod{
 	"find_all": withArity(1, newMethod(rangeFindAll)),
 	"all?":     newMethod(rangeAll),
+	"size":     newMethod(rangeSize),
 }
 
 // Actually create an array of integers from the range
@@ -136,4 +137,16 @@ func rangeAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 		}
 	}
 	return TRUE, nil
+}
+
+func rangeSize(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	if tracer != nil {
+		defer tracer.Un(tracer.Trace(trace.Here()))
+	}
+	rng, _ := context.Receiver().(*Range)
+	size := rng.Right - rng.Left
+	if rng.Inclusive {
+		size++
+	}
+	return NewInteger(size), nil
 }
