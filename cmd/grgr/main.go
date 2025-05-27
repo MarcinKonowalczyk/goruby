@@ -11,6 +11,11 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/interpreter"
 	"github.com/MarcinKonowalczyk/goruby/parser"
+	"github.com/MarcinKonowalczyk/goruby/transformer"
+)
+
+var (
+	trace_transform bool = false
 )
 
 func main() {
@@ -31,6 +36,12 @@ func main() {
 
 	if err != nil {
 		log.Printf("Error while interpreting program file: %T:%v\n", err, err)
+		os.Exit(1)
+	}
+
+	program, err = transformer.Transform(program, trace_transform)
+	if err != nil {
+		log.Printf("Error while transforming program file: %T:%v\n", err, err)
 		os.Exit(1)
 	}
 
@@ -66,6 +77,9 @@ func (g *grgrOutput) PrintNode(node ast.Node) {
 	switch node := (node).(type) {
 	case *ast.Program:
 		for _, statement := range node.Statements {
+			if statement == nil {
+				continue
+			}
 			g.PrintNode(statement.(ast.Node))
 		}
 	case *ast.Comment:
@@ -76,21 +90,31 @@ func (g *grgrOutput) PrintNode(node ast.Node) {
 		g.PrintFakeComment(fmt.Sprintf(" %T", node))
 		g.Println(node.Code())
 		g.Println()
+	case *ast.Assignment:
+		g.PrintFakeComment(fmt.Sprintf(" %T", node))
+		g.Println(node.Code())
+		g.Println()
+
+	case *ast.IndexExpression:
+		g.PrintFakeComment(fmt.Sprintf(" %T", node))
+		g.Println(node.Code())
+
+	case *ast.ContextCallExpression:
+		g.PrintFakeComment(fmt.Sprintf(" %T", node))
+		g.Println(node.Code())
+		g.Println()
+	case *ast.IntegerLiteral:
+		g.PrintFakeComment(fmt.Sprintf(" %T", node))
+		g.Println(node.Code())
+		g.Println()
+	case *ast.ConditionalExpression:
+		g.PrintFakeComment(fmt.Sprintf(" %T", node))
+		g.Println(node.Code())
+		g.Println()
 
 	default:
-		panic(fmt.Sprintf("unexpected node type: %T", node))
+		panic(fmt.Sprintf("GRGR print does not yet know how to print %T", node))
 	}
-}
-
-type codeer interface {
-	Code() string
-}
-
-func code(thing any) string {
-	if thing, ok := thing.(codeer); ok {
-		return thing.Code()
-	}
-	panic(fmt.Sprintf("%T does not have a Code() method", thing))
 }
 
 func (g *grgrOutput) PrintFakeComment(content ...string) {

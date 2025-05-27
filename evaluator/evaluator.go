@@ -477,22 +477,69 @@ func (e *evaluator) evalSymbolIndexExpression(env object.Environment, target *ob
 				args[i] = e
 			}
 		}
-		printable_args := make([]string, len(args))
-		for i, e := range args {
-			if e == nil {
-				printable_args[i] = "nil"
-			} else {
-				printable_args[i] = e.Inspect()
-			}
-		}
+		// printable_args := make([]string, len(args))
+		// for i, e := range args {
+		// 	if e == nil {
+		// 		printable_args[i] = "nil"
+		// 	} else {
+		// 		printable_args[i] = e.Inspect()
+		// 	}
+		// }
 		callContext := &callContext{object.NewCallContext(env, object.FUNCS_STORE), e}
 		value, err := object.Send(callContext, target.Value, e.tracer, args...)
 		return value, err
+
+	case ast.ExpressionList:
+		// evaluate the expression list
+		evaluated, err := e.evalExpressionList(index.(ast.ExpressionList), env)
+		if err != nil {
+			return nil, errors.WithMessage(err, "eval expression list")
+		}
+		if evaluated == nil {
+			return nil, errors.WithStack(
+				object.NewException("expression list is nil"),
+			)
+		}
+
+		evaluated_obj := evaluated.(rubyObjects)
+
+		// call the proc with the arguments
+		args := make([]object.RubyObject, len(evaluated_obj))
+		for i, e := range evaluated_obj {
+			if e == nil {
+				args[i] = object.NIL
+			} else {
+				args[i] = e
+			}
+		}
+		// printable_args := make([]string, len(args))
+		callContext := &callContext{object.NewCallContext(env, object.FUNCS_STORE), e}
+		value, err := object.Send(callContext, target.Value, e.tracer, args...)
+		return value, err
+
 	default:
-		// not implemented yet
-		return nil, errors.WithStack(
-			object.NewException("proc index operator not supported: %s", index),
-		)
+		evaluated, err := e.Eval(index, env)
+		if err != nil {
+			return nil, errors.WithMessage(err, "eval symbol index")
+		}
+
+		if evaluated == nil {
+			return nil, errors.WithStack(
+				object.NewException("symbol index is nil"),
+			)
+		}
+
+		// call the proc with the arguments
+		args := make([]object.RubyObject, 1)
+		if evaluated == nil {
+			args[0] = object.NIL
+		} else {
+			args[0] = evaluated
+		}
+
+		callContext := &callContext{object.NewCallContext(env, object.FUNCS_STORE), e}
+		value, err := object.Send(callContext, target.Value, e.tracer, args...)
+		return value, err
 	}
 }
 

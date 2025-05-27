@@ -220,7 +220,6 @@ end
 		},
 		{
 			"foobar",
-			// TODO: Ugly message
 			"NoMethodError: undefined method `foobar' for :funcs:Symbol",
 		},
 		{

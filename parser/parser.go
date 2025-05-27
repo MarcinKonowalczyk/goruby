@@ -1064,33 +1064,32 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 	}
 
 	// Check for dynamic constant assignment
-	inspect := func(n ast.Node) bool {
-		if _, ok := n.(*ast.Splat); ok {
-			// skip walking the splat since we don't want to evaluate it
-			return false
-		}
-		x, ok := n.(*ast.Assignment)
-		if !ok {
-			return true
-		}
-		switch left := x.Left.(type) {
-		case *ast.Identifier:
-			if left.IsConstant() {
-				p.errors = append(p.errors, fmt.Errorf("dynamic constant assignment"))
-			}
-		case ast.ExpressionList:
-			for _, expr := range left {
-				if ident, ok := expr.(*ast.Identifier); ok {
-					if ident.IsConstant() {
-						p.errors = append(p.errors, fmt.Errorf("dynamic constant assignment"))
-					}
-				}
-			}
-		}
-		return true
-	}
-	ast.Inspect(fl.Body, inspect)
-
+	// inspect := func(n ast.Node) bool {
+	// 	if _, ok := n.(*ast.Splat); ok {
+	// 		// skip walking the splat since we don't want to evaluate it
+	// 		return false
+	// 	}
+	// 	x, ok := n.(*ast.Assignment)
+	// 	if !ok {
+	// 		return true
+	// 	}
+	// 	switch left := x.Left.(type) {
+	// 	case *ast.Identifier:
+	// 		if left.IsConstant() {
+	// 			p.Error(fmt.Errorf("dynamic constant assignment"))
+	// 		}
+	// 	case ast.ExpressionList:
+	// 		for _, expr := range left {
+	// 			if ident, ok := expr.(*ast.Identifier); ok {
+	// 				if ident.IsConstant() {
+	// 					p.Error(fmt.Errorf("dynamic constant assignment"))
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// 	return true
+	// }
+	// ast.Inspect(fl.Body, inspect)
 	return fl
 }
 
@@ -1245,6 +1244,12 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 	return contextCallExpression
 }
 
+func (p *parser) debugMessageState() {
+	if p.tracer != nil {
+		p.tracer.Message(fmt.Sprintf("Current token: %v", p.curToken))
+		p.tracer.Message(fmt.Sprintf("Peek token: %v", p.peekToken))
+	}
+}
 func (p *parser) parseContextCallExpression(context ast.Expression) ast.Expression {
 	if p.tracer != nil {
 		defer p.tracer.Un(p.tracer.Trace(trace.Here()))

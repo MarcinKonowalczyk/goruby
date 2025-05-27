@@ -1,15 +1,14 @@
 package interpreter
 
 import (
-	"fmt"
 	"go/token"
 	"os"
-	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/evaluator"
 	"github.com/MarcinKonowalczyk/goruby/object"
 	"github.com/MarcinKonowalczyk/goruby/parser"
-	"github.com/MarcinKonowalczyk/goruby/trace"
+	"github.com/MarcinKonowalczyk/goruby/trace/printer"
+	"github.com/MarcinKonowalczyk/goruby/transformer"
 )
 
 // // Interpreter defines the methods of an interpreter
@@ -39,55 +38,41 @@ func NewInterpreter() Interpreter {
 }
 
 type interpreter struct {
-	environment object.Environment
-	trace_parse bool
-	trace_eval  bool
-}
-
-func newTracePrinter() func(trace.Node) error {
-	indent := 0
-	return func(n trace.Node) error {
-		switch n := n.(type) {
-		case *trace.Enter:
-			if n.Name == trace.START_NODE {
-				return nil
-			}
-			fmt.Printf("%s > %s\n", strings.Repeat(".", indent*2), n.Name)
-			indent++
-		case *trace.Exit:
-			if n.Name == trace.END_NODE {
-				return nil
-			}
-			indent--
-			fmt.Printf("%s < %s\n", strings.Repeat(".", indent*2), n.Name)
-		case *trace.Message:
-			fmt.Printf("%s @ %s\n", strings.Repeat(".", indent*2), n.Message)
-		default:
-			panic(fmt.Sprintf("unknown node type: %T", n))
-		}
-		return nil
-	}
+	environment     object.Environment
+	trace_parse     bool
+	trace_transform bool
+	trace_eval      bool
 }
 
 func (i *interpreter) Interpret(filename string, input interface{}) (object.RubyObject, error) {
-	node, tracer, err := parser.ParseFileEx(token.NewFileSet(), filename, input, i.trace_parse)
+	program, tracer, err := parser.ParseFileEx(token.NewFileSet(), filename, input, i.trace_parse)
 	if tracer != nil {
 		walkable, err := tracer.ToWalkable()
 		if err != nil {
 			panic(err)
 		}
-		walkable.Walk(newTracePrinter())
+		walkable.Walk(printer.NewTracePrinter())
 	}
 	if err != nil {
 		return nil, object.NewSyntaxError(err)
 	}
-	res, tracer, err := evaluator.EvalEx(node, i.environment, i.trace_eval)
+
+	// const ENABLE_TRANSFORMS_IN_INTERPRETER = true
+	const ENABLE_TRANSFORMS_IN_INTERPRETER = false
+	if ENABLE_TRANSFORMS_IN_INTERPRETER {
+		program, err = transformer.Transform(program, i.trace_transform)
+		if err != nil {
+			return nil, object.NewRuntimeError("transformer error: %v", err)
+		}
+	}
+
+	res, tracer, err := evaluator.EvalEx(program, i.environment, i.trace_eval)
 	if tracer != nil {
 		walkable, err := tracer.ToWalkable()
 		if err != nil {
 			panic(err)
 		}
-		walkable.Walk(newTracePrinter())
+		walkable.Walk(printer.NewTracePrinter())
 	}
 	return res, err
 }
