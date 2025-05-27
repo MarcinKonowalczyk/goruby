@@ -474,12 +474,12 @@ func TestFunctionObject(t *testing.T) {
 		tests := []struct {
 			input              string
 			expectedParameters []funcParam
-			expectedBody       string
+			expectedCode       string
 		}{
 			{
 				"def foo x; x + 2; end",
 				[]funcParam{{name: "x"}},
-				"(x + 2)",
+				"x + 2",
 			},
 			{
 				`def foo
@@ -520,7 +520,7 @@ func TestFunctionObject(t *testing.T) {
 				utils.AssertEqualCmpAny(t, param.Default, testParam.defaultValue, object.CompareRubyObjectsForTests)
 			}
 
-			utils.AssertEqual(t, fn.Body.String(), tt.expectedBody)
+			utils.AssertEqual(t, fn.Body.Code(), tt.expectedCode)
 		}
 	})
 }

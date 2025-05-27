@@ -10,11 +10,23 @@ import (
 // with the visitor w, followed by a call of w.Visit(nil).
 type Visitor interface {
 	VisitorMarker() // marker
-	Visit(node Node) (w Visitor)
+	Visit(node Node)
 }
 
 type Transformer interface {
 	TransformerMarker() // marker
+	// PreTransform(node Node) Node
+	// PostTransform(node Node) Node
+}
+
+// Transforms a node *before* it is walked.
+type PreTransformer interface {
+	PreTransform(node Node) Node
+}
+
+// Transforms a node *after* it is walked.
+type PostTransformer interface {
+	PostTransform(node Node) Node
 }
 
 // Parent returns the parent node of child. If child is not found within root,
@@ -72,37 +84,38 @@ func treeToLinkedList(node Node) *list.List {
 	return list
 }
 
-type inspector func(Node) bool
+type inspector func(Node)
 
 func (f inspector) VisitorMarker() {}
-func (f inspector) Visit(node Node) Visitor {
-	if f(node) {
-		return f
-	}
-	return nil
+func (f inspector) Visit(node Node) {
+	f(node)
 }
 
 var _ Visitor = inspector(nil)
+
+func Inspect(root Node, inspector_func func(Node)) {
+	// Walk the tree and apply the filter
+	Walk(root, nil, inspector(inspector_func))
+}
 
 // Contains reports whether root contains child or not. It matches child via
 // pointer equality.
 func Contains(root Node, child Node) bool {
 	var contains bool
-	filter := func(n Node) bool {
+	filter := func(n Node) {
 		if n == child {
 			contains = true
 		}
-		return !contains
 	}
 	Walk(root, nil, inspector(filter))
 	return contains
 }
 
-type visitorfunc func(Node) Visitor
+type visitorfunc func(Node)
 
 func (f visitorfunc) VisitorMarker() {}
-func (f visitorfunc) Visit(n Node) Visitor {
-	return f(n)
+func (f visitorfunc) Visit(n Node) {
+	f(n)
 }
 
 var _ Visitor = visitorfunc(nil)
@@ -111,10 +124,8 @@ var _ Visitor = visitorfunc(nil)
 // into the channel
 func WalkEmit(root Node) <-chan Node {
 	out := make(chan Node)
-	var visitor Visitor
-	visitor = visitorfunc(func(n Node) Visitor {
+	visitor := visitorfunc(func(n Node) {
 		out <- n
-		return visitor
 	})
 	go func() {
 		defer close(out)
@@ -152,16 +163,6 @@ func WalkEmit(root Node) <-chan Node {
 // 	// ...
 // }
 
-// Transforms a node *before* it is walked.
-type PreTransformer interface {
-	PreTransform(node Node) Node
-}
-
-// Transforms a node *after* it is walked.
-type PostTransformer interface {
-	PostTransform(node Node) Node
-}
-
 // Walk traverses an AST in depth-first order: It starts by calling
 // v.Visit(node); node must not be nil. If the visitor w returned by
 // v.Visit(node) is not nil, Walk is invoked recursively with visitor
@@ -198,7 +199,7 @@ func Walk(
 
 	// visit the node
 	if v != nil {
-		v = v.Visit(node)
+		v.Visit(node)
 	}
 
 	// walk children

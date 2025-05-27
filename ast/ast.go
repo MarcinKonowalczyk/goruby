@@ -2,7 +2,6 @@ package ast
 
 import (
 	"fmt"
-	"runtime"
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/ast/infix"
@@ -13,6 +12,7 @@ import (
 // All node types implement the Node interface.
 type Node interface {
 	node() // marks this as a node
+	Coder
 	String() string
 }
 
@@ -30,25 +30,6 @@ type Coder interface {
 	Code() string
 }
 
-func getParentInfo(N int) (string, int) {
-	parent, _, _, _ := runtime.Caller(1 + N)
-	info := runtime.FuncForPC(parent)
-	file, line := info.FileLine(parent)
-	return file, line
-}
-
-func code_or_string(thing any) string {
-	if thing, ok := thing.(Coder); ok {
-		return thing.Code()
-	}
-	if thing, ok := thing.(fmt.Stringer); ok {
-		file, line := getParentInfo(1)
-		fmt.Printf("# AST %T does not implement Coder at %s:%d\n", thing, file, line)
-		return thing.String()
-	}
-	panic(fmt.Sprintf("%T does not have a Code() or String() method", thing))
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
 // A Program node is the root node within the AST.
@@ -56,16 +37,17 @@ type Program struct {
 	Statements []Statement
 }
 
-func (p *Program) node() {}
+func (p *Program) node()          {}
+func (p *Program) String() string { return "<<<Program>>>" }
 
-func (p *Program) String() string {
+func (p *Program) Code() string {
 	stmts := make([]string, len(p.Statements))
 	for i, s := range p.Statements {
 		if s != nil {
-			stmts[i] = s.String()
+			stmts[i] = s.Code()
 		}
 	}
-	return strings.Join(stmts, "\n")
+	return strings.Join(stmts, "; ")
 }
 
 var (
@@ -79,12 +61,13 @@ type ReturnStatement struct {
 
 func (rs *ReturnStatement) node()          {}
 func (rs *ReturnStatement) statementNode() {}
+func (rs *ReturnStatement) String() string { return "<<<ReturnStatement>>>" }
 
-func (rs *ReturnStatement) String() string {
+func (rs *ReturnStatement) Code() string {
 	var out strings.Builder
 	out.WriteString("return ")
 	if rs.ReturnValue != nil {
-		out.WriteString(rs.ReturnValue.String())
+		out.WriteString(rs.ReturnValue.Code())
 	}
 	return out.String()
 }
@@ -101,26 +84,18 @@ type ExpressionStatement struct {
 
 func (es *ExpressionStatement) node()          {}
 func (es *ExpressionStatement) statementNode() {}
-
-func (es *ExpressionStatement) String() string {
-	if es.Expression != nil {
-		return es.Expression.String()
-	}
-	return ""
-}
+func (es *ExpressionStatement) String() string { return "<<<ExpressionStatement>>>" }
 
 func (es *ExpressionStatement) Code() string {
 	if es.Expression == nil {
 		return ""
 	}
-	return code_or_string(es.Expression)
+	return es.Expression.Code()
 }
 
 var (
 	_ Node      = &ExpressionStatement{}
 	_ Statement = &ExpressionStatement{}
-	// _ Expression = &ExpressionStatement{}
-	_ Coder = &ExpressionStatement{}
 )
 
 // BlockStatement represents a list of statements
@@ -130,16 +105,7 @@ type BlockStatement struct {
 
 func (bs *BlockStatement) node()          {}
 func (bs *BlockStatement) statementNode() {}
-
-func (bs *BlockStatement) String() string {
-	var out strings.Builder
-	for _, s := range bs.Statements {
-		if s != nil {
-			out.WriteString(s.String())
-		}
-	}
-	return out.String()
-}
+func (bs *BlockStatement) String() string { return "<<<BlockStatement>>>" }
 
 // Code returns the code representation of the block
 func (bs *BlockStatement) Code() string {
@@ -149,7 +115,7 @@ func (bs *BlockStatement) Code() string {
 		if s == nil {
 			continue
 		}
-		statement_string := code_or_string(s)
+		statement_string := s.Code()
 		statement_strings = append(statement_strings, statement_string)
 	}
 
@@ -164,7 +130,6 @@ func (bs *BlockStatement) Code() string {
 var (
 	_ Node      = &BlockStatement{}
 	_ Statement = &BlockStatement{}
-	_ Coder     = &BlockStatement{}
 )
 
 // A BreakStatement represents a break statement
@@ -175,10 +140,7 @@ type BreakStatement struct {
 
 func (bs *BreakStatement) node()          {}
 func (bs *BreakStatement) statementNode() {}
-
-func (bs *BreakStatement) String() string {
-	return "<<<Break Statement>>>"
-}
+func (bs *BreakStatement) String() string { return "<<<Break Statement>>>" }
 
 func (bs *BreakStatement) Code() string {
 	var out strings.Builder
@@ -189,7 +151,7 @@ func (bs *BreakStatement) Code() string {
 		out.WriteString("if ")
 	}
 	if bs.Condition != nil {
-		out.WriteString(code_or_string(bs.Condition))
+		out.WriteString(bs.Condition.Code())
 	}
 	return out.String()
 }
@@ -197,7 +159,6 @@ func (bs *BreakStatement) Code() string {
 var (
 	_ Node      = &BreakStatement{}
 	_ Statement = &BreakStatement{}
-	_ Coder     = &BreakStatement{}
 )
 
 // Assignment represents a generic assignment
@@ -208,27 +169,19 @@ type Assignment struct {
 
 func (a *Assignment) node()           {}
 func (a *Assignment) expressionNode() {}
-
-func (a *Assignment) String() string {
-	var out strings.Builder
-	out.WriteString(a.Left.String())
-	out.WriteString(" = ")
-	out.WriteString(a.Right.String())
-	return out.String()
-}
+func (a *Assignment) String() string  { return "<<<Assignment>>>" }
 
 func (a *Assignment) Code() string {
 	var out strings.Builder
-	out.WriteString(code_or_string(a.Left))
+	out.WriteString(maybeParenthesize(a.Left.Code(), needsParens(a.Left)))
 	out.WriteString(" = ")
-	out.WriteString(code_or_string(a.Right))
+	out.WriteString(maybeParenthesize(a.Right.Code(), needsParens(a.Right)))
 	return out.String()
 }
 
 var (
 	_ Node       = &Assignment{}
 	_ Expression = &Assignment{}
-	_ Coder      = &Assignment{}
 )
 
 // MultiAssignment represents multiple variables on the left-hand side
@@ -240,7 +193,8 @@ type MultiAssignment struct {
 func (m *MultiAssignment) node()           {}
 func (m *MultiAssignment) expressionNode() {}
 
-func (m *MultiAssignment) String() string {
+func (m *MultiAssignment) String() string { return "<<<MultiAssignment>>>" }
+func (m *MultiAssignment) Code() string {
 	var out strings.Builder
 	vars := make([]string, len(m.Variables))
 	for i, v := range m.Variables {
@@ -250,7 +204,7 @@ func (m *MultiAssignment) String() string {
 	out.WriteString(" = ")
 	values := make([]string, len(m.Values))
 	for i, v := range m.Values {
-		values[i] = v.String()
+		values[i] = v.Code()
 	}
 	out.WriteString(strings.Join(values, ", "))
 	return out.String()
@@ -267,14 +221,12 @@ type Identifier struct {
 
 func (i *Identifier) node()           {}
 func (i *Identifier) expressionNode() {}
-
-func (i *Identifier) String() string { return "<<<Identifier: " + i.Value + ">>>" }
-func (i *Identifier) Code() string   { return i.Value }
+func (i *Identifier) String() string  { return "<<<Identifier>>>: " }
+func (i *Identifier) Code() string    { return i.Value }
 
 var (
 	_ Node       = &Identifier{}
 	_ Expression = &Identifier{}
-	_ Coder      = &Identifier{}
 )
 
 func (i *Identifier) IsConstant() bool {
@@ -298,7 +250,7 @@ type IntegerLiteral struct {
 
 func (il *IntegerLiteral) node()           {}
 func (il *IntegerLiteral) expressionNode() {}
-func (il *IntegerLiteral) String() string  { return fmt.Sprintf("%d", il.Value) }
+func (il *IntegerLiteral) String() string  { return "<<<IntegerLiteral>>>" }
 func (il *IntegerLiteral) Code() string {
 	var out strings.Builder
 	out.WriteString(fmt.Sprintf("%d", il.Value))
@@ -308,7 +260,6 @@ func (il *IntegerLiteral) Code() string {
 var (
 	_ Node       = &IntegerLiteral{}
 	_ Expression = &IntegerLiteral{}
-	_ Coder      = &IntegerLiteral{}
 )
 
 // FloatLiteral represents a float in the AST
@@ -318,8 +269,8 @@ type FloatLiteral struct {
 
 func (fl *FloatLiteral) node()           {}
 func (fl *FloatLiteral) expressionNode() {}
-
-func (fl *FloatLiteral) String() string { return fmt.Sprintf("%f", fl.Value) }
+func (fl *FloatLiteral) String() string  { return "<<<FloatLiteral>>>" }
+func (fl *FloatLiteral) Code() string    { return fmt.Sprintf("%f", fl.Value) }
 
 var (
 	_ Node       = &FloatLiteral{}
@@ -333,8 +284,7 @@ type StringLiteral struct {
 
 func (sl *StringLiteral) node()           {}
 func (sl *StringLiteral) expressionNode() {}
-
-func (sl *StringLiteral) String() string { return sl.Value }
+func (sl *StringLiteral) String() string  { return "<<<StringLiteral>>>" }
 func (sl *StringLiteral) Code() string {
 	var out strings.Builder
 	out.WriteString("\"")
@@ -346,7 +296,6 @@ func (sl *StringLiteral) Code() string {
 var (
 	_ Node       = &StringLiteral{}
 	_ Expression = &StringLiteral{}
-	_ Coder      = &StringLiteral{}
 )
 
 // Comment represents a double quoted string in the AST
@@ -356,8 +305,8 @@ type Comment struct {
 
 func (c *Comment) node()          {}
 func (c *Comment) statementNode() {}
-
-func (c *Comment) String() string {
+func (c *Comment) String() string { return "<<<Comment>>>" }
+func (c *Comment) Code() string {
 	if strings.HasPrefix(c.Value, "#") {
 		return c.Value
 	}
@@ -376,8 +325,8 @@ type SymbolLiteral struct {
 
 func (s *SymbolLiteral) node()           {}
 func (s *SymbolLiteral) expressionNode() {}
-
-func (s *SymbolLiteral) String() string { return ":" + s.Value }
+func (s *SymbolLiteral) String() string  { return "<<<SymbolLiteral>>>" }
+func (s *SymbolLiteral) Code() string    { return ":" + s.Value }
 
 var (
 	_ Node       = &SymbolLiteral{}
@@ -394,10 +343,7 @@ type ConditionalExpression struct {
 
 func (ce *ConditionalExpression) node()           {}
 func (ce *ConditionalExpression) expressionNode() {}
-
-func (ce *ConditionalExpression) String() string {
-	return "<<<ConditionalExpression>>>"
-}
+func (ce *ConditionalExpression) String() string  { return "<<<ConditionalExpression>>>" }
 
 func (ce *ConditionalExpression) Code() string {
 	var out strings.Builder
@@ -406,12 +352,12 @@ func (ce *ConditionalExpression) Code() string {
 	} else {
 		out.WriteString("if ")
 	}
-	out.WriteString(code_or_string(ce.Condition))
+	out.WriteString(ce.Condition.Code())
 	out.WriteString("; ")
-	out.WriteString(code_or_string(ce.Consequence))
+	out.WriteString(ce.Consequence.Code())
 	if ce.Alternative != nil {
 		out.WriteString("else ")
-		out.WriteString(code_or_string(ce.Alternative))
+		out.WriteString(ce.Alternative.Code())
 	}
 	out.WriteString(" end")
 	return out.String()
@@ -420,26 +366,21 @@ func (ce *ConditionalExpression) Code() string {
 var (
 	_ Node       = &ConditionalExpression{}
 	_ Expression = &ConditionalExpression{}
-	_ Coder      = &ConditionalExpression{}
 )
 
-// A LoopExpression represents a loop
+// A LoopExpression represents an infinite loop (with breaks)
 type LoopExpression struct {
-	// Condition Expression
 	Block *BlockStatement
 }
 
 func (ce *LoopExpression) node()           {}
 func (ce *LoopExpression) expressionNode() {}
-
-func (ce *LoopExpression) String() string {
-	return "<<<LoopExpression>>>"
-}
+func (ce *LoopExpression) String() string  { return "<<<LoopExpression>>>" }
 
 func (ce *LoopExpression) Code() string {
 	var out strings.Builder
 	out.WriteString("loop {")
-	out.WriteString(code_or_string(ce.Block))
+	out.WriteString(ce.Block.Code())
 	out.WriteString("}")
 	return out.String()
 }
@@ -447,7 +388,6 @@ func (ce *LoopExpression) Code() string {
 var (
 	_ Node       = &LoopExpression{}
 	_ Expression = &LoopExpression{}
-	_ Coder      = &LoopExpression{}
 )
 
 // ExpressionList represents a list of expressions within the AST divided by commas
@@ -460,7 +400,7 @@ func (el ExpressionList) String() string {
 	var out strings.Builder
 	elements := []string{}
 	for _, e := range el {
-		elements = append(elements, e.String())
+		elements = append(elements, e.Code())
 	}
 	out.WriteString(strings.Join(elements, ", "))
 	return out.String()
@@ -470,22 +410,9 @@ func (el ExpressionList) Code() string {
 	var out strings.Builder
 	elements := []string{}
 	for _, e := range el {
-		needs_parens := false
-		// for now put everything except Identifiers in parentheses
-		switch e.(type) {
-		case *Identifier:
-		case *StringLiteral:
-		//
-		default:
-			needs_parens = true
-		}
-		var element string
-		if needs_parens {
-			element = "(" + code_or_string(e) + ")"
-		} else {
-			element = code_or_string(e)
-		}
-		elements = append(elements, element)
+		e_str := e.Code()
+		e_str = maybeParenthesize(e_str, needsParens(e))
+		elements = append(elements, e_str)
 	}
 	out.WriteString(strings.Join(elements, ", "))
 	return out.String()
@@ -494,7 +421,6 @@ func (el ExpressionList) Code() string {
 var (
 	_ Node       = ExpressionList{}
 	_ Expression = ExpressionList{}
-	_ Coder      = ExpressionList{}
 )
 
 // ArrayLiteral represents an Array literal within the AST
@@ -504,12 +430,12 @@ type ArrayLiteral struct {
 
 func (al *ArrayLiteral) node()           {}
 func (al *ArrayLiteral) expressionNode() {}
-
-func (al *ArrayLiteral) String() string {
+func (al *ArrayLiteral) String() string  { return "<<<ArrayLiteral>>>" }
+func (al *ArrayLiteral) Code() string {
 	var out strings.Builder
 	elements := []string{}
 	for _, el := range al.Elements {
-		elements = append(elements, el.String())
+		elements = append(elements, el.Code())
 	}
 	out.WriteString("[")
 	out.WriteString(strings.Join(elements, ", "))
@@ -529,12 +455,12 @@ type HashLiteral struct {
 
 func (hl *HashLiteral) node()           {}
 func (hl *HashLiteral) expressionNode() {}
-
-func (hl *HashLiteral) String() string {
+func (hl *HashLiteral) String() string  { return "<<<HashLiteral>>>" }
+func (hl *HashLiteral) Code() string {
 	var out strings.Builder
 	elements := []string{}
 	for key, val := range hl.Map {
-		elements = append(elements, fmt.Sprintf("%q => %q", key.String(), val.String()))
+		elements = append(elements, fmt.Sprintf("%q => %q", key.Code(), val.Code()))
 	}
 	out.WriteString("{")
 	out.WriteString(strings.Join(elements, ", "))
@@ -556,17 +482,11 @@ type RangeLiteral struct {
 
 func (rl *RangeLiteral) node()           {}
 func (rl *RangeLiteral) expressionNode() {}
-
-// String returns the string representation of the range
-func (rl *RangeLiteral) String() string {
-	var out strings.Builder
-	out.WriteString("<<<RangeLiteral>>>")
-	return out.String()
-}
+func (rl *RangeLiteral) String() string  { return "<<<RangeLiteral>>>" }
 
 func (rl *RangeLiteral) Code() string {
 	var out strings.Builder
-	out.WriteString(code_or_string(rl.Left))
+	out.WriteString(rl.Left.Code())
 	out.WriteString(" ")
 	if rl.Inclusive {
 		out.WriteString("..")
@@ -574,14 +494,13 @@ func (rl *RangeLiteral) Code() string {
 		out.WriteString("...")
 	}
 	out.WriteString(" ")
-	out.WriteString(code_or_string(rl.Right))
+	out.WriteString(rl.Right.Code())
 	return out.String()
 }
 
 var (
 	_ Node       = &RangeLiteral{}
 	_ Expression = &RangeLiteral{}
-	_ Coder      = &RangeLiteral{}
 )
 
 // A FunctionLiteral represents a function definition in the AST
@@ -602,7 +521,7 @@ func (fl *FunctionLiteral) String() string {
 	out.WriteString(fl.Name)
 	args := []string{}
 	for _, a := range fl.Parameters {
-		args = append(args, a.String())
+		args = append(args, a.Code())
 	}
 	out.WriteString("\", parameters=[")
 	if len(args) == 0 {
@@ -613,7 +532,7 @@ func (fl *FunctionLiteral) String() string {
 		out.WriteString("\"]")
 	}
 	out.WriteString(", body=\"")
-	body_string := fl.Body.String()
+	body_string := fl.Body.Code()
 	if len(body_string) > BODY_STRING_LIMIT {
 		body_string = body_string[:BODY_STRING_LIMIT] + "..."
 	}
@@ -629,11 +548,11 @@ func (fl *FunctionLiteral) Code() string {
 		out.WriteString("(")
 		args := []string{}
 		for _, a := range fl.Parameters {
-			args = append(args, code_or_string(a))
+			args = append(args, a.Code())
 		}
 		out.WriteString(strings.Join(args, ", "))
 		out.WriteString(") {")
-		out.WriteString(code_or_string(fl.Body))
+		out.WriteString(fl.Body.Code())
 		out.WriteString("}")
 	} else {
 		out.WriteString("def ")
@@ -641,12 +560,12 @@ func (fl *FunctionLiteral) Code() string {
 		out.WriteString("(")
 		args := []string{}
 		for _, a := range fl.Parameters {
-			args = append(args, code_or_string(a))
+			args = append(args, a.Code())
 		}
 		out.WriteString(strings.Join(args, ", "))
 		out.WriteString(")")
 		out.WriteString("\n")
-		body_string := code_or_string(fl.Body)
+		body_string := fl.Body.Code()
 		for _, line := range strings.Split(body_string, "\n") {
 			out.WriteString("    ")
 			out.WriteString(line)
@@ -660,7 +579,6 @@ func (fl *FunctionLiteral) Code() string {
 var (
 	_ Node       = &FunctionLiteral{}
 	_ Expression = &FunctionLiteral{}
-	_ Coder      = &FunctionLiteral{}
 )
 
 // A FunctionParameter represents a parameter in a function literal
@@ -684,7 +602,7 @@ func (f *FunctionParameter) Code() string {
 	out.WriteString(f.Name)
 	if f.Default != nil {
 		out.WriteString(" = ")
-		out.WriteString(f.Default.String())
+		out.WriteString(f.Default.Code())
 	}
 	return out.String()
 }
@@ -692,7 +610,6 @@ func (f *FunctionParameter) Code() string {
 var (
 	_ Node       = &FunctionParameter{}
 	_ Expression = &FunctionParameter{}
-	_ Coder      = &FunctionParameter{}
 )
 
 // A Splat represents a splat operator in the AST
@@ -702,11 +619,11 @@ type Splat struct {
 
 func (s *Splat) node()           {}
 func (s *Splat) expressionNode() {}
-
-func (s *Splat) String() string {
+func (s *Splat) String() string  { return "<<<Splat>>>" }
+func (s *Splat) Code() string {
 	var out strings.Builder
 	out.WriteString("*")
-	out.WriteString(s.Value.String())
+	out.WriteString(s.Value.Code())
 	return out.String()
 }
 
@@ -732,9 +649,9 @@ func (ie *IndexExpression) String() string {
 
 func (ie *IndexExpression) Code() string {
 	var out strings.Builder
-	out.WriteString(code_or_string(ie.Left))
+	out.WriteString(ie.Left.Code())
 	out.WriteString("[")
-	out.WriteString(code_or_string(ie.Index))
+	out.WriteString(ie.Index.Code())
 	out.WriteString("]")
 	return out.String()
 }
@@ -742,7 +659,6 @@ func (ie *IndexExpression) Code() string {
 var (
 	_ Node       = &IndexExpression{}
 	_ Expression = &IndexExpression{}
-	_ Coder      = &IndexExpression{}
 )
 
 // A ContextCallExpression represents a method call on a given Context
@@ -755,35 +671,20 @@ type ContextCallExpression struct {
 
 func (ce *ContextCallExpression) node()           {}
 func (ce *ContextCallExpression) expressionNode() {}
-
-func (ce *ContextCallExpression) String() string {
-	var out strings.Builder
-	out.WriteString("ContextCallExpression<functions=\"")
-	out.WriteString(ce.Function)
-	out.WriteString("\">")
-	return out.String()
-}
+func (ce *ContextCallExpression) String() string  { return "<<<ContextCallExpression>>>" }
 
 func (ce *ContextCallExpression) Code() string {
 	var out strings.Builder
 	if ce.Context != nil {
-		needs_parens := false
-		if _, ok := ce.Context.(*Identifier); !ok {
-			needs_parens = true
-		}
-		if needs_parens {
-			out.WriteString("(")
-		}
-		out.WriteString(code_or_string(ce.Context))
-		if needs_parens {
-			out.WriteString(")")
-		}
+		ce_str := ce.Context.Code()
+		ce_str = maybeParenthesize(ce_str, needsParens(ce.Context))
+		out.WriteString(ce_str)
 		out.WriteString(".")
 	}
 	out.WriteString(ce.Function)
 	args := []string{}
 	for _, a := range ce.Arguments {
-		args = append(args, code_or_string(a))
+		args = append(args, a.Code())
 	}
 	if len(args) > 0 {
 		out.WriteString("(")
@@ -792,7 +693,7 @@ func (ce *ContextCallExpression) Code() string {
 	}
 	if ce.Block != nil {
 		out.WriteString(" ")
-		out.WriteString(code_or_string(ce.Block))
+		out.WriteString(ce.Block.Code())
 	}
 	return out.String()
 }
@@ -800,7 +701,6 @@ func (ce *ContextCallExpression) Code() string {
 var (
 	_ Node       = &ContextCallExpression{}
 	_ Expression = &ContextCallExpression{}
-	_ Coder      = &ContextCallExpression{}
 )
 
 // PrefixExpression represents a prefix operator
@@ -811,15 +711,18 @@ type PrefixExpression struct {
 
 func (pe *PrefixExpression) node()           {}
 func (pe *PrefixExpression) expressionNode() {}
-
-func (pe *PrefixExpression) String() string {
+func (pe *PrefixExpression) String() string  { return "<<<PrefixExpression>>>" }
+func (pe *PrefixExpression) Code() string {
 	var out strings.Builder
-	out.WriteString("(")
 	out.WriteString(pe.Operator)
-	out.WriteString(pe.Right.String())
-	out.WriteString(")")
+	out.WriteString(maybeParenthesize(pe.Right.Code(), needsParens(pe.Right)))
 	return out.String()
 }
+
+var (
+	_ Node       = &PrefixExpression{}
+	_ Expression = &PrefixExpression{}
+)
 
 // An InfixExpression represents an infix operator in the AST
 type InfixExpression struct {
@@ -839,16 +742,46 @@ func (oe *InfixExpression) String() string {
 
 func (oe *InfixExpression) Code() string {
 	var out strings.Builder
-	out.WriteString(code_or_string(oe.Left))
+	out.WriteString(maybeParenthesize(oe.Left.Code(), needsParens(oe.Left)))
 	out.WriteString(" ")
-	out.WriteString(code_or_string(oe.Operator))
+	out.WriteString(oe.Operator.String())
 	out.WriteString(" ")
-	out.WriteString(code_or_string(oe.Right))
+	out.WriteString(maybeParenthesize(oe.Right.Code(), needsParens(oe.Right)))
 	return out.String()
 }
 
 var (
 	_ Node       = &InfixExpression{}
 	_ Expression = &InfixExpression{}
-	_ Coder      = &InfixExpression{}
 )
+
+func needsParens(e Expression) bool {
+	// This function checks if the expression needs parentheses
+	// For now, we put everything except Identifiers in parentheses
+	switch e := e.(type) {
+	case *Identifier:
+	case *StringLiteral:
+	case *IntegerLiteral:
+	case *SymbolLiteral:
+	case *FloatLiteral:
+	case *ContextCallExpression:
+		if e.Context == nil {
+			// we're calling a function without a context, aka just calling a function
+			// we should not need to parenthesize this, i don't think... -MK
+			return false
+		}
+	case *IndexExpression:
+		// Again, i don't think we ever need to parenthesize this... -MK
+		return false
+	default:
+		return true
+	}
+	return false
+}
+
+func maybeParenthesize(s string, parens bool) string {
+	if parens {
+		return "(" + s + ")"
+	}
+	return s
+}

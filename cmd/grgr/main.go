@@ -83,7 +83,7 @@ func (g *grgrOutput) PrintNode(node ast.Node) {
 			g.PrintNode(statement.(ast.Node))
 		}
 	case *ast.Comment:
-		g.Println(node)
+		g.Println(node.Code())
 	case *ast.ExpressionStatement:
 		g.PrintNode(node.Expression)
 	case *ast.FunctionLiteral:
@@ -123,6 +123,6 @@ func (g *grgrOutput) PrintFakeComment(content ...string) {
 	}
 	for _, line := range content {
 		comment_line := &ast.Comment{Value: "GRGR" + line}
-		g.Println(comment_line)
+		g.Println(comment_line.Code())
 	}
 }
