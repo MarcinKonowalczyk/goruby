@@ -227,11 +227,11 @@ func (e *evaluator) evalLoopExpression(node *ast.LoopExpression, env object.Envi
 	if e.tracer != nil {
 		defer e.tracer.Un(e.tracer.Trace(trace.Here()))
 	}
-	condition, err := e.Eval(node.Condition, env)
-	if err != nil {
-		return nil, errors.WithMessage(err, "eval loop condition")
-	}
-	for isTruthy(condition) {
+	// condition, err := e.Eval(node.Condition, env)
+	// if err != nil {
+	// return nil, errors.WithMessage(err, "eval loop condition")
+	// }
+	for {
 		value, err := e.evalBlockStatement(node.Block, env)
 		if err != nil {
 			return nil, errors.WithMessage(err, "eval loop body")
@@ -248,12 +248,11 @@ func (e *evaluator) evalLoopExpression(node *ast.LoopExpression, env object.Envi
 				// <shrug> do nothing
 			}
 		}
-		condition, err = e.Eval(node.Condition, env)
-		if err != nil {
-			return nil, errors.WithMessage(err, "eval loop condition")
-		}
+		// condition, err = e.Eval(node.Condition, env)
+		// if err != nil {
+		// 	return nil, errors.WithMessage(err, "eval loop condition")
+		// }
 	}
-	return object.NIL, nil
 }
 
 func (e *evaluator) evalProgram(statements []ast.Statement, env object.Environment) (object.RubyObject, error) {
