@@ -16,7 +16,7 @@ func Transform(node *ast.Program, trace_transform bool) (*ast.Program, error) {
 	logger := log.New(os.Stdout, "# TRANSFORMER ", 0)
 	ctx := logging.WithLogger(context.Background(), logger)
 
-	t := NewTransformer().(*transformer)
+	t := &transformer{}
 	if trace_transform {
 		t.tracer = trace.NewTracer()
 	}
@@ -31,14 +31,10 @@ func Transform(node *ast.Program, trace_transform bool) (*ast.Program, error) {
 	return node, nil
 }
 
-type Transformer interface {
-	Transform(node ast.Node) (ast.Node, error)
-}
+// type Transformer interface {
+// 	Transform(node ast.Node) (ast.Node, error)
+// }
 
-func NewTransformer() Transformer {
-	return &transformer{}
-}
-
-var (
-	_ Transformer = &transformer{}
-)
+// var (
+// 	_ Transformer = &transformer{}
+// )
