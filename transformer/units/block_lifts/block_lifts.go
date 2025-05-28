@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/ast/walk"
 	"github.com/MarcinKonowalczyk/goruby/transformer/logging"
 )
 
@@ -163,7 +164,7 @@ func (f *Lift) transformContextCallExpressionPass1(node *ast.ContextCallExpressi
 func (f *Lift) TransformerMarker() {}
 
 var (
-	_ ast.PreTransformerCtx  = &Lift{}
-	_ ast.PostTransformerCtx = &Lift{}
-	_ ast.Transformer        = &Lift{}
+	_ walk.PreTransformerCtx  = &Lift{}
+	_ walk.PostTransformerCtx = &Lift{}
+	_ walk.Transformer        = &Lift{}
 )

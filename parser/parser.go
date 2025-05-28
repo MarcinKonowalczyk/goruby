@@ -10,6 +10,7 @@ import (
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/ast/infix"
+	"github.com/MarcinKonowalczyk/goruby/ast/walk"
 	"github.com/MarcinKonowalczyk/goruby/lexer"
 	"github.com/MarcinKonowalczyk/goruby/token"
 	"github.com/MarcinKonowalczyk/goruby/trace"
@@ -1088,7 +1089,7 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 		}
 		// return true
 	}
-	ast.Inspect(fl.Body, inspect)
+	walk.Inspect(fl.Body, inspect)
 
 	return fl
 }

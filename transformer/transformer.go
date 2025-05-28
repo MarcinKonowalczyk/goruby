@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/ast/walk"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 	"github.com/MarcinKonowalczyk/goruby/transformer/logging"
 	"github.com/MarcinKonowalczyk/goruby/transformer/units/block_lifts"
@@ -43,10 +44,10 @@ func (t *transformer) transformProgram(ctx context.Context, program *ast.Program
 	if ENABLE_BLOCK_LIFT_TRANSFORMER {
 		transformer := &block_lifts.Lift{}
 		logging.Logf(ctx, "=== applying %T pass 0 ===", transformer)
-		ast.WalkCtx(ctx, program, transformer, nil)
+		walk.WalkCtx(ctx, program, transformer, nil)
 		(*transformer).Pass = 1
 		logging.Logf(ctx, "=== applying %T pass 1 ===", transformer)
-		ast.WalkCtx(ctx, program, transformer, nil)
+		walk.WalkCtx(ctx, program, transformer, nil)
 		if len(transformer.LiftedFunctions) > 0 {
 			var lifted []ast.Statement = make([]ast.Statement, len(transformer.LiftedFunctions))
 			for _, function := range transformer.LiftedFunctions {
@@ -68,7 +69,7 @@ func (t *transformer) transformProgram(ctx context.Context, program *ast.Program
 	if ENABLE_LIFT_TRANSFORMER {
 		var transformer = &builtin_lifts.Lift{}
 		logging.Logf(ctx, "=== applying %T ===", transformer)
-		_ = ast.WalkCtx(ctx, program, transformer, nil)
+		_ = walk.WalkCtx(ctx, program, transformer, nil)
 		if len(transformer.Statements) > 0 {
 			program.Statements = append(transformer.Statements, program.Statements...)
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/ast/walk"
 	"github.com/MarcinKonowalczyk/goruby/transformer/logging"
 )
 
@@ -42,6 +43,6 @@ func (f *Lift) PostTransform(ctx context.Context, node ast.Node) ast.Node {
 func (f *Lift) TransformerMarker() {}
 
 var (
-	_ ast.PostTransformerCtx = &Lift{}
-	_ ast.Transformer        = &Lift{}
+	_ walk.PostTransformerCtx = &Lift{}
+	_ walk.Transformer        = &Lift{}
 )
