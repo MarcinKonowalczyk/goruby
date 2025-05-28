@@ -1,4 +1,4 @@
-package transformer
+package builtin_lifts
 
 import (
 	"go/token"
