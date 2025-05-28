@@ -2,6 +2,7 @@ package ast
 
 import (
 	"container/list"
+	"context"
 	"fmt"
 )
 
@@ -16,7 +17,9 @@ type Visitor interface {
 type Transformer interface {
 	TransformerMarker() // marker
 	// PreTransform(node Node) Node
+	// PreTransform(ctx context.Context, node Node) Node
 	// PostTransform(node Node) Node
+	// PostTransform(ctx context.Context, node Node) Node
 }
 
 // Transforms a node *before* it is walked.
@@ -24,9 +27,17 @@ type PreTransformer interface {
 	PreTransform(node Node) Node
 }
 
+type PreTransformerCtx interface {
+	PreTransform(ctx context.Context, node Node) Node
+}
+
 // Transforms a node *after* it is walked.
 type PostTransformer interface {
 	PostTransform(node Node) Node
+}
+
+type PostTransformerCtx interface {
+	PostTransform(ctx context.Context, node Node) Node
 }
 
 // Parent returns the parent node of child. If child is not found within root,
@@ -163,12 +174,41 @@ func WalkEmit(root Node) <-chan Node {
 // 	// ...
 // }
 
+// Pre transformer with context which wraps a PreTransformer without context
+type pre_transformer_ctx struct {
+	transformer PreTransformer
+}
+
+func (p pre_transformer_ctx) PreTransform(_ context.Context, node Node) Node {
+	if p.transformer == nil {
+		return node
+	}
+	return p.transformer.PreTransform(node)
+}
+
+var _ PreTransformerCtx = pre_transformer_ctx{}
+
+// Post transformer with context which wraps a PostTransformer without context
+type post_transformer_ctx struct {
+	transformer PostTransformer
+}
+
+func (p post_transformer_ctx) PostTransform(_ context.Context, node Node) Node {
+	if p.transformer == nil {
+		return node
+	}
+	return p.transformer.PostTransform(node)
+}
+
+var _ PostTransformerCtx = post_transformer_ctx{}
+
 // Walk traverses an AST in depth-first order: It starts by calling
 // v.Visit(node); node must not be nil. If the visitor w returned by
 // v.Visit(node) is not nil, Walk is invoked recursively with visitor
 // w for each of the non-nil children of node, followed by a call of
 // w.Visit(nil).
-func Walk(
+func WalkCtx(
+	ctx context.Context,
 	node Node,
 	transformer Transformer,
 	v Visitor,
@@ -178,15 +218,25 @@ func Walk(
 	// 	return nil, post
 	// }
 
-	var pre PreTransformer
-	var post PostTransformer
+	var pre PreTransformerCtx
+	var post PostTransformerCtx
 
 	if transformer != nil {
-		if pre_transformer, ok := transformer.(PreTransformer); ok {
+		switch pre_transformer := transformer.(type) {
+		case PreTransformer:
+			pre = pre_transformer_ctx{transformer: pre_transformer}
+		case PreTransformerCtx:
 			pre = pre_transformer
+		default:
+			// do nothing
 		}
-		if post_transformer, ok := transformer.(PostTransformer); ok {
+		switch post_transformer := transformer.(type) {
+		case PostTransformer:
+			post = post_transformer_ctx{transformer: post_transformer}
+		case PostTransformerCtx:
 			post = post_transformer
+		default:
+			// do nothing
 		}
 	}
 
@@ -194,7 +244,7 @@ func Walk(
 
 	// pre-transform
 	if pre != nil {
-		node = pre.PreTransform(node)
+		node = pre.PreTransform(ctx, node)
 	}
 
 	// visit the node
@@ -217,7 +267,7 @@ func Walk(
 		if mutating {
 			new_params := make([]*FunctionParameter, len(n.Parameters))
 			for i, x := range n.Parameters {
-				new_node = Walk(x, transformer, v)
+				new_node = WalkCtx(ctx, x, transformer, v)
 				if new_param, ok := new_node.(*FunctionParameter); ok {
 					new_params[i] = new_param
 				} else {
@@ -225,7 +275,7 @@ func Walk(
 				}
 			}
 			n.Parameters = new_params
-			new_node = Walk(n.Body, transformer, v)
+			new_node = WalkCtx(ctx, n.Body, transformer, v)
 			if new_body, ok := new_node.(*BlockStatement); ok {
 				n.Body = new_body
 			} else {
@@ -233,14 +283,14 @@ func Walk(
 			}
 		} else {
 			for _, x := range n.Parameters {
-				_ = Walk(x, transformer, v)
+				_ = WalkCtx(ctx, x, transformer, v)
 			}
-			_ = Walk(n.Body, transformer, v)
+			_ = WalkCtx(ctx, n.Body, transformer, v)
 		}
 
 	case *FunctionParameter:
 		if mutating {
-			new_node = Walk(n.Default, transformer, v)
+			new_node = WalkCtx(ctx, n.Default, transformer, v)
 			if new_default, ok := new_node.(Expression); ok {
 				n.Default = new_default
 			} else {
@@ -251,31 +301,31 @@ func Walk(
 				}
 			}
 		} else {
-			_ = Walk(n.Default, transformer, v)
+			_ = WalkCtx(ctx, n.Default, transformer, v)
 		}
 
 	case *IndexExpression:
 		if mutating {
-			new_node = Walk(n.Left, transformer, v)
+			new_node = WalkCtx(ctx, n.Left, transformer, v)
 			if new_left, ok := new_node.(Expression); ok {
 				n.Left = new_left
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated an index expression left to %T", new_left))
 			}
-			new_node = Walk(n.Index, transformer, v)
+			new_node = WalkCtx(ctx, n.Index, transformer, v)
 			if new_index, ok := new_node.(Expression); ok {
 				n.Index = new_index
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated an index expression index to %T", new_index))
 			}
 		} else {
-			_ = Walk(n.Left, transformer, v)
-			_ = Walk(n.Index, transformer, v)
+			_ = WalkCtx(ctx, n.Left, transformer, v)
+			_ = WalkCtx(ctx, n.Index, transformer, v)
 		}
 
 	case *ContextCallExpression:
 		if mutating {
-			new_node = Walk(n.Context, transformer, v)
+			new_node = WalkCtx(ctx, n.Context, transformer, v)
 			if new_node == nil {
 				n.Context = nil
 			} else {
@@ -288,7 +338,7 @@ func Walk(
 			}
 			new_arguments := make([]Expression, len(n.Arguments))
 			for i, x := range n.Arguments {
-				new_node = Walk(x, transformer, v)
+				new_node = WalkCtx(ctx, x, transformer, v)
 				if new_argument, ok := new_node.(Expression); ok {
 					new_arguments[i] = new_argument
 				} else {
@@ -297,7 +347,7 @@ func Walk(
 			}
 			n.Arguments = new_arguments
 			if n.Block != nil {
-				new_node = Walk(n.Block, transformer, v)
+				new_node = WalkCtx(ctx, n.Block, transformer, v)
 				if new_block, ok := new_node.(Expression); ok {
 					n.Block = new_block
 				} else {
@@ -305,18 +355,18 @@ func Walk(
 				}
 			}
 		} else {
-			_ = Walk(n.Context, transformer, v)
+			_ = WalkCtx(ctx, n.Context, transformer, v)
 			for _, x := range n.Arguments {
-				_ = Walk(x, transformer, v)
+				_ = WalkCtx(ctx, x, transformer, v)
 			}
 			if n.Block != nil {
-				_ = Walk(n.Block, transformer, v)
+				_ = WalkCtx(ctx, n.Block, transformer, v)
 			}
 		}
 
 	case *PrefixExpression:
 		if mutating {
-			new_node = Walk(n.Right, transformer, v)
+			new_node = WalkCtx(ctx, n.Right, transformer, v)
 			if new_right, ok := new_node.(Expression); ok {
 				n.Right = new_right
 			} else {
@@ -324,33 +374,33 @@ func Walk(
 			}
 
 		} else {
-			_ = Walk(n.Right, transformer, v)
+			_ = WalkCtx(ctx, n.Right, transformer, v)
 		}
 
 	case *InfixExpression:
 		if mutating {
-			new_node = Walk(n.Left, transformer, v)
+			new_node = WalkCtx(ctx, n.Left, transformer, v)
 			if new_left, ok := new_node.(Expression); ok {
 				n.Left = new_left
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated an infix expression left to %T", new_left))
 			}
-			new_node = Walk(n.Right, transformer, v)
+			new_node = WalkCtx(ctx, n.Right, transformer, v)
 			if new_right, ok := new_node.(Expression); ok {
 				n.Right = new_right
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated an infix expression right to %T", new_right))
 			}
 		} else {
-			_ = Walk(n.Left, transformer, v)
-			_ = Walk(n.Right, transformer, v)
+			_ = WalkCtx(ctx, n.Left, transformer, v)
+			_ = WalkCtx(ctx, n.Right, transformer, v)
 		}
 
 	case *MultiAssignment:
 		if mutating {
 			new_variables := make([]*Identifier, len(n.Variables))
 			for i, x := range n.Variables {
-				new_node = Walk(x, transformer, v)
+				new_node = WalkCtx(ctx, x, transformer, v)
 				if new_variable, ok := new_node.(*Identifier); ok {
 					new_variables[i] = new_variable
 				} else {
@@ -360,7 +410,7 @@ func Walk(
 			n.Variables = new_variables
 			new_values := make([]Expression, len(n.Values))
 			for i, x := range n.Values {
-				new_node = Walk(x, transformer, v)
+				new_node = WalkCtx(ctx, x, transformer, v)
 				if new_value, ok := new_node.(Expression); ok {
 					new_values[i] = new_value
 				} else {
@@ -370,10 +420,10 @@ func Walk(
 			n.Values = new_values
 		} else {
 			for _, x := range n.Variables {
-				_ = Walk(x, transformer, v)
+				_ = WalkCtx(ctx, x, transformer, v)
 			}
 			for _, x := range n.Values {
-				_ = Walk(x, transformer, v)
+				_ = WalkCtx(ctx, x, transformer, v)
 			}
 		}
 
@@ -381,7 +431,7 @@ func Walk(
 		if mutating {
 			new_elements := make([]Expression, len(n))
 			for i, x := range n {
-				new_node = Walk(x, transformer, v)
+				new_node = WalkCtx(ctx, x, transformer, v)
 				if new_element, ok := new_node.(Expression); ok {
 					new_elements[i] = new_element
 				} else {
@@ -391,7 +441,7 @@ func Walk(
 			n = new_elements
 		} else {
 			for _, x := range n {
-				_ = Walk(x, transformer, v)
+				_ = WalkCtx(ctx, x, transformer, v)
 			}
 		}
 
@@ -400,7 +450,7 @@ func Walk(
 		if mutating {
 			new_elements := make([]Expression, len(n.Elements))
 			for i, x := range n.Elements {
-				new_node = Walk(x, transformer, v)
+				new_node = WalkCtx(ctx, x, transformer, v)
 				if new_element, ok := new_node.(Expression); ok {
 					new_elements[i] = new_element
 				} else {
@@ -410,7 +460,7 @@ func Walk(
 			n.Elements = new_elements
 		} else {
 			for _, x := range n.Elements {
-				_ = Walk(x, transformer, v)
+				_ = WalkCtx(ctx, x, transformer, v)
 			}
 		}
 
@@ -418,9 +468,9 @@ func Walk(
 		if mutating {
 			new_map := make(map[Expression]Expression, len(n.Map))
 			for k, val := range n.Map {
-				new_node = Walk(k, transformer, v)
+				new_node = WalkCtx(ctx, k, transformer, v)
 				if new_key, ok := new_node.(Expression); ok {
-					new_node = Walk(val, transformer, v)
+					new_node = WalkCtx(ctx, val, transformer, v)
 					if new_value, ok := new_node.(Expression); ok {
 						new_map[new_key] = new_value
 					} else {
@@ -433,14 +483,14 @@ func Walk(
 			n.Map = new_map
 		} else {
 			for k, val := range n.Map {
-				_ = Walk(k, transformer, v)
-				_ = Walk(val, transformer, v)
+				_ = WalkCtx(ctx, k, transformer, v)
+				_ = WalkCtx(ctx, val, transformer, v)
 			}
 		}
 
 	case *ExpressionStatement:
 		if mutating {
-			new_node = Walk(n.Expression, transformer, v)
+			new_node = WalkCtx(ctx, n.Expression, transformer, v)
 			// if new_expression, ok := new_node.(Expression); ok {
 			// 	if new_expression != n.Expression {
 			// 		fmt.Printf("# WALK *ExpressionStatement::Expression: ast.Walk mutated %T(%v) to %T(%v)\n", n.Expression, n.Expression, new_node, new_node)
@@ -459,12 +509,12 @@ func Walk(
 				panic(fmt.Sprintf("ast.Walk mutated an expression statement from %T to %T", n.Expression, new_node))
 			}
 		} else {
-			_ = Walk(n.Expression, transformer, v)
+			_ = WalkCtx(ctx, n.Expression, transformer, v)
 		}
 
 	case *Assignment:
 		if mutating {
-			new_node = Walk(n.Left, transformer, v)
+			new_node = WalkCtx(ctx, n.Left, transformer, v)
 			if new_left, ok := new_node.(Expression); ok {
 				if new_left != n.Left {
 					fmt.Printf("*Assignment::Left: ast.Walk mutated %T to %T\n", n.Left, new_node)
@@ -473,7 +523,7 @@ func Walk(
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated an assignment left to %T", new_left))
 			}
-			new_node = Walk(n.Right, transformer, v)
+			new_node = WalkCtx(ctx, n.Right, transformer, v)
 			if new_right, ok := new_node.(Expression); ok {
 				if new_right != n.Right {
 					fmt.Printf("*Assignment::Right: ast.Walk mutated %T to %T\n", n.Right, new_node)
@@ -483,13 +533,13 @@ func Walk(
 				panic(fmt.Sprintf("ast.Walk mutated an assignment right from %T to %T", n.Right, new_right))
 			}
 		} else {
-			_ = Walk(n.Left, transformer, v)
-			_ = Walk(n.Right, transformer, v)
+			_ = WalkCtx(ctx, n.Left, transformer, v)
+			_ = WalkCtx(ctx, n.Right, transformer, v)
 		}
 
 	case *ReturnStatement:
 		if mutating {
-			new_node = Walk(n.ReturnValue, transformer, v)
+			new_node = WalkCtx(ctx, n.ReturnValue, transformer, v)
 			if new_return_value, ok := new_node.(Expression); ok {
 				if new_return_value != n.ReturnValue {
 					fmt.Printf("*ReturnStatement::ReturnValue: ast.Walk mutated %T to %T\n", n.ReturnValue, new_node)
@@ -500,12 +550,12 @@ func Walk(
 			}
 
 		} else {
-			_ = Walk(n.ReturnValue, transformer, v)
+			_ = WalkCtx(ctx, n.ReturnValue, transformer, v)
 		}
 
 	case *BreakStatement:
 		if mutating {
-			new_node = Walk(n.Condition, transformer, v)
+			new_node = WalkCtx(ctx, n.Condition, transformer, v)
 			if new_node == nil {
 				n.Condition = nil
 			} else {
@@ -516,14 +566,14 @@ func Walk(
 				}
 			}
 		} else {
-			_ = Walk(n.Condition, transformer, v)
+			_ = WalkCtx(ctx, n.Condition, transformer, v)
 		}
 
 	case *BlockStatement:
 		if mutating {
 			new_statements := make([]Statement, len(n.Statements))
 			for i, x := range n.Statements {
-				new_node = Walk(x, transformer, v)
+				new_node = WalkCtx(ctx, x, transformer, v)
 				if new_statement, ok := new_node.(Statement); ok {
 					new_statements[i] = new_statement
 				} else {
@@ -533,26 +583,26 @@ func Walk(
 			n.Statements = new_statements
 		} else {
 			for _, x := range n.Statements {
-				_ = Walk(x, transformer, v)
+				_ = WalkCtx(ctx, x, transformer, v)
 			}
 		}
 
 	case *ConditionalExpression:
 		if mutating {
-			new_node = Walk(n.Condition, transformer, v)
+			new_node = WalkCtx(ctx, n.Condition, transformer, v)
 			if new_condition, ok := new_node.(Expression); ok {
 				n.Condition = new_condition
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated a conditional expression condition to %T", new_condition))
 			}
-			new_node = Walk(n.Consequence, transformer, v)
+			new_node = WalkCtx(ctx, n.Consequence, transformer, v)
 			if new_consequence, ok := new_node.(*BlockStatement); ok {
 				n.Consequence = new_consequence
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated a conditional expression consequence to %T", new_consequence))
 			}
 			if n.Alternative != nil {
-				new_node = Walk(n.Alternative, transformer, v)
+				new_node = WalkCtx(ctx, n.Alternative, transformer, v)
 				if new_alternative, ok := new_node.(*BlockStatement); ok {
 					n.Alternative = new_alternative
 				} else {
@@ -560,30 +610,30 @@ func Walk(
 				}
 			}
 		} else {
-			_ = Walk(n.Condition, transformer, v)
-			_ = Walk(n.Consequence, transformer, v)
+			_ = WalkCtx(ctx, n.Condition, transformer, v)
+			_ = WalkCtx(ctx, n.Consequence, transformer, v)
 			if n.Alternative != nil {
-				_ = Walk(n.Alternative, transformer, v)
+				_ = WalkCtx(ctx, n.Alternative, transformer, v)
 			}
 		}
 
 	case *LoopExpression:
 		if mutating {
-			// new_node = Walk(n.Condition, transformer, v)
+			// new_node = WalkCtx(ctx, n.Condition, transformer, v)
 			// if new_condition, ok := new_node.(Expression); ok {
 			// n.Condition = new_condition
 			// } else {
 			// panic(fmt.Sprintf("ast.Walk mutated a loop expression condition to %T", new_condition))
 			// }
-			new_node = Walk(n.Block, transformer, v)
+			new_node = WalkCtx(ctx, n.Block, transformer, v)
 			if new_block, ok := new_node.(*BlockStatement); ok {
 				n.Block = new_block
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated a loop expression block from %T to %T", n.Block, new_block))
 			}
 		} else {
-			// _ = Walk(n.Condition, transformer, v)
-			_ = Walk(n.Block, transformer, v)
+			// _ = WalkCtx(ctx, n.Condition, transformer, v)
+			_ = WalkCtx(ctx, n.Block, transformer, v)
 		}
 
 	// Program
@@ -591,7 +641,7 @@ func Walk(
 		if mutating {
 			new_statements := make([]Statement, len(n.Statements))
 			for i, statement := range n.Statements {
-				new_node = Walk(statement, transformer, v)
+				new_node = WalkCtx(ctx, statement, transformer, v)
 				if new_node == nil {
 					new_statements[i] = nil
 				} else {
@@ -605,27 +655,27 @@ func Walk(
 			n.Statements = new_statements
 		} else {
 			for _, x := range n.Statements {
-				_ = Walk(x, transformer, v)
+				_ = WalkCtx(ctx, x, transformer, v)
 			}
 		}
 
 	case *RangeLiteral:
 		if mutating {
-			new_node = Walk(n.Left, transformer, v)
+			new_node = WalkCtx(ctx, n.Left, transformer, v)
 			if new_left, ok := new_node.(Expression); ok {
 				n.Left = new_left
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated a range literal left from %T to %T", n.Left, new_left))
 			}
-			new_node = Walk(n.Right, transformer, v)
+			new_node = WalkCtx(ctx, n.Right, transformer, v)
 			if new_right, ok := new_node.(Expression); ok {
 				n.Right = new_right
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated a range literal right from %T to %T", n.Right, new_right))
 			}
 		} else {
-			_ = Walk(n.Left, transformer, v)
-			_ = Walk(n.Right, transformer, v)
+			_ = WalkCtx(ctx, n.Left, transformer, v)
+			_ = WalkCtx(ctx, n.Right, transformer, v)
 		}
 
 	case nil:
@@ -633,14 +683,14 @@ func Walk(
 
 	case *Splat:
 		if mutating {
-			new_node = Walk(n.Value, transformer, v)
+			new_node = WalkCtx(ctx, n.Value, transformer, v)
 			if new_value, ok := new_node.(Expression); ok {
 				n.Value = new_value
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated a splat value from %T to %T", n.Value, new_value))
 			}
 		} else {
-			_ = Walk(n.Value, transformer, v)
+			_ = WalkCtx(ctx, n.Value, transformer, v)
 		}
 
 	case *FloatLiteral:
@@ -655,10 +705,18 @@ func Walk(
 	//       that's kinda the point
 	if post != nil {
 		// fmt.Println("pre-transform", node)
-		node = post.PostTransform(node)
+		node = post.PostTransform(ctx, node)
 		// fmt.Println("post-transform", node)
 	}
 	// v.Visit(nil)
 
 	return node
+}
+
+func Walk(
+	node Node,
+	transformer Transformer,
+	v Visitor,
+) Node {
+	return WalkCtx(context.Background(), node, transformer, v)
 }

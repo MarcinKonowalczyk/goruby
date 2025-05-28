@@ -1,26 +1,25 @@
 package builtin_lifts
 
 import (
-	"fmt"
+	"context"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/transformer/logging"
 )
 
 type Lift struct {
 	Statements []ast.Statement // to be lifted
 }
 
-func (f *Lift) PostTransform(node ast.Node) ast.Node {
+func (f *Lift) PostTransform(ctx context.Context, node ast.Node) ast.Node {
 	switch node := node.(type) {
 	case nil:
 		//
 	case *ast.Comment:
 		//
 	case *ast.ContextCallExpression:
-		// fmt.Printf("%v (%T)\n", node, node)
-		fmt.Printf("# TRANSFORMER found context call expression \"%s\"\n", node.Function)
-		// f.functions = append(f.functions, node)
-
+		logging.Logf(ctx, "found context call expression \"%s\" with context %s and block %s\n",
+			node.Function, node.Context, node.Block)
 		var replacement replacement_spec
 		replacement, ok := context_call_expr_replacements[context_spec(node.Function)]
 		if ok {
@@ -35,7 +34,7 @@ func (f *Lift) PostTransform(node ast.Node) ast.Node {
 			}
 		}
 	default:
-		fmt.Printf("# TRANSFORMER walking %T\n", node)
+		logging.Logf(ctx, "walking %T\n", node)
 	}
 	return node
 }
@@ -43,6 +42,6 @@ func (f *Lift) PostTransform(node ast.Node) ast.Node {
 func (f *Lift) TransformerMarker() {}
 
 var (
-	_ ast.PostTransformer = &Lift{}
-	_ ast.Transformer     = &Lift{}
+	_ ast.PostTransformerCtx = &Lift{}
+	_ ast.Transformer        = &Lift{}
 )

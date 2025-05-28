@@ -1,9 +1,11 @@
 package block_lifts
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/transformer/logging"
 )
 
 type call struct {
@@ -25,7 +27,7 @@ type Lift struct {
 	Pass int
 }
 
-func (f *Lift) PreTransform(node ast.Node) ast.Node {
+func (f *Lift) PreTransform(ctx context.Context, node ast.Node) ast.Node {
 	switch node := node.(type) {
 	case nil:
 		//
@@ -40,12 +42,12 @@ func (f *Lift) PreTransform(node ast.Node) ast.Node {
 		f.call_stack = append(f.call_stack, &call{name: node.Name, parameters: parameter_names})
 		return node
 	default:
-		fmt.Printf("# TRANSFORMER walking %T\n", node)
+		logging.Logf(ctx, "walking %T\n", node)
 	}
 	return node
 }
 
-func (f *Lift) PostTransform(node ast.Node) ast.Node {
+func (f *Lift) PostTransform(ctx context.Context, node ast.Node) ast.Node {
 	switch node := node.(type) {
 	case nil:
 		//
@@ -65,7 +67,7 @@ func (f *Lift) PostTransform(node ast.Node) ast.Node {
 			return f.transformContextCallExpressionPass1(node)
 		}
 	default:
-		fmt.Printf("# TRANSFORMER walking %T\n", node)
+		logging.Logf(ctx, "walking %T\n", node)
 	}
 	return node
 }
@@ -165,6 +167,7 @@ func (f *Lift) transformContextCallExpressionPass1(node *ast.ContextCallExpressi
 func (f *Lift) TransformerMarker() {}
 
 var (
-	_ ast.PreTransformer = &Lift{}
-	_ ast.Transformer    = &Lift{}
+	_ ast.PreTransformerCtx  = &Lift{}
+	_ ast.PostTransformerCtx = &Lift{}
+	_ ast.Transformer        = &Lift{}
 )
