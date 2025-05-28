@@ -3,8 +3,8 @@ package object
 import (
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 	"github.com/MarcinKonowalczyk/goruby/trace"
-	"github.com/MarcinKonowalczyk/goruby/utils"
 )
 
 func TestWithArity(t *testing.T) {
@@ -44,8 +44,8 @@ func TestWithArity(t *testing.T) {
 
 		result, err := fn.Call(context, nil, testCase.arguments...)
 
-		utils.AssertEqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
+		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 
-		utils.AssertError(t, err, testCase.err)
+		assert.Error(t, err, testCase.err)
 	}
 }

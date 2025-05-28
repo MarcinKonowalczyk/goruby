@@ -1,137 +1,30 @@
-# TRANSFORMER === applying *block_lifts.Lift pass 0 ===
-# TRANSFORMER walking *ast.Program
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.FunctionParameter
-# TRANSFORMER walking *ast.FunctionParameter
-# TRANSFORMER walking *ast.FunctionParameter
-# TRANSFORMER walking *ast.FunctionParameter
-# TRANSFORMER walking *ast.BlockStatement
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.ContextCallExpression
-# TRANSFORMER walking *ast.RangeLiteral
-# TRANSFORMER walking *ast.IntegerLiteral
-# TRANSFORMER walking *ast.IntegerLiteral
-# TRANSFORMER walking *ast.ContextCallExpression
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking *ast.RangeLiteral
-# TRANSFORMER walking *ast.FunctionParameter
-# TRANSFORMER walking *ast.FunctionParameter
-# TRANSFORMER walking *ast.BlockStatement
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.InfixExpression
-# TRANSFORMER walking *ast.IndexExpression
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking *ast.IndexExpression
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking *ast.InfixExpression
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.BlockStatement
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.BlockStatement
-# WALK *ExpressionStatement::Expression: ast.Walk mutated *ast.FunctionLiteral(<<<FunctionLiteral, name="__grgr_lifted_indices", parameters=["str", "chr"], body="(0 ... str.length).find_all __...">>>) to *ast.IntegerLiteral(<<<IntegerLiteral>>>)
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.ContextCallExpression
-# TRANSFORMER walking *ast.ContextCallExpression
-# TRANSFORMER walking *ast.StringLiteral
-# TRANSFORMER walking *ast.StringLiteral
-# TRANSFORMER walking *ast.StringLiteral
-# TRANSFORMER walking *ast.StringLiteral
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.Program
-# TRANSFORMER === applying *block_lifts.Lift pass 1 ===
-# TRANSFORMER walking *ast.Program
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.IntegerLiteral
-# TRANSFORMER walking *ast.IntegerLiteral
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.ContextCallExpression
-# TRANSFORMER walking *ast.ContextCallExpression
-# TRANSFORMER walking *ast.StringLiteral
-# TRANSFORMER walking *ast.StringLiteral
-# TRANSFORMER walking *ast.StringLiteral
-# TRANSFORMER walking *ast.StringLiteral
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.Program
-# TRANSFORMER === done with *block_lifts.Lift ===
-# TRANSFORMER === applying *builtin_lifts.Lift ===
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking *ast.FunctionParameter
-# TRANSFORMER walking *ast.FunctionParameter
-# TRANSFORMER walking *ast.FunctionParameter
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking *ast.IndexExpression
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking *ast.InfixExpression
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.BlockStatement
-# TRANSFORMER walking *ast.FunctionLiteral
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.BlockStatement
-# TRANSFORMER walking *ast.FunctionLiteral
-# TRANSFORMER walking *ast.Assignment
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking *ast.FunctionParameter
-# TRANSFORMER walking *ast.FunctionParameter
-# TRANSFORMER walking *ast.IntegerLiteral
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER found context call expression "length" with context <<<Identifier>>>:  and block %!s(<nil>)
-# TRANSFORMER walking *ast.RangeLiteral
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking ast.ExpressionList
-# TRANSFORMER walking *ast.IndexExpression
-# TRANSFORMER found context call expression "find_all" with context <<<RangeLiteral>>> and block <<<IndexExpression>>>
 # WALK *ExpressionStatement::Expression: ast.Walk mutated *ast.ContextCallExpression(<<<ContextCallExpression>>>) to *ast.IndexExpression(<<<IndexExpression>>>)
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.BlockStatement
-# TRANSFORMER walking *ast.FunctionLiteral
-# TRANSFORMER walking *ast.Assignment
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.IntegerLiteral
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.Identifier
-# TRANSFORMER walking *ast.StringLiteral
-# TRANSFORMER walking *ast.StringLiteral
-# TRANSFORMER walking ast.ExpressionList
-# TRANSFORMER walking *ast.IndexExpression
-# TRANSFORMER found context call expression "puts" with context %!s(<nil>) and block %!s(<nil>)
-# TRANSFORMER walking *ast.ExpressionStatement
-# TRANSFORMER walking *ast.Program
-# TRANSFORMER === done with *builtin_lifts.Lift ===
-# GRGR
-# GRGR	This file is autogenerated by grgr.
-# GRGR	Do not edit it manually.
-# GRGR	
-
-# GRGR *ast.Assignment
+# TRANSFORM_PIPELINE *ast.Assignment
 _grgr_find_all = (-> (range, fun) {out = ([]);i = 0;loop {break if i >= range.size;if fun[i]; out.push(i) end;i = (i + 1)};out})
 
-# GRGR *ast.Assignment
+# TRANSFORM_PIPELINE *ast.Assignment
 __block_Vgm6Ywsp = (-> (str, chr) {-> (i) {str[i] == chr}})
 
-# GRGR *ast.Assignment
-__grgr_lifted_indices = (-> (str, chr) {_grgr_find_all[(0 ... str.length), __block_Vgm6Ywsp[str, chr]]})
+# TRANSFORM_PIPELINE *ast.Assignment
+__lifted_indices = (-> (str, chr) {_grgr_find_all[(0 ... str.length), __block_Vgm6Ywsp[str, chr]]})
 
-# GRGR *ast.IntegerLiteral
-42
+# TRANSFORM_PIPELINE *ast.Assignment
+__lifted_unwrap = (-> (t) {if t.size == 1; t[0]else t end})
 
-# GRGR *ast.ContextCallExpression
-puts(__grgr_lifted_indices["hello", "l"])
+# TRANSFORM_PIPELINE *ast.FunctionLiteral
+-> (str, chr) {_grgr_find_all[(0 ... str.length), __block_Vgm6Ywsp[str, chr]]}
+
+# TRANSFORM_PIPELINE *ast.ContextCallExpression
+puts(__lifted_indices["hello", "l"])
 
 # => [2, 3]
-# def unwrap(t)
-#     t.size == 1 ? t[0] : t
-# end
+# TRANSFORM_PIPELINE *ast.FunctionLiteral
+-> (t) {if t.size == 1; t[0]else t end}
+
+# TRANSFORM_PIPELINE *ast.ContextCallExpression
+puts(__lifted_unwrap[([1, 2, 3])])
+
+# => [1, 2, 3]
 # $TOP    = "^"
 # $BOTTOM = "-"
 # $L_SIDE = "/"

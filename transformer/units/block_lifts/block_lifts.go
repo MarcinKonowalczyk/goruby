@@ -133,19 +133,15 @@ func (f *Lift) transformFunctionLiteralPass0(node *ast.FunctionLiteral) ast.Node
 		// return replacement_node
 		return replacement_node
 	} else {
-		// modified_node := node
 		old_name := node.Name
-		node.Name = fmt.Sprintf("__grgr_lifted_%s", node.Name)
-		// return &ast.Assignment{
-		// 	Left:  &ast.Identifier{Value: old_name},
-		// 	Right: modified_node,
-		// }
+		node.Name = fmt.Sprintf("__lifted_%s", node.Name)
 		if f.NameChanges == nil {
 			f.NameChanges = make(map[string]string)
 		}
 		f.NameChanges[old_name] = node.Name
 		f.LiftedFunctions = append(f.LiftedFunctions, node)
-		return &ast.IntegerLiteral{Value: 42} // just a placeholder, we don't lift the function
+		// return &ast.IntegerLiteral{Value: 42} // just a placeholder, we don't lift the function
+		return nil // just a placeholder, we don't lift the function
 	}
 }
 

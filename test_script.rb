@@ -4,9 +4,11 @@ end
 
 puts indices("hello", "l") # => [2, 3]
 
-# def unwrap(t)
-#     t.size == 1 ? t[0] : t
-# end
+def unwrap(t)
+    t.size == 1 ? t[0] : t
+end
+
+puts unwrap([1, 2, 3]) # => [1, 2, 3]
 
 # $TOP    = "^"
 # $BOTTOM = "-"

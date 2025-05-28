@@ -505,6 +505,9 @@ func WalkCtx(
 					fmt.Printf("# WALK *ExpressionStatement::Expression: ast.Walk mutated %T(%v) to %T(%v)\n", n.Expression, n.Expression, new_node, new_node)
 				}
 				n.Expression = new_expression
+			case nil:
+				// we got nil. remove the expression statement
+				n = nil
 			default:
 				panic(fmt.Sprintf("ast.Walk mutated an expression statement from %T to %T", n.Expression, new_node))
 			}

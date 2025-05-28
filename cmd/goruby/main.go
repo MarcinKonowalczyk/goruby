@@ -8,7 +8,7 @@ import (
 	"runtime/pprof"
 	"strings"
 
-	"github.com/MarcinKonowalczyk/goruby/interpreter"
+	"github.com/MarcinKonowalczyk/goruby/pipelines/interpreter"
 	"github.com/pkg/errors"
 )
 

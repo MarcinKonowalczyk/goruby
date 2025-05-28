@@ -3,9 +3,9 @@ package interpreter_test
 import (
 	"testing"
 
-	"github.com/MarcinKonowalczyk/goruby/interpreter"
 	"github.com/MarcinKonowalczyk/goruby/object"
-	"github.com/MarcinKonowalczyk/goruby/utils"
+	"github.com/MarcinKonowalczyk/goruby/pipelines/interpreter"
+	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
 func TestInterpreterInterpret(t *testing.T) {
@@ -31,7 +31,7 @@ func TestInterpreterInterpret(t *testing.T) {
 		}
 
 		res, ok := out.(*object.Integer)
-		utils.Assert(t, ok, "Expected *object.Integer, got %T\n", out)
-		utils.AssertEqual(t, res.Value, 8)
+		assert.That(t, ok, "Expected *object.Integer, got %T\n", out)
+		assert.Equal(t, res.Value, 8)
 	})
 }

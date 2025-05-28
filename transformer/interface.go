@@ -31,10 +31,17 @@ func Transform(node *ast.Program, trace_transform bool) (*ast.Program, error) {
 	return node, nil
 }
 
-// type Transformer interface {
-// 	Transform(node ast.Node) (ast.Node, error)
-// }
+func NewTransformer() *transformer {
+	return &transformer{
+		tracer: trace.NewTracer(),
+	}
+}
 
-// var (
-// 	_ Transformer = &transformer{}
-// )
+type Transformer interface {
+	Transform(node ast.Node) (ast.Node, error)
+	TransformCtx(ctx context.Context, node ast.Node) (ast.Node, error)
+}
+
+var (
+	_ Transformer = &transformer{}
+)
