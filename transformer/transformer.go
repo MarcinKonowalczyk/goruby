@@ -42,10 +42,10 @@ func (t *transformer) transformProgram(ctx context.Context, program *ast.Program
 	// const ENABLE_BLOCK_LIFT_TRANSFORMER = false
 	if ENABLE_BLOCK_LIFT_TRANSFORMER {
 		transformer := &block_lifts.Lift{}
-		logging.Logf(ctx, "applying %T pass 0\n", transformer)
+		logging.Logf(ctx, "=== applying %T pass 0 ===", transformer)
 		ast.WalkCtx(ctx, program, transformer, nil)
 		(*transformer).Pass = 1
-		logging.Logf(ctx, "applying %T pass 1\n", transformer)
+		logging.Logf(ctx, "=== applying %T pass 1 ===", transformer)
 		ast.WalkCtx(ctx, program, transformer, nil)
 		if len(transformer.LiftedFunctions) > 0 {
 			var lifted []ast.Statement = make([]ast.Statement, len(transformer.LiftedFunctions))
@@ -60,19 +60,19 @@ func (t *transformer) transformProgram(ctx context.Context, program *ast.Program
 			program.Statements = append(lifted, program.Statements...)
 		}
 
-		logging.Logf(ctx, "done with %T\n", transformer)
+		logging.Logf(ctx, "=== done with %T ===", transformer)
 	}
 
 	const ENABLE_LIFT_TRANSFORMER = true
 	// const ENABLE_LIFT_TRANSFORMER = false
 	if ENABLE_LIFT_TRANSFORMER {
 		var transformer = &builtin_lifts.Lift{}
-		logging.Logf(ctx, "applying %T\n", transformer)
-		_ = ast.Walk(program, transformer, nil)
+		logging.Logf(ctx, "=== applying %T ===", transformer)
+		_ = ast.WalkCtx(ctx, program, transformer, nil)
 		if len(transformer.Statements) > 0 {
 			program.Statements = append(transformer.Statements, program.Statements...)
 		}
-		logging.Logf(ctx, "done with %T\n", transformer)
+		logging.Logf(ctx, "=== done with %T ===", transformer)
 	}
 
 	return program, nil
