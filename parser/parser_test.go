@@ -2,7 +2,6 @@ package parser_test
 
 import (
 	"fmt"
-	gotoken "go/token"
 	"os"
 	"reflect"
 	"strconv"
@@ -2348,7 +2347,7 @@ func testHashLiteral(t *testing.T, expr ast.Expression, value map[string]string)
 }
 
 func parseSource(src string) (*ast.Program, *p.Errors) {
-	prog, err := p.ParseFile(gotoken.NewFileSet(), "", src)
+	prog, err := p.Parse(src)
 	var parserErrors *p.Errors
 	if err != nil {
 		parserErrors = err.(*p.Errors)
@@ -2357,7 +2356,7 @@ func parseSource(src string) (*ast.Program, *p.Errors) {
 }
 
 func parseExpression(src string) (ast.Expression, *p.Errors) {
-	expr, err := p.ParseExprFrom(gotoken.NewFileSet(), "", src)
+	expr, err := p.ParseExpr(src)
 	var parserErrors *p.Errors
 	if err != nil {
 		parserErrors = err.(*p.Errors)

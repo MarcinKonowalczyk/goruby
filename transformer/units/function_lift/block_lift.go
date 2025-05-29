@@ -61,11 +61,11 @@ func (f *LiftBlocks) PostTransform(ctx context.Context, node ast.Node) ast.Node 
 		}
 		// call the post-transform function
 		if f.Pass == 0 {
-			return f.transformFunctionLiteralPass0(node)
+			return f.transformFunctionLiteralPass0(ctx, node)
 		}
 	case *ast.ContextCallExpression:
 		if f.Pass == 1 {
-			return f.transformContextCallExpressionPass1(node)
+			return f.transformContextCallExpressionPass1(ctx, node)
 		}
 	default:
 		logging.Logf(ctx, "walking %T\n", node)
@@ -73,8 +73,9 @@ func (f *LiftBlocks) PostTransform(ctx context.Context, node ast.Node) ast.Node 
 	return node
 }
 
-func (f *LiftBlocks) transformFunctionLiteralPass0(node *ast.FunctionLiteral) ast.Node {
+func (f *LiftBlocks) transformFunctionLiteralPass0(ctx context.Context, node *ast.FunctionLiteral) ast.Node {
 	if len(f.call_stack) > 0 {
+		logging.Logf(ctx, "lifting function %s with parameters %v\n", node.Name, node.Parameters)
 		parent := f.call_stack[len(f.call_stack)-1]
 
 		// And add all the parameters from the parent
@@ -131,7 +132,6 @@ func (f *LiftBlocks) transformFunctionLiteralPass0(node *ast.FunctionLiteral) as
 
 		f.LiftedFunctions = append(f.LiftedFunctions, lifted_function)
 
-		// return replacement_node
 		return replacement_node
 	} else {
 		old_name := node.Name
@@ -141,12 +141,11 @@ func (f *LiftBlocks) transformFunctionLiteralPass0(node *ast.FunctionLiteral) as
 		}
 		f.NameChanges[old_name] = node.Name
 		f.LiftedFunctions = append(f.LiftedFunctions, node)
-		// return &ast.IntegerLiteral{Value: 42} // just a placeholder, we don't lift the function
-		return nil // just a placeholder, we don't lift the function
+		return nil
 	}
 }
 
-func (f *LiftBlocks) transformContextCallExpressionPass1(node *ast.ContextCallExpression) ast.Node {
+func (f *LiftBlocks) transformContextCallExpressionPass1(ctx context.Context, node *ast.ContextCallExpression) ast.Node {
 	if node.Context == nil {
 		new_name, ok := f.NameChanges[node.Function]
 		if ok {

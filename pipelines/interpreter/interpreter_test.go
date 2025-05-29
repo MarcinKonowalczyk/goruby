@@ -25,7 +25,7 @@ func TestInterpreterInterpret(t *testing.T) {
 			`
 		i := interpreter.NewInterpreter()
 
-		out, err := i.Interpret("", input)
+		out, err := i.InterpretCode(input)
 		if err != nil {
 			panic(err)
 		}

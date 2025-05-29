@@ -1,11 +1,8 @@
 package function_lift
 
 import (
-	"go/token"
-
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/parser"
-	"github.com/MarcinKonowalczyk/goruby/trace/printer"
 )
 
 type context_spec string
@@ -15,30 +12,11 @@ type replacement_spec struct {
 	name      string
 }
 
-func MustCompileStatement(code string) ast.Statement {
-	program, tracer, err := parser.ParseFileEx(token.NewFileSet(), "", code, false)
-	if err != nil {
-		panic(err)
-	}
-	if tracer != nil {
-		walkable, err := tracer.ToWalkable()
-		if err != nil {
-			panic(err)
-		}
-		walkable.Walk(printer.NewTracePrinter())
-	}
-
-	if len(program.Statements) != 1 {
-		panic("MustCompileStatement expects a single statement")
-	}
-	return program.Statements[0]
-}
-
 var context_call_expr_replacements map[context_spec]replacement_spec = map[context_spec]replacement_spec{
 	"find_all": {
-		name: "_grgr_find_all",
-		statement: MustCompileStatement(`
-_grgr_find_all = -> (range, fun) {
+		name: "__builtin_find_all",
+		statement: parser.MustParseStatement(`
+__builtin_find_all = -> (range, fun) {
     out = []
     i = 0
     loop {

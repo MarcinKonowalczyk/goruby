@@ -86,7 +86,7 @@ type bufferedInterpreter struct {
 // interpretLine evaluates the next line from the input and writes the results to out
 func (b *bufferedInterpreter) interpretLine(line string, out io.Writer) {
 	b.buffer += line
-	evaluated, err := b.interpreter.Interpret("(irb)", b.preserveLineCount(b.buffer))
+	evaluated, err := b.interpreter.InterpretCode(b.preserveLineCount(b.buffer))
 	if err != nil {
 		if isEOFError(err) {
 			b.buffer += "\n"

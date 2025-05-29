@@ -3,18 +3,16 @@ package transformer
 import (
 	"context"
 	"fmt"
-	"go/token"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/parser"
 	"github.com/MarcinKonowalczyk/goruby/printer"
-	trace_printer "github.com/MarcinKonowalczyk/goruby/trace/printer"
 	t "github.com/MarcinKonowalczyk/goruby/transformer"
 )
 
 type Transformer interface {
-	Transform(filename string, input interface{}, stages []t.Stage) (string, error)
-	TransformCtx(ctx context.Context, filename string, input interface{}, stages []t.Stage) (string, error)
+	Transform(src string, stages []t.Stage) (string, error)
+	TransformCtx(ctx context.Context, src string, stages []t.Stage) (string, error)
 }
 
 func NewTransformer() Transformer {
@@ -26,20 +24,20 @@ type transformer struct {
 	// trace_transform bool
 }
 
-func (i *transformer) Transform(filename string, input interface{}, stages []t.Stage) (string, error) {
+func (i *transformer) Transform(src string, stages []t.Stage) (string, error) {
 	ctx := context.Background()
-	return i.TransformCtx(ctx, filename, input, stages)
+	return i.TransformCtx(ctx, src, stages)
 }
 
-func (i *transformer) TransformCtx(ctx context.Context, filename string, input interface{}, stages []t.Stage) (string, error) {
-	program, tracer, err := parser.ParseFileEx(token.NewFileSet(), filename, input, i.trace_parse)
-	if tracer != nil {
-		walkable, err := tracer.ToWalkable()
-		if err != nil {
-			panic(err)
-		}
-		walkable.Walk(trace_printer.NewTracePrinter())
-	}
+func (i *transformer) TransformCtx(ctx context.Context, src string, stages []t.Stage) (string, error) {
+	program, err := parser.Parse(src)
+	// if tracer != nil {
+	// 	walkable, err := tracer.ToWalkable()
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// 	walkable.Walk(trace_printer.NewTracePrinter())
+	// }
 	if err != nil {
 		return "", err
 	}
@@ -62,12 +60,20 @@ func (i *transformer) TransformCtx(ctx context.Context, filename string, input i
 
 var _ Transformer = &transformer{}
 
-func Transform(filename string, input interface{}) (string, error) {
+func Transform(src string) (string, error) {
 	transformer := NewTransformer()
-	return transformer.Transform(filename, input, t.ALL_STAGES)
+	return transformer.Transform(src, t.ALL_STAGES)
 }
 
-func TransformStages(filename string, input interface{}, stages []t.Stage) (string, error) {
+// func TransformWithComments(filename string, input interface{}) (string, error) {
+// }
+
+func TransformStages(src string, input interface{}, stages []t.Stage) (string, error) {
 	transformer := NewTransformer()
-	return transformer.Transform(filename, input, stages)
+	ctx := context.Background()
+	// logger := log.New(os.Stdout, "# TRANSFORMER ", 0)
+	// ctx = logging.WithLogger(ctx, logger)
+	return transformer.TransformCtx(ctx, src, t.ALL_STAGES)
+	// transformer := NewTransformer()
+	// return transformer.Transform(filename, input, stages)
 }

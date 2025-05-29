@@ -64,7 +64,9 @@ func runTest(
 	assert.NoError(t, err)
 
 	// Transform
-	transformed, err := transformer_pipeline.TransformStages(test_file, nil, stages)
+	src, err := os.ReadFile(test_file)
+	assert.NoError(t, err)
+	transformed, err := transformer_pipeline.TransformStages(string(src), nil, stages)
 	assert.NoError(t, err)
 
 	if intermediate_suffix != "" {
@@ -131,7 +133,7 @@ func combinationsToString(combination []transformer.Stage) string {
 	}
 	return sb.String()
 }
-func TestAllStageCombinations(t *testing.T) {
+func TestCombinations(t *testing.T) {
 	test_files := findTestFiles()
 	rb, err := ruby.FindRuby()
 	if err != nil {
@@ -149,19 +151,10 @@ func TestAllStageCombinations(t *testing.T) {
 				t.Run(
 					strings.Join([]string{base, fmt.Sprintf("%d", i), combination_string}, "/"),
 					func(t *testing.T) {
-						fmt.Printf("Running test %s with stages %s\n", base, combination_string)
 						intermediate_suffix := fmt.Sprintf("_%s_%s", combination_string, TRANSFORMED_SUFFIX)
 						runTest(t, rb, grb, test_file, intermediate_suffix, combination)
 					})
 			}
 		}
 	}
-
-	// for _, test_file := range test_files {
-	// 	base := path.Base(test_file)
-	// 	t.Run(base, func(t *testing.T) {
-	// 		t.Parallel() // Run each test in parallel
-	// 		runTest(t, rb, test_file, transformer.ALL_STAGES)
-	// 	})
-	// }
 }

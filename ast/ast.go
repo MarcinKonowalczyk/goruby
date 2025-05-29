@@ -112,18 +112,22 @@ func (bs *BlockStatement) Code() string {
 	var out strings.Builder
 	statement_strings := make([]string, 0)
 	for _, s := range bs.Statements {
-		if s == nil {
-			continue
+		switch s := s.(type) {
+		case *Comment:
+			// Comments are not included in the code output since they mess up one-line formatting
+		case nil:
+			// Nil statements are ignored
+		default:
+			statement_string := s.Code()
+			statement_strings = append(statement_strings, statement_string)
 		}
-		statement_string := s.Code()
-		statement_strings = append(statement_strings, statement_string)
 	}
 
 	if len(statement_strings) == 0 {
 		return ""
 	}
 
-	out.WriteString(strings.Join(statement_strings, ";"))
+	out.WriteString(strings.Join(statement_strings, "; "))
 	return out.String()
 }
 
@@ -543,27 +547,28 @@ func (fl *FunctionLiteral) String() string {
 
 func (fl *FunctionLiteral) Code() string {
 	var out strings.Builder
-	if strings.HasPrefix(fl.Name, "__") {
+	is_anonymous := fl.Name == "" || strings.HasPrefix(fl.Name, "__")
+
+	if is_anonymous {
 		out.WriteString("-> ")
-		out.WriteString("(")
-		args := []string{}
-		for _, a := range fl.Parameters {
-			args = append(args, a.Code())
-		}
-		out.WriteString(strings.Join(args, ", "))
-		out.WriteString(") {")
-		out.WriteString(fl.Body.Code())
-		out.WriteString("}")
 	} else {
 		out.WriteString("def ")
 		out.WriteString(fl.Name)
-		out.WriteString("(")
-		args := []string{}
-		for _, a := range fl.Parameters {
-			args = append(args, a.Code())
-		}
-		out.WriteString(strings.Join(args, ", "))
-		out.WriteString(")")
+	}
+
+	out.WriteString("(")
+	args := []string{}
+	for _, a := range fl.Parameters {
+		args = append(args, a.Code())
+	}
+	out.WriteString(strings.Join(args, ", "))
+	out.WriteString(")")
+
+	if is_anonymous {
+		out.WriteString(" {")
+		out.WriteString(fl.Body.Code())
+		out.WriteString("}")
+	} else {
 		out.WriteString("\n")
 		body_string := fl.Body.Code()
 		for _, line := range strings.Split(body_string, "\n") {
@@ -764,6 +769,7 @@ func needsParens(e Expression) bool {
 	case *IntegerLiteral:
 	case *SymbolLiteral:
 	case *FloatLiteral:
+	case *FunctionLiteral:
 	case *ContextCallExpression:
 		if e.Context == nil {
 			// we're calling a function without a context, aka just calling a function

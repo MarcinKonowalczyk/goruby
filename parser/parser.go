@@ -130,10 +130,10 @@ type parser struct {
 	infixParseFns  map[token.Type]infixParseFn
 }
 
-func (p *parser) init(fset *gotoken.FileSet, filename string, src []byte, trace_parse bool) {
-	p.file = fset.AddFile(filename, -1, len(src))
+func (p *parser) init(src string, trace_parse bool) {
+	p.file = gotoken.NewFileSet().AddFile("", -1, len(src))
 
-	p.l = lexer.New(string(src))
+	p.l = lexer.New(src)
 	p.errors = []error{}
 	if trace_parse {
 		p.tracer = trace.NewTracer()
@@ -303,7 +303,7 @@ func (p *parser) noPrefixParseFnError(t token.Type) {
 // during the parse process. If the error is not nil the AST may be incomplete
 // and callers should always check if they can handle the error with providing
 // more input by checking with e.g. IsEOFError.
-func (p *parser) ParseProgram() (*ast.Program, error) {
+func (p *parser) Parse() (*ast.Program, error) {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 	for !p.currentIs(token.EOF) {
