@@ -11,7 +11,7 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/transformer/logging"
 )
 
-func Transform(node *ast.Program, trace_transform bool) (*ast.Program, error) {
+func Transform(node *ast.Program, stages []Stage, trace_transform bool) (*ast.Program, error) {
 	// new context with stdout logger
 	logger := log.New(os.Stdout, "# TRANSFORMER ", 0)
 	ctx := logging.WithLogger(context.Background(), logger)
@@ -20,7 +20,7 @@ func Transform(node *ast.Program, trace_transform bool) (*ast.Program, error) {
 	if trace_transform {
 		t.tracer = trace.NewTracer()
 	}
-	transformed_node, err := t.TransformCtx(ctx, node)
+	transformed_node, err := t.TransformCtx(ctx, node, stages)
 	if err != nil {
 		return nil, err
 	}
@@ -38,8 +38,8 @@ func NewTransformer() *transformer {
 }
 
 type Transformer interface {
-	Transform(node ast.Node) (ast.Node, error)
-	TransformCtx(ctx context.Context, node ast.Node) (ast.Node, error)
+	Transform(node ast.Node, stages []Stage) (ast.Node, error)
+	TransformCtx(ctx context.Context, node ast.Node, stages []Stage) (ast.Node, error)
 }
 
 var (

@@ -60,7 +60,7 @@ func (i *interpreter) Interpret(filename string, input interface{}) (object.Ruby
 	// const ENABLE_TRANSFORMS_IN_INTERPRETER = true
 	const ENABLE_TRANSFORMS_IN_INTERPRETER = false
 	if ENABLE_TRANSFORMS_IN_INTERPRETER {
-		program, err = transformer.Transform(program, i.trace_transform)
+		program, err = transformer.Transform(program, transformer.ALL_STAGES, i.trace_transform)
 		if err != nil {
 			return nil, object.NewRuntimeError("transformer error: %v", err)
 		}

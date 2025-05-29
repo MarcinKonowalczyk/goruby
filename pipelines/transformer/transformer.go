@@ -12,7 +12,7 @@ import (
 )
 
 type Transformer interface {
-	Transform(filename string, input interface{}) (string, error)
+	Transform(filename string, input interface{}, stages []t.Stage) (string, error)
 }
 
 func NewTransformer() Transformer {
@@ -24,7 +24,7 @@ type transformer struct {
 	// trace_transform bool
 }
 
-func (i *transformer) Transform(filename string, input interface{}) (string, error) {
+func (i *transformer) Transform(filename string, input interface{}, stages []t.Stage) (string, error) {
 	program, tracer, err := parser.ParseFileEx(token.NewFileSet(), filename, input, i.trace_parse)
 	if tracer != nil {
 		walkable, err := tracer.ToWalkable()
@@ -38,7 +38,7 @@ func (i *transformer) Transform(filename string, input interface{}) (string, err
 	}
 
 	transformer := t.NewTransformer()
-	transformed_program, err := transformer.Transform(program)
+	transformed_program, err := transformer.Transform(program, stages)
 	if transformed_program, ok := transformed_program.(*ast.Program); !ok {
 		return "", fmt.Errorf("expected *t.Program, got %T", transformed_program)
 	}
@@ -57,5 +57,10 @@ var _ Transformer = &transformer{}
 
 func Transform(filename string, input interface{}) (string, error) {
 	transformer := NewTransformer()
-	return transformer.Transform(filename, input)
+	return transformer.Transform(filename, input, t.ALL_STAGES)
+}
+
+func TransformStages(filename string, input interface{}, stages []t.Stage) (string, error) {
+	transformer := NewTransformer()
+	return transformer.Transform(filename, input, stages)
 }

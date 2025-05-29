@@ -15,18 +15,18 @@ type transformer struct {
 	tracer trace.Tracer
 }
 
-func (t *transformer) Transform(node ast.Node) (ast.Node, error) {
-	return t.TransformCtx(context.Background(), node)
+func (t *transformer) Transform(node ast.Node, stages []Stage) (ast.Node, error) {
+	return t.TransformCtx(context.Background(), node, stages)
 }
 
-func (t *transformer) TransformCtx(ctx context.Context, node ast.Node) (ast.Node, error) {
+func (t *transformer) TransformCtx(ctx context.Context, node ast.Node, stages []Stage) (ast.Node, error) {
 	program, is_program := node.(*ast.Program)
 
 	var transformed ast.Node
 	var out_err error
 
 	if is_program {
-		transformed, out_err = t.transformProgram(ctx, program)
+		transformed, out_err = t.transformProgram(ctx, program, stages)
 
 	} else {
 		panic("Transforming non-program node is not yet implemented")
@@ -35,13 +35,39 @@ func (t *transformer) TransformCtx(ctx context.Context, node ast.Node) (ast.Node
 	return transformed, out_err
 }
 
-func (t *transformer) transformProgram(ctx context.Context, program *ast.Program) (*ast.Program, error) {
+type Stage string
+
+const (
+	Sblock_lift   Stage = "block_lift"
+	Sbuiltin_lift Stage = "builtin_lift"
+)
+
+var ALL_STAGES []Stage = []Stage{
+	Sblock_lift,
+	Sbuiltin_lift,
+}
+
+func (t *transformer) transformProgram(
+	ctx context.Context,
+	program *ast.Program,
+	stages []Stage,
+) (*ast.Program, error) {
 	// var new_statement ast.Statement = context_call_expr_replacements[context_spec("find_all")].statement
 	// program.Statements = append([]ast.Statement{new_statement}, program.Statements...)
 
-	const ENABLE_BLOCK_LIFT_TRANSFORMER = true
-	// const ENABLE_BLOCK_LIFT_TRANSFORMER = false
-	if ENABLE_BLOCK_LIFT_TRANSFORMER {
+	logging.Logf(ctx, "Transforming program with %d stages", len(stages))
+
+	if len(stages) == 0 {
+		return program, nil
+	}
+
+	var stages_map map[Stage]bool = make(map[Stage]bool)
+	for _, stage := range stages {
+		stages_map[stage] = true
+	}
+
+	// BLOCK_LIFT
+	if _, ok := stages_map[Sblock_lift]; ok {
 		transformer := &block_lifts.Lift{}
 		logging.Logf(ctx, "=== applying %T pass 0 ===", transformer)
 		walk.WalkCtx(ctx, program, transformer, nil)
@@ -64,9 +90,8 @@ func (t *transformer) transformProgram(ctx context.Context, program *ast.Program
 		logging.Logf(ctx, "=== done with %T ===", transformer)
 	}
 
-	const ENABLE_LIFT_TRANSFORMER = true
-	// const ENABLE_LIFT_TRANSFORMER = false
-	if ENABLE_LIFT_TRANSFORMER {
+	// BUILTIN_LIFT
+	if _, ok := stages_map[Sbuiltin_lift]; ok {
 		var transformer = &builtin_lifts.Lift{}
 		logging.Logf(ctx, "=== applying %T ===", transformer)
 		_ = walk.WalkCtx(ctx, program, transformer, nil)
