@@ -44,7 +44,7 @@ func main() {
 	version := flag.Bool("version", false, "print version")
 	flag.Parse()
 	if *version {
-		fmt.Println("goruby version 0.1.0")
+		fmt.Println("goruby 0.1.0")
 		os.Exit(0)
 	}
 	if cpuprofile != "" {

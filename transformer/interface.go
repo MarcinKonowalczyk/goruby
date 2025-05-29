@@ -31,7 +31,7 @@ func Transform(node *ast.Program, stages []Stage, trace_transform bool) (*ast.Pr
 	return node, nil
 }
 
-func NewTransformer() *transformer {
+func NewTransformer() Transformer {
 	return &transformer{
 		tracer: trace.NewTracer(),
 	}

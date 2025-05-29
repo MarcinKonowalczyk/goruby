@@ -17,7 +17,6 @@ import (
 
 // test files folder relative to this package
 const TEST_FILES_FOLDER = "test_files"
-const SAVE_INTERMEDIATE_FILES = true
 const TRANSFORMED_SUFFIX = "transformed"
 
 func findTestFiles() []string {
@@ -34,9 +33,27 @@ func findTestFiles() []string {
 	return filtered_test_files
 }
 
+func initGoRuby() (ruby.Ruby, error) {
+	path, err := utils.CompileGoRuby(true)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile GoRuby: %w", err)
+	}
+
+	rb, err := ruby.FindRuby(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find GoRuby binary: %w", err)
+	}
+
+	if !strings.Contains(strings.ToLower(rb.Version()), "goruby") {
+		return nil, fmt.Errorf("GoRuby binary does not contain 'goruby' in version string: %s", rb.Version())
+	}
+	return rb, nil
+}
+
 func runTest(
 	t *testing.T,
 	rb ruby.Ruby,
+	grb ruby.Ruby,
 	test_file string,
 	intermediate_suffix string,
 	stages []transformer.Stage,
@@ -47,7 +64,6 @@ func runTest(
 	assert.NoError(t, err)
 
 	// Transform
-	fmt.Println(stages)
 	transformed, err := transformer_pipeline.TransformStages(test_file, nil, stages)
 	assert.NoError(t, err)
 
@@ -64,6 +80,17 @@ func runTest(
 
 	// Make sure the output is the same
 	assert.Equal(t, before, after)
+
+	if grb != nil {
+		// we have goruby! check that it produces the same output for both original and transformed code
+		before_grb, err := grb.RunFile(test_file)
+		assert.NoError(t, err)
+		assert.Equal(t, before, before_grb)
+
+		after_grb, err := grb.RunCode(transformed)
+		assert.NoError(t, err)
+		assert.Equal(t, after, after_grb)
+	}
 }
 
 func TestAll(t *testing.T) {
@@ -71,12 +98,21 @@ func TestAll(t *testing.T) {
 	rb, err := ruby.FindRuby()
 	if err != nil {
 		t.Skip("Ruby interpreter not found, skipping tests")
+	} else {
+		t.Logf("Using Ruby interpreter: %s", rb.Version())
 	}
+	grb, err := initGoRuby()
+	if err != nil {
+		t.Skipf("GoRuby not compiled, skipping tests: %v", err)
+	} else {
+		t.Logf("Using GoRuby binary: %s", grb.Version())
+	}
+
 	for _, test_file := range test_files {
 		base := path.Base(test_file)
 		t.Run(base, func(t *testing.T) {
-			t.Parallel() // Run each test in parallel
-			runTest(t, rb, test_file, "", transformer.ALL_STAGES)
+			// t.Parallel() // Run each test in parallel
+			runTest(t, rb, grb, test_file, "", transformer.ALL_STAGES)
 		})
 	}
 }
@@ -101,6 +137,7 @@ func TestAllStageCombinations(t *testing.T) {
 	if err != nil {
 		t.Skip("Ruby interpreter not found, skipping tests")
 	}
+	var grb ruby.Ruby = nil // no need to check with goruby here
 	all_stages := transformer.ALL_STAGES
 	for i := 1; i <= len(all_stages); i++ {
 		combinations := combinatorics.CombinationsSorted(all_stages, i, func(a, b transformer.Stage) bool { return a < b })
@@ -114,7 +151,7 @@ func TestAllStageCombinations(t *testing.T) {
 					func(t *testing.T) {
 						fmt.Printf("Running test %s with stages %s\n", base, combination_string)
 						intermediate_suffix := fmt.Sprintf("_%s_%s", combination_string, TRANSFORMED_SUFFIX)
-						runTest(t, rb, test_file, intermediate_suffix, combination)
+						runTest(t, rb, grb, test_file, intermediate_suffix, combination)
 					})
 			}
 		}

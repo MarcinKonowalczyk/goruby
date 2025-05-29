@@ -6,12 +6,18 @@ import (
 )
 
 type Ruby interface {
+	Version() string
 	RunCode(code string) (string, error)
 	RunFile(filename string) (string, error)
 }
 
 type ruby_interpreter struct {
 	ruby_path string
+	version   string
+}
+
+func (r *ruby_interpreter) Version() string {
+	return r.version
 }
 
 func (r *ruby_interpreter) RunCode(code string) (string, error) {
@@ -42,14 +48,27 @@ func (r *ruby_interpreter) RunFile(filename string) (string, error) {
 
 var _ Ruby = (*ruby_interpreter)(nil)
 
-func FindRuby() (Ruby, error) {
-	ruby_path := os.Getenv("RUBY_PATH")
+func FindRuby(args ...string) (Ruby, error) {
+	var ruby_path string
+	if len(args) > 0 {
+		ruby_path = args[0]
+	}
+	if ruby_path == "" {
+		ruby_path = os.Getenv("RUBY_PATH")
+	}
 	if ruby_path == "" {
 		ruby_path = "ruby" // default to 'ruby' in PATH
 	}
+
 	cmd := exec.Command(ruby_path, "--version")
-	if err := cmd.Run(); err != nil {
-		return &ruby_interpreter{}, err // Ruby not found
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err // Ruby not found
 	}
-	return &ruby_interpreter{ruby_path: ruby_path}, nil
+	version := string(output)
+
+	return &ruby_interpreter{
+		ruby_path: ruby_path,
+		version:   version,
+	}, nil
 }

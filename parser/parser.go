@@ -345,6 +345,8 @@ func (p *parser) parseStatement() ast.Statement {
 		return nil
 	case token.NEWLINE:
 		return nil
+	case token.SEMICOLON:
+		return nil
 	case token.RETURN:
 		return p.parseReturnStatement()
 	case token.COMMENT:

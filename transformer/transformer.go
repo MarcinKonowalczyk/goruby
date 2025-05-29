@@ -7,8 +7,7 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/ast/walk"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 	"github.com/MarcinKonowalczyk/goruby/transformer/logging"
-	"github.com/MarcinKonowalczyk/goruby/transformer/units/block_lifts"
-	"github.com/MarcinKonowalczyk/goruby/transformer/units/builtin_lifts"
+	"github.com/MarcinKonowalczyk/goruby/transformer/units/function_lift"
 )
 
 type transformer struct {
@@ -38,13 +37,11 @@ func (t *transformer) TransformCtx(ctx context.Context, node ast.Node, stages []
 type Stage string
 
 const (
-	Sblock_lift   Stage = "block_lift"
-	Sbuiltin_lift Stage = "builtin_lift"
+	Sfunction_lift Stage = "function_lift"
 )
 
 var ALL_STAGES []Stage = []Stage{
-	Sblock_lift,
-	Sbuiltin_lift,
+	Sfunction_lift,
 }
 
 func (t *transformer) transformProgram(
@@ -67,8 +64,8 @@ func (t *transformer) transformProgram(
 	}
 
 	// BLOCK_LIFT
-	if _, ok := stages_map[Sblock_lift]; ok {
-		transformer := &block_lifts.Lift{}
+	if _, ok := stages_map[Sfunction_lift]; ok {
+		transformer := &function_lift.LiftBlocks{}
 		logging.Logf(ctx, "=== applying %T pass 0 ===", transformer)
 		walk.WalkCtx(ctx, program, transformer, nil)
 		(*transformer).Pass = 1
@@ -90,9 +87,8 @@ func (t *transformer) transformProgram(
 		logging.Logf(ctx, "=== done with %T ===", transformer)
 	}
 
-	// BUILTIN_LIFT
-	if _, ok := stages_map[Sbuiltin_lift]; ok {
-		var transformer = &builtin_lifts.Lift{}
+	if _, ok := stages_map[Sfunction_lift]; ok {
+		var transformer = &function_lift.LiftBuiltins{}
 		logging.Logf(ctx, "=== applying %T ===", transformer)
 		_ = walk.WalkCtx(ctx, program, transformer, nil)
 		if len(transformer.Statements) > 0 {

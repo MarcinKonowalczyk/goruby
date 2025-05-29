@@ -1,4 +1,4 @@
-package block_lifts
+package function_lift
 
 import (
 	"context"
@@ -18,7 +18,7 @@ func (c *call) String() string {
 	return fmt.Sprintf("call(name=%s, parameters=%v)", c.name, c.parameters)
 }
 
-type Lift struct {
+type LiftBlocks struct {
 	call_stack []*call
 	// functions which we lifted and want to now stick in the top level of the program
 	LiftedFunctions []*ast.FunctionLiteral
@@ -28,7 +28,7 @@ type Lift struct {
 	Pass int
 }
 
-func (f *Lift) PreTransform(ctx context.Context, node ast.Node) ast.Node {
+func (f *LiftBlocks) PreTransform(ctx context.Context, node ast.Node) ast.Node {
 	switch node := node.(type) {
 	case nil:
 		//
@@ -48,7 +48,7 @@ func (f *Lift) PreTransform(ctx context.Context, node ast.Node) ast.Node {
 	return node
 }
 
-func (f *Lift) PostTransform(ctx context.Context, node ast.Node) ast.Node {
+func (f *LiftBlocks) PostTransform(ctx context.Context, node ast.Node) ast.Node {
 	switch node := node.(type) {
 	case nil:
 		//
@@ -73,7 +73,7 @@ func (f *Lift) PostTransform(ctx context.Context, node ast.Node) ast.Node {
 	return node
 }
 
-func (f *Lift) transformFunctionLiteralPass0(node *ast.FunctionLiteral) ast.Node {
+func (f *LiftBlocks) transformFunctionLiteralPass0(node *ast.FunctionLiteral) ast.Node {
 	if len(f.call_stack) > 0 {
 		parent := f.call_stack[len(f.call_stack)-1]
 
@@ -146,7 +146,7 @@ func (f *Lift) transformFunctionLiteralPass0(node *ast.FunctionLiteral) ast.Node
 	}
 }
 
-func (f *Lift) transformContextCallExpressionPass1(node *ast.ContextCallExpression) ast.Node {
+func (f *LiftBlocks) transformContextCallExpressionPass1(node *ast.ContextCallExpression) ast.Node {
 	if node.Context == nil {
 		new_name, ok := f.NameChanges[node.Function]
 		if ok {
@@ -161,10 +161,10 @@ func (f *Lift) transformContextCallExpressionPass1(node *ast.ContextCallExpressi
 	return node
 }
 
-func (f *Lift) TransformerMarker() {}
+func (f *LiftBlocks) TransformerMarker() {}
 
 var (
-	_ walk.PreTransformerCtx  = &Lift{}
-	_ walk.PostTransformerCtx = &Lift{}
-	_ walk.Transformer        = &Lift{}
+	_ walk.PreTransformerCtx  = &LiftBlocks{}
+	_ walk.PostTransformerCtx = &LiftBlocks{}
+	_ walk.Transformer        = &LiftBlocks{}
 )

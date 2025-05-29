@@ -1,4 +1,4 @@
-package builtin_lifts
+package function_lift
 
 import (
 	"context"
@@ -8,11 +8,11 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/transformer/logging"
 )
 
-type Lift struct {
+type LiftBuiltins struct {
 	Statements []ast.Statement // to be lifted
 }
 
-func (f *Lift) PostTransform(ctx context.Context, node ast.Node) ast.Node {
+func (f *LiftBuiltins) PostTransform(ctx context.Context, node ast.Node) ast.Node {
 	switch node := node.(type) {
 	case nil:
 		//
@@ -40,9 +40,9 @@ func (f *Lift) PostTransform(ctx context.Context, node ast.Node) ast.Node {
 	return node
 }
 
-func (f *Lift) TransformerMarker() {}
+func (f *LiftBuiltins) TransformerMarker() {}
 
 var (
-	_ walk.PostTransformerCtx = &Lift{}
-	_ walk.Transformer        = &Lift{}
+	_ walk.PostTransformerCtx = &LiftBuiltins{}
+	_ walk.Transformer        = &LiftBuiltins{}
 )

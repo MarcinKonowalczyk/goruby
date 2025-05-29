@@ -1,6 +1,7 @@
 package transformer
 
 import (
+	"context"
 	"fmt"
 	"go/token"
 
@@ -13,6 +14,7 @@ import (
 
 type Transformer interface {
 	Transform(filename string, input interface{}, stages []t.Stage) (string, error)
+	TransformCtx(ctx context.Context, filename string, input interface{}, stages []t.Stage) (string, error)
 }
 
 func NewTransformer() Transformer {
@@ -25,6 +27,11 @@ type transformer struct {
 }
 
 func (i *transformer) Transform(filename string, input interface{}, stages []t.Stage) (string, error) {
+	ctx := context.Background()
+	return i.TransformCtx(ctx, filename, input, stages)
+}
+
+func (i *transformer) TransformCtx(ctx context.Context, filename string, input interface{}, stages []t.Stage) (string, error) {
 	program, tracer, err := parser.ParseFileEx(token.NewFileSet(), filename, input, i.trace_parse)
 	if tracer != nil {
 		walkable, err := tracer.ToWalkable()
@@ -38,7 +45,7 @@ func (i *transformer) Transform(filename string, input interface{}, stages []t.S
 	}
 
 	transformer := t.NewTransformer()
-	transformed_program, err := transformer.Transform(program, stages)
+	transformed_program, err := transformer.TransformCtx(ctx, program, stages)
 	if transformed_program, ok := transformed_program.(*ast.Program); !ok {
 		return "", fmt.Errorf("expected *t.Program, got %T", transformed_program)
 	}

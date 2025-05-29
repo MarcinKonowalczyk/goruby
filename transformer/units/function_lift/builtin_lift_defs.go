@@ -1,4 +1,4 @@
-package builtin_lifts
+package function_lift
 
 import (
 	"go/token"
