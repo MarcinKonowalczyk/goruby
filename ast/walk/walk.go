@@ -74,7 +74,7 @@ func Path(root, child ast.Node) (*list.List, bool) {
 		return nil, false
 	}
 	childTree := list.New()
-	l := treeToLinkedList(root)
+	l := TreeToLinkedList(root)
 	for e := l.Front(); e != nil; e = e.Next() {
 		n, ok := e.Value.(ast.Node)
 		if !ok {
@@ -87,7 +87,7 @@ func Path(root, child ast.Node) (*list.List, bool) {
 	return childTree, true
 }
 
-func treeToLinkedList(node ast.Node) *list.List {
+func TreeToLinkedList(node ast.Node) *list.List {
 	list := list.New()
 	for n := range WalkEmit(node) {
 		if n != nil {

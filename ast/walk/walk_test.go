@@ -1,4 +1,4 @@
-package walk
+package walk_test
 
 import (
 	"container/list"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/ast/walk"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
@@ -25,7 +26,7 @@ func Test_Parent(t *testing.T) {
 			},
 		}
 
-		p, ok := Parent(root, child)
+		p, ok := walk.Parent(root, child)
 
 		assert.That(t, ok, "Expected child to be contained within root, was not")
 		assert.That(t, reflect.DeepEqual(parent, p), "Expected parent to equal\n%+#v\n\tgot\n%+#v\n", parent, p)
@@ -39,7 +40,7 @@ func Test_Parent(t *testing.T) {
 			},
 		}
 
-		_, ok := Parent(root, root)
+		_, ok := walk.Parent(root, root)
 
 		assert.That(t, !ok, "Expected bool to return false")
 	})
@@ -58,7 +59,7 @@ func Test_Parent(t *testing.T) {
 			},
 		}
 
-		_, ok := Parent(root, &ast.IntegerLiteral{Value: 3})
+		_, ok := walk.Parent(root, &ast.IntegerLiteral{Value: 3})
 
 		assert.That(t, !ok, "Expected child not to be contained within root")
 	})
@@ -81,7 +82,7 @@ func Test_Path(t *testing.T) {
 			},
 		}
 
-		path, ok := Path(root, child)
+		path, ok := walk.Path(root, child)
 
 		assert.That(t, ok, "Expected child to be contained within root, was not")
 
@@ -110,7 +111,7 @@ func Test_Path(t *testing.T) {
 			},
 		}
 
-		_, ok := Path(root, &ast.IntegerLiteral{Value: 3})
+		_, ok := walk.Path(root, &ast.IntegerLiteral{Value: 3})
 		assert.That(t, !ok, "Expected child not to be contained within root")
 	})
 }
@@ -130,7 +131,7 @@ func Test_treeToList(t *testing.T) {
 		},
 	}
 
-	actual := treeToLinkedList(root)
+	actual := walk.TreeToLinkedList(root)
 
 	expected := list.New()
 	expected.PushBack(root)
@@ -165,7 +166,7 @@ func Test_Contains(t *testing.T) {
 		}
 
 		assert.That(t,
-			Contains(statement, needle),
+			walk.Contains(statement, needle),
 			"Expected node to be within statement, was not",
 		)
 	})
@@ -177,7 +178,7 @@ func Test_Contains(t *testing.T) {
 		}
 
 		assert.That(t,
-			!Contains(statement, other_needle),
+			!walk.Contains(statement, other_needle),
 			"Expected node not to be within statement",
 		)
 
@@ -192,7 +193,7 @@ func Test_Contains(t *testing.T) {
 		}
 
 		assert.That(t,
-			!Contains(statement, needle),
+			!walk.Contains(statement, needle),
 			"Expected node not to be within statement",
 		)
 	})
