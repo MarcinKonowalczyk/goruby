@@ -26,3 +26,4 @@ pyra.rb
 main
 .DS_Store
 *.trace
+*.prof
