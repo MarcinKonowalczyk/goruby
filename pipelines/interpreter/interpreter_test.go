@@ -1,6 +1,7 @@
 package interpreter_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/object"
@@ -23,7 +24,7 @@ func TestInterpreterInterpret(t *testing.T) {
 
 			add foo, x
 			`
-		i := interpreter.NewInterpreter()
+		i := interpreter.NewInterpreter(os.Args[1:])
 
 		out, err := i.InterpretCode(input)
 		if err != nil {

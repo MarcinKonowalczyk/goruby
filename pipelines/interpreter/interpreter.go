@@ -1,12 +1,14 @@
 package interpreter
 
 import (
-	"os"
+	"context"
+	"fmt"
 
 	"github.com/MarcinKonowalczyk/goruby/evaluator"
 	"github.com/MarcinKonowalczyk/goruby/object"
 	"github.com/MarcinKonowalczyk/goruby/parser"
 	parser_pipeline "github.com/MarcinKonowalczyk/goruby/pipelines/parser"
+	"github.com/MarcinKonowalczyk/goruby/trace"
 	"github.com/MarcinKonowalczyk/goruby/trace/printer"
 	"github.com/MarcinKonowalczyk/goruby/transformer"
 )
@@ -21,7 +23,7 @@ type Interpreter interface {
 	SetTraceEval(trace_eval bool)
 }
 
-func NewInterpreterEx(argv []string) Interpreter {
+func NewInterpreter(argv []string) Interpreter {
 	env := object.NewMainEnvironment()
 
 	argvArr := object.NewArray()
@@ -32,12 +34,6 @@ func NewInterpreterEx(argv []string) Interpreter {
 	return &interpreter{environment: env}
 }
 
-// NewInterpreter returns an Interpreter ready to use and with the environment set to
-// object.NewMainEnvironment()
-func NewInterpreter() Interpreter {
-	return NewInterpreterEx(os.Args[1:])
-}
-
 type interpreter struct {
 	environment     object.Environment
 	trace_parse     bool
@@ -46,7 +42,23 @@ type interpreter struct {
 }
 
 func (i *interpreter) InterpretCode(src string) (object.RubyObject, error) {
-	program, err := parser.Parse(src)
+	ctx := context.Background()
+	var parse_tracer trace.Tracer
+	if i.trace_parse {
+		fmt.Printf("tracing")
+		parse_tracer = trace.NewTracer()
+		ctx = trace.WithTracer(ctx, parse_tracer)
+	}
+	program, err := parser.ParseCtx(ctx, src)
+	if parse_tracer != nil {
+		parse_tracer.Done()
+		walkable, err := parse_tracer.ToWalkable()
+		if err != nil {
+			panic(err)
+		}
+		walkable.Walk(printer.NewTracePrinter())
+	}
+
 	if err != nil {
 		return nil, object.NewSyntaxError(err)
 	}
@@ -72,9 +84,16 @@ func (i *interpreter) InterpretCode(src string) (object.RubyObject, error) {
 }
 
 func (i *interpreter) Interpret(filename string) (object.RubyObject, error) {
-	program, tracer, err := parser_pipeline.ParseFile(filename, i.trace_parse)
-	if tracer != nil {
-		walkable, err := tracer.ToWalkable()
+	ctx := context.Background()
+	var parse_tracer trace.Tracer
+	if i.trace_parse {
+		parse_tracer = trace.NewTracer()
+		ctx = trace.WithTracer(ctx, parse_tracer)
+	}
+	program, err := parser_pipeline.ParseFile(ctx, filename)
+	if parse_tracer != nil {
+		parse_tracer.Done()
+		walkable, err := parse_tracer.ToWalkable()
 		if err != nil {
 			panic(err)
 		}

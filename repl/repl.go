@@ -3,6 +3,7 @@ package repl
 import (
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/object"
@@ -45,7 +46,7 @@ func New(input Input, output io.Writer, prompt Prompt) Repl {
 		output: output,
 		prompt: prompt,
 		interpreter: &bufferedInterpreter{
-			interpreter: interpreter.NewInterpreter(),
+			interpreter: interpreter.NewInterpreter(os.Args[1:]),
 		},
 	}
 }

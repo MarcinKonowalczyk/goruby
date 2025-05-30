@@ -1,33 +1,42 @@
 package parser
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
-	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 type Parser interface {
-	Parse() (*ast.Program, error)
-	Tracer() trace.Tracer
+	Parse(src string) (*ast.Program, error)
+	ParseCtx(ctx context.Context, src string) (*ast.Program, error)
 }
 
-func NewParser(src string, trace_parse bool) Parser {
+func NewParser() Parser {
 	var p parser
-	p.init(src, trace_parse)
+	p.init()
 	return &p
 }
 
-func (p *parser) Tracer() trace.Tracer {
-	return p.tracer
+func (p *parser) Parse(src string) (*ast.Program, error) {
+	return p.parse(context.Background(), src)
+}
+
+func (p *parser) ParseCtx(ctx context.Context, src string) (*ast.Program, error) {
+	return p.parse(ctx, src)
 }
 
 var _ Parser = (*parser)(nil)
 
 // Parse source
 func Parse(src string) (*ast.Program, error) {
-	p := NewParser(src, false)
-	return p.Parse()
+	p := NewParser()
+	return p.Parse(src)
+}
+
+func ParseCtx(ctx context.Context, src string) (*ast.Program, error) {
+	p := NewParser()
+	return p.ParseCtx(ctx, src)
 }
 
 // Parse source and return a single statement

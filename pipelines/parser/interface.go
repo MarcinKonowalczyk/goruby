@@ -2,13 +2,13 @@ package parser
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/parser"
-	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 func readSource(filename string, src interface{}) (string, error) {
@@ -41,21 +41,17 @@ func readSource(filename string, src interface{}) (string, error) {
 
 }
 
-func ParseFile(filename string, trace_parse bool) (*ast.Program, trace.Tracer, error) {
+func ParseFile(ctx context.Context, filename string) (*ast.Program, error) {
 	// get source
 	src, err := readSource(filename, nil)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	p := parser.NewParser(src, trace_parse)
+	p := parser.NewParser()
 
-	program, err := p.Parse()
-	tracer := p.Tracer()
-	if tracer != nil {
-		tracer.Done()
-	}
-	return program, tracer, err
+	program, err := p.ParseCtx(ctx, src)
+	return program, err
 }
 
 // // ParseExprFrom is a convenience function for parsing an expression.

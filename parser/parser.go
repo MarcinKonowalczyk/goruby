@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"context"
 	"fmt"
 	gotoken "go/token"
 	"strconv"
@@ -119,7 +120,7 @@ type parser struct {
 	l      *lexer.Lexer
 	errors []error
 
-	tracer trace.Tracer
+	ctx context.Context
 
 	pos       gotoken.Pos
 	lastLine  string
@@ -130,15 +131,7 @@ type parser struct {
 	infixParseFns  map[token.Type]infixParseFn
 }
 
-func (p *parser) init(src string, trace_parse bool) {
-	p.file = gotoken.NewFileSet().AddFile("", -1, len(src))
-
-	p.l = lexer.New(src)
-	p.errors = []error{}
-	if trace_parse {
-		p.tracer = trace.NewTracer()
-	}
-
+func (p *parser) init() {
 	p.prefixParseFns = make(map[token.Type]prefixParseFn)
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
@@ -201,6 +194,15 @@ func (p *parser) init(src string, trace_parse bool) {
 	p.registerInfix(token.COMMA, p.parseExpressions)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
 	p.registerInfix(token.SLBRACKET, p.parseCallArgument)
+}
+
+func (p *parser) init2(ctx context.Context, src string) {
+	p.ctx = ctx
+
+	p.file = gotoken.NewFileSet().AddFile("", -1, len(src))
+
+	p.l = lexer.New(src)
+	p.errors = []error{}
 
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()
@@ -259,10 +261,8 @@ func (p *parser) nextToken() {
 }
 
 func (p *parser) parseIdentifier() ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-		p.tracer.Message(p.curToken.Literal)
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	return &ast.Identifier{Value: p.curToken.Literal}
 }
 
@@ -272,10 +272,8 @@ func (p *parser) Errors() []error {
 }
 
 func (p *parser) Error(err error) {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-		p.tracer.Message(err)
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	p.errors = append(p.errors, err)
 }
 
@@ -303,7 +301,8 @@ func (p *parser) noPrefixParseFnError(t token.Type) {
 // during the parse process. If the error is not nil the AST may be incomplete
 // and callers should always check if they can handle the error with providing
 // more input by checking with e.g. IsEOFError.
-func (p *parser) Parse() (*ast.Program, error) {
+func (p *parser) parse(ctx context.Context, src string) (*ast.Program, error) {
+	p.init2(ctx, src)
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 	for !p.currentIs(token.EOF) {
@@ -328,9 +327,8 @@ func (p *parser) Parse() (*ast.Program, error) {
 }
 
 func (p *parser) parseStatement() ast.Statement {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	switch p.curToken.Type {
 	case token.ILLEGAL:
 		msg := p.curToken.Literal
@@ -359,9 +357,8 @@ func (p *parser) parseStatement() ast.Statement {
 }
 
 func (p *parser) parseReturnStatement() *ast.ReturnStatement {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	stmt := &ast.ReturnStatement{}
 	p.nextToken()
 
@@ -402,9 +399,8 @@ func (p *parser) parseReturnStatement() *ast.ReturnStatement {
 }
 
 func (p *parser) parseExpressionStatement() *ast.ExpressionStatement {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	stmt := &ast.ExpressionStatement{}
 	stmt.Expression = p.parseExpression(precLowest)
 	if p.peekIs(token.SEMICOLON, token.NEWLINE) {
@@ -414,9 +410,8 @@ func (p *parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *parser) parseExpression(precedence int) ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
 		p.noPrefixParseFnError(p.curToken.Type)
@@ -441,9 +436,8 @@ func (p *parser) parseExpression(precedence int) ast.Expression {
 }
 
 func (p *parser) parseComment() ast.Statement {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	comment := &ast.Comment{}
 	comment.Value = p.curToken.Literal
 	if !p.peekIs(token.NEWLINE, token.EOF) {
@@ -478,9 +472,8 @@ func newAnonymousName(prefix string) string {
 }
 
 func (p *parser) parseLambdaLiteral() ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	proc := &ast.FunctionLiteral{
 		Name: newAnonymousName("lambda"),
 	}
@@ -501,9 +494,8 @@ func (p *parser) parseLambdaLiteral() ast.Expression {
 }
 
 func (p *parser) parseSplat() ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	splat := &ast.Splat{}
 	// p.nextToken()
 	// if p.curToken.Type != token.IDENT {
@@ -524,9 +516,8 @@ func (p *parser) parseSplat() ast.Expression {
 }
 
 func (p *parser) parseExpressions(left ast.Expression) ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	p.nextToken()
 	elements := []ast.Expression{left}
 	next := p.parseExpression(precAssignment)
@@ -540,9 +531,8 @@ func (p *parser) parseExpressions(left ast.Expression) ast.Expression {
 }
 
 func (p *parser) parseAssignmentOperator(left ast.Expression) ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	assignIndex := strings.LastIndexByte(p.curToken.Literal, '=')
 	if assignIndex < 0 {
 		return nil
@@ -568,9 +558,8 @@ func (p *parser) parseAssignmentOperator(left ast.Expression) ast.Expression {
 }
 
 func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	switch left.(type) {
 	case *ast.Identifier:
 	case *ast.IndexExpression:
@@ -640,18 +629,16 @@ func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
 }
 
 func (p *parser) parseNilLiteral() ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	return &ast.SymbolLiteral{Value: "nil"}
 }
 
 var integerLiteralReplacer = strings.NewReplacer("_", "")
 
 func (p *parser) parseIntegerLiteral() ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	// p.tracer.Message("hello sailor!")
 	lit := &ast.IntegerLiteral{}
 	value, err := strconv.ParseInt(integerLiteralReplacer.Replace(p.curToken.Literal), 0, 64)
@@ -664,9 +651,8 @@ func (p *parser) parseIntegerLiteral() ast.Expression {
 }
 
 func (p *parser) parseFloatLiteral() ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	lit := &ast.FloatLiteral{}
 	value, err := strconv.ParseFloat(p.curToken.Literal, 64)
 	if err != nil {
@@ -678,37 +664,32 @@ func (p *parser) parseFloatLiteral() ast.Expression {
 
 }
 func (p *parser) parseStringLiteral() ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	return &ast.StringLiteral{
 		Value: p.curToken.Literal}
 }
 
 func (p *parser) parseSymbolLiteral() ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	return &ast.SymbolLiteral{
 		Value: strings.TrimPrefix(p.curToken.Literal, ":"),
 	}
 }
 
 func (p *parser) parseArrayLiteral() ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
-	array := &ast.ArrayLiteral{}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
 
+	array := &ast.ArrayLiteral{}
 	p.nextToken()
 	array.Elements = p.parseExpressionList(token.RBRACKET)
 	return array
 }
 
 func (p *parser) parseBoolean() ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	if p.currentIs(token.FALSE) {
 		return &ast.SymbolLiteral{Value: "false"}
 	} else if p.currentIs(token.TRUE) {
@@ -736,9 +717,8 @@ func (p *parser) consumeNewlineOrComment() {
 	}
 }
 func (p *parser) parseHash() ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	hash := &ast.HashLiteral{Map: make(map[ast.Expression]ast.Expression)}
 	p.nextToken()
 
@@ -785,9 +765,8 @@ func (p *parser) parseHash() ast.Expression {
 }
 
 func (p *parser) parseKeyValue() (ast.Expression, ast.Expression, bool) {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	key := p.parseExpression(precAssignment)
 	if !p.consume(token.HASHROCKET) {
 		return nil, nil, false
@@ -797,13 +776,10 @@ func (p *parser) parseKeyValue() (ast.Expression, ast.Expression, bool) {
 }
 
 func (p *parser) parseBlock() *ast.FunctionLiteral {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	name := newAnonymousName("block")
-	if p.tracer != nil {
-		p.tracer.Message(name)
-	}
+	trace.MessageCtx(p.ctx, name)
 	block := &ast.FunctionLiteral{
 		Name: name,
 	}
@@ -823,9 +799,8 @@ func (p *parser) parseBlock() *ast.FunctionLiteral {
 }
 
 func (p *parser) parsePrefixExpression() ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	expression := &ast.PrefixExpression{
 		Operator: p.curToken.Literal,
 	}
@@ -835,9 +810,7 @@ func (p *parser) parsePrefixExpression() ast.Expression {
 }
 
 func (p *parser) parseInfixExpression(left ast.Expression) ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
 
 	op := infix.InfixFromToken(p.curToken)
 	if op == infix.ILLEGAL {
@@ -856,9 +829,8 @@ func (p *parser) parseInfixExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *parser) parseRangeLiteral(left ast.Expression) ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	expression := &ast.RangeLiteral{
 		Left:      left,
 		Inclusive: p.curToken.Type == token.DDOT,
@@ -870,9 +842,8 @@ func (p *parser) parseRangeLiteral(left ast.Expression) ast.Expression {
 }
 
 func (p *parser) parseIndexExpression(left ast.Expression) ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	exp := &ast.IndexExpression{Left: left}
 
 	p.nextToken()
@@ -895,9 +866,8 @@ func (p *parser) parseIndexExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *parser) parseGroupedExpression() ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	p.nextToken()
 	exp := p.parseExpression(precLowest)
 	if !p.accept(token.RPAREN) {
@@ -907,9 +877,8 @@ func (p *parser) parseGroupedExpression() ast.Expression {
 }
 
 func (p *parser) parseIfExpression() ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	expression := &ast.ConditionalExpression{Unless: p.currentIs(token.UNLESS)}
 	p.nextToken()
 	expression.Condition = p.parseExpression(precLowest)
@@ -960,9 +929,8 @@ func (p *parser) parseIfExpression() ast.Expression {
 }
 
 func (p *parser) parseTernaryIfExpression(condition ast.Expression) ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	expression := &ast.ConditionalExpression{Unless: p.currentIs(token.UNLESS)}
 	p.nextToken()
 	expression.Condition = condition
@@ -985,9 +953,8 @@ func (p *parser) parseTernaryIfExpression(condition ast.Expression) ast.Expressi
 }
 
 func (p *parser) parseModifierConditionalExpression(left ast.Expression) ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	expression := &ast.ConditionalExpression{Unless: p.currentIs(token.UNLESS)}
 	p.nextToken()
 	expression.Condition = p.parseExpression(precLowest)
@@ -1001,9 +968,8 @@ func (p *parser) parseModifierConditionalExpression(left ast.Expression) ast.Exp
 }
 
 func (p *parser) parseLoopExpression() ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	loop := &ast.LoopExpression{}
 	if p.curToken.Type == token.LOOP {
 		if p.peekIs(token.LBRACE) {
@@ -1020,9 +986,8 @@ func (p *parser) parseLoopExpression() ast.Expression {
 }
 
 func (p *parser) parseBreakStatement() *ast.BreakStatement {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	stmt := &ast.BreakStatement{}
 	if p.peekIs(token.IF) {
 		p.accept(token.IF)
@@ -1038,9 +1003,8 @@ func (p *parser) parseBreakStatement() *ast.BreakStatement {
 }
 
 func (p *parser) parseFunctionLiteral() ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	fl := &ast.FunctionLiteral{}
 
 	if !p.peekIs(token.IDENT) && !p.peekToken.Type.IsOperator() {
@@ -1097,9 +1061,8 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 }
 
 func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast.FunctionParameter {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	hasDelimiters := false
 	if p.peekIs(startToken) {
 		hasDelimiters = true
@@ -1172,9 +1135,8 @@ func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast
 }
 
 func (p *parser) parseBlockStatement(t ...token.Type) *ast.BlockStatement {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	terminatorTokens := append(
 		[]token.Type{
 			token.END,
@@ -1200,9 +1162,8 @@ func (p *parser) parseBlockStatement(t ...token.Type) *ast.BlockStatement {
 }
 
 func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	contextCallExpression := &ast.ContextCallExpression{Context: context}
 
 	p.nextToken()
@@ -1213,9 +1174,7 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 	}
 
 	name := p.curToken.Literal
-	if p.tracer != nil {
-		p.tracer.Message(name)
-	}
+	trace.MessageCtx(p.ctx, name)
 	contextCallExpression.Function = name
 
 	if p.peekIs(token.SEMICOLON, token.NEWLINE, token.EOF, token.DOT, token.RPAREN, token.QMARK) {
@@ -1248,15 +1207,13 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 }
 
 func (p *parser) debugMessageState() {
-	if p.tracer != nil {
-		p.tracer.Message(fmt.Sprintf("Current token: %v", p.curToken))
-		p.tracer.Message(fmt.Sprintf("Peek token: %v", p.peekToken))
-	}
+	trace.MessageCtx(p.ctx, fmt.Sprintf("Current token: %v", p.curToken))
+	trace.MessageCtx(p.ctx, fmt.Sprintf("Peek token: %v", p.peekToken))
 }
+
 func (p *parser) parseContextCallExpression(context ast.Expression) ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	contextCallExpression := &ast.ContextCallExpression{Context: context}
 	if p.currentIs(token.DOT) {
 		p.nextToken()
@@ -1299,9 +1256,8 @@ func (p *parser) parseContextCallExpression(context ast.Expression) ast.Expressi
 }
 
 func (p *parser) parseCallArgument(function ast.Expression) ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	ident, ok := function.(*ast.Identifier)
 	if !ok {
 		// method call on any other object
@@ -1322,9 +1278,7 @@ func (p *parser) parseCallArgument(function ast.Expression) ast.Expression {
 }
 
 func (p *parser) parseCallBlock(function ast.Expression) ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
 
 	exp := &ast.ContextCallExpression{}
 	exp.Block = p.parseBlock()
@@ -1348,9 +1302,8 @@ func (p *parser) parseCallBlock(function ast.Expression) ast.Expression {
 // func (p *parser) parseCallExpression(function ast.Expression) ast.Expression {
 
 func (p *parser) parseCallExpressionWithParens(function ast.Expression) ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	ident, ok := function.(*ast.Identifier)
 	if !ok {
 		p.Error(fmt.Errorf("could not parse call expression: expected identifier, got token '%T'", function))
@@ -1367,9 +1320,8 @@ func (p *parser) parseCallExpressionWithParens(function ast.Expression) ast.Expr
 }
 
 func (p *parser) parseCallArguments(end ...token.Type) []ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	list := []ast.Expression{}
 	if p.currentIs(end...) {
 		return list
@@ -1390,9 +1342,8 @@ func (p *parser) parseCallArguments(end ...token.Type) []ast.Expression {
 }
 
 func (p *parser) parseExpressionList(end ...token.Type) []ast.Expression {
-	if p.tracer != nil {
-		defer p.tracer.Un(p.tracer.Trace(trace.Here()))
-	}
+	defer trace.TraceCtx(p.ctx, trace.Here())()
+
 	list := []ast.Expression{}
 	if p.currentIs(end...) {
 		return list

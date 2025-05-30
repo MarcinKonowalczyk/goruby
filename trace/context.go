@@ -1,0 +1,50 @@
+package trace
+
+import (
+	"context"
+)
+
+type tracerKey struct{}
+
+func WithTracer(ctx context.Context, tracer Tracer) context.Context {
+	return context.WithValue(ctx, tracerKey{}, tracer)
+}
+
+func GetTracer(ctx context.Context) Tracer {
+	tracer, ok := ctx.Value(tracerKey{}).(Tracer)
+	if !ok {
+		return nil
+	}
+	return tracer
+}
+
+// WITHOUT CONTEXT:
+//
+//	if tracer != nil {
+//	    defer tracer.Un(tracer.Trace(trace.Here()))
+//	}
+//
+// WITH CONTEXT:
+// NOTE the extra `()`
+//
+//	defer trace.TraceCtx(ctx, trace.Here())()
+func TraceCtx(ctx context.Context, where string) func() {
+	tracer := GetTracer(ctx)
+	// fmt.Printf("%p\n", tracer)
+	if tracer == nil {
+		return func() {}
+	} else {
+		t := tracer.Trace(where)
+		return func() {
+			tracer.Un(t)
+		}
+	}
+
+}
+
+func MessageCtx(ctx context.Context, args ...any) {
+	tracer := GetTracer(ctx)
+	if tracer != nil {
+		tracer.Message(args...)
+	}
+}

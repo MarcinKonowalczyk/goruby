@@ -44,6 +44,7 @@ func initGoRuby() (ruby.Ruby, error) {
 		return nil, fmt.Errorf("failed to find GoRuby binary: %w", err)
 	}
 
+	// make sure we are actually running GoRuby
 	if !strings.Contains(strings.ToLower(rb.Version()), "goruby") {
 		return nil, fmt.Errorf("GoRuby binary does not contain 'goruby' in version string: %s", rb.Version())
 	}

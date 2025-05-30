@@ -30,7 +30,7 @@ func (i *transformer) Transform(src string, stages []t.Stage) (string, error) {
 }
 
 func (i *transformer) TransformCtx(ctx context.Context, src string, stages []t.Stage) (string, error) {
-	program, err := parser.Parse(src)
+	program, err := parser.ParseCtx(ctx, src)
 	// if tracer != nil {
 	// 	walkable, err := tracer.ToWalkable()
 	// 	if err != nil {

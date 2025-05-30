@@ -67,7 +67,7 @@ func main() {
 		log.Println("No program files specified")
 		os.Exit(1)
 	}
-	interpreter := interpreter.NewInterpreterEx(args[1:])
+	interpreter := interpreter.NewInterpreter(args[1:])
 	if trace_parse {
 		interpreter.SetTraceParse(true)
 	}
