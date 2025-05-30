@@ -105,7 +105,7 @@ func TestTraceToWalkable(t *testing.T) {
 	walkable, err := tracer.ToWalkable()
 	assert.NoError(t, err)
 	fmt.Println("Walkable:")
-	walkable.Walk(func(node trace.Node) error {
+	_ = walkable.Walk(func(node trace.Node) error {
 		// fmt.Println(node, "prev:", node.Prev(), "next:", node.Next())
 		fmt.Println(node)
 		return nil

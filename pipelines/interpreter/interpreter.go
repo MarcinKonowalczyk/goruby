@@ -56,7 +56,7 @@ func (i *interpreter) InterpretCode(src string) (object.RubyObject, error) {
 		if err != nil {
 			panic(err)
 		}
-		walkable.Walk(printer.NewTracePrinter())
+		_ = walkable.Walk(printer.NewTracePrinter())
 	}
 
 	if err != nil {
@@ -85,7 +85,7 @@ func (i *interpreter) InterpretCode(src string) (object.RubyObject, error) {
 		if err != nil {
 			panic(err)
 		}
-		walkable.Walk(printer.NewTracePrinter())
+		_ = walkable.Walk(printer.NewTracePrinter())
 	}
 
 	return res, err
