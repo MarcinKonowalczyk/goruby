@@ -75,37 +75,33 @@ var arrayMethods = map[string]RubyMethod{
 	"*":        newMethod(arrayAst),
 }
 
-func arrayPush(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	array, _ := context.Receiver().(*Array)
+func arrayPush(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+
+	array, _ := ctx.Receiver().(*Array)
 	array.Elements = append(array.Elements, args...)
 	return array, nil
 }
 
-func arrayUnshift(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	array, _ := context.Receiver().(*Array)
+func arrayUnshift(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+
+	array, _ := ctx.Receiver().(*Array)
 	array.Elements = append(args, array.Elements...)
 	return array, nil
 }
 
-func arraySize(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	array, _ := context.Receiver().(*Array)
+func arraySize(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+
+	array, _ := ctx.Receiver().(*Array)
 	return NewInteger(int64(len(array.Elements))), nil
 }
 
-func arrayFindAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	array, _ := context.Receiver().(*Array)
+func arrayFindAll(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+
+	array, _ := ctx.Receiver().(*Array)
 	if len(args) == 0 {
 		return nil, NewArgumentError("(1) array find_all requires a block")
 	}
@@ -120,7 +116,7 @@ func arrayFindAll(context CallContext, tracer trace.Tracer, args ...RubyObject) 
 	}
 	result := NewArray()
 	for _, element := range array.Elements {
-		ret, err := fn.Call(context, tracer, element)
+		ret, err := fn.Call(ctx, element)
 		if err != nil {
 			return nil, err
 		}
@@ -138,11 +134,10 @@ func arrayFindAll(context CallContext, tracer trace.Tracer, args ...RubyObject) 
 	return result, nil
 }
 
-func arrayFirst(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	array, _ := context.Receiver().(*Array)
+func arrayFirst(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+
+	array, _ := ctx.Receiver().(*Array)
 	if len(args) == 0 {
 		if len(array.Elements) == 0 {
 			return nil, NewArgumentError("array is empty")
@@ -169,12 +164,11 @@ func arrayFirst(context CallContext, tracer trace.Tracer, args ...RubyObject) (R
 	return result, nil
 }
 
-func arrayMap(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-		tracer.Message(context.Receiver().Inspect())
-	}
-	array, _ := context.Receiver().(*Array)
+func arrayMap(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	trace.MessageCtx(ctx, ctx.Receiver().Inspect())
+
+	array, _ := ctx.Receiver().(*Array)
 	if len(args) == 0 {
 		return nil, NewArgumentError("map requires a block")
 	}
@@ -189,7 +183,7 @@ func arrayMap(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 	}
 	result := NewArray()
 	for _, elem := range array.Elements {
-		ret, err := fn.Call(context, tracer, elem)
+		ret, err := fn.Call(ctx, elem)
 		if err != nil {
 			return nil, err
 		}
@@ -198,11 +192,10 @@ func arrayMap(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 	return result, nil
 }
 
-func arrayAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	array, _ := context.Receiver().(*Array)
+func arrayAll(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+
+	array, _ := ctx.Receiver().(*Array)
 	if len(args) == 0 {
 		return nil, NewArgumentError("all? requires a block")
 	}
@@ -216,7 +209,7 @@ func arrayAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 		return nil, NewNoMethodError(FUNCS_STORE, proc.Value)
 	}
 	for _, elem := range array.Elements {
-		ret, err := fn.Call(context, tracer, elem)
+		ret, err := fn.Call(ctx, elem)
 		if err != nil {
 			return nil, err
 		}
@@ -231,11 +224,10 @@ func arrayAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 	return TRUE, nil
 }
 
-func arrayJoin(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	array, _ := context.Receiver().(*Array)
+func arrayJoin(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+
+	array, _ := ctx.Receiver().(*Array)
 	if len(args) == 0 {
 		return nil, NewArgumentError("join requires at least 1 argument")
 	}
@@ -251,11 +243,10 @@ func arrayJoin(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ru
 	return NewString(result), nil
 }
 
-func arrayInclude(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	array, _ := context.Receiver().(*Array)
+func arrayInclude(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+
+	array, _ := ctx.Receiver().(*Array)
 	if len(args) == 0 {
 		return nil, NewArgumentError("include? requires at least 1 argument")
 	}
@@ -273,8 +264,8 @@ func arrayInclude(context CallContext, tracer trace.Tracer, args ...RubyObject) 
 
 		// 	}
 		// }
-		ctx := NewCallContext(context.Env(), elem)
-		ret, err := Send(ctx, "==", nil, arg)
+		ctx2 := WithReceiver(ctx, elem)
+		ret, err := Send(ctx2, "==", arg)
 		if err != nil {
 			// fmt.Println("Error in arrayInclude:", err)
 			continue
@@ -291,11 +282,10 @@ func arrayInclude(context CallContext, tracer trace.Tracer, args ...RubyObject) 
 	return FALSE, nil
 }
 
-func arrayEach(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	array, _ := context.Receiver().(*Array)
+func arrayEach(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+
+	array, _ := ctx.Receiver().(*Array)
 	if len(args) == 0 {
 		return nil, NewArgumentError("map requires a block")
 	}
@@ -309,7 +299,7 @@ func arrayEach(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ru
 		return nil, NewNoMethodError(FUNCS_STORE, proc.Value)
 	}
 	for _, elem := range array.Elements {
-		_, err := fn.Call(context, tracer, elem)
+		_, err := fn.Call(ctx, elem)
 		if err != nil {
 			return nil, err
 		}
@@ -317,11 +307,10 @@ func arrayEach(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ru
 	return array, nil
 }
 
-func arrayReject(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	array, _ := context.Receiver().(*Array)
+func arrayReject(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+
+	array, _ := ctx.Receiver().(*Array)
 	if len(args) == 0 {
 		return nil, NewArgumentError("map requires a block")
 	}
@@ -336,7 +325,7 @@ func arrayReject(context CallContext, tracer trace.Tracer, args ...RubyObject) (
 	}
 	result := NewArray()
 	for _, elem := range array.Elements {
-		ret, err := fn.Call(context, tracer, elem)
+		ret, err := fn.Call(ctx, elem)
 		if err != nil {
 			return nil, err
 		}
@@ -354,11 +343,10 @@ func arrayReject(context CallContext, tracer trace.Tracer, args ...RubyObject) (
 	return result, nil
 }
 
-func arrayPop(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	array, _ := context.Receiver().(*Array)
+func arrayPop(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+
+	array, _ := ctx.Receiver().(*Array)
 	if len(array.Elements) == 0 {
 		return NIL, nil
 	}
@@ -367,11 +355,10 @@ func arrayPop(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 	return elem, nil
 }
 
-func arrayMinus(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	array, _ := context.Receiver().(*Array)
+func arrayMinus(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+
+	array, _ := ctx.Receiver().(*Array)
 	if len(args) == 0 {
 		return nil, NewArgumentError("array minus requires at least 1 argument")
 	}
@@ -383,8 +370,8 @@ func arrayMinus(context CallContext, tracer trace.Tracer, args ...RubyObject) (R
 	for _, elem := range array.Elements {
 		include := false
 		for _, otherElem := range otherArray.Elements {
-			ctx := NewCallContext(context.Env(), elem)
-			ret, err := Send(ctx, "==", nil, otherElem)
+			ctx2 := WithReceiver(ctx, elem)
+			ret, err := Send(ctx2, "==", otherElem)
 			if err != nil {
 				return nil, err
 			}
@@ -404,11 +391,10 @@ func arrayMinus(context CallContext, tracer trace.Tracer, args ...RubyObject) (R
 	return result, nil
 }
 
-func arrayPlus(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	array, _ := context.Receiver().(*Array)
+func arrayPlus(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+
+	array, _ := ctx.Receiver().(*Array)
 	if len(args) == 0 {
 		return nil, NewArgumentError("array plus requires at least 1 argument")
 	}
@@ -422,11 +408,10 @@ func arrayPlus(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ru
 	return result, nil
 }
 
-func arrayAst(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	array, _ := context.Receiver().(*Array)
+func arrayAst(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+
+	array, _ := ctx.Receiver().(*Array)
 	if len(args) == 0 {
 		return nil, NewArgumentError("array ast requires at least 1 argument")
 	}

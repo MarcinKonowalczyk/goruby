@@ -7,8 +7,8 @@ import (
 )
 
 func TestBottomIsNil(t *testing.T) {
-	context := &callContext{receiver: TRUE}
-	result, err := bottomIsNil(context, nil)
+	ctx := &callContext{receiver: TRUE}
+	result, err := bottomIsNil(ctx)
 
 	assert.NoError(t, err)
 
@@ -19,15 +19,15 @@ func TestBottomIsNil(t *testing.T) {
 
 func TestBottomToS(t *testing.T) {
 	t.Run("object as receiver", func(t *testing.T) {
-		context := &callContext{receiver: &Bottom{}}
-		result, err := bottomToS(context, nil)
+		ctx := &callContext{receiver: &Bottom{}}
+		result, err := bottomToS(ctx)
 		assert.NoError(t, err)
-		assert.EqualCmpAny(t, result, NewStringf("#<Bottom:%p>", context.receiver), CompareRubyObjectsForTests)
+		assert.EqualCmpAny(t, result, NewStringf("#<Bottom:%p>", ctx.receiver), CompareRubyObjectsForTests)
 	})
 	t.Run("self object as receiver", func(t *testing.T) {
 		self := &Bottom{}
-		context := &callContext{receiver: self}
-		result, err := bottomToS(context, nil)
+		ctx := &callContext{receiver: self}
+		result, err := bottomToS(ctx)
 		assert.NoError(t, err)
 		assert.EqualCmpAny(t, result, NewStringf("#<Bottom:%p>", self), CompareRubyObjectsForTests)
 	})
@@ -36,26 +36,26 @@ func TestBottomToS(t *testing.T) {
 func TestBottomRaise(t *testing.T) {
 	object := &Bottom{}
 	env := NewMainEnvironment()
-	context := &callContext{
+	ctx := &callContext{
 		receiver: object,
 		env:      env,
 	}
 
 	t.Run("without args", func(t *testing.T) {
-		result, err := bottomRaise(context, nil)
+		result, err := bottomRaise(ctx)
 		assert.EqualCmpAny(t, result, nil, CompareRubyObjectsForTests)
 		assert.Error(t, err, NewRuntimeError(""))
 	})
 
 	t.Run("with 1 arg", func(t *testing.T) {
 		t.Run("string argument", func(t *testing.T) {
-			result, err := bottomRaise(context, nil, NewString("ouch"))
+			result, err := bottomRaise(ctx, NewString("ouch"))
 			assert.EqualCmpAny(t, result, nil, CompareRubyObjectsForTests)
 			assert.Error(t, err, NewRuntimeError("ouch"))
 		})
 		t.Run("integer argument", func(t *testing.T) {
 			obj := NewInteger(5)
-			result, err := bottomRaise(context, nil, obj)
+			result, err := bottomRaise(ctx, obj)
 			assert.EqualCmpAny(t, result, nil, CompareRubyObjectsForTests)
 			assert.Error(t, err, NewRuntimeError("%s", obj.Inspect()))
 		})

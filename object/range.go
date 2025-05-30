@@ -70,11 +70,9 @@ func (rang *Range) ToArray() *Array {
 	return result
 }
 
-func rangeFindAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	rng, _ := context.Receiver().(*Range)
+func rangeFindAll(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	rng, _ := ctx.Receiver().(*Range)
 	proc, ok := args[0].(*Symbol)
 	if !ok {
 		return nil, NewArgumentError("(2) range find_all requires a block")
@@ -88,7 +86,7 @@ func rangeFindAll(context CallContext, tracer trace.Tracer, args ...RubyObject) 
 	// evaluate the range
 	result := NewArray()
 	for _, elem := range rng.ToArray().Elements {
-		ret, err := fn.Call(context, tracer, elem)
+		ret, err := fn.Call(ctx, elem)
 		if err != nil {
 			return nil, err
 		}
@@ -106,11 +104,9 @@ func rangeFindAll(context CallContext, tracer trace.Tracer, args ...RubyObject) 
 	return result, nil
 }
 
-func rangeAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	rng, _ := context.Receiver().(*Range)
+func rangeAll(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	rng, _ := ctx.Receiver().(*Range)
 	if len(args) == 0 {
 		return nil, NewArgumentError("all? requires a block")
 	}
@@ -124,7 +120,7 @@ func rangeAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 		return nil, NewNoMethodError(FUNCS_STORE, proc.Value)
 	}
 	for _, elem := range rng.ToArray().Elements {
-		ret, err := fn.Call(context, tracer, elem)
+		ret, err := fn.Call(ctx, elem)
 		if err != nil {
 			return nil, err
 		}
@@ -139,11 +135,9 @@ func rangeAll(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 	return TRUE, nil
 }
 
-func rangeSize(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	rng, _ := context.Receiver().(*Range)
+func rangeSize(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	rng, _ := ctx.Receiver().(*Range)
 	size := rng.Right - rng.Left
 	if rng.Inclusive {
 		size++

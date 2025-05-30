@@ -139,19 +139,17 @@ func (f *Function) String() string {
 }
 
 // Call implements the RubyMethod interface. It evaluates f.Body and returns its result
-func (f *Function) Call(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace("Function.Call"))
-		tracer.Message(f.Name)
-		tracer.Message(f.String())
-	}
+func (f *Function) Call(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, "Function.Call")()
+	trace.MessageCtx(ctx, f.Name)
+	trace.MessageCtx(ctx, f.String())
 	// TODO: Handle tail splats
 	if len(f.Parameters) == 1 && f.Parameters[0].Splat {
 		// Only one splat parameter.
 		args_arr := NewArray(args...)
 		extendedEnv := NewEnclosedEnvironment(f.Env)
 		extendedEnv.Set(f.Parameters[0].Name, args_arr)
-		evaluated, err := context.Eval(f.Body, extendedEnv)
+		evaluated, err := ctx.Eval(f.Body, extendedEnv)
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +169,7 @@ func (f *Function) Call(context CallContext, tracer trace.Tracer, args ...RubyOb
 		for k, v := range params {
 			extendedEnv.Set(k, v)
 		}
-		evaluated, err := context.Eval(f.Body, extendedEnv)
+		evaluated, err := ctx.Eval(f.Body, extendedEnv)
 		if err != nil {
 			return nil, err
 		}

@@ -41,9 +41,9 @@ func TestIntegerDiv(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		context := &callContext{receiver: NewInteger(4)}
+		ctx := &callContext{receiver: NewInteger(4)}
 
-		result, err := integerDiv(context, nil, testCase.arguments...)
+		result, err := integerDiv(ctx, testCase.arguments...)
 
 		assert.Error(t, err, testCase.err)
 
@@ -70,9 +70,9 @@ func TestIntegerMul(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		context := &callContext{receiver: NewInteger(4)}
+		ctx := &callContext{receiver: NewInteger(4)}
 
-		result, err := integerMul(context, nil, testCase.arguments...)
+		result, err := integerMul(ctx, testCase.arguments...)
 
 		assert.Error(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -98,9 +98,9 @@ func TestIntegerAdd(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		context := &callContext{receiver: NewInteger(2)}
+		ctx := &callContext{receiver: NewInteger(2)}
 
-		result, err := integerAdd(context, nil, testCase.arguments...)
+		result, err := integerAdd(ctx, testCase.arguments...)
 
 		assert.Error(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -126,9 +126,9 @@ func TestIntegerSub(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		context := &callContext{receiver: NewInteger(4)}
+		ctx := &callContext{receiver: NewInteger(4)}
 
-		result, err := integerSub(context, nil, testCase.arguments...)
+		result, err := integerSub(ctx, testCase.arguments...)
 
 		assert.Error(t, err, testCase.err)
 
@@ -155,9 +155,9 @@ func TestIntegerSub(t *testing.T) {
 // 	}
 
 // 	for _, testCase := range tests {
-// 		context := &callContext{receiver: NewInteger(4)}
+// ctx := &callContext{receiver: NewInteger(4)}
 
-// 		result, err := integerModulo(context, nil, testCase.arguments...)
+// 		result, err := integerModulo(ctx, testCase.arguments...)
 
 // 		assert.AssertError(t, err, testCase.err)
 
@@ -189,9 +189,9 @@ func TestIntegerLt(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		context := &callContext{receiver: NewInteger(4)}
+		ctx := &callContext{receiver: NewInteger(4)}
 
-		result, _ := integerLt(context, nil, testCase.arguments...)
+		result, _ := integerLt(ctx, testCase.arguments...)
 
 		// assert.AssertError(t, err, testCase.err)
 
@@ -223,9 +223,9 @@ func TestIntegerGt(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		context := &callContext{receiver: NewInteger(4)}
+		ctx := &callContext{receiver: NewInteger(4)}
 
-		result, _ := integerGt(context, nil, testCase.arguments...)
+		result, _ := integerGt(ctx, testCase.arguments...)
 
 		// assert.AssertError(t, err, testCase.err)
 
@@ -257,9 +257,9 @@ func TestIntegerGt(t *testing.T) {
 // 	}
 
 // 	for _, testCase := range tests {
-// 		context := &callContext{receiver: NewInteger(4)}
+// ctx := &callContext{receiver: NewInteger(4)}
 
-// 		result, err := integerEq(context, nil, testCase.arguments...)
+// 		result, err := integerEq(ctx, testCase.arguments...)
 
 // 		assert.AssertError(t, err, testCase.err)
 
@@ -291,9 +291,9 @@ func TestIntegerGt(t *testing.T) {
 // 	}
 
 // 	for _, testCase := range tests {
-// 		context := &callContext{receiver: NewInteger(4)}
+// ctx := &callContext{receiver: NewInteger(4)}
 
-// 		result, err := integerNeq(context, nil, testCase.arguments...)
+// 		result, err := integerNeq(ctx, testCase.arguments...)
 
 // 		assert.AssertError(t, err, testCase.err)
 
@@ -330,9 +330,9 @@ func TestIntegerGte(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		context := &callContext{receiver: NewInteger(4)}
+		ctx := &callContext{receiver: NewInteger(4)}
 
-		result, _ := integerGte(context, nil, testCase.arguments...)
+		result, _ := integerGte(ctx, testCase.arguments...)
 
 		// assert.AssertError(t, err, testCase.err)
 
@@ -369,9 +369,9 @@ func TestIntegerLte(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		context := &callContext{receiver: NewInteger(4)}
+		ctx := &callContext{receiver: NewInteger(4)}
 
-		result, _ := integerLte(context, nil, testCase.arguments...)
+		result, _ := integerLte(ctx, testCase.arguments...)
 
 		// assert.AssertError(t, err, testCase.err)
 
@@ -408,9 +408,9 @@ func TestIntegerSpaceship(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		context := &callContext{receiver: NewInteger(4)}
+		ctx := &callContext{receiver: NewInteger(4)}
 
-		result, _ := integerSpaceship(context, nil, testCase.arguments...)
+		result, _ := integerSpaceship(ctx, testCase.arguments...)
 
 		// assert.AssertError(t, err, testCase.err)
 

@@ -48,13 +48,14 @@ var (
 	_ RubyObject = &String{}
 )
 
-func stringify(obj RubyObject) (string, error) {
+func stringify(ctx CallContext, obj RubyObject) (string, error) {
 	if obj == nil {
 		return "", NewTypeError(
 			"can't convert nil into String",
 		)
 	}
-	stringObj, err := Send(NewCallContext(nil, obj), "to_s", nil)
+	ctx2 := WithReceiver(ctx, obj)
+	stringObj, err := Send(ctx2, "to_s")
 	if err != nil {
 		return "", NewTypeError(
 			fmt.Sprintf(
@@ -89,25 +90,15 @@ var stringMethods = map[string]RubyMethod{
 	"to_f":   withArity(0, newMethod(stringToF)),
 }
 
-func stringToS(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	str := context.Receiver().(*String)
+func stringToS(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	str := ctx.Receiver().(*String)
 	return NewString(str.Value), nil
 }
 
-func stringAdd(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	s := context.Receiver().(*String)
+func stringAdd(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	s := ctx.Receiver().(*String)
 	add, ok := args[0].(*String)
 	if !ok {
 		return nil, NewImplicitConversionTypeError(add, args[0])
@@ -115,11 +106,9 @@ func stringAdd(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ru
 	return NewString(s.Value + add.Value), nil
 }
 
-func stringGsub(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	s := context.Receiver().(*String)
+func stringGsub(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	s := ctx.Receiver().(*String)
 	pattern, ok := args[0].(*String)
 	if !ok {
 		return nil, NewImplicitConversionTypeError(pattern, args[0])
@@ -141,19 +130,15 @@ func stringGsub(context CallContext, tracer trace.Tracer, args ...RubyObject) (R
 	return NewString(result), nil
 }
 
-func stringLength(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	s := context.Receiver().(*String)
+func stringLength(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	s := ctx.Receiver().(*String)
 	return NewInteger(int64(len(s.Value))), nil
 }
 
-func stringLines(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	s := context.Receiver().(*String)
+func stringLines(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	s := ctx.Receiver().(*String)
 	lines := strings.Split(s.Value, "\n")
 	arr := NewArray()
 	for _, line := range lines {
@@ -164,11 +149,9 @@ func stringLines(context CallContext, tracer trace.Tracer, args ...RubyObject) (
 
 var FLOAT_RE = regexp.MustCompile(`[-+]?\d*\.?\d+`)
 
-func stringToF(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	s := context.Receiver().(*String)
+func stringToF(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	s := ctx.Receiver().(*String)
 	if s.Value == "" {
 		return NewFloat(0.0), nil
 	}

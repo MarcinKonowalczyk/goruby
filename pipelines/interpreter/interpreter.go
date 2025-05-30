@@ -72,14 +72,22 @@ func (i *interpreter) InterpretCode(src string) (object.RubyObject, error) {
 		}
 	}
 
-	res, tracer, err := evaluator.EvalEx(program, i.environment, i.trace_eval)
-	if tracer != nil {
-		walkable, err := tracer.ToWalkable()
+	var eval_tracer trace.Tracer
+	if i.trace_eval {
+		fmt.Printf("tracing")
+		eval_tracer = trace.NewTracer()
+		ctx = trace.WithTracer(ctx, eval_tracer)
+	}
+	res, err := evaluator.Eval(ctx, program, i.environment)
+	if eval_tracer != nil {
+		eval_tracer.Done()
+		walkable, err := eval_tracer.ToWalkable()
 		if err != nil {
 			panic(err)
 		}
 		walkable.Walk(printer.NewTracePrinter())
 	}
+
 	return res, err
 }
 
@@ -112,14 +120,22 @@ func (i *interpreter) Interpret(filename string) (object.RubyObject, error) {
 		}
 	}
 
-	res, tracer, err := evaluator.EvalEx(program, i.environment, i.trace_eval)
-	if tracer != nil {
-		walkable, err := tracer.ToWalkable()
+	var eval_tracer trace.Tracer
+	if i.trace_eval {
+		fmt.Printf("tracing")
+		eval_tracer = trace.NewTracer()
+		ctx = trace.WithTracer(ctx, eval_tracer)
+	}
+	res, err := evaluator.Eval(ctx, program, i.environment)
+	if eval_tracer != nil {
+		eval_tracer.Done()
+		walkable, err := eval_tracer.ToWalkable()
 		if err != nil {
 			panic(err)
 		}
 		walkable.Walk(printer.NewTracePrinter())
 	}
+
 	return res, err
 }
 

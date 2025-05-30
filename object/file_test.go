@@ -10,13 +10,13 @@ import (
 func TestFileExpandPath(t *testing.T) {
 	t.Run("one arg flavour", func(t *testing.T) {
 		env := NewEnvironment()
-		context := &callContext{
+		ctx := &callContext{
 			receiver: fileClass,
 			env:      env,
 		}
 		filename := NewString("./fixtures/testfile.rb")
 
-		result, err := fileExpandPath(context, nil, filename)
+		result, err := fileExpandPath(ctx, filename)
 
 		assert.NoError(t, err)
 
@@ -30,14 +30,14 @@ func TestFileExpandPath(t *testing.T) {
 	})
 	t.Run("two arg flavour", func(t *testing.T) {
 		env := NewEnvironment()
-		context := &callContext{
+		ctx := &callContext{
 			receiver: fileClass,
 			env:      env,
 		}
 		filename := NewString("../../main.go")
 		dirname := NewString("object/fixtures/")
 
-		result, err := fileExpandPath(context, nil, filename, dirname)
+		result, err := fileExpandPath(ctx, filename, dirname)
 
 		assert.NoError(t, err)
 
@@ -52,13 +52,13 @@ func TestFileExpandPath(t *testing.T) {
 }
 
 func TestFileDirname(t *testing.T) {
-	context := &callContext{
+	ctx := &callContext{
 		receiver: fileClass,
 		env:      NewEnvironment(),
 	}
 	filename := NewString("/var/log/foo.log")
 
-	result, err := fileDirname(context, nil, filename)
+	result, err := fileDirname(ctx, filename)
 
 	assert.NoError(t, err)
 

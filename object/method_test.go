@@ -4,11 +4,10 @@ import (
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
-	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 func TestWithArity(t *testing.T) {
-	wrappedMethod := newMethod(func(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
+	wrappedMethod := newMethod(func(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 		return NewInteger(1), nil
 	})
 
@@ -40,9 +39,9 @@ func TestWithArity(t *testing.T) {
 
 	for _, testCase := range tests {
 		fn := withArity(testCase.arity, wrappedMethod)
-		context := &callContext{receiver: NIL}
+		ctx := &callContext{receiver: NIL}
 
-		result, err := fn.Call(context, nil, testCase.arguments...)
+		result, err := fn.Call(ctx, testCase.arguments...)
 
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 

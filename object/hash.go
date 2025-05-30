@@ -91,11 +91,9 @@ var hashMethods = map[string]RubyMethod{
 	"has_key?": newMethod(hashHasKey),
 }
 
-func hashHasKey(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	hash, _ := context.Receiver().(*Hash)
+func hashHasKey(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	hash, _ := ctx.Receiver().(*Hash)
 	if len(args) != 1 {
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))
 	}

@@ -1,38 +1,36 @@
 package object
 
-import "github.com/MarcinKonowalczyk/goruby/trace"
+import (
+	"github.com/MarcinKonowalczyk/goruby/trace"
+)
 
 type RubyMethod interface {
-	Call(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error)
+	Call(ctx CallContext, args ...RubyObject) (RubyObject, error)
 }
 
 func withArity(arity int, fn RubyMethod) RubyMethod {
 	return &method{
-		fn: func(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-			if tracer != nil {
-				defer tracer.Un(tracer.Trace("withArity"))
-			}
+		fn: func(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+			defer trace.TraceCtx(ctx, "withArity")()
 			if len(args) != arity {
 				return nil, NewWrongNumberOfArgumentsError(arity, len(args))
 			}
-			return fn.Call(context, tracer, args...)
+			return fn.Call(ctx, args...)
 		},
 	}
 }
 
-func newMethod(fn func(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error)) RubyMethod {
+func newMethod(fn func(ctx CallContext, args ...RubyObject) (RubyObject, error)) RubyMethod {
 	return &method{fn: fn}
 }
 
 type method struct {
-	fn func(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error)
+	fn func(ctx CallContext, args ...RubyObject) (RubyObject, error)
 }
 
-func (m *method) Call(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace("method.Call"))
-	}
-	return m.fn(context, tracer, args...)
+func (m *method) Call(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, "method.Call")()
+	return m.fn(ctx, args...)
 }
 
 // MethodSet represents a set of methods

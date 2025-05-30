@@ -11,6 +11,10 @@ func WithTracer(ctx context.Context, tracer Tracer) context.Context {
 }
 
 func GetTracer(ctx context.Context) Tracer {
+	if ctx == nil {
+		// no context, no tracer
+		return nil
+	}
 	tracer, ok := ctx.Value(tracerKey{}).(Tracer)
 	if !ok {
 		return nil
@@ -30,7 +34,6 @@ func GetTracer(ctx context.Context) Tracer {
 //	defer trace.TraceCtx(ctx, trace.Here())()
 func TraceCtx(ctx context.Context, where string) func() {
 	tracer := GetTracer(ctx)
-	// fmt.Printf("%p\n", tracer)
 	if tracer == nil {
 		return func() {}
 	} else {

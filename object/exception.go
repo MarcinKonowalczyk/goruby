@@ -61,15 +61,13 @@ var exceptionMethods = map[string]RubyMethod{
 	"to_s":       withArity(0, newMethod(exceptionToS)),
 }
 
-func exceptionInitialize(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	receiver := context.Receiver()
+func exceptionInitialize(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	receiver := ctx.Receiver()
 	var message string
 	message = receiver.Class().Name()
 	if len(args) == 1 {
-		msg, err := stringify(args[0])
+		msg, err := stringify(ctx, args[0])
 		if err != nil {
 			return nil, err
 		}
@@ -81,11 +79,9 @@ func exceptionInitialize(context CallContext, tracer trace.Tracer, args ...RubyO
 	return receiver, nil
 }
 
-func exceptionException(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	receiver := context.Receiver()
+func exceptionException(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	receiver := ctx.Receiver()
 	if len(args) == 0 {
 		return receiver, nil
 	}
@@ -93,7 +89,7 @@ func exceptionException(context CallContext, tracer trace.Tracer, args ...RubyOb
 	if err, ok := receiver.(error); ok {
 		oldMessage = err.Error()
 	}
-	message, err := stringify(args[0])
+	message, err := stringify(ctx, args[0])
 	if err != nil {
 		return nil, err
 	}
@@ -112,11 +108,9 @@ func exceptionException(context CallContext, tracer trace.Tracer, args ...RubyOb
 	return receiver, nil
 }
 
-func exceptionToS(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	receiver := context.Receiver()
+func exceptionToS(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	receiver := ctx.Receiver()
 	if err, ok := receiver.(exception); ok {
 		return NewString(err.Error()), nil
 	}

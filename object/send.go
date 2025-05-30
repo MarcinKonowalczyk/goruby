@@ -7,12 +7,11 @@ import (
 )
 
 // Send sends message method with args to context and returns its result
-func Send(context CallContext, method string, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-		tracer.Message(method)
-	}
-	receiver := context.Receiver()
+func Send(ctx CallContext, method string, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	trace.MessageCtx(ctx, method)
+
+	receiver := ctx.Receiver()
 	class := receiver.Class()
 
 	// search for the method in the ancestry tree
@@ -27,7 +26,7 @@ func Send(context CallContext, method string, tracer trace.Tracer, args ...RubyO
 			continue
 		}
 
-		return fn.Call(context, tracer, args...)
+		return fn.Call(ctx, args...)
 	}
 
 	// fmt.Printf("receiver: %v(%T)\n", receiver, receiver)

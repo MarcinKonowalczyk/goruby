@@ -64,14 +64,9 @@ var floatMethods = map[string]RubyMethod{
 	"**":   withArity(1, newMethod(floatPow)),
 }
 
-func floatDiv(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	i := context.Receiver().(*Float)
+func floatDiv(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	i := ctx.Receiver().(*Float)
 	var divisor float64
 	switch arg := args[0].(type) {
 	case *Integer:
@@ -87,14 +82,9 @@ func floatDiv(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 	return NewFloat(i.Value / divisor), nil
 }
 
-func floatMul(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	i := context.Receiver().(*Float)
+func floatMul(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	i := ctx.Receiver().(*Float)
 	var factor float64
 	switch arg := args[0].(type) {
 	case *Integer:
@@ -108,11 +98,9 @@ func floatMul(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 	return NewFloat(i.Value * factor), nil
 }
 
-func floatAdd(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	i := context.Receiver().(*Float)
+func floatAdd(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	i := ctx.Receiver().(*Float)
 	add, ok := args[0].(*Float)
 	if !ok {
 		return nil, NewCoercionTypeError(args[0], i)
@@ -120,11 +108,9 @@ func floatAdd(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 	return NewFloat(i.Value + add.Value), nil
 }
 
-func floatSub(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	i := context.Receiver().(*Float)
+func floatSub(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	i := ctx.Receiver().(*Float)
 	sub, ok := args[0].(*Float)
 	if !ok {
 		return nil, NewCoercionTypeError(args[0], i)
@@ -171,11 +157,9 @@ func floatCmpHelper(args []RubyObject) (float64, error) {
 	}
 	return right, nil
 }
-func floatLt(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	i := context.Receiver().(*Float)
+func floatLt(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	i := ctx.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
 	if err != nil {
 		return nil, err
@@ -186,11 +170,9 @@ func floatLt(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ruby
 	return FALSE, nil
 }
 
-func floatGt(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	i := context.Receiver().(*Float)
+func floatGt(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	i := ctx.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
 	if err != nil {
 		return nil, err
@@ -201,11 +183,9 @@ func floatGt(context CallContext, tracer trace.Tracer, args ...RubyObject) (Ruby
 	return FALSE, nil
 }
 
-func floatSpaceship(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	i := context.Receiver().(*Float)
+func floatSpaceship(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	i := ctx.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
 	if err != nil {
 		return NIL, err
@@ -222,11 +202,9 @@ func floatSpaceship(context CallContext, tracer trace.Tracer, args ...RubyObject
 	}
 }
 
-func floatGte(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	i := context.Receiver().(*Float)
+func floatGte(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	i := ctx.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
 	if err != nil {
 		return nil, err
@@ -237,11 +215,9 @@ func floatGte(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 	return FALSE, nil
 }
 
-func floatLte(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	i := context.Receiver().(*Float)
+func floatLte(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	i := ctx.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
 	if err != nil {
 		return nil, err
@@ -252,19 +228,15 @@ func floatLte(context CallContext, tracer trace.Tracer, args ...RubyObject) (Rub
 	return FALSE, nil
 }
 
-func floatToI(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	i := context.Receiver().(*Float)
+func floatToI(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	i := ctx.Receiver().(*Float)
 	return NewInteger(int64(i.Value)), nil
 }
 
-func floatPow(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	i := context.Receiver().(*Float)
+func floatPow(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	i := ctx.Receiver().(*Float)
 	if len(args) != 1 {
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))
 	}

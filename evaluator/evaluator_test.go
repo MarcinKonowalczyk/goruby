@@ -1,6 +1,7 @@
 package evaluator_test
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -816,16 +817,17 @@ func testNilObject(t *testing.T, obj object.RubyObject) bool {
 	return true
 }
 
-func testEval(input string, context ...object.Environment) (object.RubyObject, error) {
+func testEval(input string, args ...object.Environment) (object.RubyObject, error) {
 	env := object.NewEnvironment()
-	if len(context) > 0 {
-		env = context[0]
+	if len(args) > 0 {
+		env = args[0]
 	}
 	program, err := parser.Parse(input)
 	if err != nil {
 		return nil, object.NewSyntaxError(err)
 	}
-	return evaluator.Eval(program, env)
+	ctx := context.Background()
+	return evaluator.Eval(ctx, program, env)
 }
 
 func testObject(t *testing.T, exp object.RubyObject, expected interface{}) {

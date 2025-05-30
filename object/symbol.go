@@ -88,31 +88,25 @@ var symbolMethods = map[string]RubyMethod{
 	"size": withArity(0, newMethod(symbolSize)),
 }
 
-func symbolToS(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	if sym, ok := context.Receiver().(*Symbol); ok {
+func symbolToS(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	if sym, ok := ctx.Receiver().(*Symbol); ok {
 		return NewString(sym.Value), nil
 	}
 	return nil, nil
 }
 
-func symbolSize(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	if sym, ok := context.Receiver().(*Symbol); ok {
+func symbolSize(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	if sym, ok := ctx.Receiver().(*Symbol); ok {
 		return NewInteger(int64(len(sym.Value))), nil
 	}
 	return nil, nil
 }
 
-func symbolToI(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
-	if boolean, ok := SymbolToBool(context.Receiver()); ok {
+func symbolToI(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
+	if boolean, ok := SymbolToBool(ctx.Receiver()); ok {
 		if boolean {
 			return NewInteger(1), nil
 		}

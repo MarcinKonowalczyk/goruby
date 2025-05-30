@@ -24,7 +24,7 @@ func TestFunctionCall(t *testing.T) {
 		}
 
 		var actualEvalNode ast.Node
-		context := &callContext{
+		ctx := &callContext{
 			env: NewMainEnvironment(),
 			eval: func(node ast.Node, env Environment) (RubyObject, error) {
 				actualEvalNode = node
@@ -32,7 +32,7 @@ func TestFunctionCall(t *testing.T) {
 			},
 		}
 
-		_, err := function.Call(context, nil)
+		_, err := function.Call(ctx)
 		assert.NoError(t, err)
 
 		var expected ast.Node = functionBody
@@ -41,7 +41,7 @@ func TestFunctionCall(t *testing.T) {
 	t.Run("returns any error returned by CallContext#Eval", func(t *testing.T) {
 		evalErr := fmt.Errorf("An error")
 
-		context := &callContext{
+		ctx := &callContext{
 			env:  NewMainEnvironment(),
 			eval: func(ast.Node, Environment) (RubyObject, error) { return nil, evalErr },
 		}
@@ -50,14 +50,14 @@ func TestFunctionCall(t *testing.T) {
 			Parameters: []*FunctionParameter{},
 		}
 
-		_, err := function.Call(context, nil)
+		_, err := function.Call(ctx)
 		assert.That(t, reflect.DeepEqual(evalErr, err), "Expected error to equal\n%v\n\tgot\n%v\n", evalErr, err)
 	})
 	t.Run("uses the function env as env for CallContext#Eval", func(t *testing.T) {
 		contextEnv := NewEnvironment()
 		contextEnv.Set("bar", NewString("not reachable in Eval"))
 		var evalEnv Environment
-		context := &callContext{
+		ctx := &callContext{
 			env: contextEnv,
 			eval: func(node ast.Node, env Environment) (RubyObject, error) {
 				evalEnv = env
@@ -72,7 +72,7 @@ func TestFunctionCall(t *testing.T) {
 			Env:        functionEnv,
 		}
 
-		_, err := function.Call(context, nil)
+		_, err := function.Call(ctx)
 		assert.NoError(t, err)
 
 		{
@@ -90,7 +90,7 @@ func TestFunctionCall(t *testing.T) {
 	t.Run("puts the Call args into the env for CallContext#Eval", func(t *testing.T) {
 		contextEnv := NewEnvironment()
 		var evalEnv Environment
-		context := &callContext{
+		ctx := &callContext{
 			env: contextEnv,
 			eval: func(node ast.Node, env Environment) (RubyObject, error) {
 				evalEnv = env
@@ -106,7 +106,7 @@ func TestFunctionCall(t *testing.T) {
 				},
 			}
 
-			_, err := function.Call(context, nil, NewInteger(300), NewString("sym"))
+			_, err := function.Call(ctx, NewInteger(300), NewString("sym"))
 			assert.NoError(t, err)
 
 			{
@@ -132,7 +132,7 @@ func TestFunctionCall(t *testing.T) {
 				},
 			}
 
-			_, err := function.Call(context, nil, NewInteger(300), NewSymbol("sym"))
+			_, err := function.Call(ctx, NewInteger(300), NewSymbol("sym"))
 			assert.NoError(t, err)
 
 			{
@@ -154,30 +154,32 @@ func TestFunctionCall(t *testing.T) {
 	})
 	t.Run("returns the object returned by CallContext#Eval", func(t *testing.T) {
 		t.Run("vanilla object", func(t *testing.T) {
-			context := &callContext{
+			ctx := &callContext{
 				env:  NewMainEnvironment(),
 				eval: func(ast.Node, Environment) (RubyObject, error) { return NewInteger(8), nil },
 			}
 
 			function := &Function{}
 
-			result, _ := function.Call(context, nil)
+			result, _ := function.Call(ctx)
 			assert.EqualCmpAny(t, NewInteger(8), result, CompareRubyObjectsForTests)
 		})
 		t.Run("wrapped into a return value", func(t *testing.T) {
-			context := &callContext{
-				env:  NewMainEnvironment(),
-				eval: func(ast.Node, Environment) (RubyObject, error) { return &ReturnValue{Value: NewInteger(8)}, nil },
+			ctx := &callContext{
+				env: NewMainEnvironment(),
+				eval: func(ast.Node, Environment) (RubyObject, error) {
+					return &ReturnValue{Value: NewInteger(8)}, nil
+				},
 			}
 
 			function := &Function{}
 
-			result, _ := function.Call(context, nil)
+			result, _ := function.Call(ctx)
 			assert.EqualCmpAny(t, NewInteger(8), result, CompareRubyObjectsForTests)
 		})
 	})
 	t.Run("validates that the arguments match the function parameters", func(t *testing.T) {
-		context := &callContext{
+		ctx := &callContext{
 			env:  NewMainEnvironment(),
 			eval: func(ast.Node, Environment) (RubyObject, error) { return nil, nil },
 		}
@@ -187,7 +189,7 @@ func TestFunctionCall(t *testing.T) {
 		}
 
 		t.Run("without block argument", func(t *testing.T) {
-			_, err := function.Call(context, nil, NewString("foo"))
+			_, err := function.Call(ctx, NewString("foo"))
 			assert.Error(t, err, NewWrongNumberOfArgumentsError(0, 1))
 		})
 
@@ -197,7 +199,7 @@ func TestFunctionCall(t *testing.T) {
 				{Name: "y"},
 			}
 
-			_, err := function.Call(context, nil, NewInteger(8))
+			_, err := function.Call(ctx, NewInteger(8))
 			assert.NoError(t, err)
 		})
 	})

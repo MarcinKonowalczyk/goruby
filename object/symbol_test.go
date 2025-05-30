@@ -18,11 +18,11 @@ func TestSymbol_hashKey(t *testing.T) {
 }
 
 func TestSymbolToS(t *testing.T) {
-	context := &callContext{
+	ctx := &callContext{
 		receiver: NewSymbol("foo"),
 	}
 
-	result, err := symbolToS(context, nil)
+	result, err := symbolToS(ctx)
 
 	assert.NoError(t, err)
 

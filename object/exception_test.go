@@ -7,12 +7,12 @@ import (
 )
 
 func TestExceptionInitialize(t *testing.T) {
-	context := &callContext{
+	ctx := &callContext{
 		receiver: &Exception{},
 		env:      NewMainEnvironment(),
 	}
 	t.Run("without args", func(t *testing.T) {
-		result, err := exceptionInitialize(context, nil)
+		result, err := exceptionInitialize(ctx)
 
 		assert.NoError(t, err)
 
@@ -20,14 +20,14 @@ func TestExceptionInitialize(t *testing.T) {
 	})
 	t.Run("with arg", func(t *testing.T) {
 		t.Run("string", func(t *testing.T) {
-			result, err := exceptionInitialize(context, nil, NewString("err"))
+			result, err := exceptionInitialize(ctx, NewString("err"))
 
 			assert.NoError(t, err)
 
 			assert.EqualCmpAny(t, result, &Exception{message: "err"}, CompareRubyObjectsForTests)
 		})
 		t.Run("other object", func(t *testing.T) {
-			result, err := exceptionInitialize(context, nil, NewSymbol("symbol"))
+			result, err := exceptionInitialize(ctx, NewSymbol("symbol"))
 
 			assert.NoError(t, err)
 
@@ -38,26 +38,26 @@ func TestExceptionInitialize(t *testing.T) {
 
 func TestExceptionException(t *testing.T) {
 	contextObject := &Exception{message: "x"}
-	context := &callContext{
+	ctx := &callContext{
 		receiver: contextObject,
 		env:      NewMainEnvironment(),
 	}
 	t.Run("without args", func(t *testing.T) {
-		result, err := exceptionException(context, nil)
+		result, err := exceptionException(ctx)
 
 		assert.NoError(t, err)
 		assert.EqualCmpAny(t, result, contextObject, CompareRubyObjectsForTests)
 		assert.EqualCmpAny(t, result, &Exception{message: "x"}, CompareRubyObjectsForTests)
 	})
 	t.Run("with arg", func(t *testing.T) {
-		result, err := exceptionException(context, nil, NewString("x"))
+		result, err := exceptionException(ctx, NewString("x"))
 
 		assert.NoError(t, err)
 		assert.EqualCmpAny(t, result, contextObject, CompareRubyObjectsForTests)
 		assert.EqualCmpAny(t, result, &Exception{message: "x"}, CompareRubyObjectsForTests)
 	})
 	t.Run("with arg but different message", func(t *testing.T) {
-		result, err := exceptionException(context, nil, NewString("err"))
+		result, err := exceptionException(ctx, NewString("err"))
 
 		assert.NoError(t, err)
 
@@ -67,12 +67,12 @@ func TestExceptionException(t *testing.T) {
 
 func TestExceptionToS(t *testing.T) {
 	contextObject := &Exception{message: "x"}
-	context := &callContext{
+	ctx := &callContext{
 		receiver: contextObject,
 		env:      NewMainEnvironment(),
 	}
 
-	result, err := exceptionToS(context, nil)
+	result, err := exceptionToS(ctx)
 
 	assert.NoError(t, err)
 

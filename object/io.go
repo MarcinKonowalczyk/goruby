@@ -22,10 +22,8 @@ var ioClassMethods = map[string]RubyMethod{
 	"gets": withArity(0, newMethod(ioClassGets)),
 }
 
-func ioClassGets(context CallContext, tracer trace.Tracer, args ...RubyObject) (RubyObject, error) {
-	if tracer != nil {
-		defer tracer.Un(tracer.Trace(trace.Here()))
-	}
+func ioClassGets(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+	defer trace.TraceCtx(ctx, trace.Here())()
 	// read a string from stdin
 	reader := bufio.NewReader(os.Stdin)
 	text, err := reader.ReadString('\n')
