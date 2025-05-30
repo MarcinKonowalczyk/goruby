@@ -30,6 +30,7 @@ var noEvalPresent = func(node ast.Node, env Environment) (RubyObject, error) {
 // NewCallContext returns a new CallContext with a stubbed eval function
 func NewCallContext(env Environment, receiver RubyObject) CallContext {
 	return &callContext{
+		emptyCtx: emptyCtx{},
 		env:      env,
 		eval:     noEvalPresent,
 		receiver: receiver,

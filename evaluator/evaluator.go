@@ -78,11 +78,12 @@ func (e *evaluator) Eval(ctx context.Context, node ast.Node, env object.Environm
 		CallContext: object.NewCallContext(env, object.FUNCS_STORE),
 		evaluator:   e,
 	}
+	// ctx := object.NewCallContext(env, object.FUNCS_STORE)
 	return e.eval(node, env)
 }
 
 func (e *evaluator) eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
-	trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))
+	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))
 	switch node := node.(type) {
 	// Statements
 	case *ast.Program:
@@ -504,7 +505,6 @@ func (e *evaluator) evalSymbolIndexExpression(env object.Environment, target *ob
 			args[0] = evaluated
 		}
 
-		// ctx2 := &callContext{object.NewCallContext(env, object.FUNCS_STORE), e}
 		value, err := object.Send(e.ctx, target.Value, args...)
 		return value, err
 	}
@@ -722,7 +722,6 @@ func (e *evaluator) evalIdentifier(node *ast.Identifier, env object.Environment)
 
 	// maybe a function
 	// fmt.Println("ident", node)
-	// ctx2 := &callContext{object.NewCallContext(env, object.FUNCS_STORE), e}
 	val, err := object.Send(e.ctx, node.Value)
 	if err != nil {
 		return nil, errors.Wrap(
@@ -988,7 +987,7 @@ func (e *evaluator) evalContextCallExpression(node *ast.ContextCallExpression, e
 		}
 		args = append(args, block)
 	}
-	ctx2 := &callContext{object.NewCallContext(env, context), e}
+	ctx2 := object.WithReceiver(e.ctx, context)
 	return object.Send(ctx2, node.Function, args...)
 }
 
@@ -1047,8 +1046,7 @@ func (e *evaluator) evalInfixExpression(node *ast.InfixExpression, env object.En
 		// result is right
 		return right, nil
 	}
-	ctx2 := &callContext{object.NewCallContext(env, left), e}
-	// ctx2 := object.NewCallContext(env, left)
+	ctx2 := object.WithReceiver(e.ctx, left)
 	return object.Send(ctx2, node.Operator.String(), right)
 }
 
