@@ -31,7 +31,7 @@ func GetTracer(ctx context.Context) Tracer {
 // WITH CONTEXT:
 // NOTE the extra `()`
 //
-//	defer trace.TraceCtx(ctx, trace.Here())()
+//	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 func TraceCtx(ctx context.Context, where string) func() {
 	tracer := GetTracer(ctx)
 	if tracer == nil {
@@ -43,6 +43,14 @@ func TraceCtx(ctx context.Context, where string) func() {
 		}
 	}
 
+}
+
+func HereCtx(ctx context.Context) string {
+	tracer := GetTracer(ctx)
+	if tracer != nil {
+		return here(callerName(1))
+	}
+	return ""
 }
 
 func MessageCtx(ctx context.Context, args ...any) {

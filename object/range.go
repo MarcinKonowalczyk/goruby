@@ -71,7 +71,7 @@ func (rang *Range) ToArray() *Array {
 }
 
 func rangeFindAll(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	rng, _ := ctx.Receiver().(*Range)
 	proc, ok := args[0].(*Symbol)
 	if !ok {
@@ -105,7 +105,7 @@ func rangeFindAll(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 }
 
 func rangeAll(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	rng, _ := ctx.Receiver().(*Range)
 	if len(args) == 0 {
 		return nil, NewArgumentError("all? requires a block")
@@ -136,7 +136,7 @@ func rangeAll(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 }
 
 func rangeSize(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	rng, _ := ctx.Receiver().(*Range)
 	size := rng.Right - rng.Left
 	if rng.Inclusive {

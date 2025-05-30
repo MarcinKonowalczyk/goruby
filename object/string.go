@@ -91,13 +91,13 @@ var stringMethods = map[string]RubyMethod{
 }
 
 func stringToS(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	str := ctx.Receiver().(*String)
 	return NewString(str.Value), nil
 }
 
 func stringAdd(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	s := ctx.Receiver().(*String)
 	add, ok := args[0].(*String)
 	if !ok {
@@ -107,7 +107,7 @@ func stringAdd(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 }
 
 func stringGsub(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	s := ctx.Receiver().(*String)
 	pattern, ok := args[0].(*String)
 	if !ok {
@@ -131,13 +131,13 @@ func stringGsub(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 }
 
 func stringLength(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	s := ctx.Receiver().(*String)
 	return NewInteger(int64(len(s.Value))), nil
 }
 
 func stringLines(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	s := ctx.Receiver().(*String)
 	lines := strings.Split(s.Value, "\n")
 	arr := NewArray()
@@ -150,7 +150,7 @@ func stringLines(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 var FLOAT_RE = regexp.MustCompile(`[-+]?\d*\.?\d+`)
 
 func stringToF(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	s := ctx.Receiver().(*String)
 	if s.Value == "" {
 		return NewFloat(0.0), nil

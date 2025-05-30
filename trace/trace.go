@@ -199,11 +199,14 @@ func callerName(N int) string {
 	return name
 }
 
-func Here() string {
-	name := callerName(1)
+func here(name string) string {
 	// strip everything before the last . to get just the function name
 	name = name[strings.LastIndex(name, ".")+1:]
 	return name
+}
+
+func Here() string {
+	return here(callerName(1))
 }
 
 func (t *tracer) Trace(where string) *Exit {

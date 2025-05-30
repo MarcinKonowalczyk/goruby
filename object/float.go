@@ -65,7 +65,7 @@ var floatMethods = map[string]RubyMethod{
 }
 
 func floatDiv(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Float)
 	var divisor float64
 	switch arg := args[0].(type) {
@@ -83,7 +83,7 @@ func floatDiv(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 }
 
 func floatMul(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Float)
 	var factor float64
 	switch arg := args[0].(type) {
@@ -99,7 +99,7 @@ func floatMul(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 }
 
 func floatAdd(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Float)
 	add, ok := args[0].(*Float)
 	if !ok {
@@ -109,7 +109,7 @@ func floatAdd(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 }
 
 func floatSub(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Float)
 	sub, ok := args[0].(*Float)
 	if !ok {
@@ -158,7 +158,7 @@ func floatCmpHelper(args []RubyObject) (float64, error) {
 	return right, nil
 }
 func floatLt(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
 	if err != nil {
@@ -171,7 +171,7 @@ func floatLt(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 }
 
 func floatGt(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
 	if err != nil {
@@ -184,7 +184,7 @@ func floatGt(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 }
 
 func floatSpaceship(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
 	if err != nil {
@@ -203,7 +203,7 @@ func floatSpaceship(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 }
 
 func floatGte(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
 	if err != nil {
@@ -216,7 +216,7 @@ func floatGte(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 }
 
 func floatLte(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Float)
 	right, err := floatCmpHelper(args)
 	if err != nil {
@@ -229,13 +229,13 @@ func floatLte(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 }
 
 func floatToI(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Float)
 	return NewInteger(int64(i.Value)), nil
 }
 
 func floatPow(ctx CallContext, args ...RubyObject) (RubyObject, error) {
-	defer trace.TraceCtx(ctx, trace.Here())()
+	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Float)
 	if len(args) != 1 {
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))
