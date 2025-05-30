@@ -3,8 +3,8 @@ package parser
 import (
 	"bytes"
 	"fmt"
-	gotoken "go/token"
 
+	"github.com/MarcinKonowalczyk/goruby/parser/file"
 	"github.com/MarcinKonowalczyk/goruby/token"
 	"github.com/pkg/errors"
 )
@@ -105,7 +105,7 @@ func (t tokens) String() string {
 }
 
 type UnexpectedTokenError struct {
-	Pos            gotoken.Position
+	Position       file.Position
 	ExpectedTokens []token.Type
 	ActualToken    token.Type
 	Description    string
@@ -120,8 +120,8 @@ func (e *UnexpectedTokenError) Error() string {
 	if e.Description != "" {
 		msg += ": " + e.Description
 	}
-	if e.Pos.Filename != "" || e.Pos.IsValid() {
-		return e.Pos.String() + ": " + msg
+	if e.Position.Filename != "" || e.Position.IsValid() {
+		return e.Position.String() + ": " + msg
 	}
 	return msg
 }

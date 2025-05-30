@@ -3,7 +3,6 @@ package parser
 import (
 	"context"
 	"fmt"
-	gotoken "go/token"
 	"strconv"
 	"strings"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/ast/infix"
 	"github.com/MarcinKonowalczyk/goruby/ast/walk"
 	"github.com/MarcinKonowalczyk/goruby/lexer"
+	"github.com/MarcinKonowalczyk/goruby/parser/file"
 	"github.com/MarcinKonowalczyk/goruby/token"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 	"github.com/pkg/errors"
@@ -116,13 +116,15 @@ type (
 // A parser parses the token emitted by the provided lexer.Lexer and returns an
 // AST describing the parsed program.
 type parser struct {
-	file   *gotoken.File
+	// for tracking were are we in the source code
+	file file.File
+	pos  file.Pos
+
 	l      *lexer.Lexer
 	errors []error
 
 	ctx context.Context
 
-	pos       gotoken.Pos
 	lastLine  string
 	curToken  token.Token
 	peekToken token.Token
@@ -196,14 +198,8 @@ func (p *parser) init() {
 	p.registerInfix(token.SLBRACKET, p.parseCallArgument)
 }
 
-func (p *parser) init2(ctx context.Context, src string) {
-	p.ctx = ctx
-
-	p.file = gotoken.NewFileSet().AddFile("", -1, len(src))
-
-	p.l = lexer.New(src)
-	p.errors = []error{}
-
+func (p *parser) init2(src string) {
+	p.file = file.NewFile("", len(src))
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()
 	p.nextToken()
@@ -247,7 +243,7 @@ func (p *parser) nextToken() {
 		// }
 	}
 	p.curToken = p.peekToken
-	p.pos = gotoken.Pos(p.curToken.Pos)
+	p.pos = file.Pos(p.curToken.Pos)
 	p.lastLine += p.curToken.Literal
 	if p.curToken.Type == token.NEWLINE {
 		p.file.AddLine(int(p.pos))
@@ -278,9 +274,8 @@ func (p *parser) Error(err error) {
 }
 
 func (p *parser) unexpectedTokenError(actual token.Type, description string, expected ...token.Type) {
-	epos := p.file.Position(p.pos)
 	err := &UnexpectedTokenError{
-		Pos:            epos,
+		Position:       p.file.Position(p.pos),
 		ExpectedTokens: expected,
 		ActualToken:    actual,
 		Description:    description,
@@ -302,7 +297,11 @@ func (p *parser) noPrefixParseFnError(t token.Type) {
 // and callers should always check if they can handle the error with providing
 // more input by checking with e.g. IsEOFError.
 func (p *parser) parse(ctx context.Context, src string) (*ast.Program, error) {
-	p.init2(ctx, src)
+
+	p.ctx = ctx
+	p.l = lexer.New(src)
+	p.init2(src)
+
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 	for !p.currentIs(token.EOF) {
