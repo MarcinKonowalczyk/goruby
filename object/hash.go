@@ -80,7 +80,7 @@ func (h *Hash) HashKey() hash.Key {
 }
 
 var hashMethods = map[string]ruby.Method{
-	"has_key?": newMethod(hashHasKey),
+	"has_key?": ruby.NewMethod(hashHasKey),
 }
 
 func hashHasKey(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {

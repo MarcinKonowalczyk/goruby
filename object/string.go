@@ -84,13 +84,13 @@ func stringify(ctx call.Context[ruby.Object], obj ruby.Object) (string, error) {
 var stringClassMethods = map[string]ruby.Method{}
 
 var stringMethods = map[string]ruby.Method{
-	"to_s":   withArity(0, newMethod(stringToS)),
-	"+":      withArity(1, newMethod(stringAdd)),
-	"gsub":   withArity(2, newMethod(stringGsub)),
-	"length": withArity(0, newMethod(stringLength)),
-	"size":   withArity(0, newMethod(stringLength)),
-	"lines":  withArity(0, newMethod(stringLines)),
-	"to_f":   withArity(0, newMethod(stringToF)),
+	"to_s":   WithArity(0, ruby.NewMethod(stringToS)),
+	"+":      WithArity(1, ruby.NewMethod(stringAdd)),
+	"gsub":   WithArity(2, ruby.NewMethod(stringGsub)),
+	"length": WithArity(0, ruby.NewMethod(stringLength)),
+	"size":   WithArity(0, ruby.NewMethod(stringLength)),
+	"lines":  WithArity(0, ruby.NewMethod(stringLines)),
+	"to_f":   WithArity(0, ruby.NewMethod(stringToF)),
 }
 
 func stringToS(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {

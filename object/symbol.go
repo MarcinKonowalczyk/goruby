@@ -88,9 +88,9 @@ var (
 var symbolClassMethods = map[string]ruby.Method{}
 
 var symbolMethods = map[string]ruby.Method{
-	"to_s": withArity(0, newMethod(symbolToS)),
-	"to_i": withArity(0, newMethod(symbolToI)),
-	"size": withArity(0, newMethod(symbolSize)),
+	"to_s": WithArity(0, ruby.NewMethod(symbolToS)),
+	"to_i": WithArity(0, ruby.NewMethod(symbolToI)),
+	"size": WithArity(0, ruby.NewMethod(symbolSize)),
 }
 
 func symbolToS(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {

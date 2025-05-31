@@ -830,7 +830,7 @@ func (e *evaluator) evalFunctionLiteral(node *ast.FunctionLiteral, ev env.Enviro
 		Env:        ev,
 		Body:       node.Body,
 	}
-	_, extended := object.AddMethod(object.FUNCS_STORE, node.Name, function)
+	_, extended := ruby.AddMethod(object.FUNCS_STORE, node.Name, function)
 	if extended {
 		panic("we should not be extending FUNCS. they already should be extended")
 	}

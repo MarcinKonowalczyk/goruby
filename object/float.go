@@ -53,18 +53,18 @@ var (
 )
 
 var floatMethods = map[string]ruby.Method{
-	"div":  withArity(1, newMethod(floatDiv)),
-	"/":    withArity(1, newMethod(floatDiv)),
-	"*":    withArity(1, newMethod(floatMul)),
-	"+":    withArity(1, newMethod(floatAdd)),
-	"-":    withArity(1, newMethod(floatSub)),
-	"<":    withArity(1, newMethod(floatLt)),
-	">":    withArity(1, newMethod(floatGt)),
-	">=":   withArity(1, newMethod(floatGte)),
-	"<=":   withArity(1, newMethod(floatLte)),
-	"<=>":  withArity(1, newMethod(floatSpaceship)),
-	"to_i": withArity(0, newMethod(floatToI)),
-	"**":   withArity(1, newMethod(floatPow)),
+	"div":  WithArity(1, ruby.NewMethod(floatDiv)),
+	"/":    WithArity(1, ruby.NewMethod(floatDiv)),
+	"*":    WithArity(1, ruby.NewMethod(floatMul)),
+	"+":    WithArity(1, ruby.NewMethod(floatAdd)),
+	"-":    WithArity(1, ruby.NewMethod(floatSub)),
+	"<":    WithArity(1, ruby.NewMethod(floatLt)),
+	">":    WithArity(1, ruby.NewMethod(floatGt)),
+	">=":   WithArity(1, ruby.NewMethod(floatGte)),
+	"<=":   WithArity(1, ruby.NewMethod(floatLte)),
+	"<=>":  WithArity(1, ruby.NewMethod(floatSpaceship)),
+	"to_i": WithArity(0, ruby.NewMethod(floatToI)),
+	"**":   WithArity(1, ruby.NewMethod(floatPow)),
 }
 
 func floatDiv(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {

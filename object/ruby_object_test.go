@@ -28,7 +28,7 @@ func TestFunctionCall(t *testing.T) {
 		}
 
 		var actualEvalNode ast.Node
-		ctx := call.NewContext[ruby.Object](nil, object.NewMainEnvironment())
+		ctx := call.NewContext(nil, object.NewMainEnvironment())
 		ctx = call.WithEval(ctx, func(node ast.Node, env env.Environment[ruby.Object]) (ruby.Object, error) {
 			actualEvalNode = node
 			return nil, nil
@@ -42,12 +42,7 @@ func TestFunctionCall(t *testing.T) {
 	})
 	t.Run("returns any error returned by CallContext#Eval", func(t *testing.T) {
 		evalErr := fmt.Errorf("An error")
-
-		// ctx := &callContext{
-		// 	env:  NewMainEnvironment(),
-		// 	eval: func(ast.Node, Environment) (ruby.Object, error) { return nil, evalErr },
-		// }
-		ctx := call.NewContext[ruby.Object](nil, object.NewMainEnvironment())
+		ctx := call.NewContext(nil, object.NewMainEnvironment())
 		ctx = call.WithEval(ctx, func(ast.Node, env.Environment[ruby.Object]) (ruby.Object, error) {
 			return nil, evalErr
 		})
@@ -63,14 +58,7 @@ func TestFunctionCall(t *testing.T) {
 		contextEnv := env.NewEnvironment[ruby.Object]()
 		contextEnv.Set("bar", object.NewString("not reachable in Eval"))
 		var evalEnv env.Environment[ruby.Object]
-		// ctx := &callContext{
-		// 	env: contextEnv,
-		// 	eval: func(node ast.Node, env Environment) (ruby.Object, error) {
-		// 		evalEnv = env
-		// 		return nil, nil
-		// 	},
-		// }
-		ctx := call.NewContext[ruby.Object](nil, contextEnv)
+		ctx := call.NewContext(nil, contextEnv)
 		ctx = call.WithEval(ctx, func(node ast.Node, env env.Environment[ruby.Object]) (ruby.Object, error) {
 			evalEnv = env
 			return nil, nil
@@ -100,14 +88,7 @@ func TestFunctionCall(t *testing.T) {
 	t.Run("puts the Call args into the env for CallContext#Eval", func(t *testing.T) {
 		contextEnv := env.NewEnvironment[ruby.Object]()
 		var evalEnv env.Environment[ruby.Object]
-		// ctx := &callContext{
-		// 	env: contextEnv,
-		// 	eval: func(node ast.Node, env Environment) (ruby.Object, error) {
-		// 		evalEnv = env
-		// 		return nil, nil
-		// 	},
-		// }
-		ctx := call.NewContext[ruby.Object](nil, contextEnv)
+		ctx := call.NewContext(nil, contextEnv)
 		ctx = call.WithEval(ctx, func(node ast.Node, env env.Environment[ruby.Object]) (ruby.Object, error) {
 			evalEnv = env
 			return nil, nil
@@ -169,11 +150,7 @@ func TestFunctionCall(t *testing.T) {
 	})
 	t.Run("returns the object returned by CallContext#Eval", func(t *testing.T) {
 		t.Run("vanilla object", func(t *testing.T) {
-			// ctx := &callContext{
-			// 	env:  NewMainEnvironment(),
-			// 	eval: func(ast.Node, Environment) (ruby.Object, error) { return NewInteger(8), nil },
-			// }
-			ctx := call.NewContext[ruby.Object](nil, object.NewMainEnvironment())
+			ctx := call.NewContext(nil, object.NewMainEnvironment())
 			ctx = call.WithEval(ctx, func(ast.Node, env.Environment[ruby.Object]) (ruby.Object, error) {
 				return object.NewInteger(8), nil
 			})
@@ -184,13 +161,7 @@ func TestFunctionCall(t *testing.T) {
 			assert.EqualCmpAny(t, object.NewInteger(8), result, object.CompareRubyObjectsForTests)
 		})
 		t.Run("wrapped into a return value", func(t *testing.T) {
-			// ctx := &callContext{
-			// 	env: NewMainEnvironment(),
-			// 	eval: func(ast.Node, Environment) (ruby.Object, error) {
-			// 		return &ReturnValue{Value: NewInteger(8)}, nil
-			// 	},
-			// }
-			ctx := call.NewContext[ruby.Object](nil, object.NewMainEnvironment())
+			ctx := call.NewContext(nil, object.NewMainEnvironment())
 			ctx = call.WithEval(ctx, func(ast.Node, env.Environment[ruby.Object]) (ruby.Object, error) {
 				return &object.ReturnValue{Value: object.NewInteger(8)}, nil
 			})
@@ -202,11 +173,7 @@ func TestFunctionCall(t *testing.T) {
 		})
 	})
 	t.Run("validates that the arguments match the function parameters", func(t *testing.T) {
-		// ctx := &callContext{
-		// 	env:  NewMainEnvironment(),
-		// 	eval: func(ast.Node, Environment) (ruby.Object, error) { return nil, nil },
-		// }
-		ctx := call.NewContext[ruby.Object](nil, object.NewMainEnvironment())
+		ctx := call.NewContext(nil, object.NewMainEnvironment())
 		ctx = call.WithEval(ctx, func(ast.Node, env.Environment[ruby.Object]) (ruby.Object, error) {
 			return nil, nil
 		})

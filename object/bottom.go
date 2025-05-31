@@ -11,9 +11,9 @@ import (
 )
 
 var (
-	nil_class   *class          = nil
-	bottomClass *class          = nil_class
-	BOTTOM      *extendedObject = nil
+	nil_class   *class              = nil
+	bottomClass *class              = nil_class
+	BOTTOM      ruby.ExtendedObject = nil
 )
 
 // TODO: make sure we don't collide with other hash keys
@@ -30,7 +30,7 @@ func init() {
 	bottomClass.class = bottomClass
 	CLASSES.Set("Bottom", bottomClass)
 
-	BOTTOM = newExtendedObject(&Bottom{})
+	BOTTOM = ruby.NewExtendedObject(&Bottom{})
 }
 
 type Bottom struct{}
@@ -40,16 +40,16 @@ func (o *Bottom) Class() ruby.Class { return bottomClass }
 func (o *Bottom) HashKey() hash.Key { return HASH_KEY_BOTTOM }
 
 var bottomMethodSet = map[string]ruby.Method{
-	"to_s":    withArity(0, newMethod(bottomToS)),
-	"is_a?":   withArity(1, newMethod(bottomIsA)),
-	"nil?":    withArity(0, newMethod(bottomIsNil)),
-	"methods": newMethod(bottomMethods),
-	"class":   withArity(0, newMethod(bottomClassMethod)),
-	"puts":    newMethod(bottomPuts),
-	"print":   newMethod(bottomPrint),
-	"raise":   newMethod(bottomRaise),
-	"==":      withArity(1, newMethod(bottomEqual)),
-	"!=":      withArity(1, newMethod(bottomNotEqual)),
+	"to_s":    WithArity(0, ruby.NewMethod(bottomToS)),
+	"is_a?":   WithArity(1, ruby.NewMethod(bottomIsA)),
+	"nil?":    WithArity(0, ruby.NewMethod(bottomIsNil)),
+	"methods": ruby.NewMethod(bottomMethods),
+	"class":   WithArity(0, ruby.NewMethod(bottomClassMethod)),
+	"puts":    ruby.NewMethod(bottomPuts),
+	"print":   ruby.NewMethod(bottomPrint),
+	"raise":   ruby.NewMethod(bottomRaise),
+	"==":      WithArity(1, ruby.NewMethod(bottomEqual)),
+	"!=":      WithArity(1, ruby.NewMethod(bottomNotEqual)),
 }
 
 func bottomToS(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
@@ -153,14 +153,14 @@ func bottomMethods(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Obj
 	receiver := ctx.Receiver()
 	class := ctx.Receiver().Class()
 
-	extended, ok := receiver.(*extendedObject)
+	extended, ok := receiver.(ruby.ExtendedObject)
 
 	if !showSuperMethods && !ok {
 		return &Array{}, nil
 	}
 
 	if !showSuperMethods && ok {
-		class = extended.eigenclass
+		class = extended.Eigenclass()
 	}
 
 	return getMethods(class, showSuperMethods), nil

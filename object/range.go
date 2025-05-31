@@ -55,9 +55,9 @@ func (a *Range) HashKey() hash.Key {
 }
 
 var rangeMethods = map[string]ruby.Method{
-	"find_all": withArity(1, newMethod(rangeFindAll)),
-	"all?":     newMethod(rangeAll),
-	"size":     newMethod(rangeSize),
+	"find_all": WithArity(1, ruby.NewMethod(rangeFindAll)),
+	"all?":     ruby.NewMethod(rangeAll),
+	"size":     ruby.NewMethod(rangeSize),
 }
 
 // Actually create an array of integers from the range

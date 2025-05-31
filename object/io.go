@@ -21,7 +21,7 @@ func init() {
 }
 
 var ioClassMethods = map[string]ruby.Method{
-	"gets": withArity(0, newMethod(ioClassGets)),
+	"gets": WithArity(0, ruby.NewMethod(ioClassGets)),
 }
 
 func ioClassGets(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {

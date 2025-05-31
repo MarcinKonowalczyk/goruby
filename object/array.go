@@ -60,22 +60,22 @@ func (a *Array) HashKey() hash.Key {
 }
 
 var arrayMethods = map[string]ruby.Method{
-	"push":     newMethod(arrayPush),
-	"unshift":  newMethod(arrayUnshift),
-	"size":     newMethod(arraySize),
-	"length":   newMethod(arraySize),
-	"find_all": newMethod(arrayFindAll),
-	"first":    newMethod(arrayFirst),
-	"map":      newMethod(arrayMap),
-	"all?":     newMethod(arrayAll),
-	"join":     newMethod(arrayJoin),
-	"include?": newMethod(arrayInclude),
-	"each":     newMethod(arrayEach),
-	"reject":   newMethod(arrayReject),
-	"pop":      newMethod(arrayPop),
-	"-":        newMethod(arrayMinus),
-	"+":        newMethod(arrayPlus),
-	"*":        newMethod(arrayAst),
+	"push":     ruby.NewMethod(arrayPush),
+	"unshift":  ruby.NewMethod(arrayUnshift),
+	"size":     ruby.NewMethod(arraySize),
+	"length":   ruby.NewMethod(arraySize),
+	"find_all": ruby.NewMethod(arrayFindAll),
+	"first":    ruby.NewMethod(arrayFirst),
+	"map":      ruby.NewMethod(arrayMap),
+	"all?":     ruby.NewMethod(arrayAll),
+	"join":     ruby.NewMethod(arrayJoin),
+	"include?": ruby.NewMethod(arrayInclude),
+	"each":     ruby.NewMethod(arrayEach),
+	"reject":   ruby.NewMethod(arrayReject),
+	"pop":      ruby.NewMethod(arrayPop),
+	"-":        ruby.NewMethod(arrayMinus),
+	"+":        ruby.NewMethod(arrayPlus),
+	"*":        ruby.NewMethod(arrayAst),
 }
 
 func arrayPush(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {

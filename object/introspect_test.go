@@ -10,11 +10,11 @@ import (
 
 func TestGetMethods(t *testing.T) {
 	contextMethods := map[string]ruby.Method{
-		"foo": newMethod(nil),
-		"bar": newMethod(nil),
+		"foo": ruby.NewMethod(nil),
+		"bar": ruby.NewMethod(nil),
 	}
 	myClass := &class{
-		instanceMethods: NewMethodSet(contextMethods),
+		instanceMethods: ruby.NewMethodSet(contextMethods),
 	}
 
 	t.Run("no super methods", func(t *testing.T) {

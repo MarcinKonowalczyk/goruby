@@ -27,12 +27,14 @@ func newClass(
 	}
 	cls := &class{
 		name:            name,
-		instanceMethods: NewMethodSet(instanceMethods),
-		class:           newEigenclass(bottomClass),
+		instanceMethods: ruby.NewMethodSet(instanceMethods),
+		class:           ruby.NewEigenclass(bottomClass),
 		builder:         builder,
 		Environment:     env.NewEnclosedEnvironment[ruby.Object](nil),
 	}
-	cls.class.(*eigenclass).methods = NewMethodSet(classMethods)
+	for name, method := range classMethods {
+		cls.class.(ruby.Eigenclass).AddMethod(name, method)
+	}
 	if cls == nil_class {
 		panic("newClass tried to return is nil_class")
 	}
@@ -43,7 +45,7 @@ func newClass(
 type class struct {
 	name            string
 	class           ruby.Class
-	instanceMethods SettableMethodSet
+	instanceMethods ruby.SettableMethodSet
 	builder         func(ruby.ClassObject, ...ruby.Object) (ruby.Object, error)
 	env.Environment[ruby.Object]
 }

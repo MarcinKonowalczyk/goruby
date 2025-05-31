@@ -128,35 +128,6 @@ func TestIntegerSub(t *testing.T) {
 	}
 }
 
-// func TestIntegerModulo(t *testing.T) {
-// 	tests := []struct {
-// 		arguments []ruby.Object
-// 		result    ruby.Object
-// 		err       error
-// 	}{
-// 		{
-// 			[]ruby.Object{NewInteger(3)},
-// 			NewInteger(1),
-// 			nil,
-// 		},
-// 		{
-// 			[]ruby.Object{NewString("")},
-// 			nil,
-// 			NewCoercionTypeError(NewString(""), NewInteger(0)),)),
-// 		},
-// 	}
-
-// 	for _, testCase := range tests {
-// ctx := call.NewContext[ruby.Object](NewInteger(4), nil)
-
-// 		result, err := integerModulo(ctx, testCase.arguments...)
-
-// 		assert.AssertError(t, err, testCase.err)
-
-// 		checkResult(t, result, testCase.result)
-// 	}
-// }
-
 func TestIntegerLt(t *testing.T) {
 	tests := []struct {
 		arguments []ruby.Object
@@ -218,74 +189,6 @@ func TestIntegerGt(t *testing.T) {
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
-
-// func TestIntegerEq(t *testing.T) {
-// 	tests := []struct {
-// 		arguments []ruby.Object
-// 		result    ruby.Object
-// 		err       error
-// 	}{
-// 		{
-// 			[]ruby.Object{NewInteger(6)},
-// 			FALSE,
-// 			nil,
-// 		},
-// 		{
-// 			[]ruby.Object{NewInteger(4)},
-// 			TRUE,
-// 			nil,
-// 		},
-// 		{
-// 			[]ruby.Object{NewString("")},
-// 			nil,
-// 			NewArgumentError("comparison of Integer with String failed"),
-// 		},
-// 	}
-
-// 	for _, testCase := range tests {
-// ctx := call.NewContext[ruby.Object](NewInteger(4), nil)
-
-// 		result, err := integerEq(ctx, testCase.arguments...)
-
-// 		assert.AssertError(t, err, testCase.err)
-
-// 		checkResult(t, result, testCase.result)
-// 	}
-// }
-
-// func TestIntegerNeq(t *testing.T) {
-// 	tests := []struct {
-// 		arguments []ruby.Object
-// 		result    ruby.Object
-// 		err       error
-// 	}{
-// 		{
-// 			[]ruby.Object{NewInteger(6)},
-// 			TRUE,
-// 			nil,
-// 		},
-// 		{
-// 			[]ruby.Object{NewInteger(4)},
-// 			FALSE,
-// 			nil,
-// 		},
-// 		{
-// 			[]ruby.Object{NewString("")},
-// 			nil,
-// 			NewArgumentError("comparison of Integer with String failed"),
-// 		},
-// 	}
-
-// 	for _, testCase := range tests {
-// ctx := call.NewContext[ruby.Object](NewInteger(4), nil)
-
-// 		result, err := integerNeq(ctx, testCase.arguments...)
-
-// 		assert.AssertError(t, err, testCase.err)
-
-// 		checkResult(t, result, testCase.result)
-// 	}
-// }
 
 func TestIntegerGte(t *testing.T) {
 	tests := []struct {

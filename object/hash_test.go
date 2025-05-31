@@ -54,7 +54,7 @@ func TestHashGet(t *testing.T) {
 		value := NewInteger(42)
 
 		hash := &Hash{Map: map[hash.Key]hashPair{
-			key.HashKey(): hashPair{Key: key, Value: value},
+			key.HashKey(): {Key: key, Value: value},
 		}}
 
 		result, ok := hash.Get(key)
@@ -90,7 +90,7 @@ func TestHashMap(t *testing.T) {
 		value := NewInteger(42)
 
 		hash := &Hash{Map: map[hash.Key]hashPair{
-			key.HashKey(): hashPair{Key: key, Value: value},
+			key.HashKey(): {Key: key, Value: value},
 		}}
 
 		var result map[ruby.Object]ruby.Object = hash.ObjectMap()

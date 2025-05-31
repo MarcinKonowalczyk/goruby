@@ -59,9 +59,9 @@ var (
 	_ error     = &Exception{}
 )
 var exceptionMethods = map[string]ruby.Method{
-	"initialize": newMethod(exceptionInitialize),
-	"exception":  newMethod(exceptionException),
-	"to_s":       withArity(0, newMethod(exceptionToS)),
+	"initialize": ruby.NewMethod(exceptionInitialize),
+	"exception":  ruby.NewMethod(exceptionException),
+	"to_s":       WithArity(0, ruby.NewMethod(exceptionToS)),
 }
 
 func exceptionInitialize(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {

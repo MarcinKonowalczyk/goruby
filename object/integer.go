@@ -44,20 +44,20 @@ func (i *Integer) HashKey() hash.Key {
 }
 
 var integerMethods = map[string]ruby.Method{
-	"div":  withArity(1, newMethod(integerDiv)),
-	"/":    withArity(1, newMethod(integerDiv)),
-	"*":    withArity(1, newMethod(integerMul)),
-	"+":    withArity(1, newMethod(integerAdd)),
-	"-":    withArity(1, newMethod(integerSub)),
-	"%":    withArity(1, newMethod(integerModulo)),
-	"<":    withArity(1, newMethod(integerLt)),
-	">":    withArity(1, newMethod(integerGt)),
-	">=":   withArity(1, newMethod(integerGte)),
-	"<=":   withArity(1, newMethod(integerLte)),
-	"<=>":  withArity(1, newMethod(integerSpaceship)),
-	"to_i": withArity(0, newMethod(integerToI)),
-	"**":   withArity(1, newMethod(integerPow)),
-	"chr":  withArity(0, newMethod(integerChr)),
+	"div":  WithArity(1, ruby.NewMethod(integerDiv)),
+	"/":    WithArity(1, ruby.NewMethod(integerDiv)),
+	"*":    WithArity(1, ruby.NewMethod(integerMul)),
+	"+":    WithArity(1, ruby.NewMethod(integerAdd)),
+	"-":    WithArity(1, ruby.NewMethod(integerSub)),
+	"%":    WithArity(1, ruby.NewMethod(integerModulo)),
+	"<":    WithArity(1, ruby.NewMethod(integerLt)),
+	">":    WithArity(1, ruby.NewMethod(integerGt)),
+	">=":   WithArity(1, ruby.NewMethod(integerGte)),
+	"<=":   WithArity(1, ruby.NewMethod(integerLte)),
+	"<=>":  WithArity(1, ruby.NewMethod(integerSpaceship)),
+	"to_i": WithArity(0, ruby.NewMethod(integerToI)),
+	"**":   WithArity(1, ruby.NewMethod(integerPow)),
+	"chr":  WithArity(0, ruby.NewMethod(integerChr)),
 }
 
 func integerDiv(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {

@@ -8,7 +8,7 @@ import (
 var (
 	CLASSES = env.NewEnvironment[ruby.Object]()
 	// symbol to which all function definitions are attached to
-	FUNCS_STORE = newExtendedObject(FUNCS)
+	FUNCS_STORE = ruby.NewExtendedObject(FUNCS)
 )
 
 // NewMainEnvironment returns a new Environment populated with all Ruby classes

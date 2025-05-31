@@ -21,9 +21,9 @@ func init() {
 }
 
 var fileClassMethods = map[string]ruby.Method{
-	"expand_path": newMethod(fileExpandPath),
-	"dirname":     newMethod(fileDirname),
-	"read":        newMethod(fileRead),
+	"expand_path": ruby.NewMethod(fileExpandPath),
+	"dirname":     ruby.NewMethod(fileDirname),
+	"read":        ruby.NewMethod(fileRead),
 }
 
 func fileExpandPath(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
