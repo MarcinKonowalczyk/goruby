@@ -238,10 +238,30 @@ func (t *tracer) Un(exit *Exit) {
 	t.append(exit)
 }
 
+func argsToMessage(args ...any) string {
+	// check if the first
+	var msg string
+	if len(args) == 0 {
+		msg = "<empty message>"
+	} else if len(args) == 1 {
+		// check if we are a function func() string
+		if fn, ok := args[0].(func() string); ok {
+			msg = fn()
+		} else if str, ok := args[0].(string); ok {
+			msg = str
+		} else {
+			msg = fmt.Sprintf("%v", args[0])
+		}
+	} else {
+		msg = fmt.Sprint(args...)
+	}
+	return msg
+}
 func (t *tracer) Message(args ...any) {
 	debug("  messaging", t.where.Name)
+	message := argsToMessage(args...)
 	t.append(&Message{
-		Message: fmt.Sprint(args...),
+		Message: message,
 		parent:  t.where,
 	})
 }
