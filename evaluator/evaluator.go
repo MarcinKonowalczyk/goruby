@@ -162,19 +162,19 @@ func (e *evaluator) eval(node ast.Node, ev env.Environment[ruby.Object]) (ruby.O
 
 }
 
+// NOTE: we support only double-quoted strings
+var rep = []struct{ a, b string }{
+	{a: "\\n", b: "\n"},
+	{a: "\\t", b: "\t"},
+	{a: "\\r", b: "\r"},
+	{a: "\\b", b: "\b"},
+	{a: "\\\\", b: "\\"},
+}
+
 func unescapeStringLiteral(node *ast.StringLiteral) string {
-	rep := map[string]string{
-		"\\n":  "\n",
-		"\\t":  "\t",
-		"\\r":  "\r",
-		"\\b":  "\b",
-		"\\\\": "\\",
-	}
-	// NOTE: we support only double-quoted strings
-	rep["\""] = "\""
 	value := node.Value
-	for k, v := range rep {
-		value = strings.ReplaceAll(value, k, v)
+	for _, v := range rep {
+		value = strings.ReplaceAll(value, v.a, v.b)
 	}
 	return value
 }
