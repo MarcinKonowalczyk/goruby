@@ -13,7 +13,7 @@ type walkable interface {
 
 type Tracer interface {
 	// add the function to the tracing stack
-	Trace(where string) *Exit
+	Trace(where ...string) *Exit
 	Un(*Exit)
 	// add a message to the trace
 	Message(args ...any)
@@ -205,16 +205,29 @@ func here(name string) string {
 	return name
 }
 
+//go:noinline
 func Here() string {
 	return here(callerName(1))
 }
 
-func (t *tracer) Trace(where string) *Exit {
-	debug("> entering", t.where.Name)
-	n := &Enter{Name: where}
+//go:inline
+func whereToString(where ...string) string {
+	var where_str string
+	if len(where) == 0 {
+		where_str = here(callerName(1))
+	} else if len(where) > 1 {
+		where_str = where[0]
+	}
+	return where_str
+}
+
+func (t *tracer) Trace(where ...string) *Exit {
+	where_str := whereToString(where...)
+	debug("> entering", where_str)
+	n := &Enter{Name: where_str}
 	t.append(n)
 	return &Exit{
-		Name:   where,
+		Name:   where_str,
 		parent: n,
 	}
 }

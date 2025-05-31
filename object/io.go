@@ -25,7 +25,7 @@ var ioClassMethods = map[string]ruby.Method{
 }
 
 func ioClassGets(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	// read a string from stdin
 	reader := bufio.NewReader(os.Stdin)
 	text, err := reader.ReadString('\n')

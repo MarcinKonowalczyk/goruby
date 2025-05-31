@@ -64,7 +64,7 @@ var exceptionMethods = map[string]ruby.Method{
 }
 
 func exceptionInitialize(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	receiver := ctx.Receiver()
 	var message string
 	message = receiver.Class().Name()
@@ -82,7 +82,7 @@ func exceptionInitialize(ctx call.Context[ruby.Object], args ...ruby.Object) (ru
 }
 
 func exceptionToS(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	receiver := ctx.Receiver()
 	if err, ok := receiver.(exception); ok {
 		return NewString(err.Error()), nil

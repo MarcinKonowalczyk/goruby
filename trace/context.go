@@ -31,20 +31,24 @@ func GetTracer(ctx context.Context) Tracer {
 // WITH CONTEXT:
 // NOTE the extra `()`
 //
-//	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
-func TraceCtx(ctx context.Context, where string) func() {
+//	defer trace.TraceCtx(ctx)()
+//
+//go:noinline
+func TraceCtx(ctx context.Context, where ...string) func() {
 	tracer := GetTracer(ctx)
+
 	if tracer == nil {
 		return func() {}
 	} else {
-		t := tracer.Trace(where)
+		// we have a tracer
+		t := tracer.Trace(where...)
 		return func() {
 			tracer.Un(t)
 		}
 	}
-
 }
 
+//go:noinline
 func HereCtx(ctx context.Context) string {
 	tracer := GetTracer(ctx)
 	if tracer != nil {

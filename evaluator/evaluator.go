@@ -93,7 +93,7 @@ func (e *evaluator) Eval(ctx context.Context, node ast.Node, ev env.Environment[
 }
 
 func (e *evaluator) eval(node ast.Node, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))
+	defer trace.TraceCtx(e.ctx)
 	switch node := node.(type) {
 	// Statements
 	case *ast.Program:
@@ -182,7 +182,7 @@ func unescapeStringLiteral(node *ast.StringLiteral) string {
 var FORMAT_DIRECTIVE_RE = regexp.MustCompile(`\x60#\{(?P<content>[^}]*)\}\x60`)
 
 func (e *evaluator) evalFormatDirectives(ev env.Environment[ruby.Object], value string) (string, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	if !strings.Contains(value, "`") {
 		return value, nil
 	}
@@ -227,7 +227,7 @@ func (e *evaluator) evalFormatDirectives(ev env.Environment[ruby.Object], value 
 }
 
 func (e *evaluator) evalLoopExpression(node *ast.LoopExpression, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	// condition, err := e.Eval(node.Condition, ev)
 	// if err != nil {
 	// return nil, errors.WithMessage(err, "eval loop condition")
@@ -257,7 +257,7 @@ func (e *evaluator) evalLoopExpression(node *ast.LoopExpression, ev env.Environm
 }
 
 func (e *evaluator) evalProgram(statements []ast.Statement, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	var result ruby.Object
 	var err error
 	for _, statement := range statements {
@@ -280,7 +280,7 @@ func (e *evaluator) evalProgram(statements []ast.Statement, ev env.Environment[r
 }
 
 func (e *evaluator) evalExpressions(expressions []ast.Expression, ev env.Environment[ruby.Object]) ([]ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	var result []ruby.Object
 
 	for _, expression := range expressions {
@@ -294,7 +294,7 @@ func (e *evaluator) evalExpressions(expressions []ast.Expression, ev env.Environ
 }
 
 func (e *evaluator) evalArrayElements(elements []ast.Expression, ev env.Environment[ruby.Object]) ([]ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	var result []ruby.Object
 
 	for _, element := range elements {
@@ -328,7 +328,7 @@ func (e *evaluator) evalArrayElements(elements []ast.Expression, ev env.Environm
 }
 
 func (e *evaluator) evalPrefixExpression(operator string, right ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	switch operator {
 	case "!":
 		return e.evalBangOperatorExpression(right), nil
@@ -340,7 +340,7 @@ func (e *evaluator) evalPrefixExpression(operator string, right ruby.Object) (ru
 }
 
 func (e *evaluator) evalBangOperatorExpression(right ruby.Object) ruby.Object {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	switch right {
 	case object.TRUE:
 		return object.FALSE
@@ -354,7 +354,7 @@ func (e *evaluator) evalBangOperatorExpression(right ruby.Object) ruby.Object {
 }
 
 func (e *evaluator) evalMinusPrefixOperatorExpression(right ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	switch right := right.(type) {
 	case *object.Integer:
 		return object.NewInteger(-right.Value), nil
@@ -364,7 +364,7 @@ func (e *evaluator) evalMinusPrefixOperatorExpression(right ruby.Object) (ruby.O
 }
 
 func (e *evaluator) evalConditionalExpression(ce *ast.ConditionalExpression, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	condition, err := e.eval(ce.Condition, ev)
 	if err != nil {
 		return nil, err
@@ -383,7 +383,7 @@ func (e *evaluator) evalConditionalExpression(ce *ast.ConditionalExpression, ev 
 }
 
 func (e *evaluator) evalIndexExpressionAssignment(left, index, right ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	switch target := left.(type) {
 	case *object.Array:
 		integer, ok := index.(*object.Integer)
@@ -414,7 +414,7 @@ func (e *evaluator) evalIndexExpressionAssignment(left, index, right ruby.Object
 }
 
 func (e *evaluator) evalDefaultIndexExpression(left, index ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	switch target := left.(type) {
 	case *object.Array:
 		return e.evalArrayIndexExpression(target, index)
@@ -428,7 +428,7 @@ func (e *evaluator) evalDefaultIndexExpression(left, index ruby.Object) (ruby.Ob
 }
 
 func (e *evaluator) evalSymbolIndexExpression(ev env.Environment[ruby.Object], target *object.Symbol, index ast.Expression) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	switch index.(type) {
 	case *ast.Splat:
 		// evaluate the splat literal
@@ -521,7 +521,7 @@ func (e *evaluator) evalSymbolIndexExpression(ev env.Environment[ruby.Object], t
 }
 
 func (e *evaluator) evalArrayIndexExpression(arrayObject *object.Array, index ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	len := int64(len(arrayObject.Elements))
 	switch index := index.(type) {
 	case *object.Integer:
@@ -562,7 +562,7 @@ func (e *evaluator) evalArrayIndexExpression(arrayObject *object.Array, index ru
 }
 
 func (e *evaluator) evalHashIndexExpression(hash *object.Hash, index ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	result, ok := hash.Get(index)
 	if !ok {
 		return object.NIL, nil
@@ -642,7 +642,7 @@ func objectRangeToIndex(index *object.Range, length int64) (int64, int64, bool, 
 }
 
 func (e *evaluator) evalStringIndexExpression(stringObject *object.String, index ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	switch index := index.(type) {
 	case *object.Integer:
 		idx, out_of_bounds := objectIntegerToIndex(index, int64(len(stringObject.Value)))
@@ -685,7 +685,7 @@ func (e *evaluator) evalStringIndexExpression(stringObject *object.String, index
 }
 
 func (e *evaluator) evalBlockStatement(block *ast.BlockStatement, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	var result ruby.Object
 	var err error
 	for _, statement := range block.Statements {
@@ -711,7 +711,7 @@ func (e *evaluator) evalBlockStatement(block *ast.BlockStatement, ev env.Environ
 }
 
 func (e *evaluator) evalIdentifier(node *ast.Identifier, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	trace.MessageCtx(e.ctx, node.Value)
 
 	val, ok := ev.Get(node.Value)
@@ -772,12 +772,12 @@ func isTruthy(obj ruby.Object) bool {
 }
 
 func (e *evaluator) evalExpressionStatement(node *ast.ExpressionStatement, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	return e.eval(node.Expression, ev)
 }
 
 func (e *evaluator) evalReturnStatement(node *ast.ReturnStatement, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	val, err := e.eval(node.ReturnValue, ev)
 	if err != nil {
 		return nil, errors.WithMessage(err, "eval of return statement")
@@ -786,7 +786,7 @@ func (e *evaluator) evalReturnStatement(node *ast.ReturnStatement, ev env.Enviro
 }
 
 func (e *evaluator) evalBreakStatement(node *ast.BreakStatement, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	var val ruby.Object
 	val, err := e.eval(node.Condition, ev)
 	if err != nil {
@@ -803,7 +803,7 @@ func (e *evaluator) evalBreakStatement(node *ast.BreakStatement, ev env.Environm
 }
 
 func (e *evaluator) evalStringLiteral(node *ast.StringLiteral, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	value := unescapeStringLiteral(node)
 	value, err := e.evalFormatDirectives(ev, value)
 	if err != nil {
@@ -813,7 +813,7 @@ func (e *evaluator) evalStringLiteral(node *ast.StringLiteral, ev env.Environmen
 }
 
 func (e *evaluator) evalFunctionLiteral(node *ast.FunctionLiteral, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	// context, _ := env.Get("bottom")
 	// construct a function object and stick it onto self
 	params := make([]*object.FunctionParameter, len(node.Parameters))
@@ -842,7 +842,7 @@ func (e *evaluator) evalFunctionLiteral(node *ast.FunctionLiteral, ev env.Enviro
 }
 
 func (e *evaluator) evalArrayLiteral(node *ast.ArrayLiteral, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	elements, err := e.evalArrayElements(node.Elements, ev)
 	if err != nil {
 		return nil, errors.WithMessage(err, "eval array literal")
@@ -852,7 +852,7 @@ func (e *evaluator) evalArrayLiteral(node *ast.ArrayLiteral, ev env.Environment[
 }
 
 func (e *evaluator) evalHashLiteral(node *ast.HashLiteral, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	var hash object.Hash
 	for k, v := range node.Map {
 		key, err := e.eval(k, ev)
@@ -869,7 +869,7 @@ func (e *evaluator) evalHashLiteral(node *ast.HashLiteral, ev env.Environment[ru
 }
 
 func (e *evaluator) evalExpressionList(node ast.ExpressionList, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	var objects []ruby.Object
 	for _, n := range node {
 		obj, err := e.eval(n, ev)
@@ -883,7 +883,7 @@ func (e *evaluator) evalExpressionList(node ast.ExpressionList, ev env.Environme
 }
 
 func (e *evaluator) evalAssignment(node *ast.Assignment, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	right, err := e.eval(node.Right, ev)
 	if err != nil {
 		return nil, errors.WithMessage(err, "eval right hand Assignment side")
@@ -972,7 +972,7 @@ func (e *evaluator) evalAssignment(node *ast.Assignment, ev env.Environment[ruby
 }
 
 func (e *evaluator) evalContextCallExpression(node *ast.ContextCallExpression, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	trace.MessageCtx(e.ctx, node.Function)
 	context, err := e.eval(node.Context, ev)
 	if err != nil {
@@ -1002,7 +1002,7 @@ func (e *evaluator) evalContextCallExpression(node *ast.ContextCallExpression, e
 }
 
 func (e *evaluator) evalIndexExpression(node *ast.IndexExpression, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	left, err := e.eval(node.Left, ev)
 	if err != nil {
 		return nil, errors.WithMessage(err, "eval IndexExpression left side")
@@ -1024,7 +1024,7 @@ func (e *evaluator) evalIndexExpression(node *ast.IndexExpression, ev env.Enviro
 }
 
 func (e *evaluator) evalInfixExpression(node *ast.InfixExpression, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	left, err := e.eval(node.Left, ev)
 	if err != nil {
 		return nil, errors.WithMessage(err, "eval operator left side")
@@ -1061,7 +1061,7 @@ func (e *evaluator) evalInfixExpression(node *ast.InfixExpression, ev env.Enviro
 }
 
 func (e *evaluator) evalRangeLiteral(node *ast.RangeLiteral, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 
 	left, err := e.eval(node.Left, ev)
 	if err != nil {
@@ -1096,7 +1096,7 @@ func (e *evaluator) evalRangeLiteral(node *ast.RangeLiteral, ev env.Environment[
 }
 
 func (e *evaluator) evalSplat(node *ast.Splat, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	val, err := e.eval(node.Value, ev)
 	if err != nil {
 		return nil, errors.WithMessage(err, "eval splat value")
@@ -1116,16 +1116,16 @@ func (e *evaluator) evalSplat(node *ast.Splat, ev env.Environment[ruby.Object]) 
 }
 
 func (e *evaluator) evalIntegerLiteral(node *ast.IntegerLiteral, _ env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	return object.NewInteger(node.Value), nil
 }
 
 func (e *evaluator) evalFloatLiteral(node *ast.FloatLiteral, _ env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	return object.NewFloat(node.Value), nil
 }
 
 func (e *evaluator) evalSymbolLiteral(node *ast.SymbolLiteral, _ env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx, trace.HereCtx(e.ctx))()
+	defer trace.TraceCtx(e.ctx)()
 	return object.NewSymbol(node.Value), nil
 }

@@ -8,7 +8,7 @@ import (
 
 // Send sends message method with args to context and returns its result
 func Send(ctx call.Context[ruby.Object], method string, args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	trace.MessageCtx(ctx, method)
 
 	receiver := ctx.Receiver()

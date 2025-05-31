@@ -53,14 +53,14 @@ var bottomMethodSet = map[string]ruby.Method{
 }
 
 func bottomToS(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	receiver := ctx.Receiver()
 	val := fmt.Sprintf("#<%s:%p>", receiver.Class().Name(), receiver)
 	return NewString(val), nil
 }
 
 func bottomIsA(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	receiver_class := ctx.Receiver().Class()
 	switch arg := args[0].(type) {
 	case ruby.ClassObject:
@@ -87,7 +87,7 @@ func print(lines []string, delimiter string) {
 }
 
 func bottomPuts(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	var lines []string
 	for _, arg := range args {
 		if arr, ok := arg.(*Array); ok {
@@ -114,7 +114,7 @@ func bottomPuts(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object
 }
 
 func bottomPrint(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	var lines []string
 	for _, arg := range args {
 		if arr, ok := arg.(*Array); ok {
@@ -142,7 +142,7 @@ func bottomPrint(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Objec
 }
 
 func bottomMethods(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	showSuperMethods := true
 	if len(args) == 1 {
 		if val, ok := SymbolToBool(args[0]); ok {
@@ -167,7 +167,7 @@ func bottomMethods(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Obj
 }
 
 func bottomIsNil(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	receiver := ctx.Receiver()
 	if receiver == NIL {
 		return TRUE, nil
@@ -176,7 +176,7 @@ func bottomIsNil(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Objec
 }
 
 func bottomClassMethod(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	receiver := ctx.Receiver()
 	if _, ok := receiver.(ruby.ClassObject); ok {
 		return nil, nil
@@ -185,7 +185,7 @@ func bottomClassMethod(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby
 }
 
 func bottomRaise(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	switch len(args) {
 	case 1:
 		switch arg := args[0].(type) {
@@ -372,7 +372,7 @@ func RubyObjectsEqual(left, right ruby.Object) bool {
 }
 
 func bottomEqual(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	if RubyObjectsEqual(ctx.Receiver(), args[0]) {
 		return TRUE, nil
 	}
@@ -380,7 +380,7 @@ func bottomEqual(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Objec
 }
 
 func bottomNotEqual(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	if RubyObjectsEqual(ctx.Receiver(), args[0]) {
 		return FALSE, nil
 	}

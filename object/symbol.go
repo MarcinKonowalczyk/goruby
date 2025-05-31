@@ -94,7 +94,7 @@ var symbolMethods = map[string]ruby.Method{
 }
 
 func symbolToS(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	if sym, ok := ctx.Receiver().(*Symbol); ok {
 		return NewString(sym.Value), nil
 	}
@@ -102,7 +102,7 @@ func symbolToS(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object,
 }
 
 func symbolSize(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	if sym, ok := ctx.Receiver().(*Symbol); ok {
 		return NewInteger(int64(len(sym.Value))), nil
 	}
@@ -110,7 +110,7 @@ func symbolSize(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object
 }
 
 func symbolToI(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	if boolean, ok := SymbolToBool(ctx.Receiver()); ok {
 		if boolean {
 			return NewInteger(1), nil

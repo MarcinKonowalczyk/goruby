@@ -84,7 +84,7 @@ var hashMethods = map[string]ruby.Method{
 }
 
 func hashHasKey(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
+	defer trace.TraceCtx(ctx)()
 	hash, _ := ctx.Receiver().(*Hash)
 	if len(args) != 1 {
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))
