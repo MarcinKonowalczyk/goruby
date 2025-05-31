@@ -8,6 +8,17 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/ast"
 )
 
+// types for type assertions
+type _R interface{}
+type _E interface{}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// carries all the information about a call + all the context.Context stuff
+// like loggers, tracers, deadlines, etc.
+// R and E are the types of the receiver and the environment. they needed
+// to be generics to break the import cycle with the object package, but
+// in practise they are always RubyObject and Environment respectively.
 type Context[R, E any] interface {
 	// embedded context.Context
 	context.Context
@@ -20,35 +31,19 @@ type Context[R, E any] interface {
 	Eval(ast.Node, E) (R, error)
 }
 
-func noEvalPresent[R, E any](node ast.Node, env E) (R, error) {
-	return *new(R), fmt.Errorf("no eval present")
-}
-
 // NewContext returns a new CallContext with a stubbed eval function
 func NewContext[R, E any](receiver R, env E) Context[R, E] {
-	return &callContext[R, E]{
-		emptyCtx: emptyCtx{},
-		receiver: receiver,
-		env:      env,
-		eval:     noEvalPresent[R, E],
-	}
+	return WrappedContext(
+		emptyContext[R, E]{},
+		&receiver,
+		&env,
+		nil,
+	)
 }
 
-// func NewWithReceiver(parent context.Context, receiver RubyObject) CallContext {
-// 	if parent == nil {
-// 		panic("parent context cannot be nil")
-// 	}
-// 	if ctx, ok := parent.(CallContext); ok {
-// 		return WithReceiver(ctx, receiver)
-// 	}
-// 	return &callContext{
-// 		emptyCtx: emptyCtx{},
-// 		env:      NewMainEnvironment(),
-// 		eval:     noEvalPresent,
-// 		receiver: receiver,
-// 	}
-// }
+////////////////////////////////////////////////////////////////////////////////
 
+// utility struct to wrap a context and replace the receiver, env or eval
 type wrappedCtx[R, E any] struct {
 	Context[R, E]
 	receiver *R
@@ -76,10 +71,6 @@ func (c *wrappedCtx[R, E]) Eval(node ast.Node, env E) (R, error) {
 	}
 	return c.Context.Eval(node, env)
 }
-
-// types for type assertions
-type _R interface{}
-type _E interface{}
 
 var (
 	_ Context[_R, _E] = (*wrappedCtx[_R, _E])(nil)
@@ -131,7 +122,7 @@ func WithEval[R, E any](parent Context[R, E], eval func(ast.Node, E) (R, error))
 	}
 }
 
-func WrappedContext[R, E any](parent Context[R, E], receiver *R, env *E, eval *func(ast.Node, E) (R, error)) Context[R, E] {
+func WrappedContext[R, E any](parent Context[R, E], receiver *R, env *E, eval func(ast.Node, E) (R, error)) Context[R, E] {
 	if parent == nil {
 		panic("parent CallContext cannot be nil")
 	}
@@ -142,44 +133,46 @@ func WrappedContext[R, E any](parent Context[R, E], receiver *R, env *E, eval *f
 		Context:  parent,
 		receiver: receiver,
 		env:      env,
-		eval:     eval,
+		eval:     &eval,
 	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-type emptyCtx struct{}
+type emptyContext[R, E any] struct{}
 
-func (emptyCtx) Deadline() (deadline time.Time, ok bool) {
+func (emptyContext[R, E]) Deadline() (deadline time.Time, ok bool) {
 	return
 }
 
-func (emptyCtx) Done() <-chan struct{} {
+func (emptyContext[R, E]) Done() <-chan struct{} {
 	return nil
 }
 
-func (emptyCtx) Err() error {
+func (emptyContext[R, E]) Err() error {
 	return nil
 }
 
-func (emptyCtx) Value(key any) any {
+func (emptyContext[R, E]) Value(key any) any {
 	return nil
 }
 
-type callContext[R, E any] struct {
-	emptyCtx
-	receiver R
-	env      E
-	eval     func(node ast.Node, env E) (R, error)
+func (c emptyContext[R, E]) Receiver() R {
+	var zero R
+	return zero
 }
 
-func (c *callContext[R, E]) Env() E { return c.env }
-func (c *callContext[R, E]) Eval(node ast.Node, env E) (R, error) {
-	return c.eval(node, env)
+func (c emptyContext[R, E]) Env() E {
+	var zero E
+	return zero
 }
-func (c *callContext[R, E]) Receiver() R { return c.receiver }
+
+func (c emptyContext[R, E]) Eval(node ast.Node, env E) (R, error) {
+	var zero R
+	return zero, fmt.Errorf("no eval present")
+}
 
 var (
-	_ Context[_R, _E] = (*callContext[_R, _E])(nil)
-	_ context.Context = (*callContext[_R, _E])(nil)
+	_ Context[_R, _E] = (*emptyContext[_R, _E])(nil)
+	_ context.Context = (*emptyContext[_R, _E])(nil)
 )
