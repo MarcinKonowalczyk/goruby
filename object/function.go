@@ -115,7 +115,8 @@ func (f *Function) String() string {
 func (f *Function) Call(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, "Function.Call")()
 	trace.MessageCtx(ctx, f.Name)
-	trace.MessageCtx(ctx, f.String())
+	trace.MessageCtx(ctx, func() string { return f.String() })
+
 	// TODO: Handle tail splats
 	if len(f.Parameters) == 1 && f.Parameters[0].Splat {
 		// Only one splat parameter.
