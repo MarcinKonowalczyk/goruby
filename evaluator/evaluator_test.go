@@ -512,7 +512,7 @@ func TestFunctionObject(t *testing.T) {
 			assert.That(t, ok, "object is not Symbol. got=%T (%+v)", evaluated, evaluated)
 			assert.Equal(t, sym.Value, "foo")
 
-			method, ok := object.FUNCS_STORE.Class().Methods().Get("foo")
+			method, ok := object.FUNCS_STORE.Class().GetMethod("foo")
 			assert.That(t, ok, "Expected method to be added to self")
 			fn, ok := method.(*object.Function)
 			assert.That(t, ok, "Expected method to be a function. got=%T (%+v)", method, method)

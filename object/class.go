@@ -39,13 +39,12 @@ func newClass(
 type class struct {
 	name            string
 	class           ruby.Class
-	instanceMethods ruby.SettableMethodSet
+	instanceMethods ruby.MethodSet
 	env.Environment[ruby.Object]
 }
 
-func (c *class) Inspect() string         { return c.name }
-func (c *class) Class() ruby.Class       { return c.class }
-func (c *class) Methods() ruby.MethodSet { return c.instanceMethods }
+func (c *class) Inspect() string   { return c.name }
+func (c *class) Class() ruby.Class { return c.class }
 
 func (c *class) GetMethod(name string) (ruby.Method, bool) {
 	method, ok := c.instanceMethods.Get(name)

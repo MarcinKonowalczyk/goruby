@@ -35,16 +35,15 @@ func (o *Bottom) Class() ruby.Class { return bottomClass }
 func (o *Bottom) HashKey() hash.Key { return HASH_KEY_BOTTOM }
 
 var bottomMethodSet = map[string]ruby.Method{
-	"to_s":    WithArity(0, ruby.NewMethod(bottomToS)),
-	"is_a?":   WithArity(1, ruby.NewMethod(bottomIsA)),
-	"nil?":    WithArity(0, ruby.NewMethod(bottomIsNil)),
-	"methods": ruby.NewMethod(bottomMethods),
-	"class":   WithArity(0, ruby.NewMethod(bottomClassMethod)),
-	"puts":    ruby.NewMethod(bottomPuts),
-	"print":   ruby.NewMethod(bottomPrint),
-	"raise":   ruby.NewMethod(bottomRaise),
-	"==":      WithArity(1, ruby.NewMethod(bottomEqual)),
-	"!=":      WithArity(1, ruby.NewMethod(bottomNotEqual)),
+	"to_s":  WithArity(0, ruby.NewMethod(bottomToS)),
+	"is_a?": WithArity(1, ruby.NewMethod(bottomIsA)),
+	"nil?":  WithArity(0, ruby.NewMethod(bottomIsNil)),
+	"class": WithArity(0, ruby.NewMethod(bottomClassMethod)),
+	"puts":  ruby.NewMethod(bottomPuts),
+	"print": ruby.NewMethod(bottomPrint),
+	"raise": ruby.NewMethod(bottomRaise),
+	"==":    WithArity(1, ruby.NewMethod(bottomEqual)),
+	"!=":    WithArity(1, ruby.NewMethod(bottomNotEqual)),
 }
 
 func bottomToS(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
@@ -134,31 +133,6 @@ func bottomPrint(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Objec
 	}
 	print(lines, "")
 	return NIL, nil
-}
-
-func bottomMethods(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx)()
-	showSuperMethods := true
-	if len(args) == 1 {
-		if val, ok := SymbolToBool(args[0]); ok {
-			showSuperMethods = val
-		}
-	}
-
-	receiver := ctx.Receiver()
-	class := ctx.Receiver().Class()
-
-	extended, ok := receiver.(ruby.ExtendedObject)
-
-	if !showSuperMethods && !ok {
-		return &Array{}, nil
-	}
-
-	if !showSuperMethods && ok {
-		class = extended.Eigenclass()
-	}
-
-	return getMethods(class, showSuperMethods), nil
 }
 
 func bottomIsNil(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {

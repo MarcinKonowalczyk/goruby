@@ -18,17 +18,14 @@ func (m *method) Call(ctx call.Context[Object], args ...Object) (Object, error) 
 	return m.fn(ctx, args...)
 }
 
-// SettableMethodSet represents a MethodSet which can be mutated by setting
-// methods on it.
-type SettableMethodSet interface {
-	MethodSet
-	// Set will set method to key name. If there was a method prior defined
-	// under name it will be overridden.
+type MethodSet interface {
+	Get(name string) (Method, bool)
 	Set(name string, method Method)
+	Names() []string
 }
 
 // NewMethodSet returns a new method set populated with the given methods
-func NewMethodSet(methods map[string]Method) SettableMethodSet {
+func NewMethodSet(methods map[string]Method) MethodSet {
 	if methods == nil {
 		methods = make(map[string]Method)
 	}

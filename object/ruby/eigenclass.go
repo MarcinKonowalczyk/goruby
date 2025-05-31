@@ -19,7 +19,7 @@ func NewEigenclass(wrappedClass Class) Eigenclass {
 }
 
 type eigenclass struct {
-	methods    SettableMethodSet
+	methods    MethodSet
 	superclass Class
 }
 
@@ -30,7 +30,6 @@ func (e *eigenclass) Inspect() string {
 func (e *eigenclass) Class() Class {
 	return e.superclass
 }
-func (e *eigenclass) Methods() MethodSet { return e.methods }
 func (e *eigenclass) GetMethod(name string) (Method, bool) {
 	if method, ok := e.methods.Get(name); ok {
 		return method, true
