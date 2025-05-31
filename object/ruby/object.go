@@ -39,7 +39,7 @@ type Class interface {
 	hashable
 	GetMethod(name string) (Method, bool)
 	Methods() MethodSet
-	New(args ...Object) (Object, error)
+	// New(args ...Object) (Object, error)
 	Name() string
 }
 

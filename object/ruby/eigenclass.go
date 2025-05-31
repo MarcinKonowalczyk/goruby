@@ -38,14 +38,8 @@ func (e *eigenclass) GetMethod(name string) (Method, bool) {
 	return nil, false
 }
 
-func (e *eigenclass) SuperClass() Class {
-	return e.superclass
-}
-
-func (e *eigenclass) New(args ...Object) (Object, error) {
-	return e.superclass.New(args...)
-}
-func (e *eigenclass) Name() string { return e.superclass.Name() }
+func (e *eigenclass) SuperClass() Class { return e.superclass }
+func (e *eigenclass) Name() string      { return e.superclass.Name() }
 func (e *eigenclass) AddMethod(name string, method Method) {
 	e.methods.Set(name, method)
 }

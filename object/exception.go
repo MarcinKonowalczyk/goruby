@@ -60,7 +60,6 @@ var (
 )
 var exceptionMethods = map[string]ruby.Method{
 	"initialize": ruby.NewMethod(exceptionInitialize),
-	"exception":  ruby.NewMethod(exceptionException),
 	"to_s":       WithArity(0, ruby.NewMethod(exceptionToS)),
 }
 
@@ -78,35 +77,6 @@ func exceptionInitialize(ctx call.Context[ruby.Object], args ...ruby.Object) (ru
 	}
 	if exception, ok := receiver.(exception); ok {
 		exception.setErrorMessage(message)
-	}
-	return receiver, nil
-}
-
-func exceptionException(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
-	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
-	receiver := ctx.Receiver()
-	if len(args) == 0 {
-		return receiver, nil
-	}
-	var oldMessage string
-	if err, ok := receiver.(error); ok {
-		oldMessage = err.Error()
-	}
-	message, err := stringify(ctx, args[0])
-	if err != nil {
-		return nil, err
-	}
-
-	if oldMessage != message {
-		class := receiver.Class()
-		exc, err := class.New()
-		if err != nil {
-			return nil, err
-		}
-		if exception, ok := exc.(exception); ok {
-			exception.setErrorMessage(message)
-		}
-		return exc, nil
 	}
 	return receiver, nil
 }

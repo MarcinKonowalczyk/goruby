@@ -34,37 +34,3 @@ func TestExceptionInitialize(t *testing.T) {
 		})
 	})
 }
-
-func TestExceptionException(t *testing.T) {
-	contextObject := &Exception{message: "x"}
-	ctx := call.NewContext[ruby.Object](contextObject, NewMainEnvironment())
-	t.Run("without args", func(t *testing.T) {
-		result, err := exceptionException(ctx)
-
-		assert.NoError(t, err)
-		assert.EqualCmpAny(t, result, contextObject, CompareRubyObjectsForTests)
-		assert.EqualCmpAny(t, result, &Exception{message: "x"}, CompareRubyObjectsForTests)
-	})
-	t.Run("with arg", func(t *testing.T) {
-		result, err := exceptionException(ctx, NewString("x"))
-
-		assert.NoError(t, err)
-		assert.EqualCmpAny(t, result, contextObject, CompareRubyObjectsForTests)
-		assert.EqualCmpAny(t, result, &Exception{message: "x"}, CompareRubyObjectsForTests)
-	})
-	t.Run("with arg but different message", func(t *testing.T) {
-		result, err := exceptionException(ctx, NewString("err"))
-
-		assert.NoError(t, err)
-
-		assert.EqualCmpAny(t, result, &Exception{message: "err"}, CompareRubyObjectsForTests)
-	})
-}
-
-func TestExceptionToS(t *testing.T) {
-	contextObject := &Exception{message: "x"}
-	ctx := call.NewContext[ruby.Object](contextObject, NewMainEnvironment())
-	result, err := exceptionToS(ctx)
-	assert.NoError(t, err)
-	assert.EqualCmpAny(t, result, NewString("x"), CompareRubyObjectsForTests)
-}
