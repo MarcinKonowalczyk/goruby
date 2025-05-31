@@ -205,21 +205,6 @@ func (p *parser) init2(src string) {
 	p.nextToken()
 }
 
-// func (p *parser) printTrace(a ...interface{}) string {
-// 	const dots = ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . "
-// 	const n = len(dots)
-// 	pos := p.file.Position(p.pos)
-// 	fmt.Printf("%5d:%3d: ", pos.Line, pos.Column)
-// 	i := 2 * p.indent
-// 	for i > n {
-// 		fmt.Print(dots)
-// 		i -= n
-// 	}
-// 	// i <= n
-// 	// fmt.Print(dots[0:i])
-// 	// fmt.Println(a...)
-// }
-
 func (p *parser) registerPrefix(tokenType token.Type, fn prefixParseFn) {
 	p.prefixParseFns[tokenType] = fn
 }
@@ -229,19 +214,6 @@ func (p *parser) registerInfix(tokenType token.Type, fn infixParseFn) {
 }
 
 func (p *parser) nextToken() {
-	// The very first token (!p.pos.IsValid()) is not initialized
-	// (it is token.ILLEGAL), so don't print it .
-	if p.pos.IsValid() {
-		// s := p.peekToken.Type.String()
-		// switch {
-		// case p.peekToken.IsLiteral():
-		// 	p.printTrace(s, p.peekToken.Literal)
-		// case p.peekToken.IsOperator(), p.peekToken.IsKeyword():
-		// 	p.printTrace("\"" + s + "\"")
-		// default:
-		// 	p.printTrace(s)
-		// }
-	}
 	p.curToken = p.peekToken
 	p.pos = file.Pos(p.curToken.Pos)
 	p.lastLine += p.curToken.Literal

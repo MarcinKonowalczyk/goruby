@@ -67,9 +67,6 @@ func (c *class) HashKey() hash.Key {
 	h.Write([]byte(c.name))
 	return hash.Key(h.Sum64())
 }
-func (c *class) addMethod(name string, method ruby.Method) {
-	c.instanceMethods.Set(name, method)
-}
 func (c *class) New(args ...ruby.Object) (ruby.Object, error) {
 	return c.builder(c)
 }

@@ -292,7 +292,7 @@ func (t *tracer) Messages() []Message {
 		return nil
 	}
 
-	walkable.Walk(func(n Node) error {
+	_ = walkable.Walk(func(n Node) error {
 		switch n := n.(type) {
 		case *Message:
 			messages = append(messages, *n)

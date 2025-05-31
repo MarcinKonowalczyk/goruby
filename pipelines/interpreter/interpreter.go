@@ -107,7 +107,7 @@ func (i *interpreter) Interpret(filename string) (ruby.Object, error) {
 		if err != nil {
 			panic(err)
 		}
-		walkable.Walk(printer.NewTracePrinter())
+		_ = walkable.Walk(printer.NewTracePrinter())
 	}
 	if err != nil {
 		return nil, object.NewSyntaxError(err)
@@ -135,7 +135,7 @@ func (i *interpreter) Interpret(filename string) (ruby.Object, error) {
 		if err != nil {
 			panic(err)
 		}
-		walkable.Walk(printer.NewTracePrinter())
+		_ = walkable.Walk(printer.NewTracePrinter())
 	}
 
 	return res, err
