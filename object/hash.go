@@ -11,14 +11,7 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
-var hashClass ruby.ClassObject = newClass(
-	"Hash",
-	hashMethods,
-	nil,
-	func(ruby.ClassObject, ...ruby.Object) (ruby.Object, error) {
-		return &Hash{Map: make(map[hash.Key]hashPair)}, nil
-	},
-)
+var hashClass ruby.ClassObject = newClass("Hash", hashMethods, nil)
 
 func init() {
 	CLASSES.Set("Hash", hashClass)

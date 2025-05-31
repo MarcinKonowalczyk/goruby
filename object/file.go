@@ -9,12 +9,7 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
-var fileClass ruby.ClassObject = newClass(
-	"File",
-	nil,
-	fileClassMethods,
-	notInstantiatable,
-)
+var fileClass ruby.ClassObject = newClass("File", nil, fileClassMethods)
 
 func init() {
 	CLASSES.Set("File", fileClass)

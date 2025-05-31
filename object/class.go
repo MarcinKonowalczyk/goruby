@@ -8,16 +8,11 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 )
 
-var notInstantiatable = func(c ruby.ClassObject, args ...ruby.Object) (ruby.Object, error) {
-	return nil, NewNoMethodError(c, "new")
-}
-
 // newClass returns a new Ruby Class
 func newClass(
 	name string,
 	instanceMethods,
 	classMethods map[string]ruby.Method,
-	builder func(ruby.ClassObject, ...ruby.Object) (ruby.Object, error),
 ) *class {
 	if instanceMethods == nil {
 		instanceMethods = make(map[string]ruby.Method)
@@ -29,7 +24,6 @@ func newClass(
 		name:            name,
 		instanceMethods: ruby.NewMethodSet(instanceMethods),
 		class:           ruby.NewEigenclass(bottomClass),
-		builder:         builder,
 		Environment:     env.NewEnclosedEnvironment[ruby.Object](nil),
 	}
 	for name, method := range classMethods {
@@ -46,7 +40,6 @@ type class struct {
 	name            string
 	class           ruby.Class
 	instanceMethods ruby.SettableMethodSet
-	builder         func(ruby.ClassObject, ...ruby.Object) (ruby.Object, error)
 	env.Environment[ruby.Object]
 }
 
@@ -66,9 +59,6 @@ func (c *class) HashKey() hash.Key {
 	h := fnv.New64a()
 	h.Write([]byte(c.name))
 	return hash.Key(h.Sum64())
-}
-func (c *class) New(args ...ruby.Object) (ruby.Object, error) {
-	return c.builder(c)
 }
 func (c *class) Name() string { return c.name }
 

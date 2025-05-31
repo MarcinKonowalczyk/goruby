@@ -14,7 +14,7 @@ import (
 )
 
 var floatClass ruby.ClassObject = newClass(
-	"Float", floatMethods, nil, notInstantiatable,
+	"Float", floatMethods, nil,
 )
 
 func init() {
@@ -22,6 +22,8 @@ func init() {
 }
 
 // NewFloat returns a new Float with the given value
+//
+//go:inline
 func NewFloat(value float64) *Float {
 	return &Float{Value: value}
 }

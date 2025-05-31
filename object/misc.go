@@ -34,3 +34,32 @@ func WithArity(arity int, fn ruby.Method) ruby.Method {
 		},
 	)
 }
+
+func IsTruthy(obj ruby.Object) bool {
+	switch obj {
+	case NIL:
+		return false
+	case TRUE:
+		return true
+	case FALSE:
+		return false
+	default:
+		switch obj := obj.(type) {
+		case *Integer:
+			return obj.Value != 0
+		case *Float:
+			return obj.Value != 0.0
+		case *String:
+			return obj.Value != ""
+		case *Array:
+			return len(obj.Elements) > 0
+		case *Hash:
+			return len(obj.Map) > 0
+		case *Symbol:
+			// NOTE: we've checked special symbols above already. other symbols are truthy.
+			return true
+		default:
+			return true
+		}
+	}
+}

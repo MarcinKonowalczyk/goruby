@@ -14,7 +14,6 @@ var arrayClass ruby.ClassObject = newClass(
 	"Array",
 	arrayMethods,
 	nil,
-	func(c ruby.ClassObject, args ...ruby.Object) (ruby.Object, error) { return NewArray(args...), nil },
 )
 
 func init() {

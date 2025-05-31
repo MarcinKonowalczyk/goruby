@@ -9,12 +9,7 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
-var IoClass ruby.ClassObject = newClass(
-	"IO",
-	nil,
-	ioClassMethods,
-	notInstantiatable,
-)
+var IoClass ruby.ClassObject = newClass("IO", nil, ioClassMethods)
 
 func init() {
 	CLASSES.Set("Io", IoClass)

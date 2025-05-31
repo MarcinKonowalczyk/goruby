@@ -16,9 +16,6 @@ var (
 		"Exception",
 		exceptionMethods,
 		nil,
-		func(c ruby.ClassObject, args ...ruby.Object) (ruby.Object, error) {
-			return &Exception{message: c.Name()}, nil
-		},
 	)
 )
 

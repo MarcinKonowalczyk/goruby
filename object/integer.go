@@ -11,15 +11,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-var integerClass ruby.ClassObject = newClass(
-	"Integer", integerMethods, nil, notInstantiatable,
-)
+var integerClass ruby.ClassObject = newClass("Integer", integerMethods, nil)
 
 func init() {
 	CLASSES.Set("Integer", integerClass)
 }
 
 // NewInteger returns a new Integer with the given value
+//
+//go:inline
 func NewInteger(value int64) *Integer {
 	return &Integer{Value: value}
 }

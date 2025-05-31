@@ -27,12 +27,7 @@ var (
 //
 //go:inline
 func initSymbolClass() {
-	symbolClass = newClass(
-		"Symbol",
-		symbolMethods,
-		symbolClassMethods,
-		notInstantiatable, // not instantiatable through new
-	)
+	symbolClass = newClass("Symbol", symbolMethods, symbolClassMethods)
 }
 
 func init() {
@@ -40,6 +35,7 @@ func init() {
 	CLASSES.Set("Symbol", symbolClass)
 }
 
+//go:inline
 func NewSymbol(value string) *Symbol {
 	switch value {
 	case "true":

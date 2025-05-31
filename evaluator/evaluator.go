@@ -240,7 +240,7 @@ func (e *evaluator) evalLoopExpression(node *ast.LoopExpression, ev env.Environm
 		if value != nil {
 			switch value := value.(type) {
 			case *object.BreakValue:
-				if isTruthy(value.Value) {
+				if object.IsTruthy(value.Value) {
 					return value.Value, nil
 				}
 			case *object.ReturnValue:
@@ -369,7 +369,7 @@ func (e *evaluator) evalConditionalExpression(ce *ast.ConditionalExpression, ev 
 	if err != nil {
 		return nil, err
 	}
-	evaluateConsequence := isTruthy(condition)
+	evaluateConsequence := object.IsTruthy(condition)
 	if ce.Unless {
 		evaluateConsequence = !evaluateConsequence
 	}
@@ -698,7 +698,7 @@ func (e *evaluator) evalBlockStatement(block *ast.BlockStatement, ev env.Environ
 			case *object.ReturnValue:
 				return result, nil
 			case *object.BreakValue:
-				if isTruthy(result.Value) {
+				if object.IsTruthy(result.Value) {
 					return result, nil
 				}
 			}
@@ -742,35 +742,6 @@ func (e *evaluator) evalIdentifier(node *ast.Identifier, ev env.Environment[ruby
 	return val, nil
 }
 
-func isTruthy(obj ruby.Object) bool {
-	switch obj {
-	case object.NIL:
-		return false
-	case object.TRUE:
-		return true
-	case object.FALSE:
-		return false
-	default:
-		switch obj := obj.(type) {
-		case *object.Integer:
-			return obj.Value != 0
-		case *object.Float:
-			return obj.Value != 0.0
-		case *object.String:
-			return obj.Value != ""
-		case *object.Array:
-			return len(obj.Elements) > 0
-		case *object.Hash:
-			return len(obj.Map) > 0
-		case *object.Symbol:
-			// NOTE: we've checked special symbols above already. other symbols are truthy.
-			return true
-		default:
-			return true
-		}
-	}
-}
-
 func (e *evaluator) evalExpressionStatement(node *ast.ExpressionStatement, ev env.Environment[ruby.Object]) (ruby.Object, error) {
 	defer trace.TraceCtx(e.ctx)()
 	return e.eval(node.Expression, ev)
@@ -793,7 +764,7 @@ func (e *evaluator) evalBreakStatement(node *ast.BreakStatement, ev env.Environm
 		return nil, errors.WithMessage(err, "eval of break statement")
 	}
 	if node.Unless {
-		if isTruthy(val) {
+		if object.IsTruthy(val) {
 			val = object.FALSE
 		} else {
 			val = object.TRUE
@@ -1031,12 +1002,12 @@ func (e *evaluator) evalInfixExpression(node *ast.InfixExpression, ev env.Enviro
 	}
 
 	if node.Operator == infix.LOGICALOR {
-		if isTruthy(left) {
+		if object.IsTruthy(left) {
 			// left is already truthy. don't evaluate right side
 			return left, nil
 		}
 	} else if node.Operator == infix.LOGICALAND {
-		if !isTruthy(left) {
+		if !object.IsTruthy(left) {
 			// left is already falsy. don't evaluate right side
 			return left, nil
 		}

@@ -13,23 +13,18 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
-var stringClass ruby.ClassObject = newClass(
-	"String",
-	stringMethods,
-	stringClassMethods,
-	func(ruby.ClassObject, ...ruby.Object) (ruby.Object, error) {
-		return NewString(""), nil
-	},
-)
+var stringClass ruby.ClassObject = newClass("String", stringMethods, stringClassMethods)
 
 func init() {
 	CLASSES.Set("String", stringClass)
 }
 
+//go:inline
 func NewString(value string) *String {
 	return &String{Value: value}
 }
 
+//go:inline
 func NewStringf(format string, args ...interface{}) *String {
 	return NewString(fmt.Sprintf(format, args...))
 }

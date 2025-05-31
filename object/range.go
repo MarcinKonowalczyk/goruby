@@ -11,12 +11,7 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
-var rangeClass ruby.ClassObject = newClass(
-	"Range",
-	rangeMethods,
-	nil,
-	notInstantiatable,
-)
+var rangeClass ruby.ClassObject = newClass("Range", rangeMethods, nil)
 
 func init() {
 	CLASSES.Set("Range", rangeClass)
