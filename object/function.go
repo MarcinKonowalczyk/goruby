@@ -119,36 +119,43 @@ func (f *Function) Call(ctx call.Context[ruby.Object], args ...ruby.Object) (rub
 
 	// TODO: Handle tail splats
 	if len(f.Parameters) == 1 && f.Parameters[0].Splat {
-		// Only one splat parameter.
-		args_arr := NewArray(args...)
-		extendedEnv := env.NewEnclosedEnvironment(f.Env)
-		extendedEnv.Set(f.Parameters[0].Name, args_arr)
-		evaluated, err := ctx.Eval(f.Body, extendedEnv)
-		if err != nil {
-			return nil, err
-		}
-		return f.unwrapReturnValue(evaluated), nil
-
+		return f.callOneSpatParameter(ctx, args)
 	} else {
-		// normal evaluation
-		defaultParams := functionParameters(f.Parameters).defaultParamCount()
-		if len(args) < len(f.Parameters)-defaultParams || len(args) > len(f.Parameters) {
-			return nil, NewWrongNumberOfArgumentsError(len(f.Parameters), len(args))
-		}
-		params, err := f.populateParameters(args)
-		if err != nil {
-			return nil, err
-		}
-		extendedEnv := env.NewEnclosedEnvironment(f.Env)
-		for _, v := range params {
-			extendedEnv.Set(v.name, v.value)
-		}
-		evaluated, err := ctx.Eval(f.Body, extendedEnv)
-		if err != nil {
-			return nil, err
-		}
-		return f.unwrapReturnValue(evaluated), nil
+		return f.callNormal(ctx, args)
 	}
+}
+
+func (f *Function) callOneSpatParameter(ctx call.Context[ruby.Object], args []ruby.Object) (ruby.Object, error) {
+	defer trace.TraceCtx(ctx)()
+	args_arr := NewArray(args...)
+	extendedEnv := env.NewEnclosedEnvironment(f.Env)
+	extendedEnv.Set(f.Parameters[0].Name, args_arr)
+	evaluated, err := ctx.Eval(f.Body, extendedEnv)
+	if err != nil {
+		return nil, err
+	}
+	return f.unwrapReturnValue(evaluated), nil
+}
+
+func (f *Function) callNormal(ctx call.Context[ruby.Object], args []ruby.Object) (ruby.Object, error) {
+	defer trace.TraceCtx(ctx)()
+	defaultParams := functionParameters(f.Parameters).defaultParamCount()
+	if len(args) < len(f.Parameters)-defaultParams || len(args) > len(f.Parameters) {
+		return nil, NewWrongNumberOfArgumentsError(len(f.Parameters), len(args))
+	}
+	params, err := f.populateParameters(args)
+	if err != nil {
+		return nil, err
+	}
+	extendedEnv := env.NewEnclosedEnvironment(f.Env)
+	for _, v := range params {
+		extendedEnv.Set(v.name, v.value)
+	}
+	evaluated, err := ctx.Eval(f.Body, extendedEnv)
+	if err != nil {
+		return nil, err
+	}
+	return f.unwrapReturnValue(evaluated), nil
 }
 
 type populatedParameter struct {
