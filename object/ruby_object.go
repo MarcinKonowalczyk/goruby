@@ -139,8 +139,8 @@ func (f *Function) Call(ctx call.Context[ruby.Object], args ...ruby.Object) (rub
 			return nil, err
 		}
 		extendedEnv := env.NewEnclosedEnvironment(f.Env)
-		for k, v := range params {
-			extendedEnv.Set(k, v)
+		for _, v := range params {
+			extendedEnv.Set(v.name, v.value)
 		}
 		evaluated, err := ctx.Eval(f.Body, extendedEnv)
 		if err != nil {
@@ -150,11 +150,16 @@ func (f *Function) Call(ctx call.Context[ruby.Object], args ...ruby.Object) (rub
 	}
 }
 
-func (f *Function) populateParameters(args []ruby.Object) (map[string]ruby.Object, error) {
+type populatedParameter struct {
+	name  string
+	value ruby.Object
+}
+
+func (f *Function) populateParameters(args []ruby.Object) ([]populatedParameter, error) {
 	if len(args) > len(f.Parameters) {
 		return nil, NewWrongNumberOfArgumentsError(len(f.Parameters), len(args))
 	}
-	params := make(map[string]ruby.Object)
+	params := make([]populatedParameter, 0, len(f.Parameters))
 
 	mandatory, defaults := functionParameters(f.Parameters).separateDefaultParams()
 
@@ -164,7 +169,10 @@ func (f *Function) populateParameters(args []ruby.Object) (map[string]ruby.Objec
 
 	if len(args) == len(f.Parameters) {
 		for paramIdx, param := range f.Parameters {
-			params[param.Name] = args[paramIdx]
+			params = append(params, populatedParameter{
+				name:  param.Name,
+				value: args[paramIdx],
+			})
 		}
 		return params, nil
 	}
@@ -173,10 +181,18 @@ func (f *Function) populateParameters(args []ruby.Object) (map[string]ruby.Objec
 
 	for paramIdx, param := range parameters {
 		if paramIdx >= len(args) {
-			params[param.Name] = param.Default
+			// params[param.Name] = param.Default
+			params = append(params, populatedParameter{
+				name:  param.Name,
+				value: param.Default,
+			})
 			continue
 		}
-		params[param.Name] = args[paramIdx]
+		// params[param.Name] = args[paramIdx]
+		params = append(params, populatedParameter{
+			name:  param.Name,
+			value: args[paramIdx],
+		})
 	}
 	return params, nil
 }
