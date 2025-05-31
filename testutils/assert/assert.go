@@ -148,7 +148,7 @@ func EqualCmpAny(t *testing.T, a any, b any, comparator func(any, any) bool) {
 		}
 	}()
 	t.Helper()
-	assert(t, nestedAssertParent, comparator(a, b), []any{"expected %v (%T) == %v (%T)", a, a, b, b})
+	assert(t, nestedAssertParent, comparator(a, b), []any{"expected '%v' (%T) == '%v' (%T)", a, a, b, b})
 }
 
 // Utility functions for comparing arrays. Equivalent to AssertEqualWithComparator
