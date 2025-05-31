@@ -281,7 +281,7 @@ func (e *evaluator) evalProgram(statements []ast.Statement, ev env.Environment[r
 
 func (e *evaluator) evalExpressions(expressions []ast.Expression, ev env.Environment[ruby.Object]) ([]ruby.Object, error) {
 	defer trace.TraceCtx(e.ctx)()
-	var result []ruby.Object
+	var result []ruby.Object = make([]ruby.Object, 0, len(expressions))
 
 	for _, expression := range expressions {
 		evaluated, err := e.eval(expression, ev)
@@ -448,25 +448,8 @@ func (e *evaluator) evalSymbolIndexExpression(ev env.Environment[ruby.Object], t
 				object.NewException("splat value is not an array: %T", evaluated),
 			)
 		}
-
 		// call the proc with the splat arguments
-		args := make([]ruby.Object, len(arrObj.Elements))
-		for i, e := range arrObj.Elements {
-			if e == nil {
-				args[i] = object.NIL
-			} else {
-				args[i] = e
-			}
-		}
-		// printable_args := make([]string, len(args))
-		// for i, e := range args {
-		// 	if e == nil {
-		// 		printable_args[i] = "nil"
-		// 	} else {
-		// 		printable_args[i] = e.Inspect()
-		// 	}
-		// }
-		value, err := object.Send(e.ctx, target.Value, args...)
+		value, err := object.Send(e.ctx, target.Value, arrObj.Elements...)
 		return value, err
 
 	case ast.ExpressionList:
@@ -945,18 +928,15 @@ func (e *evaluator) evalAssignment(node *ast.Assignment, ev env.Environment[ruby
 func (e *evaluator) evalContextCallExpression(node *ast.ContextCallExpression, ev env.Environment[ruby.Object]) (ruby.Object, error) {
 	defer trace.TraceCtx(e.ctx)()
 	trace.MessageCtx(e.ctx, node.Function)
+
 	context, err := e.eval(node.Context, ev)
 	if err != nil {
 		return nil, errors.WithMessage(err, "eval method call receiver")
 	}
 	if context == nil {
-		// var ok bool
-		// context, ok = env.Get("bottom")
-		// if !ok {
-		// 	panic("no bottom class in the env")
-		// }
 		context = object.FUNCS_STORE
 	}
+
 	args, err := e.evalExpressions(node.Arguments, ev)
 	if err != nil {
 		return nil, errors.WithMessage(err, "eval method call arguments")

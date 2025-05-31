@@ -24,7 +24,6 @@ type MethodSet interface {
 	Names() []string
 }
 
-// NewMethodSet returns a new method set populated with the given methods
 func NewMethodSet(methods map[string]Method) MethodSet {
 	if methods == nil {
 		methods = make(map[string]Method)
