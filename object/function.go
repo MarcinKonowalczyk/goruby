@@ -203,3 +203,7 @@ func (f *Function) unwrapReturnValue(obj ruby.Object) ruby.Object {
 	}
 	return obj
 }
+
+var (
+	_ ruby.Method = &Function{}
+)
