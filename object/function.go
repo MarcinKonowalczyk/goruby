@@ -52,8 +52,8 @@ func (f functionParameters) defaultParamCount() int {
 	return count
 }
 
-func (f functionParameters) separateDefaultParams() ([]*FunctionParameter, []*FunctionParameter) {
-	mandatory, defaults := make([]*FunctionParameter, 0), make([]*FunctionParameter, 0)
+func (f functionParameters) separateDefaultParams(C int) ([]*FunctionParameter, []*FunctionParameter) {
+	mandatory, defaults := make([]*FunctionParameter, 0, C), make([]*FunctionParameter, 0, C)
 	for _, p := range f {
 		if p.Default != nil {
 			defaults = append(defaults, p)
@@ -169,7 +169,7 @@ func (f *Function) populateParameters(args []ruby.Object) ([]populatedParameter,
 	}
 	params := make([]populatedParameter, 0, len(f.Parameters))
 
-	mandatory, defaults := functionParameters(f.Parameters).separateDefaultParams()
+	mandatory, defaults := functionParameters(f.Parameters).separateDefaultParams(len(args))
 
 	if len(args) < len(mandatory)-len(defaults) || len(args) > len(f.Parameters) {
 		return nil, NewWrongNumberOfArgumentsError(len(f.Parameters), len(args))
