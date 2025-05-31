@@ -4,66 +4,39 @@ import (
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/env"
+	"github.com/MarcinKonowalczyk/goruby/object/hash"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
-
-type inspectable interface {
-	Inspect() string
-}
-
-type hashable interface {
-	HashKey() HashKey
-}
-
-// RubyObject represents an object in Ruby
-type RubyObject interface {
-	inspectable
-	hashable
-	Class() RubyClass
-}
-
-// RubyClass represents a class in Ruby
-type RubyClass interface {
-	inspectable
-	hashable
-	GetMethod(name string) (RubyMethod, bool)
-	Methods() MethodSet
-	New(args ...RubyObject) (RubyObject, error)
-	Name() string
-}
-
-// RubyClassObject represents a class object in Ruby
-type RubyClassObject interface {
-	RubyObject
-	RubyClass
-}
 
 // ReturnValue represents a wrapper object for a return statement. It is no
 // real Ruby object and only used within the interpreter evaluation
 type ReturnValue struct {
-	Value RubyObject
+	Value ruby.Object
 }
 
-func (rv *ReturnValue) Inspect() string  { return rv.Value.Inspect() }
-func (rv *ReturnValue) Class() RubyClass { return rv.Value.Class() }
-func (rv *ReturnValue) HashKey() HashKey { return rv.Value.HashKey() }
+func (rv *ReturnValue) Inspect() string   { return rv.Value.Inspect() }
+func (rv *ReturnValue) Class() ruby.Class { return rv.Value.Class() }
+func (rv *ReturnValue) HashKey() hash.Key { return rv.Value.HashKey() }
 
 var (
-	_ RubyObject = &ReturnValue{}
+	_ ruby.Object = &ReturnValue{}
 )
 
 // BreakValue represents a wrapper object for a break statement. It is no
 // real Ruby object and only used within the interpreter evaluation
 type BreakValue struct {
-	Value RubyObject
+	Value ruby.Object
 }
 
-func (bv *BreakValue) Inspect() string  { return bv.Value.Inspect() }
-func (bv *BreakValue) Class() RubyClass { return bv.Value.Class() }
-func (bv *BreakValue) HashKey() HashKey { return bv.Value.HashKey() }
+func (bv *BreakValue) Inspect() string   { return bv.Value.Inspect() }
+func (bv *BreakValue) Class() ruby.Class { return bv.Value.Class() }
+func (bv *BreakValue) HashKey() hash.Key { return bv.Value.HashKey() }
 
 var (
-	_ RubyObject = &BreakValue{}
+	_ ruby.Object = &BreakValue{}
 )
 
 // FunctionParameters represents a list of function parameters.
@@ -94,7 +67,7 @@ func (f functionParameters) separateDefaultParams() ([]*FunctionParameter, []*Fu
 // FunctionParameter represents a parameter within a function
 type FunctionParameter struct {
 	Name    string
-	Default RubyObject
+	Default ruby.Object
 	Splat   bool
 }
 
@@ -116,7 +89,7 @@ type Function struct {
 	Name       string
 	Parameters []*FunctionParameter
 	Body       *ast.BlockStatement
-	Env        Environment
+	Env        env.Environment[ruby.Object]
 }
 
 // String returns the function literal
@@ -139,7 +112,7 @@ func (f *Function) String() string {
 }
 
 // Call implements the RubyMethod interface. It evaluates f.Body and returns its result
-func (f *Function) Call(ctx CC, args ...RubyObject) (RubyObject, error) {
+func (f *Function) Call(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, "Function.Call")()
 	trace.MessageCtx(ctx, f.Name)
 	trace.MessageCtx(ctx, f.String())
@@ -147,7 +120,7 @@ func (f *Function) Call(ctx CC, args ...RubyObject) (RubyObject, error) {
 	if len(f.Parameters) == 1 && f.Parameters[0].Splat {
 		// Only one splat parameter.
 		args_arr := NewArray(args...)
-		extendedEnv := NewEnclosedEnvironment(f.Env)
+		extendedEnv := env.NewEnclosedEnvironment(f.Env)
 		extendedEnv.Set(f.Parameters[0].Name, args_arr)
 		evaluated, err := ctx.Eval(f.Body, extendedEnv)
 		if err != nil {
@@ -165,7 +138,7 @@ func (f *Function) Call(ctx CC, args ...RubyObject) (RubyObject, error) {
 		if err != nil {
 			return nil, err
 		}
-		extendedEnv := NewEnclosedEnvironment(f.Env)
+		extendedEnv := env.NewEnclosedEnvironment(f.Env)
 		for k, v := range params {
 			extendedEnv.Set(k, v)
 		}
@@ -177,11 +150,11 @@ func (f *Function) Call(ctx CC, args ...RubyObject) (RubyObject, error) {
 	}
 }
 
-func (f *Function) populateParameters(args []RubyObject) (map[string]RubyObject, error) {
+func (f *Function) populateParameters(args []ruby.Object) (map[string]ruby.Object, error) {
 	if len(args) > len(f.Parameters) {
 		return nil, NewWrongNumberOfArgumentsError(len(f.Parameters), len(args))
 	}
-	params := make(map[string]RubyObject)
+	params := make(map[string]ruby.Object)
 
 	mandatory, defaults := functionParameters(f.Parameters).separateDefaultParams()
 
@@ -208,7 +181,7 @@ func (f *Function) populateParameters(args []RubyObject) (map[string]RubyObject,
 	return params, nil
 }
 
-func (f *Function) unwrapReturnValue(obj RubyObject) RubyObject {
+func (f *Function) unwrapReturnValue(obj ruby.Object) ruby.Object {
 	if returnValue, ok := obj.(*ReturnValue); ok {
 		return returnValue.Value
 	}

@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/hash"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 	"github.com/pkg/errors"
 )
 
-var integerClass RubyClassObject = newClass(
+var integerClass ruby.ClassObject = newClass(
 	"Integer", integerMethods, nil, notInstantiatable,
 )
 
@@ -30,17 +33,17 @@ type Integer struct {
 func (i *Integer) Inspect() string { return fmt.Sprintf("%d", i.Value) }
 
 // Class returns integerClass
-func (i *Integer) Class() RubyClass { return integerClass }
+func (i *Integer) Class() ruby.Class { return integerClass }
 
 var (
-	_ RubyObject = &Integer{}
+	_ ruby.Object = &Integer{}
 )
 
-func (i *Integer) HashKey() HashKey {
-	return HashKey(uint64(i.Value))
+func (i *Integer) HashKey() hash.Key {
+	return hash.Key(uint64(i.Value))
 }
 
-var integerMethods = map[string]RubyMethod{
+var integerMethods = map[string]ruby.Method{
 	"div":  withArity(1, newMethod(integerDiv)),
 	"/":    withArity(1, newMethod(integerDiv)),
 	"*":    withArity(1, newMethod(integerMul)),
@@ -57,7 +60,7 @@ var integerMethods = map[string]RubyMethod{
 	"chr":  withArity(0, newMethod(integerChr)),
 }
 
-func integerDiv(ctx CC, args ...RubyObject) (RubyObject, error) {
+func integerDiv(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Integer)
 	divisor, ok := args[0].(*Integer)
@@ -70,7 +73,7 @@ func integerDiv(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return NewInteger(i.Value / divisor.Value), nil
 }
 
-func integerMul(ctx CC, args ...RubyObject) (RubyObject, error) {
+func integerMul(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Integer)
 	factor, ok := args[0].(*Integer)
@@ -80,7 +83,7 @@ func integerMul(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return NewInteger(i.Value * factor.Value), nil
 }
 
-func integerAdd(ctx CC, args ...RubyObject) (RubyObject, error) {
+func integerAdd(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Integer)
 	add, ok := args[0].(*Integer)
@@ -90,7 +93,7 @@ func integerAdd(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return NewInteger(i.Value + add.Value), nil
 }
 
-func integerSub(ctx CC, args ...RubyObject) (RubyObject, error) {
+func integerSub(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Integer)
 	sub, ok := args[0].(*Integer)
@@ -101,7 +104,7 @@ func integerSub(ctx CC, args ...RubyObject) (RubyObject, error) {
 }
 
 // Objects which can *safely* be converted to an integer
-func safeObjectToInteger(arg RubyObject) (int64, bool) {
+func safeObjectToInteger(arg ruby.Object) (int64, bool) {
 	var right int64
 	switch arg := arg.(type) {
 	case *Integer:
@@ -118,13 +121,13 @@ func safeObjectToInteger(arg RubyObject) (int64, bool) {
 	return right, true
 }
 
-func integerCmpHelper(args []RubyObject) (int64, error) {
+func integerCmpHelper(args []ruby.Object) (int64, error) {
 	right, ok := safeObjectToInteger(args[0])
 	if !ok {
 		return 0, errors.WithMessage(
 			NewArgumentError(
 				"comparison of Integer with %s failed",
-				args[0].Class().(RubyObject).Inspect(),
+				args[0].Class().(ruby.Object).Inspect(),
 			),
 			callersName(),
 		)
@@ -132,7 +135,7 @@ func integerCmpHelper(args []RubyObject) (int64, error) {
 	return right, nil
 }
 
-func integerModulo(ctx CC, args ...RubyObject) (RubyObject, error) {
+func integerModulo(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
@@ -142,7 +145,7 @@ func integerModulo(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return NewInteger(i.Value % right), nil
 }
 
-func integerLt(ctx CC, args ...RubyObject) (RubyObject, error) {
+func integerLt(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
@@ -155,7 +158,7 @@ func integerLt(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-func integerGt(ctx CC, args ...RubyObject) (RubyObject, error) {
+func integerGt(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
@@ -168,7 +171,7 @@ func integerGt(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-func integerSpaceship(ctx CC, args ...RubyObject) (RubyObject, error) {
+func integerSpaceship(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
@@ -187,7 +190,7 @@ func integerSpaceship(ctx CC, args ...RubyObject) (RubyObject, error) {
 	}
 }
 
-func integerGte(ctx CC, args ...RubyObject) (RubyObject, error) {
+func integerGte(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
@@ -200,7 +203,7 @@ func integerGte(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-func integerLte(ctx CC, args ...RubyObject) (RubyObject, error) {
+func integerLte(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Integer)
 	right, err := integerCmpHelper(args)
@@ -213,13 +216,13 @@ func integerLte(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-func integerToI(ctx CC, args ...RubyObject) (RubyObject, error) {
+func integerToI(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Integer)
 	return i, nil
 }
 
-func integerPow(ctx CC, args ...RubyObject) (RubyObject, error) {
+func integerPow(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Integer)
 	switch arg := args[0].(type) {
@@ -237,7 +240,7 @@ func integerPow(ctx CC, args ...RubyObject) (RubyObject, error) {
 	}
 }
 
-func integerChr(ctx CC, args ...RubyObject) (RubyObject, error) {
+func integerChr(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	i := ctx.Receiver().(*Integer)
 	if i.Value < 0 || i.Value > 255 {

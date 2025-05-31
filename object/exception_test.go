@@ -3,11 +3,13 @@ package object
 import (
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
 func TestExceptionInitialize(t *testing.T) {
-	ctx := NewCC(&Exception{}, NewMainEnvironment())
+	ctx := call.NewContext[ruby.Object](&Exception{}, NewMainEnvironment())
 	t.Run("without args", func(t *testing.T) {
 		result, err := exceptionInitialize(ctx)
 
@@ -35,7 +37,7 @@ func TestExceptionInitialize(t *testing.T) {
 
 func TestExceptionException(t *testing.T) {
 	contextObject := &Exception{message: "x"}
-	ctx := NewCC(contextObject, NewMainEnvironment())
+	ctx := call.NewContext[ruby.Object](contextObject, NewMainEnvironment())
 	t.Run("without args", func(t *testing.T) {
 		result, err := exceptionException(ctx)
 
@@ -61,7 +63,7 @@ func TestExceptionException(t *testing.T) {
 
 func TestExceptionToS(t *testing.T) {
 	contextObject := &Exception{message: "x"}
-	ctx := NewCC(contextObject, NewMainEnvironment())
+	ctx := call.NewContext[ruby.Object](contextObject, NewMainEnvironment())
 	result, err := exceptionToS(ctx)
 	assert.NoError(t, err)
 	assert.EqualCmpAny(t, result, NewString("x"), CompareRubyObjectsForTests)

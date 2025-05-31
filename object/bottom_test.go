@@ -3,11 +3,13 @@ package object
 import (
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
 func TestBottomIsNil(t *testing.T) {
-	ctx := NewCC(TRUE, nil)
+	ctx := call.NewContext[ruby.Object](TRUE, nil)
 	result, err := bottomIsNil(ctx)
 
 	assert.NoError(t, err)
@@ -19,14 +21,14 @@ func TestBottomIsNil(t *testing.T) {
 
 func TestBottomToS(t *testing.T) {
 	t.Run("object as receiver", func(t *testing.T) {
-		ctx := NewCC(&Bottom{}, nil)
+		ctx := call.NewContext[ruby.Object](&Bottom{}, nil)
 		result, err := bottomToS(ctx)
 		assert.NoError(t, err)
 		assert.EqualCmpAny(t, result, NewStringf("#<Bottom:%p>", ctx.Receiver()), CompareRubyObjectsForTests)
 	})
 	t.Run("self object as receiver", func(t *testing.T) {
 		self := &Bottom{}
-		ctx := NewCC(self, nil)
+		ctx := call.NewContext[ruby.Object](self, nil)
 		result, err := bottomToS(ctx)
 		assert.NoError(t, err)
 		assert.EqualCmpAny(t, result, NewStringf("#<Bottom:%p>", self), CompareRubyObjectsForTests)
@@ -36,7 +38,7 @@ func TestBottomToS(t *testing.T) {
 func TestBottomRaise(t *testing.T) {
 	object := &Bottom{}
 	env := NewMainEnvironment()
-	ctx := NewCC(object, env)
+	ctx := call.NewContext[ruby.Object](object, env)
 
 	t.Run("without args", func(t *testing.T) {
 		result, err := bottomRaise(ctx)

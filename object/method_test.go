@@ -3,35 +3,37 @@ package object
 import (
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
 func TestWithArity(t *testing.T) {
-	wrappedMethod := newMethod(func(ctx CC, args ...RubyObject) (RubyObject, error) {
+	wrappedMethod := newMethod(func(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 		return NewInteger(1), nil
 	})
 
 	tests := []struct {
 		arity     int
-		arguments []RubyObject
-		result    RubyObject
+		arguments []ruby.Object
+		result    ruby.Object
 		err       error
 	}{
 		{
 			1,
-			[]RubyObject{NIL},
+			[]ruby.Object{NIL},
 			NewInteger(1),
 			nil,
 		},
 		{
 			1,
-			[]RubyObject{NIL, NIL},
+			[]ruby.Object{NIL, NIL},
 			nil,
 			NewWrongNumberOfArgumentsError(1, 2),
 		},
 		{
 			2,
-			[]RubyObject{NIL},
+			[]ruby.Object{NIL},
 			nil,
 			NewWrongNumberOfArgumentsError(2, 1),
 		},
@@ -39,7 +41,7 @@ func TestWithArity(t *testing.T) {
 
 	for _, testCase := range tests {
 		fn := withArity(testCase.arity, wrappedMethod)
-		ctx := NewCC(NIL, nil)
+		ctx := call.NewContext[ruby.Object](NIL, nil)
 
 		result, err := fn.Call(ctx, testCase.arguments...)
 

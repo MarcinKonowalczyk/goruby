@@ -3,6 +3,8 @@ package object
 import (
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
@@ -18,7 +20,7 @@ func TestSymbol_hashKey(t *testing.T) {
 }
 
 func TestSymbolToS(t *testing.T) {
-	ctx := NewCC(NewSymbol("foo"), nil)
+	ctx := call.NewContext[ruby.Object](NewSymbol("foo"), nil)
 	result, err := symbolToS(ctx)
 	assert.NoError(t, err)
 	expected := NewString("foo")

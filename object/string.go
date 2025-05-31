@@ -8,14 +8,16 @@ import (
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/hash"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
-var stringClass RubyClassObject = newClass(
+var stringClass ruby.ClassObject = newClass(
 	"String",
 	stringMethods,
 	stringClassMethods,
-	func(RubyClassObject, ...RubyObject) (RubyObject, error) {
+	func(ruby.ClassObject, ...ruby.Object) (ruby.Object, error) {
 		return NewString(""), nil
 	},
 )
@@ -36,20 +38,20 @@ type String struct {
 	Value string
 }
 
-func (s *String) Inspect() string  { return s.Value }
-func (s *String) Class() RubyClass { return stringClass }
+func (s *String) Inspect() string   { return s.Value }
+func (s *String) Class() ruby.Class { return stringClass }
 
-func (s *String) HashKey() HashKey {
+func (s *String) HashKey() hash.Key {
 	h := fnv.New64a()
 	h.Write([]byte(s.Value))
-	return HashKey(h.Sum64())
+	return hash.Key(h.Sum64())
 }
 
 var (
-	_ RubyObject = &String{}
+	_ ruby.Object = &String{}
 )
 
-func stringify(ctx CC, obj RubyObject) (string, error) {
+func stringify(ctx call.Context[ruby.Object], obj ruby.Object) (string, error) {
 	if obj == nil {
 		return "", NewTypeError(
 			"can't convert nil into String",
@@ -79,9 +81,9 @@ func stringify(ctx CC, obj RubyObject) (string, error) {
 	return str.Value, nil
 }
 
-var stringClassMethods = map[string]RubyMethod{}
+var stringClassMethods = map[string]ruby.Method{}
 
-var stringMethods = map[string]RubyMethod{
+var stringMethods = map[string]ruby.Method{
 	"to_s":   withArity(0, newMethod(stringToS)),
 	"+":      withArity(1, newMethod(stringAdd)),
 	"gsub":   withArity(2, newMethod(stringGsub)),
@@ -91,13 +93,13 @@ var stringMethods = map[string]RubyMethod{
 	"to_f":   withArity(0, newMethod(stringToF)),
 }
 
-func stringToS(ctx CC, args ...RubyObject) (RubyObject, error) {
+func stringToS(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	str := ctx.Receiver().(*String)
 	return NewString(str.Value), nil
 }
 
-func stringAdd(ctx CC, args ...RubyObject) (RubyObject, error) {
+func stringAdd(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	s := ctx.Receiver().(*String)
 	add, ok := args[0].(*String)
@@ -107,7 +109,7 @@ func stringAdd(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return NewString(s.Value + add.Value), nil
 }
 
-func stringGsub(ctx CC, args ...RubyObject) (RubyObject, error) {
+func stringGsub(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	s := ctx.Receiver().(*String)
 	pattern, ok := args[0].(*String)
@@ -131,13 +133,13 @@ func stringGsub(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return NewString(result), nil
 }
 
-func stringLength(ctx CC, args ...RubyObject) (RubyObject, error) {
+func stringLength(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	s := ctx.Receiver().(*String)
 	return NewInteger(int64(len(s.Value))), nil
 }
 
-func stringLines(ctx CC, args ...RubyObject) (RubyObject, error) {
+func stringLines(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	s := ctx.Receiver().(*String)
 	lines := strings.Split(s.Value, "\n")
@@ -150,7 +152,7 @@ func stringLines(ctx CC, args ...RubyObject) (RubyObject, error) {
 
 var FLOAT_RE = regexp.MustCompile(`[-+]?\d*\.?\d+`)
 
-func stringToF(ctx CC, args ...RubyObject) (RubyObject, error) {
+func stringToF(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	s := ctx.Receiver().(*String)
 	if s.Value == "" {

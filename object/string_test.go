@@ -3,6 +3,8 @@ package object
 import (
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
@@ -19,13 +21,13 @@ func TestString_hashKey(t *testing.T) {
 
 func Test_stringify(t *testing.T) {
 	t.Run("object with regular `to_s`", func(t *testing.T) {
-		ctx := NewCC(nil, nil)
+		ctx := call.NewContext[ruby.Object](nil, nil)
 		res, err := stringify(ctx, NewSymbol("sym"))
 		assert.NoError(t, err)
 		assert.Equal(t, res, "sym")
 	})
 	t.Run("object without `to_s`", func(t *testing.T) {
-		ctx := NewCC(nil, nil)
+		ctx := call.NewContext[ruby.Object](nil, nil)
 		_, err := stringify(ctx, nil)
 		assert.Error(t, err, NewTypeError("can't convert nil into String"))
 	})
@@ -33,24 +35,24 @@ func Test_stringify(t *testing.T) {
 
 func TestStringAdd(t *testing.T) {
 	tests := []struct {
-		arguments []RubyObject
-		result    RubyObject
+		arguments []ruby.Object
+		result    ruby.Object
 		err       error
 	}{
 		{
-			[]RubyObject{NewString(" bar")},
+			[]ruby.Object{NewString(" bar")},
 			NewString("foo bar"),
 			nil,
 		},
 		{
-			[]RubyObject{NewInteger(3)},
+			[]ruby.Object{NewInteger(3)},
 			nil,
 			NewImplicitConversionTypeError(NewString(""), NewInteger(0)),
 		},
 	}
 
 	for _, testCase := range tests {
-		ctx := NewCC(NewString("foo"), nil)
+		ctx := call.NewContext[ruby.Object](NewString("foo"), nil)
 		result, err := stringAdd(ctx, testCase.arguments...)
 		assert.Error(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -59,19 +61,19 @@ func TestStringAdd(t *testing.T) {
 
 func Test_StringGsub(t *testing.T) {
 	tests := []struct {
-		arguments []RubyObject
-		result    RubyObject
+		arguments []ruby.Object
+		result    ruby.Object
 		err       error
 	}{
 		{
-			[]RubyObject{NewString("o"), NewString("zz")},
+			[]ruby.Object{NewString("o"), NewString("zz")},
 			NewString("fzzzzbar"),
 			nil,
 		},
 	}
 
 	for _, testCase := range tests {
-		ctx := NewCC(NewString("foobar"), nil)
+		ctx := call.NewContext[ruby.Object](NewString("foobar"), nil)
 		result, err := stringGsub(ctx, testCase.arguments...)
 		assert.Error(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)

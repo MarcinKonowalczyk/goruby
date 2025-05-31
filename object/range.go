@@ -5,10 +5,13 @@ import (
 	"hash/fnv"
 	"strings"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/hash"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
-var rangeClass RubyClassObject = newClass(
+var rangeClass ruby.ClassObject = newClass(
 	"Range",
 	rangeMethods,
 	nil,
@@ -37,9 +40,9 @@ func (a *Range) Inspect() string {
 	return out.String()
 }
 
-func (a *Range) Class() RubyClass { return rangeClass }
+func (a *Range) Class() ruby.Class { return rangeClass }
 
-func (a *Range) HashKey() HashKey {
+func (a *Range) HashKey() hash.Key {
 	h := fnv.New64a()
 	h.Write([]byte(fmt.Sprintf("%d", a.Left)))
 	h.Write([]byte(fmt.Sprintf("%d", a.Right)))
@@ -48,10 +51,10 @@ func (a *Range) HashKey() HashKey {
 	} else {
 		h.Write([]byte("0"))
 	}
-	return HashKey(h.Sum64())
+	return hash.Key(h.Sum64())
 }
 
-var rangeMethods = map[string]RubyMethod{
+var rangeMethods = map[string]ruby.Method{
 	"find_all": withArity(1, newMethod(rangeFindAll)),
 	"all?":     newMethod(rangeAll),
 	"size":     newMethod(rangeSize),
@@ -70,7 +73,7 @@ func (rang *Range) ToArray() *Array {
 	return result
 }
 
-func rangeFindAll(ctx CC, args ...RubyObject) (RubyObject, error) {
+func rangeFindAll(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	rng, _ := ctx.Receiver().(*Range)
 	proc, ok := args[0].(*Symbol)
@@ -104,7 +107,7 @@ func rangeFindAll(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return result, nil
 }
 
-func rangeAll(ctx CC, args ...RubyObject) (RubyObject, error) {
+func rangeAll(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	rng, _ := ctx.Receiver().(*Range)
 	if len(args) == 0 {
@@ -135,7 +138,7 @@ func rangeAll(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return TRUE, nil
 }
 
-func rangeSize(ctx CC, args ...RubyObject) (RubyObject, error) {
+func rangeSize(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	rng, _ := ctx.Receiver().(*Range)
 	size := rng.Right - rng.Left

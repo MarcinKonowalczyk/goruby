@@ -4,11 +4,12 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
 func TestGetMethods(t *testing.T) {
-	contextMethods := map[string]RubyMethod{
+	contextMethods := map[string]ruby.Method{
 		"foo": newMethod(nil),
 		"bar": newMethod(nil),
 	}

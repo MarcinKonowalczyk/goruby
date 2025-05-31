@@ -7,6 +7,8 @@ import (
 
 	"github.com/MarcinKonowalczyk/goruby/evaluator"
 	"github.com/MarcinKonowalczyk/goruby/object"
+	"github.com/MarcinKonowalczyk/goruby/object/env"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/parser"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert/compare"
@@ -240,11 +242,11 @@ end
 	}
 
 	for _, tt := range tests {
-		env := object.NewEnvironment()
+		env := env.NewEnvironment[ruby.Object]()
 		_, err := testEval(tt.input, env)
 		assert.NotEqual(t, err, nil)
 
-		actual, ok := errors.Cause(err).(object.RubyObject)
+		actual, ok := errors.Cause(err).(ruby.Object)
 		assert.That(t, ok, "Error is not a RubyObject. got=%T (%+v)", err, err)
 		assert.That(t, object.IsError(actual), "Expected error or exception, got %T", actual)
 		assert.Equal(t, actual.Inspect(), tt.expectedMessage)
@@ -330,19 +332,19 @@ func TestAssignment(t *testing.T) {
 	t.Run("assign to array", func(t *testing.T) {
 		tests := []struct {
 			input    string
-			elements []object.RubyObject
+			elements []ruby.Object
 		}{
 			{
 				`x = [3]; x[0] = 5; x`,
-				[]object.RubyObject{object.NewInteger(5)},
+				[]ruby.Object{object.NewInteger(5)},
 			},
 			{
 				`x = []; x[0] = 5; x`,
-				[]object.RubyObject{object.NewInteger(5)},
+				[]ruby.Object{object.NewInteger(5)},
 			},
 			{
 				`x = [3]; x[3] = 5; x`,
-				[]object.RubyObject{object.NewInteger(3), object.NIL, object.NIL, object.NewInteger(5)},
+				[]ruby.Object{object.NewInteger(3), object.NIL, object.NIL, object.NewInteger(5)},
 			},
 		}
 
@@ -454,8 +456,8 @@ func TestGlobalAssignmentExpression(t *testing.T) {
 	t.Run("set as global", func(t *testing.T) {
 		input := "$Foo = 3"
 
-		outer := object.NewEnvironment()
-		env := object.NewEnclosedEnvironment(outer)
+		outer := env.NewEnvironment[ruby.Object]()
+		env := env.NewEnclosedEnvironment(outer)
 		_, err := testEval(input, env)
 		assert.NoError(t, err)
 
@@ -470,7 +472,7 @@ func TestGlobalAssignmentExpression(t *testing.T) {
 func TestFunctionObject(t *testing.T) {
 	type funcParam struct {
 		name         string
-		defaultValue object.RubyObject
+		defaultValue ruby.Object
 	}
 	t.Run("methods without receiver", func(t *testing.T) {
 		tests := []struct {
@@ -503,7 +505,7 @@ func TestFunctionObject(t *testing.T) {
 		}
 
 		for _, tt := range tests {
-			env := object.NewEnvironment()
+			env := env.NewEnvironment[ruby.Object]()
 			evaluated, err := testEval(tt.input, env)
 			assert.NoError(t, err)
 			sym, ok := evaluated.(*object.Symbol)
@@ -543,7 +545,7 @@ func TestFunctionApplication(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		env := object.NewEnvironment()
+		env := env.NewEnvironment[ruby.Object]()
 		evaluated, err := testEval(tt.input, env)
 		assert.NoError(t, err)
 		testIntegerObject(t, evaluated, tt.expected)
@@ -719,7 +721,7 @@ func TestHashLiteral(t *testing.T) {
 	hash, ok := evaluated.(*object.Hash)
 	assert.That(t, ok, "object is not Hash. got=%T (%+v)", evaluated, evaluated)
 
-	expected := map[string]object.RubyObject{
+	expected := map[string]ruby.Object{
 		"foo":   object.NewInteger(42),
 		":bar":  object.NewInteger(2),
 		":nil":  object.TRUE,
@@ -727,7 +729,7 @@ func TestHashLiteral(t *testing.T) {
 		"2":     object.NewInteger(2),
 	}
 
-	actual := make(map[string]object.RubyObject)
+	actual := make(map[string]ruby.Object)
 	for k, v := range hash.ObjectMap() {
 		actual[k.Inspect()] = v
 	}
@@ -811,14 +813,14 @@ func TestHashIndexExpressions(t *testing.T) {
 	}
 }
 
-func testNilObject(t *testing.T, obj object.RubyObject) bool {
+func testNilObject(t *testing.T, obj ruby.Object) bool {
 	t.Helper()
 	assert.EqualCmpAny(t, obj, object.NIL, object.CompareRubyObjectsForTests)
 	return true
 }
 
-func testEval(input string, args ...object.Environment) (object.RubyObject, error) {
-	env := object.NewEnvironment()
+func testEval(input string, args ...env.Environment[ruby.Object]) (ruby.Object, error) {
+	env := env.NewEnvironment[ruby.Object]()
 	if len(args) > 0 {
 		env = args[0]
 	}
@@ -830,7 +832,7 @@ func testEval(input string, args ...object.Environment) (object.RubyObject, erro
 	return evaluator.Eval(ctx, program, env)
 }
 
-func testObject(t *testing.T, exp object.RubyObject, expected interface{}) {
+func testObject(t *testing.T, exp ruby.Object, expected interface{}) {
 	t.Helper()
 	switch v := expected.(type) {
 	case int:
@@ -855,7 +857,7 @@ func testObject(t *testing.T, exp object.RubyObject, expected interface{}) {
 	}
 }
 
-func testBooleanObject(t *testing.T, obj object.RubyObject, expected bool) bool {
+func testBooleanObject(t *testing.T, obj ruby.Object, expected bool) bool {
 	t.Helper()
 	result, ok := object.SymbolToBool(obj)
 	assert.That(t, ok, "object is not Boolean. got=%T (%+v)", obj, obj)
@@ -863,28 +865,28 @@ func testBooleanObject(t *testing.T, obj object.RubyObject, expected bool) bool 
 	return true
 }
 
-func testIntegerObject(t *testing.T, obj object.RubyObject, expected int64) {
+func testIntegerObject(t *testing.T, obj ruby.Object, expected int64) {
 	t.Helper()
 	result, ok := obj.(*object.Integer)
 	assert.That(t, ok, "object is not Integer. got=%T (%+v)", obj, obj)
 	assert.Equal(t, result.Value, expected)
 }
 
-func testSymbolObject(t *testing.T, obj object.RubyObject, expected string) {
+func testSymbolObject(t *testing.T, obj ruby.Object, expected string) {
 	t.Helper()
 	result, ok := obj.(*object.Symbol)
 	assert.That(t, ok, "object is not Symbol. got=%T (%+v)", obj, obj)
 	assert.Equal(t, result.Value, expected)
 }
 
-func testStringObject(t *testing.T, obj object.RubyObject, expected string) {
+func testStringObject(t *testing.T, obj ruby.Object, expected string) {
 	t.Helper()
 	result, ok := obj.(*object.String)
 	assert.That(t, ok, "object is not String. got=%T (%+v)", obj, obj)
 	assert.Equal(t, result.Value, expected)
 }
 
-func testHashObject(t *testing.T, obj object.RubyObject, expected map[string]string) {
+func testHashObject(t *testing.T, obj ruby.Object, expected map[string]string) {
 	t.Helper()
 	result, ok := obj.(*object.Hash)
 	assert.That(t, ok, "object is not Hash. got=%T (%+v)", obj, obj)
@@ -895,7 +897,7 @@ func testHashObject(t *testing.T, obj object.RubyObject, expected map[string]str
 	assert.EqualCmp(t, hashMap, expected, compare.Maps)
 }
 
-func testArrayObject(t *testing.T, obj object.RubyObject, expected []string) {
+func testArrayObject(t *testing.T, obj ruby.Object, expected []string) {
 	t.Helper()
 	result, ok := obj.(*object.Array)
 	assert.That(t, ok, "object is not Array. got=%T (%+v)", obj, obj)

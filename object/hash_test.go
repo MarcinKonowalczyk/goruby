@@ -4,12 +4,14 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/object/hash"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
 func TestHashSet(t *testing.T) {
 	t.Run("Set on initialized hash", func(t *testing.T) {
-		hash := &Hash{Map: make(map[HashKey]hashPair)}
+		hash := &Hash{Map: make(map[hash.Key]hashPair)}
 
 		key := NewString("foo")
 		value := NewInteger(42)
@@ -51,7 +53,7 @@ func TestHashGet(t *testing.T) {
 		key := NewString("foo")
 		value := NewInteger(42)
 
-		hash := &Hash{Map: map[HashKey]hashPair{
+		hash := &Hash{Map: map[hash.Key]hashPair{
 			key.HashKey(): hashPair{Key: key, Value: value},
 		}}
 
@@ -63,7 +65,7 @@ func TestHashGet(t *testing.T) {
 	t.Run("value not found", func(t *testing.T) {
 		key := NewString("foo")
 
-		hash := &Hash{Map: map[HashKey]hashPair{}}
+		hash := &Hash{Map: map[hash.Key]hashPair{}}
 
 		result, ok := hash.Get(key)
 
@@ -87,16 +89,16 @@ func TestHashMap(t *testing.T) {
 		key := NewString("foo")
 		value := NewInteger(42)
 
-		hash := &Hash{Map: map[HashKey]hashPair{
+		hash := &Hash{Map: map[hash.Key]hashPair{
 			key.HashKey(): hashPair{Key: key, Value: value},
 		}}
 
-		var result map[RubyObject]RubyObject = hash.ObjectMap()
+		var result map[ruby.Object]ruby.Object = hash.ObjectMap()
 
-		expected := map[string]RubyObject{
+		expected := map[string]ruby.Object{
 			"foo": value,
 		}
-		actual := make(map[string]RubyObject)
+		actual := make(map[string]ruby.Object)
 		for k, v := range result {
 			actual[k.Inspect()] = v
 		}
@@ -106,10 +108,10 @@ func TestHashMap(t *testing.T) {
 	t.Run("on uninitialized hash", func(t *testing.T) {
 		var hash Hash
 
-		var result map[RubyObject]RubyObject = hash.ObjectMap()
+		var result map[ruby.Object]ruby.Object = hash.ObjectMap()
 
-		expected := map[string]RubyObject{}
-		actual := make(map[string]RubyObject)
+		expected := map[string]ruby.Object{}
+		actual := make(map[string]ruby.Object)
 		for k, v := range result {
 			actual[k.Inspect()] = v
 		}

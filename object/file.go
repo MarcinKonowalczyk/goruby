@@ -4,10 +4,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
-var fileClass RubyClassObject = newClass(
+var fileClass ruby.ClassObject = newClass(
 	"File",
 	nil,
 	fileClassMethods,
@@ -18,13 +20,13 @@ func init() {
 	CLASSES.Set("File", fileClass)
 }
 
-var fileClassMethods = map[string]RubyMethod{
+var fileClassMethods = map[string]ruby.Method{
 	"expand_path": newMethod(fileExpandPath),
 	"dirname":     newMethod(fileDirname),
 	"read":        newMethod(fileRead),
 }
 
-func fileExpandPath(ctx CC, args ...RubyObject) (RubyObject, error) {
+func fileExpandPath(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	switch len(args) {
 	case 1:
@@ -60,7 +62,7 @@ func fileExpandPath(ctx CC, args ...RubyObject) (RubyObject, error) {
 	}
 }
 
-func fileDirname(ctx CC, args ...RubyObject) (RubyObject, error) {
+func fileDirname(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	if len(args) != 1 {
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))
@@ -75,7 +77,7 @@ func fileDirname(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return NewString(dirname), nil
 }
 
-func fileRead(ctx CC, args ...RubyObject) (RubyObject, error) {
+func fileRead(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	if len(args) != 1 {
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))

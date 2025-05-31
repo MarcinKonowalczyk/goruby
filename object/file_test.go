@@ -4,13 +4,16 @@ import (
 	"os"
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/env"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
 func TestFileExpandPath(t *testing.T) {
 	t.Run("one arg flavour", func(t *testing.T) {
-		env := NewEnvironment()
-		ctx := NewCC(fileClass, env)
+		env := env.NewEnvironment[ruby.Object]()
+		ctx := call.NewContext[ruby.Object](fileClass, env)
 		filename := NewString("./fixtures/testfile.rb")
 
 		result, err := fileExpandPath(ctx, filename)
@@ -26,8 +29,8 @@ func TestFileExpandPath(t *testing.T) {
 		assert.EqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 	})
 	t.Run("two arg flavour", func(t *testing.T) {
-		env := NewEnvironment()
-		ctx := NewCC(fileClass, env)
+		env := env.NewEnvironment[ruby.Object]()
+		ctx := call.NewContext[ruby.Object](fileClass, env)
 		filename := NewString("../../main.go")
 		dirname := NewString("object/fixtures/")
 
@@ -44,7 +47,7 @@ func TestFileExpandPath(t *testing.T) {
 }
 
 func TestFileDirname(t *testing.T) {
-	ctx := NewCC(fileClass, NewMainEnvironment())
+	ctx := call.NewContext[ruby.Object](fileClass, NewMainEnvironment())
 	filename := NewString("/var/log/foo.log")
 	result, err := fileDirname(ctx, filename)
 	assert.NoError(t, err)

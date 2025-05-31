@@ -4,23 +4,28 @@ import (
 	"fmt"
 	"hash/fnv"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/hash"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 var (
-	symbolClass RubyClassObject = nil_class
-	// TRUE  RubyObject = NewSymbol("true")
-	// FALSE RubyObject = NewSymbol("false")
-	// NIL   RubyObject = NewSymbol("nil")
+	symbolClass ruby.ClassObject = nil_class
+	// TRUE  ruby.Object = NewSymbol("true")
+	// FALSE ruby.Object = NewSymbol("false")
+	// NIL   ruby.Object = NewSymbol("nil")
 
 	// unique symbols
-	TRUE  RubyObject = &Symbol{Value: "true"}
-	FALSE RubyObject = &Symbol{Value: "false"}
-	NIL   RubyObject = &Symbol{Value: "nil"}
-	FUNCS RubyObject = &Symbol{Value: "funcs"}
+	TRUE  ruby.Object = &Symbol{Value: "true"}
+	FALSE ruby.Object = &Symbol{Value: "false"}
+	NIL   ruby.Object = &Symbol{Value: "nil"}
+	FUNCS ruby.Object = &Symbol{Value: "funcs"}
 )
 
 // instantiate the symbol class
+//
+//go:inline
 func initSymbolClass() {
 	symbolClass = newClass(
 		"Symbol",
@@ -56,39 +61,39 @@ type Symbol struct {
 
 func (s *Symbol) Inspect() string { return ":" + s.Value }
 
-func (s *Symbol) Class() RubyClass {
+func (s *Symbol) Class() ruby.Class {
 	if symbolClass == nil {
 		panic("symbolClass is nil")
 	}
-	if symbolClass == nil_class {
+	if sc, ok := symbolClass.(*class); ok && sc == nil_class {
 		initSymbolClass()
-		if symbolClass == nil_class {
+		if sc2, ok := symbolClass.(*class); ok && sc2 == nil_class {
 			panic("symbolClass is *still* nil_class")
 		}
 	}
 	return symbolClass
 }
 
-func (s *Symbol) HashKey() HashKey {
+func (s *Symbol) HashKey() hash.Key {
 	h := fnv.New64a()
 	h.Write([]byte(s.Value))
-	return HashKey(h.Sum64())
+	return hash.Key(h.Sum64())
 }
 
 var (
-	_ RubyObject = &Symbol{}
-	_ RubyClass  = symbolClass
+	_ ruby.Object = &Symbol{}
+	_ ruby.Class  = symbolClass
 )
 
-var symbolClassMethods = map[string]RubyMethod{}
+var symbolClassMethods = map[string]ruby.Method{}
 
-var symbolMethods = map[string]RubyMethod{
+var symbolMethods = map[string]ruby.Method{
 	"to_s": withArity(0, newMethod(symbolToS)),
 	"to_i": withArity(0, newMethod(symbolToI)),
 	"size": withArity(0, newMethod(symbolSize)),
 }
 
-func symbolToS(ctx CC, args ...RubyObject) (RubyObject, error) {
+func symbolToS(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	if sym, ok := ctx.Receiver().(*Symbol); ok {
 		return NewString(sym.Value), nil
@@ -96,7 +101,7 @@ func symbolToS(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return nil, nil
 }
 
-func symbolSize(ctx CC, args ...RubyObject) (RubyObject, error) {
+func symbolSize(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	if sym, ok := ctx.Receiver().(*Symbol); ok {
 		return NewInteger(int64(len(sym.Value))), nil
@@ -104,7 +109,7 @@ func symbolSize(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return nil, nil
 }
 
-func symbolToI(ctx CC, args ...RubyObject) (RubyObject, error) {
+func symbolToI(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	if boolean, ok := SymbolToBool(ctx.Receiver()); ok {
 		if boolean {
@@ -118,7 +123,7 @@ func symbolToI(ctx CC, args ...RubyObject) (RubyObject, error) {
 
 // If a symbol is "true" or "false", it returns the corresponding boolean value.
 // Otherwise, it returns false and ok as false.
-func SymbolToBool(o RubyObject) (val bool, ok bool) {
+func SymbolToBool(o ruby.Object) (val bool, ok bool) {
 	if sym, ok := o.(*Symbol); ok {
 		if sym == nil {
 			// nil pointer, not ok
@@ -136,7 +141,7 @@ func SymbolToBool(o RubyObject) (val bool, ok bool) {
 }
 
 // If a symbol is "nil", returns ok as 'true'.
-func SymbolToNil(o RubyObject) (ok bool) {
+func SymbolToNil(o ruby.Object) (ok bool) {
 	if sym, ok := o.(*Symbol); ok {
 		if sym == nil {
 			// nil pointer, not ok

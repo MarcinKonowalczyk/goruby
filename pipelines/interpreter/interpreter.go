@@ -6,6 +6,8 @@ import (
 
 	"github.com/MarcinKonowalczyk/goruby/evaluator"
 	"github.com/MarcinKonowalczyk/goruby/object"
+	"github.com/MarcinKonowalczyk/goruby/object/env"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/parser"
 	parser_pipeline "github.com/MarcinKonowalczyk/goruby/pipelines/parser"
 	"github.com/MarcinKonowalczyk/goruby/trace"
@@ -15,8 +17,8 @@ import (
 
 // // Interpreter defines the methods of an interpreter
 type Interpreter interface {
-	Interpret(filename string) (object.RubyObject, error)
-	InterpretCode(code string) (object.RubyObject, error)
+	Interpret(filename string) (ruby.Object, error)
+	InterpretCode(code string) (ruby.Object, error)
 	// SetTraceParse sets the trace_parse flag
 	SetTraceParse(trace_parse bool)
 	// SetTraceEval sets the trace_eval flag
@@ -35,13 +37,13 @@ func NewInterpreter(argv []string) Interpreter {
 }
 
 type interpreter struct {
-	environment     object.Environment
+	environment     env.Environment[ruby.Object]
 	trace_parse     bool
 	trace_transform bool
 	trace_eval      bool
 }
 
-func (i *interpreter) InterpretCode(src string) (object.RubyObject, error) {
+func (i *interpreter) InterpretCode(src string) (ruby.Object, error) {
 	ctx := context.Background()
 	var parse_tracer trace.Tracer
 	if i.trace_parse {
@@ -91,7 +93,7 @@ func (i *interpreter) InterpretCode(src string) (object.RubyObject, error) {
 	return res, err
 }
 
-func (i *interpreter) Interpret(filename string) (object.RubyObject, error) {
+func (i *interpreter) Interpret(filename string) (ruby.Object, error) {
 	ctx := context.Background()
 	var parse_tracer trace.Tracer
 	if i.trace_parse {

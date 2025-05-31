@@ -4,33 +4,37 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/env"
+	"github.com/MarcinKonowalczyk/goruby/object/hash"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 	"github.com/pkg/errors"
 )
 
 type testRubyObject struct {
-	class RubyClassObject
+	class ruby.ClassObject
 	Name  string
 }
 
 func (t *testRubyObject) Inspect() string { return "TEST OBJECT" }
-func (t *testRubyObject) Class() RubyClass {
+func (t *testRubyObject) Class() ruby.Class {
 	if t.class != nil {
 		return t.class
 	}
 	return bottomClass
 }
-func (t *testRubyObject) HashKey() HashKey {
-	return HashKey(99)
+func (t *testRubyObject) HashKey() hash.Key {
+	return hash.Key(99)
 }
 
 func TestSend(t *testing.T) {
 	// }
-	methods := map[string]RubyMethod{
-		"a_method": newMethod(func(ctx CC, args ...RubyObject) (RubyObject, error) {
+	methods := map[string]ruby.Method{
+		"a_method": newMethod(func(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 			return TRUE, nil
 		}),
-		"another_method": newMethod(func(ctx CC, args ...RubyObject) (RubyObject, error) {
+		"another_method": newMethod(func(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 			return FALSE, nil
 		}),
 	}
@@ -43,7 +47,7 @@ func TestSend(t *testing.T) {
 		// 		},
 		// 	},
 		// }
-		ctx := NewCC(
+		ctx := call.NewContext[ruby.Object](
 			&testRubyObject{
 				class: &class{
 					name:            "base class",
@@ -55,7 +59,7 @@ func TestSend(t *testing.T) {
 
 		tests := []struct {
 			method         string
-			expectedResult RubyObject
+			expectedResult ruby.Object
 			expectedError  error
 		}{
 			{
@@ -89,7 +93,7 @@ func TestAddMethod(t *testing.T) {
 		call_context := &testRubyObject{
 			class: &class{
 				name:            "base class",
-				instanceMethods: NewMethodSet(map[string]RubyMethod{}),
+				instanceMethods: NewMethodSet(map[string]ruby.Method{}),
 			},
 		}
 
@@ -97,7 +101,7 @@ func TestAddMethod(t *testing.T) {
 			Parameters: []*FunctionParameter{
 				{Name: "x"},
 			},
-			Env:  &environment{store: map[string]RubyObject{}},
+			Env:  env.NewEnvironment[ruby.Object](),
 			Body: nil,
 		}
 
@@ -109,14 +113,14 @@ func TestAddMethod(t *testing.T) {
 	t.Run("class object", func(t *testing.T) {
 		call_context := &class{
 			name:            "A",
-			instanceMethods: NewMethodSet(map[string]RubyMethod{}),
+			instanceMethods: NewMethodSet(map[string]ruby.Method{}),
 		}
 
 		fn := &Function{
 			Parameters: []*FunctionParameter{
 				{Name: "x"},
 			},
-			Env:  &environment{store: map[string]RubyObject{}},
+			Env:  env.NewEnvironment[ruby.Object](),
 			Body: nil,
 		}
 
@@ -133,12 +137,12 @@ func TestAddMethod(t *testing.T) {
 			&testRubyObject{
 				class: &class{
 					name:            "base class",
-					instanceMethods: NewMethodSet(map[string]RubyMethod{}),
+					instanceMethods: NewMethodSet(map[string]ruby.Method{}),
 				},
 			},
 		)
 
-		call_context.eigenclass.addMethod("bar", newMethod(func(ctx CC, args ...RubyObject) (RubyObject, error) {
+		call_context.eigenclass.addMethod("bar", newMethod(func(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 			return NIL, nil
 		}))
 
@@ -146,7 +150,7 @@ func TestAddMethod(t *testing.T) {
 			Parameters: []*FunctionParameter{
 				{Name: "x"},
 			},
-			Env:  &environment{store: map[string]RubyObject{}},
+			Env:  env.NewEnvironment[ruby.Object](),
 			Body: nil,
 		}
 
@@ -162,7 +166,7 @@ func TestAddMethod(t *testing.T) {
 		vanillaObject := &testRubyObject{
 			class: &class{
 				name:            "base class",
-				instanceMethods: NewMethodSet(map[string]RubyMethod{}),
+				instanceMethods: NewMethodSet(map[string]ruby.Method{}),
 			},
 			Name: "main",
 		}
@@ -172,7 +176,7 @@ func TestAddMethod(t *testing.T) {
 			Parameters: []*FunctionParameter{
 				{Name: "x"},
 			},
-			Env:  &environment{store: map[string]RubyObject{}},
+			Env:  env.NewEnvironment[ruby.Object](),
 			Body: nil,
 		}
 
@@ -186,7 +190,7 @@ func TestAddMethod(t *testing.T) {
 		contextPointer := reflect.ValueOf(call_context).Pointer()
 		assert.NotEqual(t, returnPointer, contextPointer)
 
-		extendedRubyObject := newContext.(*extendedObject).RubyObject
+		extendedRubyObject := newContext.(*extendedObject).Object
 		assert.EqualCmpAny(t, vanillaObject, extendedRubyObject, CompareRubyObjectsForTests)
 	})
 	t.Run("extended self object", func(t *testing.T) {
@@ -194,12 +198,12 @@ func TestAddMethod(t *testing.T) {
 			&testRubyObject{
 				class: &class{
 					name:            "base class",
-					instanceMethods: NewMethodSet(map[string]RubyMethod{}),
+					instanceMethods: NewMethodSet(map[string]ruby.Method{}),
 				},
 			},
 		)
 
-		call_context.eigenclass.addMethod("bar", newMethod(func(ctx CC, args ...RubyObject) (RubyObject, error) {
+		call_context.eigenclass.addMethod("bar", newMethod(func(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 			return NIL, nil
 		}))
 
@@ -207,7 +211,7 @@ func TestAddMethod(t *testing.T) {
 			Parameters: []*FunctionParameter{
 				{Name: "x"},
 			},
-			Env:  &environment{store: map[string]RubyObject{}},
+			Env:  env.NewEnvironment[ruby.Object](),
 			Body: nil,
 		}
 

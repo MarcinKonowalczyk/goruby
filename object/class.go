@@ -2,9 +2,13 @@ package object
 
 import (
 	"hash/fnv"
+
+	"github.com/MarcinKonowalczyk/goruby/object/env"
+	"github.com/MarcinKonowalczyk/goruby/object/hash"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 )
 
-var notInstantiatable = func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
+var notInstantiatable = func(c ruby.ClassObject, args ...ruby.Object) (ruby.Object, error) {
 	return nil, NewNoMethodError(c, "new")
 }
 
@@ -12,21 +16,21 @@ var notInstantiatable = func(c RubyClassObject, args ...RubyObject) (RubyObject,
 func newClass(
 	name string,
 	instanceMethods,
-	classMethods map[string]RubyMethod,
-	builder func(RubyClassObject, ...RubyObject) (RubyObject, error),
+	classMethods map[string]ruby.Method,
+	builder func(ruby.ClassObject, ...ruby.Object) (ruby.Object, error),
 ) *class {
 	if instanceMethods == nil {
-		instanceMethods = make(map[string]RubyMethod)
+		instanceMethods = make(map[string]ruby.Method)
 	}
 	if classMethods == nil {
-		classMethods = make(map[string]RubyMethod)
+		classMethods = make(map[string]ruby.Method)
 	}
 	cls := &class{
 		name:            name,
 		instanceMethods: NewMethodSet(instanceMethods),
 		class:           newEigenclass(bottomClass),
 		builder:         builder,
-		Environment:     NewEnclosedEnvironment(nil),
+		Environment:     env.NewEnclosedEnvironment[ruby.Object](nil),
 	}
 	cls.class.(*eigenclass).methods = NewMethodSet(classMethods)
 	if cls == nil_class {
@@ -38,17 +42,17 @@ func newClass(
 // class represents a Ruby Class object
 type class struct {
 	name            string
-	class           RubyClass
+	class           ruby.Class
 	instanceMethods SettableMethodSet
-	builder         func(RubyClassObject, ...RubyObject) (RubyObject, error)
-	Environment
+	builder         func(ruby.ClassObject, ...ruby.Object) (ruby.Object, error)
+	env.Environment[ruby.Object]
 }
 
-func (c *class) Inspect() string    { return c.name }
-func (c *class) Class() RubyClass   { return c.class }
-func (c *class) Methods() MethodSet { return c.instanceMethods }
+func (c *class) Inspect() string         { return c.name }
+func (c *class) Class() ruby.Class       { return c.class }
+func (c *class) Methods() ruby.MethodSet { return c.instanceMethods }
 
-func (c *class) GetMethod(name string) (RubyMethod, bool) {
+func (c *class) GetMethod(name string) (ruby.Method, bool) {
 	method, ok := c.instanceMethods.Get(name)
 	if ok {
 		return method, true
@@ -56,20 +60,21 @@ func (c *class) GetMethod(name string) (RubyMethod, bool) {
 	return nil, false
 }
 
-func (c *class) HashKey() HashKey {
+func (c *class) HashKey() hash.Key {
 	h := fnv.New64a()
 	h.Write([]byte(c.name))
-	return HashKey(h.Sum64())
+	return hash.Key(h.Sum64())
 }
-func (c *class) addMethod(name string, method RubyMethod) {
+func (c *class) addMethod(name string, method ruby.Method) {
 	c.instanceMethods.Set(name, method)
 }
-func (c *class) New(args ...RubyObject) (RubyObject, error) {
+func (c *class) New(args ...ruby.Object) (ruby.Object, error) {
 	return c.builder(c)
 }
 func (c *class) Name() string { return c.name }
 
 var (
-	_ RubyObject = &class{}
-	_ RubyClass  = &class{}
+	_ ruby.Object      = &class{}
+	_ ruby.Class       = &class{}
+	_ ruby.ClassObject = &class{}
 )

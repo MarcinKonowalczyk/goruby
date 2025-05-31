@@ -5,15 +5,18 @@ import (
 	"hash/fnv"
 	"strings"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/hash"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
 var (
-	exceptionClass RubyClassObject = newClass(
+	exceptionClass ruby.ClassObject = newClass(
 		"Exception",
 		exceptionMethods,
 		nil,
-		func(c RubyClassObject, args ...RubyObject) (RubyObject, error) {
+		func(c ruby.ClassObject, args ...ruby.Object) (ruby.Object, error) {
 			return &Exception{message: c.Name()}, nil
 		},
 	)
@@ -23,12 +26,12 @@ func init() {
 	CLASSES.Set("Exception", exceptionClass)
 }
 
-func formatException(exception RubyObject, message string) string {
+func formatException(exception ruby.Object, message string) string {
 	return fmt.Sprintf("%s: %s", RubyObjectToTypeString(exception), message)
 }
 
 type exception interface {
-	RubyObject
+	ruby.Object
 	setErrorMessage(string)
 	error
 }
@@ -46,22 +49,22 @@ type Exception struct {
 func (e *Exception) Inspect() string            { return formatException(e, e.message) }
 func (e *Exception) Error() string              { return e.message }
 func (e *Exception) setErrorMessage(msg string) { e.message = msg }
-func (e *Exception) Class() RubyClass           { return exceptionClass }
-func (e *Exception) HashKey() HashKey           { return hashException(e) }
+func (e *Exception) Class() ruby.Class          { return exceptionClass }
+func (e *Exception) HashKey() hash.Key          { return hashException(e) }
 
 var (
-	_ RubyObject = &Exception{}
+	_ ruby.Object = &Exception{}
 	// _ RubyClass  = &Exception{}
 	_ exception = &Exception{}
 	_ error     = &Exception{}
 )
-var exceptionMethods = map[string]RubyMethod{
+var exceptionMethods = map[string]ruby.Method{
 	"initialize": newMethod(exceptionInitialize),
 	"exception":  newMethod(exceptionException),
 	"to_s":       withArity(0, newMethod(exceptionToS)),
 }
 
-func exceptionInitialize(ctx CC, args ...RubyObject) (RubyObject, error) {
+func exceptionInitialize(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	receiver := ctx.Receiver()
 	var message string
@@ -79,7 +82,7 @@ func exceptionInitialize(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return receiver, nil
 }
 
-func exceptionException(ctx CC, args ...RubyObject) (RubyObject, error) {
+func exceptionException(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	receiver := ctx.Receiver()
 	if len(args) == 0 {
@@ -108,7 +111,7 @@ func exceptionException(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return receiver, nil
 }
 
-func exceptionToS(ctx CC, args ...RubyObject) (RubyObject, error) {
+func exceptionToS(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	receiver := ctx.Receiver()
 	if err, ok := receiver.(exception); ok {
@@ -117,13 +120,13 @@ func exceptionToS(ctx CC, args ...RubyObject) (RubyObject, error) {
 	return nil, nil
 }
 
-func hashException(exception RubyObject) HashKey {
+func hashException(exception ruby.Object) hash.Key {
 	h := fnv.New64a()
 	h.Write([]byte(fmt.Sprintf("%T", exception)))
 	if err, ok := exception.(error); ok {
 		h.Write([]byte(err.Error()))
 	}
-	return HashKey(h.Sum64())
+	return hash.Key(h.Sum64())
 }
 
 func NewStandardError(message string) *StandardError {
@@ -137,13 +140,13 @@ type StandardError struct {
 func (e *StandardError) Inspect() string            { return formatException(e, e.message) }
 func (e *StandardError) Error() string              { return e.message }
 func (e *StandardError) setErrorMessage(msg string) { e.message = msg }
-func (e *StandardError) Class() RubyClass           { return exceptionClass }
-func (e *StandardError) HashKey() HashKey           { return hashException(e) }
+func (e *StandardError) Class() ruby.Class          { return exceptionClass }
+func (e *StandardError) HashKey() hash.Key          { return hashException(e) }
 
 var (
-	_ RubyObject = &StandardError{}
-	_ error      = &StandardError{}
-	_ exception  = &StandardError{}
+	_ ruby.Object = &StandardError{}
+	_ error       = &StandardError{}
+	_ exception   = &StandardError{}
 )
 
 func NewRuntimeError(format string, args ...interface{}) *RuntimeError {
@@ -159,13 +162,13 @@ type RuntimeError struct {
 func (e *RuntimeError) Inspect() string            { return formatException(e, e.message) }
 func (e *RuntimeError) Error() string              { return e.message }
 func (e *RuntimeError) setErrorMessage(msg string) { e.message = msg }
-func (e *RuntimeError) Class() RubyClass           { return exceptionClass }
-func (e *RuntimeError) HashKey() HashKey           { return hashException(e) }
+func (e *RuntimeError) Class() ruby.Class          { return exceptionClass }
+func (e *RuntimeError) HashKey() hash.Key          { return hashException(e) }
 
 var (
-	_ RubyObject = &RuntimeError{}
-	_ error      = &RuntimeError{}
-	_ exception  = &RuntimeError{}
+	_ ruby.Object = &RuntimeError{}
+	_ error       = &RuntimeError{}
+	_ exception   = &RuntimeError{}
 )
 
 func NewZeroDivisionError() *ZeroDivisionError {
@@ -181,13 +184,13 @@ type ZeroDivisionError struct {
 func (e *ZeroDivisionError) Inspect() string            { return formatException(e, e.message) }
 func (e *ZeroDivisionError) Error() string              { return e.message }
 func (e *ZeroDivisionError) setErrorMessage(msg string) { e.message = msg }
-func (e *ZeroDivisionError) Class() RubyClass           { return exceptionClass }
-func (e *ZeroDivisionError) HashKey() HashKey           { return hashException(e) }
+func (e *ZeroDivisionError) Class() ruby.Class          { return exceptionClass }
+func (e *ZeroDivisionError) HashKey() hash.Key          { return hashException(e) }
 
 var (
-	_ RubyObject = &ZeroDivisionError{}
-	_ error      = &ZeroDivisionError{}
-	_ exception  = &ZeroDivisionError{}
+	_ ruby.Object = &ZeroDivisionError{}
+	_ error       = &ZeroDivisionError{}
+	_ exception   = &ZeroDivisionError{}
 )
 
 func NewWrongNumberOfArgumentsError(expected, actual int) *ArgumentError {
@@ -213,13 +216,13 @@ type ArgumentError struct {
 func (e *ArgumentError) Inspect() string            { return formatException(e, e.message) }
 func (e *ArgumentError) Error() string              { return e.message }
 func (e *ArgumentError) setErrorMessage(msg string) { e.message = msg }
-func (e *ArgumentError) Class() RubyClass           { return exceptionClass }
-func (e *ArgumentError) HashKey() HashKey           { return hashException(e) }
+func (e *ArgumentError) Class() ruby.Class          { return exceptionClass }
+func (e *ArgumentError) HashKey() hash.Key          { return hashException(e) }
 
 var (
-	_ RubyObject = &ArgumentError{}
-	_ error      = &ArgumentError{}
-	_ exception  = &ArgumentError{}
+	_ ruby.Object = &ArgumentError{}
+	_ error       = &ArgumentError{}
+	_ exception   = &ArgumentError{}
 )
 
 func NewUninitializedConstantNameError(name string) *NameError {
@@ -238,16 +241,16 @@ type NameError struct {
 func (e *NameError) Inspect() string            { return formatException(e, e.message) }
 func (e *NameError) Error() string              { return e.message }
 func (e *NameError) setErrorMessage(msg string) { e.message = msg }
-func (e *NameError) Class() RubyClass           { return exceptionClass }
-func (e *NameError) HashKey() HashKey           { return hashException(e) }
+func (e *NameError) Class() ruby.Class          { return exceptionClass }
+func (e *NameError) HashKey() hash.Key          { return hashException(e) }
 
 var (
-	_ RubyObject = &NameError{}
-	_ error      = &NameError{}
-	_ exception  = &NameError{}
+	_ ruby.Object = &NameError{}
+	_ error       = &NameError{}
+	_ exception   = &NameError{}
 )
 
-func NewNoMethodError(context RubyObject, method string) *NoMethodError {
+func NewNoMethodError(context ruby.Object, method string) *NoMethodError {
 	// panic("stop here")
 	return &NoMethodError{
 		message: fmt.Sprintf(
@@ -266,41 +269,41 @@ type NoMethodError struct {
 func (e *NoMethodError) Inspect() string            { return formatException(e, e.message) }
 func (e *NoMethodError) Error() string              { return e.message }
 func (e *NoMethodError) setErrorMessage(msg string) { e.message = msg }
-func (e *NoMethodError) Class() RubyClass           { return exceptionClass }
-func (e *NoMethodError) HashKey() HashKey           { return hashException(e) }
+func (e *NoMethodError) Class() ruby.Class          { return exceptionClass }
+func (e *NoMethodError) HashKey() hash.Key          { return hashException(e) }
 
 var (
-	_ RubyObject = &NoMethodError{}
-	_ error      = &NoMethodError{}
-	_ exception  = &NoMethodError{}
+	_ ruby.Object = &NoMethodError{}
+	_ error       = &NoMethodError{}
+	_ exception   = &NoMethodError{}
 )
 
-func RubyObjectToTypeString(rubyType RubyObject) string {
+func RubyObjectToTypeString(rubyType ruby.Object) string {
 	ts := fmt.Sprintf("%T", rubyType)
 	ts = strings.TrimPrefix(ts, "*object.")
 	ts = strings.TrimPrefix(ts, "object.")
 	return ts
 }
 
-func NewWrongArgumentTypeError(expected, actual RubyObject) *TypeError {
+func NewWrongArgumentTypeError(expected, actual ruby.Object) *TypeError {
 	return &TypeError{
 		Message: fmt.Sprintf("wrong argument type %s (expected %s)", actual, expected),
 	}
 }
 
-func NewCoercionTypeError(expected, actual RubyObject) *TypeError {
+func NewCoercionTypeError(expected, actual ruby.Object) *TypeError {
 	return &TypeError{
 		Message: fmt.Sprintf("%s can't be coerced into %s", RubyObjectToTypeString(actual), RubyObjectToTypeString(expected)),
 	}
 }
 
-func NewImplicitConversionTypeError(expected, actual RubyObject) *TypeError {
+func NewImplicitConversionTypeError(expected, actual ruby.Object) *TypeError {
 	return &TypeError{
 		Message: fmt.Sprintf("no implicit conversion of %s into %s", RubyObjectToTypeString(actual), RubyObjectToTypeString(expected)),
 	}
 }
 
-func NewImplicitConversionTypeErrorMany(actual RubyObject, expected ...RubyObject) *TypeError {
+func NewImplicitConversionTypeErrorMany(actual ruby.Object, expected ...ruby.Object) *TypeError {
 	if len(expected) == 0 {
 		return nil
 	}
@@ -332,13 +335,13 @@ type TypeError struct {
 func (e *TypeError) Inspect() string            { return formatException(e, e.Message) }
 func (e *TypeError) Error() string              { return e.Message }
 func (e *TypeError) setErrorMessage(msg string) { e.Message = msg }
-func (e *TypeError) Class() RubyClass           { return exceptionClass }
-func (e *TypeError) HashKey() HashKey           { return hashException(e) }
+func (e *TypeError) Class() ruby.Class          { return exceptionClass }
+func (e *TypeError) HashKey() hash.Key          { return hashException(e) }
 
 var (
-	_ RubyObject = &TypeError{}
-	_ error      = &TypeError{}
-	_ exception  = &TypeError{}
+	_ ruby.Object = &TypeError{}
+	_ error       = &TypeError{}
+	_ exception   = &TypeError{}
 )
 
 func NewScriptError(format string, args ...interface{}) *ScriptError {
@@ -352,13 +355,13 @@ type ScriptError struct {
 func (e *ScriptError) Inspect() string            { return formatException(e, e.message) }
 func (e *ScriptError) Error() string              { return e.message }
 func (e *ScriptError) setErrorMessage(msg string) { e.message = msg }
-func (e *ScriptError) Class() RubyClass           { return exceptionClass }
-func (e *ScriptError) HashKey() HashKey           { return hashException(e) }
+func (e *ScriptError) Class() ruby.Class          { return exceptionClass }
+func (e *ScriptError) HashKey() hash.Key          { return hashException(e) }
 
 var (
-	_ RubyObject = &ScriptError{}
-	_ error      = &ScriptError{}
-	_ exception  = &ScriptError{}
+	_ ruby.Object = &ScriptError{}
+	_ error       = &ScriptError{}
+	_ exception   = &ScriptError{}
 )
 
 func NewSyntaxError(syntaxError error) *SyntaxError {
@@ -379,14 +382,14 @@ type SyntaxError struct {
 func (e *SyntaxError) Inspect() string            { return formatException(e, e.message) }
 func (e *SyntaxError) Error() string              { return e.message }
 func (e *SyntaxError) setErrorMessage(msg string) { e.message = msg }
-func (e *SyntaxError) Class() RubyClass           { return exceptionClass }
+func (e *SyntaxError) Class() ruby.Class          { return exceptionClass }
 func (e *SyntaxError) UnderlyingError() error     { return e.err }
-func (e *SyntaxError) HashKey() HashKey           { return hashException(e) }
+func (e *SyntaxError) HashKey() hash.Key          { return hashException(e) }
 
 var (
-	_ RubyObject = &SyntaxError{}
-	_ error      = &SyntaxError{}
-	_ exception  = &SyntaxError{}
+	_ ruby.Object = &SyntaxError{}
+	_ error       = &SyntaxError{}
+	_ exception   = &SyntaxError{}
 )
 
 func NewNotImplementedError(format string, args ...interface{}) *NotImplementedError {
@@ -400,18 +403,18 @@ type NotImplementedError struct {
 func (e *NotImplementedError) Inspect() string            { return formatException(e, e.message) }
 func (e *NotImplementedError) Error() string              { return e.message }
 func (e *NotImplementedError) setErrorMessage(msg string) { e.message = msg }
-func (e *NotImplementedError) Class() RubyClass           { return exceptionClass }
-func (e *NotImplementedError) HashKey() HashKey           { return hashException(e) }
+func (e *NotImplementedError) Class() ruby.Class          { return exceptionClass }
+func (e *NotImplementedError) HashKey() hash.Key          { return hashException(e) }
 
 var (
-	_ RubyObject = &NotImplementedError{}
-	_ error      = &NotImplementedError{}
-	_ exception  = &NotImplementedError{}
+	_ ruby.Object = &NotImplementedError{}
+	_ error       = &NotImplementedError{}
+	_ exception   = &NotImplementedError{}
 )
 
 // IsError returns true if the given RubyObject is an object.Error or an
 // object.Exception (or any subclass of object.Exception)
-func IsError(obj RubyObject) bool {
+func IsError(obj ruby.Object) bool {
 	if obj == nil {
 		return false
 	}

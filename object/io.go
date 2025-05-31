@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"os"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
-var IoClass RubyClassObject = newClass(
+var IoClass ruby.ClassObject = newClass(
 	"IO",
 	nil,
 	ioClassMethods,
@@ -18,11 +20,11 @@ func init() {
 	CLASSES.Set("Io", IoClass)
 }
 
-var ioClassMethods = map[string]RubyMethod{
+var ioClassMethods = map[string]ruby.Method{
 	"gets": withArity(0, newMethod(ioClassGets)),
 }
 
-func ioClassGets(ctx CC, args ...RubyObject) (RubyObject, error) {
+func ioClassGets(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	// read a string from stdin
 	reader := bufio.NewReader(os.Stdin)

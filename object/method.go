@@ -2,22 +2,19 @@ package object
 
 import (
 	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
-type CC call.Context[RubyObject, Environment]
+// type CC call.Context[ruby.Object]
 
-func NewCC(receiver RubyObject, env Environment) CC {
-	return call.NewContext[RubyObject, Environment](receiver, env)
-}
+// type ruby.Method interface {
+// 	Call(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error)
+// }
 
-type RubyMethod interface {
-	Call(ctx CC, args ...RubyObject) (RubyObject, error)
-}
-
-func withArity(arity int, fn RubyMethod) RubyMethod {
+func withArity(arity int, fn ruby.Method) ruby.Method {
 	return &method{
-		fn: func(ctx CC, args ...RubyObject) (RubyObject, error) {
+		fn: func(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 			defer trace.TraceCtx(ctx, "withArity")()
 			if len(args) != arity {
 				return nil, NewWrongNumberOfArgumentsError(arity, len(args))
@@ -27,47 +24,38 @@ func withArity(arity int, fn RubyMethod) RubyMethod {
 	}
 }
 
-func newMethod(fn func(ctx CC, args ...RubyObject) (RubyObject, error)) RubyMethod {
+func newMethod(fn func(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error)) ruby.Method {
 	return &method{fn: fn}
 }
 
 type method struct {
-	fn func(ctx CC, args ...RubyObject) (RubyObject, error)
+	fn func(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error)
 }
 
-func (m *method) Call(ctx CC, args ...RubyObject) (RubyObject, error) {
+func (m *method) Call(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, "method.Call")()
 	return m.fn(ctx, args...)
-}
-
-// MethodSet represents a set of methods
-type MethodSet interface {
-	// Get returns the method found for name. The boolean will return true if
-	// a method was found, false otherwise
-	Get(name string) (RubyMethod, bool)
-	// Names returns the names of all methods in the set
-	Names() []string
 }
 
 // SettableMethodSet represents a MethodSet which can be mutated by setting
 // methods on it.
 type SettableMethodSet interface {
-	MethodSet
+	ruby.MethodSet
 	// Set will set method to key name. If there was a method prior defined
 	// under name it will be overridden.
-	Set(name string, method RubyMethod)
+	Set(name string, method ruby.Method)
 }
 
 // NewMethodSet returns a new method set populated with the given methods
-func NewMethodSet(methods map[string]RubyMethod) SettableMethodSet {
+func NewMethodSet(methods map[string]ruby.Method) SettableMethodSet {
 	if methods == nil {
-		methods = make(map[string]RubyMethod)
+		methods = make(map[string]ruby.Method)
 	}
 	return &methodSet{methods: methods}
 }
 
 type methodSet struct {
-	methods map[string]RubyMethod
+	methods map[string]ruby.Method
 }
 
 func (m *methodSet) Names() []string {
@@ -78,11 +66,11 @@ func (m *methodSet) Names() []string {
 	return methods
 }
 
-func (m *methodSet) Get(name string) (RubyMethod, bool) {
+func (m *methodSet) Get(name string) (ruby.Method, bool) {
 	method, ok := m.methods[name]
 	return method, ok
 }
 
-func (m *methodSet) Set(name string, method RubyMethod) {
+func (m *methodSet) Set(name string, method ruby.Method) {
 	m.methods[name] = method
 }

@@ -3,6 +3,8 @@ package object
 import (
 	"testing"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
@@ -18,29 +20,29 @@ func TestFloat_hashKey(t *testing.T) {
 
 func TestFloatDiv(t *testing.T) {
 	tests := []struct {
-		arguments []RubyObject
-		result    RubyObject
+		arguments []ruby.Object
+		result    ruby.Object
 		err       error
 	}{
 		{
-			[]RubyObject{NewFloat(2)},
+			[]ruby.Object{NewFloat(2)},
 			NewFloat(2),
 			nil,
 		},
 		{
-			[]RubyObject{NewString("")},
+			[]ruby.Object{NewString("")},
 			nil,
 			NewCoercionTypeError(NewString(""), NewFloat(0)),
 		},
 		{
-			[]RubyObject{NewFloat(0)},
+			[]ruby.Object{NewFloat(0)},
 			nil,
 			NewZeroDivisionError(),
 		},
 	}
 
 	for _, testCase := range tests {
-		ctx := NewCC(NewFloat(4), nil)
+		ctx := call.NewContext[ruby.Object](NewFloat(4), nil)
 		result, err := floatDiv(ctx, testCase.arguments...)
 		assert.Error(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -49,24 +51,24 @@ func TestFloatDiv(t *testing.T) {
 
 func TestFloatMul(t *testing.T) {
 	tests := []struct {
-		arguments []RubyObject
-		result    RubyObject
+		arguments []ruby.Object
+		result    ruby.Object
 		err       error
 	}{
 		{
-			[]RubyObject{NewFloat(2)},
+			[]ruby.Object{NewFloat(2)},
 			NewFloat(8),
 			nil,
 		},
 		{
-			[]RubyObject{NewString("")},
+			[]ruby.Object{NewString("")},
 			nil,
 			NewCoercionTypeError(NewString(""), NewFloat(0)),
 		},
 	}
 
 	for _, testCase := range tests {
-		ctx := NewCC(NewFloat(4), nil)
+		ctx := call.NewContext[ruby.Object](NewFloat(4), nil)
 		result, err := floatMul(ctx, testCase.arguments...)
 		assert.Error(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -75,24 +77,24 @@ func TestFloatMul(t *testing.T) {
 
 func TestFloatAdd(t *testing.T) {
 	tests := []struct {
-		arguments []RubyObject
-		result    RubyObject
+		arguments []ruby.Object
+		result    ruby.Object
 		err       error
 	}{
 		{
-			[]RubyObject{NewFloat(2)},
+			[]ruby.Object{NewFloat(2)},
 			NewFloat(4),
 			nil,
 		},
 		{
-			[]RubyObject{NewString("")},
+			[]ruby.Object{NewString("")},
 			nil,
 			NewCoercionTypeError(NewString(""), NewFloat(0)),
 		},
 	}
 
 	for _, testCase := range tests {
-		ctx := NewCC(NewFloat(2), nil)
+		ctx := call.NewContext[ruby.Object](NewFloat(2), nil)
 		result, err := floatAdd(ctx, testCase.arguments...)
 		assert.Error(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -101,24 +103,24 @@ func TestFloatAdd(t *testing.T) {
 
 func TestFloatSub(t *testing.T) {
 	tests := []struct {
-		arguments []RubyObject
-		result    RubyObject
+		arguments []ruby.Object
+		result    ruby.Object
 		err       error
 	}{
 		{
-			[]RubyObject{NewFloat(3)},
+			[]ruby.Object{NewFloat(3)},
 			NewFloat(1),
 			nil,
 		},
 		{
-			[]RubyObject{NewString("")},
+			[]ruby.Object{NewString("")},
 			nil,
 			NewCoercionTypeError(NewString(""), NewFloat(0)),
 		},
 	}
 
 	for _, testCase := range tests {
-		ctx := NewCC(NewFloat(4), nil)
+		ctx := call.NewContext[ruby.Object](NewFloat(4), nil)
 		result, err := floatSub(ctx, testCase.arguments...)
 		assert.Error(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -144,7 +146,7 @@ func TestFloatSub(t *testing.T) {
 // 	}
 
 // 	for _, testCase := range tests {
-// 		ctx := NewCC(NewFloat(4), nil)
+// 		ctx := call.NewContext[ruby.Object](NewFloat(4), nil)
 
 // 		result, err := floatModulo(ctx, testCase.arguments...)
 
@@ -156,29 +158,29 @@ func TestFloatSub(t *testing.T) {
 
 func TestFloatLt(t *testing.T) {
 	tests := []struct {
-		arguments []RubyObject
-		result    RubyObject
+		arguments []ruby.Object
+		result    ruby.Object
 		err       error
 	}{
 		{
-			[]RubyObject{NewFloat(6)},
+			[]ruby.Object{NewFloat(6)},
 			TRUE,
 			nil,
 		},
 		{
-			[]RubyObject{NewFloat(2)},
+			[]ruby.Object{NewFloat(2)},
 			FALSE,
 			nil,
 		},
 		{
-			[]RubyObject{NewString("")},
+			[]ruby.Object{NewString("")},
 			nil,
 			NewArgumentError("comparison of Float with String failed"),
 		},
 	}
 
 	for _, testCase := range tests {
-		ctx := NewCC(NewFloat(4), nil)
+		ctx := call.NewContext[ruby.Object](NewFloat(4), nil)
 		result, _ := floatLt(ctx, testCase.arguments...)
 		// assert.AssertError(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -187,29 +189,29 @@ func TestFloatLt(t *testing.T) {
 
 func TestFloatGt(t *testing.T) {
 	tests := []struct {
-		arguments []RubyObject
-		result    RubyObject
+		arguments []ruby.Object
+		result    ruby.Object
 		err       error
 	}{
 		{
-			[]RubyObject{NewFloat(6)},
+			[]ruby.Object{NewFloat(6)},
 			FALSE,
 			nil,
 		},
 		{
-			[]RubyObject{NewFloat(2)},
+			[]ruby.Object{NewFloat(2)},
 			TRUE,
 			nil,
 		},
 		{
-			[]RubyObject{NewString("")},
+			[]ruby.Object{NewString("")},
 			nil,
 			NewArgumentError("comparison of Float with String failed"),
 		},
 	}
 
 	for _, testCase := range tests {
-		ctx := NewCC(NewFloat(4), nil)
+		ctx := call.NewContext[ruby.Object](NewFloat(4), nil)
 		result, _ := floatGt(ctx, testCase.arguments...)
 		// assert.AssertError(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -240,7 +242,7 @@ func TestFloatGt(t *testing.T) {
 // 	}
 
 // 	for _, testCase := range tests {
-// 		ctx := NewCC(NewFloat(4), nil)
+// 		ctx := call.NewContext[ruby.Object](NewFloat(4), nil)
 
 // 		result, err := floatEq(ctx, testCase.arguments...)
 
@@ -274,7 +276,7 @@ func TestFloatGt(t *testing.T) {
 // 	}
 
 // 	for _, testCase := range tests {
-// 		ctx := NewCC(NewFloat(4), nil)
+// 		ctx := call.NewContext[ruby.Object](NewFloat(4), nil)
 
 // 		result, err := floatNeq(ctx, testCase.arguments...)
 
@@ -286,34 +288,34 @@ func TestFloatGt(t *testing.T) {
 
 func TestFloatGte(t *testing.T) {
 	tests := []struct {
-		arguments []RubyObject
-		result    RubyObject
+		arguments []ruby.Object
+		result    ruby.Object
 		err       error
 	}{
 		{
-			[]RubyObject{NewFloat(6)},
+			[]ruby.Object{NewFloat(6)},
 			FALSE,
 			nil,
 		},
 		{
-			[]RubyObject{NewFloat(4)},
+			[]ruby.Object{NewFloat(4)},
 			TRUE,
 			nil,
 		},
 		{
-			[]RubyObject{NewFloat(2)},
+			[]ruby.Object{NewFloat(2)},
 			TRUE,
 			nil,
 		},
 		{
-			[]RubyObject{NewString("")},
+			[]ruby.Object{NewString("")},
 			nil,
 			NewArgumentError("comparison of Float with String failed"),
 		},
 	}
 
 	for _, testCase := range tests {
-		ctx := NewCC(NewFloat(4), nil)
+		ctx := call.NewContext[ruby.Object](NewFloat(4), nil)
 		result, _ := floatGte(ctx, testCase.arguments...)
 		// assert.AssertError(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -322,34 +324,34 @@ func TestFloatGte(t *testing.T) {
 
 func TestFloatLte(t *testing.T) {
 	tests := []struct {
-		arguments []RubyObject
-		result    RubyObject
+		arguments []ruby.Object
+		result    ruby.Object
 		err       error
 	}{
 		{
-			[]RubyObject{NewFloat(6)},
+			[]ruby.Object{NewFloat(6)},
 			TRUE,
 			nil,
 		},
 		{
-			[]RubyObject{NewFloat(4)},
+			[]ruby.Object{NewFloat(4)},
 			TRUE,
 			nil,
 		},
 		{
-			[]RubyObject{NewFloat(2)},
+			[]ruby.Object{NewFloat(2)},
 			FALSE,
 			nil,
 		},
 		{
-			[]RubyObject{NewString("")},
+			[]ruby.Object{NewString("")},
 			nil,
 			NewArgumentError("comparison of Float with String failed"),
 		},
 	}
 
 	for _, testCase := range tests {
-		ctx := NewCC(NewFloat(4), nil)
+		ctx := call.NewContext[ruby.Object](NewFloat(4), nil)
 		result, _ := floatLte(ctx, testCase.arguments...)
 		// assert.AssertError(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -358,34 +360,34 @@ func TestFloatLte(t *testing.T) {
 
 func TestFloatSpaceship(t *testing.T) {
 	tests := []struct {
-		arguments []RubyObject
-		result    RubyObject
+		arguments []ruby.Object
+		result    ruby.Object
 		err       error
 	}{
 		{
-			[]RubyObject{NewFloat(6)},
+			[]ruby.Object{NewFloat(6)},
 			NewFloat(-1),
 			nil,
 		},
 		{
-			[]RubyObject{NewFloat(4)},
+			[]ruby.Object{NewFloat(4)},
 			NewFloat(0),
 			nil,
 		},
 		{
-			[]RubyObject{NewFloat(2)},
+			[]ruby.Object{NewFloat(2)},
 			NewFloat(1),
 			nil,
 		},
 		{
-			[]RubyObject{NewString("")},
+			[]ruby.Object{NewString("")},
 			NIL,
 			nil,
 		},
 	}
 
 	for _, testCase := range tests {
-		ctx := NewCC(NewFloat(4), nil)
+		ctx := call.NewContext[ruby.Object](NewFloat(4), nil)
 		result, _ := floatSpaceship(ctx, testCase.arguments...)
 		// assert.AssertError(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)

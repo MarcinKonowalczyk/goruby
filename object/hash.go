@@ -5,15 +5,18 @@ import (
 	"hash/fnv"
 	"strings"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
+	"github.com/MarcinKonowalczyk/goruby/object/hash"
+	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
-var hashClass RubyClassObject = newClass(
+var hashClass ruby.ClassObject = newClass(
 	"Hash",
 	hashMethods,
 	nil,
-	func(RubyClassObject, ...RubyObject) (RubyObject, error) {
-		return &Hash{Map: make(map[HashKey]hashPair)}, nil
+	func(ruby.ClassObject, ...ruby.Object) (ruby.Object, error) {
+		return &Hash{Map: make(map[hash.Key]hashPair)}, nil
 	},
 )
 
@@ -21,47 +24,36 @@ func init() {
 	CLASSES.Set("Hash", hashClass)
 }
 
-func (h *Hash) ObjectMap() map[RubyObject]RubyObject {
-	hashmap := make(map[RubyObject]RubyObject)
+func (h *Hash) ObjectMap() map[ruby.Object]ruby.Object {
+	hashmap := make(map[ruby.Object]ruby.Object)
 	for _, v := range h.Map {
 		hashmap[v.Key] = v.Value
 	}
 	return hashmap
 }
 
-type HashKey uint64
-
-func (h HashKey) bytes() []byte {
-	bytes := [4]byte{}
-	bytes[0] = byte(h >> 24)
-	bytes[1] = byte(h >> 16)
-	bytes[2] = byte(h >> 8)
-	bytes[3] = byte(h)
-	return bytes[:]
-}
-
 type hashPair struct {
-	Key   RubyObject
-	Value RubyObject
+	Key   ruby.Object
+	Value ruby.Object
 }
 
 type Hash struct {
-	Map map[HashKey]hashPair
+	Map map[hash.Key]hashPair
 }
 
 func (h *Hash) init() {
 	if h.Map == nil {
-		h.Map = make(map[HashKey]hashPair)
+		h.Map = make(map[hash.Key]hashPair)
 	}
 }
 
-func (h *Hash) Set(key, value RubyObject) RubyObject {
+func (h *Hash) Set(key, value ruby.Object) ruby.Object {
 	h.init()
 	h.Map[key.HashKey()] = hashPair{Key: key, Value: value}
 	return value
 }
 
-func (h *Hash) Get(key RubyObject) (RubyObject, bool) {
+func (h *Hash) Get(key ruby.Object) (ruby.Object, bool) {
 	v, ok := h.Map[key.HashKey()]
 	if !ok {
 		return nil, false
@@ -77,21 +69,21 @@ func (h *Hash) Inspect() string {
 	return "{" + strings.Join(elems, ", ") + "}"
 }
 
-func (h *Hash) Class() RubyClass { return hashClass }
+func (h *Hash) Class() ruby.Class { return hashClass }
 
-func (h *Hash) HashKey() HashKey {
-	hash := fnv.New64a()
+func (h *Hash) HashKey() hash.Key {
+	hsh := fnv.New64a()
 	for k := range h.Map {
-		hash.Write(k.bytes())
+		hsh.Write(k.Bytes())
 	}
-	return HashKey(hash.Sum64())
+	return hash.Key(hsh.Sum64())
 }
 
-var hashMethods = map[string]RubyMethod{
+var hashMethods = map[string]ruby.Method{
 	"has_key?": newMethod(hashHasKey),
 }
 
-func hashHasKey(ctx CC, args ...RubyObject) (RubyObject, error) {
+func hashHasKey(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	hash, _ := ctx.Receiver().(*Hash)
 	if len(args) != 1 {
