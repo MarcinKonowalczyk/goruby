@@ -61,7 +61,7 @@ var exceptionMethods = map[string]RubyMethod{
 	"to_s":       withArity(0, newMethod(exceptionToS)),
 }
 
-func exceptionInitialize(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func exceptionInitialize(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	receiver := ctx.Receiver()
 	var message string
@@ -79,7 +79,7 @@ func exceptionInitialize(ctx CallContext, args ...RubyObject) (RubyObject, error
 	return receiver, nil
 }
 
-func exceptionException(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func exceptionException(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	receiver := ctx.Receiver()
 	if len(args) == 0 {
@@ -108,7 +108,7 @@ func exceptionException(ctx CallContext, args ...RubyObject) (RubyObject, error)
 	return receiver, nil
 }
 
-func exceptionToS(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func exceptionToS(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	receiver := ctx.Receiver()
 	if err, ok := receiver.(exception); ok {

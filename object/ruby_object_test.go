@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/object/call"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
@@ -24,13 +25,11 @@ func TestFunctionCall(t *testing.T) {
 		}
 
 		var actualEvalNode ast.Node
-		ctx := &callContext{
-			env: NewMainEnvironment(),
-			eval: func(node ast.Node, env Environment) (RubyObject, error) {
-				actualEvalNode = node
-				return nil, nil
-			},
-		}
+		ctx := NewCC(nil, NewMainEnvironment())
+		ctx = call.WithEval(ctx, func(node ast.Node, env Environment) (RubyObject, error) {
+			actualEvalNode = node
+			return nil, nil
+		})
 
 		_, err := function.Call(ctx)
 		assert.NoError(t, err)
@@ -41,10 +40,14 @@ func TestFunctionCall(t *testing.T) {
 	t.Run("returns any error returned by CallContext#Eval", func(t *testing.T) {
 		evalErr := fmt.Errorf("An error")
 
-		ctx := &callContext{
-			env:  NewMainEnvironment(),
-			eval: func(ast.Node, Environment) (RubyObject, error) { return nil, evalErr },
-		}
+		// ctx := &callContext{
+		// 	env:  NewMainEnvironment(),
+		// 	eval: func(ast.Node, Environment) (RubyObject, error) { return nil, evalErr },
+		// }
+		ctx := NewCC(nil, NewMainEnvironment())
+		ctx = call.WithEval(ctx, func(ast.Node, Environment) (RubyObject, error) {
+			return nil, evalErr
+		})
 
 		function := &Function{
 			Parameters: []*FunctionParameter{},
@@ -57,13 +60,18 @@ func TestFunctionCall(t *testing.T) {
 		contextEnv := NewEnvironment()
 		contextEnv.Set("bar", NewString("not reachable in Eval"))
 		var evalEnv Environment
-		ctx := &callContext{
-			env: contextEnv,
-			eval: func(node ast.Node, env Environment) (RubyObject, error) {
-				evalEnv = env
-				return nil, nil
-			},
-		}
+		// ctx := &callContext{
+		// 	env: contextEnv,
+		// 	eval: func(node ast.Node, env Environment) (RubyObject, error) {
+		// 		evalEnv = env
+		// 		return nil, nil
+		// 	},
+		// }
+		ctx := NewCC(nil, contextEnv)
+		ctx = call.WithEval(ctx, func(node ast.Node, env Environment) (RubyObject, error) {
+			evalEnv = env
+			return nil, nil
+		})
 
 		functionEnv := NewEnvironment()
 		functionEnv.Set("foo", NewSymbol("bar"))
@@ -78,7 +86,6 @@ func TestFunctionCall(t *testing.T) {
 		{
 			expected := NewSymbol("bar")
 			actual, ok := evalEnv.Get("foo")
-
 			assert.That(t, ok, "Expected key 'foo' to be in Eval env")
 			assert.EqualCmpAny(t, expected, actual, CompareRubyObjectsForTests)
 		}
@@ -90,13 +97,18 @@ func TestFunctionCall(t *testing.T) {
 	t.Run("puts the Call args into the env for CallContext#Eval", func(t *testing.T) {
 		contextEnv := NewEnvironment()
 		var evalEnv Environment
-		ctx := &callContext{
-			env: contextEnv,
-			eval: func(node ast.Node, env Environment) (RubyObject, error) {
-				evalEnv = env
-				return nil, nil
-			},
-		}
+		// ctx := &callContext{
+		// 	env: contextEnv,
+		// 	eval: func(node ast.Node, env Environment) (RubyObject, error) {
+		// 		evalEnv = env
+		// 		return nil, nil
+		// 	},
+		// }
+		ctx := NewCC(nil, contextEnv)
+		ctx = call.WithEval(ctx, func(node ast.Node, env Environment) (RubyObject, error) {
+			evalEnv = env
+			return nil, nil
+		})
 
 		t.Run("without default params", func(t *testing.T) {
 			function := &Function{
@@ -154,10 +166,14 @@ func TestFunctionCall(t *testing.T) {
 	})
 	t.Run("returns the object returned by CallContext#Eval", func(t *testing.T) {
 		t.Run("vanilla object", func(t *testing.T) {
-			ctx := &callContext{
-				env:  NewMainEnvironment(),
-				eval: func(ast.Node, Environment) (RubyObject, error) { return NewInteger(8), nil },
-			}
+			// ctx := &callContext{
+			// 	env:  NewMainEnvironment(),
+			// 	eval: func(ast.Node, Environment) (RubyObject, error) { return NewInteger(8), nil },
+			// }
+			ctx := NewCC(nil, NewMainEnvironment())
+			ctx = call.WithEval(ctx, func(ast.Node, Environment) (RubyObject, error) {
+				return NewInteger(8), nil
+			})
 
 			function := &Function{}
 
@@ -165,12 +181,16 @@ func TestFunctionCall(t *testing.T) {
 			assert.EqualCmpAny(t, NewInteger(8), result, CompareRubyObjectsForTests)
 		})
 		t.Run("wrapped into a return value", func(t *testing.T) {
-			ctx := &callContext{
-				env: NewMainEnvironment(),
-				eval: func(ast.Node, Environment) (RubyObject, error) {
-					return &ReturnValue{Value: NewInteger(8)}, nil
-				},
-			}
+			// ctx := &callContext{
+			// 	env: NewMainEnvironment(),
+			// 	eval: func(ast.Node, Environment) (RubyObject, error) {
+			// 		return &ReturnValue{Value: NewInteger(8)}, nil
+			// 	},
+			// }
+			ctx := NewCC(nil, NewMainEnvironment())
+			ctx = call.WithEval(ctx, func(ast.Node, Environment) (RubyObject, error) {
+				return &ReturnValue{Value: NewInteger(8)}, nil
+			})
 
 			function := &Function{}
 
@@ -179,10 +199,14 @@ func TestFunctionCall(t *testing.T) {
 		})
 	})
 	t.Run("validates that the arguments match the function parameters", func(t *testing.T) {
-		ctx := &callContext{
-			env:  NewMainEnvironment(),
-			eval: func(ast.Node, Environment) (RubyObject, error) { return nil, nil },
-		}
+		// ctx := &callContext{
+		// 	env:  NewMainEnvironment(),
+		// 	eval: func(ast.Node, Environment) (RubyObject, error) { return nil, nil },
+		// }
+		ctx := NewCC(nil, NewMainEnvironment())
+		ctx = call.WithEval(ctx, func(ast.Node, Environment) (RubyObject, error) {
+			return nil, nil
+		})
 
 		function := &Function{
 			Parameters: []*FunctionParameter{},

@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
@@ -48,13 +49,13 @@ var (
 	_ RubyObject = &String{}
 )
 
-func stringify(ctx CallContext, obj RubyObject) (string, error) {
+func stringify(ctx CC, obj RubyObject) (string, error) {
 	if obj == nil {
 		return "", NewTypeError(
 			"can't convert nil into String",
 		)
 	}
-	ctx2 := WithReceiver(ctx, obj)
+	ctx2 := call.WithReceiver(ctx, &obj)
 	stringObj, err := Send(ctx2, "to_s")
 	if err != nil {
 		return "", NewTypeError(
@@ -90,13 +91,13 @@ var stringMethods = map[string]RubyMethod{
 	"to_f":   withArity(0, newMethod(stringToF)),
 }
 
-func stringToS(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func stringToS(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	str := ctx.Receiver().(*String)
 	return NewString(str.Value), nil
 }
 
-func stringAdd(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func stringAdd(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	s := ctx.Receiver().(*String)
 	add, ok := args[0].(*String)
@@ -106,7 +107,7 @@ func stringAdd(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return NewString(s.Value + add.Value), nil
 }
 
-func stringGsub(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func stringGsub(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	s := ctx.Receiver().(*String)
 	pattern, ok := args[0].(*String)
@@ -130,13 +131,13 @@ func stringGsub(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return NewString(result), nil
 }
 
-func stringLength(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func stringLength(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	s := ctx.Receiver().(*String)
 	return NewInteger(int64(len(s.Value))), nil
 }
 
-func stringLines(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func stringLines(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	s := ctx.Receiver().(*String)
 	lines := strings.Split(s.Value, "\n")
@@ -149,7 +150,7 @@ func stringLines(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 
 var FLOAT_RE = regexp.MustCompile(`[-+]?\d*\.?\d+`)
 
-func stringToF(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func stringToF(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	s := ctx.Receiver().(*String)
 	if s.Value == "" {

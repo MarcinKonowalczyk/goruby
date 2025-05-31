@@ -1,16 +1,23 @@
 package object
 
 import (
+	"github.com/MarcinKonowalczyk/goruby/object/call"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
+type CC call.Context[RubyObject, Environment]
+
+func NewCC(receiver RubyObject, env Environment) CC {
+	return call.NewContext[RubyObject, Environment](receiver, env)
+}
+
 type RubyMethod interface {
-	Call(ctx CallContext, args ...RubyObject) (RubyObject, error)
+	Call(ctx CC, args ...RubyObject) (RubyObject, error)
 }
 
 func withArity(arity int, fn RubyMethod) RubyMethod {
 	return &method{
-		fn: func(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+		fn: func(ctx CC, args ...RubyObject) (RubyObject, error) {
 			defer trace.TraceCtx(ctx, "withArity")()
 			if len(args) != arity {
 				return nil, NewWrongNumberOfArgumentsError(arity, len(args))
@@ -20,15 +27,15 @@ func withArity(arity int, fn RubyMethod) RubyMethod {
 	}
 }
 
-func newMethod(fn func(ctx CallContext, args ...RubyObject) (RubyObject, error)) RubyMethod {
+func newMethod(fn func(ctx CC, args ...RubyObject) (RubyObject, error)) RubyMethod {
 	return &method{fn: fn}
 }
 
 type method struct {
-	fn func(ctx CallContext, args ...RubyObject) (RubyObject, error)
+	fn func(ctx CC, args ...RubyObject) (RubyObject, error)
 }
 
-func (m *method) Call(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func (m *method) Call(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, "method.Call")()
 	return m.fn(ctx, args...)
 }

@@ -10,10 +10,7 @@ import (
 func TestFileExpandPath(t *testing.T) {
 	t.Run("one arg flavour", func(t *testing.T) {
 		env := NewEnvironment()
-		ctx := &callContext{
-			receiver: fileClass,
-			env:      env,
-		}
+		ctx := NewCC(fileClass, env)
 		filename := NewString("./fixtures/testfile.rb")
 
 		result, err := fileExpandPath(ctx, filename)
@@ -30,15 +27,11 @@ func TestFileExpandPath(t *testing.T) {
 	})
 	t.Run("two arg flavour", func(t *testing.T) {
 		env := NewEnvironment()
-		ctx := &callContext{
-			receiver: fileClass,
-			env:      env,
-		}
+		ctx := NewCC(fileClass, env)
 		filename := NewString("../../main.go")
 		dirname := NewString("object/fixtures/")
 
 		result, err := fileExpandPath(ctx, filename, dirname)
-
 		assert.NoError(t, err)
 
 		cwd, err := os.Getwd()
@@ -46,23 +39,15 @@ func TestFileExpandPath(t *testing.T) {
 			t.Skip("Cannot determine working directory")
 		}
 		expected := NewString(cwd + "/main.go")
-
 		assert.EqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 	})
 }
 
 func TestFileDirname(t *testing.T) {
-	ctx := &callContext{
-		receiver: fileClass,
-		env:      NewEnvironment(),
-	}
+	ctx := NewCC(fileClass, NewMainEnvironment())
 	filename := NewString("/var/log/foo.log")
-
 	result, err := fileDirname(ctx, filename)
-
 	assert.NoError(t, err)
-
 	expected := NewString("/var/log")
-
 	assert.EqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 }

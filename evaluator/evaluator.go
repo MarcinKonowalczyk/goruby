@@ -9,22 +9,23 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/ast/infix"
 	"github.com/MarcinKonowalczyk/goruby/object"
+	"github.com/MarcinKonowalczyk/goruby/object/call"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 	"github.com/pkg/errors"
 )
 
-type callContext struct {
-	object.CallContext
-	evaluator Evaluator
-}
+// type callContext struct {
+// 	object.CallContext
+// 	evaluator Evaluator
+// }
 
-func (c *callContext) Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
-	return c.evaluator.Eval(c, node, env)
-}
+// func (c *callContext) Eval(node ast.Node, env object.Environment) (object.RubyObject, error) {
+// 	return c.evaluator.Eval(c, node, env)
+// }
 
-var (
-	_ object.CallContext = &callContext{}
-)
+// var (
+// 	_ object.CallContext = &callContext{}
+// )
 
 type rubyObjects []object.RubyObject
 
@@ -70,14 +71,20 @@ func NewEvaluator() Evaluator {
 }
 
 type evaluator struct {
-	ctx object.CallContext
+	ctx object.CC
 }
 
 func (e *evaluator) Eval(ctx context.Context, node ast.Node, env object.Environment) (object.RubyObject, error) {
-	e.ctx = &callContext{
-		CallContext: object.NewCallContext(env, object.FUNCS_STORE),
-		evaluator:   e,
-	}
+	// e.ctx = &callContext{
+	// 	CallContext: object.NewCallContext(env, object.FUNCS_STORE),
+	// 	evaluator:   e,
+	// }
+	ectx := object.NewCC(object.FUNCS_STORE, env)
+	ectx = call.WithEval(ectx, func(node ast.Node, env object.Environment) (object.RubyObject, error) {
+		// return e.eval(node, env)
+		return e.eval(node, env)
+	})
+	e.ctx = ectx
 	// ctx := object.NewCallContext(env, object.FUNCS_STORE)
 	return e.eval(node, env)
 }
@@ -987,7 +994,7 @@ func (e *evaluator) evalContextCallExpression(node *ast.ContextCallExpression, e
 		}
 		args = append(args, block)
 	}
-	ctx2 := object.WithReceiver(e.ctx, context)
+	ctx2 := call.WithReceiver(e.ctx, &context)
 	return object.Send(ctx2, node.Function, args...)
 }
 
@@ -1046,7 +1053,7 @@ func (e *evaluator) evalInfixExpression(node *ast.InfixExpression, env object.En
 		// result is right
 		return right, nil
 	}
-	ctx2 := object.WithReceiver(e.ctx, left)
+	ctx2 := call.WithReceiver(e.ctx, &left)
 	return object.Send(ctx2, node.Operator.String(), right)
 }
 

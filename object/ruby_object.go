@@ -139,7 +139,7 @@ func (f *Function) String() string {
 }
 
 // Call implements the RubyMethod interface. It evaluates f.Body and returns its result
-func (f *Function) Call(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func (f *Function) Call(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, "Function.Call")()
 	trace.MessageCtx(ctx, f.Name)
 	trace.MessageCtx(ctx, f.String())

@@ -4,6 +4,7 @@ import (
 	"hash/fnv"
 	"strings"
 
+	"github.com/MarcinKonowalczyk/goruby/object/call"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
@@ -75,7 +76,7 @@ var arrayMethods = map[string]RubyMethod{
 	"*":        newMethod(arrayAst),
 }
 
-func arrayPush(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func arrayPush(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 
 	array, _ := ctx.Receiver().(*Array)
@@ -83,7 +84,7 @@ func arrayPush(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return array, nil
 }
 
-func arrayUnshift(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func arrayUnshift(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 
 	array, _ := ctx.Receiver().(*Array)
@@ -91,14 +92,14 @@ func arrayUnshift(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return array, nil
 }
 
-func arraySize(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func arraySize(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 
 	array, _ := ctx.Receiver().(*Array)
 	return NewInteger(int64(len(array.Elements))), nil
 }
 
-func arrayFindAll(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func arrayFindAll(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 
 	array, _ := ctx.Receiver().(*Array)
@@ -134,7 +135,7 @@ func arrayFindAll(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return result, nil
 }
 
-func arrayFirst(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func arrayFirst(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 
 	array, _ := ctx.Receiver().(*Array)
@@ -164,7 +165,7 @@ func arrayFirst(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return result, nil
 }
 
-func arrayMap(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func arrayMap(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	trace.MessageCtx(ctx, ctx.Receiver().Inspect())
 
@@ -192,7 +193,7 @@ func arrayMap(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return result, nil
 }
 
-func arrayAll(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func arrayAll(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 
 	array, _ := ctx.Receiver().(*Array)
@@ -224,7 +225,7 @@ func arrayAll(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return TRUE, nil
 }
 
-func arrayJoin(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func arrayJoin(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 
 	array, _ := ctx.Receiver().(*Array)
@@ -243,7 +244,7 @@ func arrayJoin(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return NewString(result), nil
 }
 
-func arrayInclude(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func arrayInclude(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 
 	array, _ := ctx.Receiver().(*Array)
@@ -264,7 +265,7 @@ func arrayInclude(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 
 		// 	}
 		// }
-		ctx2 := WithReceiver(ctx, elem)
+		ctx2 := call.WithReceiver(ctx, &elem)
 		ret, err := Send(ctx2, "==", arg)
 		if err != nil {
 			// fmt.Println("Error in arrayInclude:", err)
@@ -282,7 +283,7 @@ func arrayInclude(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return FALSE, nil
 }
 
-func arrayEach(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func arrayEach(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 
 	array, _ := ctx.Receiver().(*Array)
@@ -307,7 +308,7 @@ func arrayEach(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return array, nil
 }
 
-func arrayReject(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func arrayReject(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 
 	array, _ := ctx.Receiver().(*Array)
@@ -343,7 +344,7 @@ func arrayReject(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return result, nil
 }
 
-func arrayPop(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func arrayPop(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 
 	array, _ := ctx.Receiver().(*Array)
@@ -355,7 +356,7 @@ func arrayPop(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return elem, nil
 }
 
-func arrayMinus(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func arrayMinus(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 
 	array, _ := ctx.Receiver().(*Array)
@@ -370,7 +371,7 @@ func arrayMinus(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	for _, elem := range array.Elements {
 		include := false
 		for _, otherElem := range otherArray.Elements {
-			ctx2 := WithReceiver(ctx, elem)
+			ctx2 := call.WithReceiver(ctx, &elem)
 			ret, err := Send(ctx2, "==", otherElem)
 			if err != nil {
 				return nil, err
@@ -391,7 +392,7 @@ func arrayMinus(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return result, nil
 }
 
-func arrayPlus(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func arrayPlus(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 
 	array, _ := ctx.Receiver().(*Array)
@@ -408,7 +409,7 @@ func arrayPlus(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return result, nil
 }
 
-func arrayAst(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func arrayAst(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 
 	array, _ := ctx.Receiver().(*Array)

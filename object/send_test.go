@@ -27,22 +27,31 @@ func (t *testRubyObject) HashKey() HashKey {
 func TestSend(t *testing.T) {
 	// }
 	methods := map[string]RubyMethod{
-		"a_method": newMethod(func(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+		"a_method": newMethod(func(ctx CC, args ...RubyObject) (RubyObject, error) {
 			return TRUE, nil
 		}),
-		"another_method": newMethod(func(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+		"another_method": newMethod(func(ctx CC, args ...RubyObject) (RubyObject, error) {
 			return FALSE, nil
 		}),
 	}
 	t.Run("normal object as context", func(t *testing.T) {
-		ctx := &callContext{
-			receiver: &testRubyObject{
+		// ctx := &callContext{
+		// 	receiver: &testRubyObject{
+		// 		class: &class{
+		// 			name:            "base class",
+		// 			instanceMethods: NewMethodSet(methods),
+		// 		},
+		// 	},
+		// }
+		ctx := NewCC(
+			&testRubyObject{
 				class: &class{
 					name:            "base class",
 					instanceMethods: NewMethodSet(methods),
 				},
 			},
-		}
+			nil,
+		)
 
 		tests := []struct {
 			method         string
@@ -62,7 +71,7 @@ func TestSend(t *testing.T) {
 			{
 				"unknown_method",
 				nil,
-				NewNoMethodError(ctx.receiver, "unknown_method"),
+				NewNoMethodError(ctx.Receiver(), "unknown_method"),
 			},
 		}
 
@@ -129,7 +138,7 @@ func TestAddMethod(t *testing.T) {
 			},
 		)
 
-		call_context.eigenclass.addMethod("bar", newMethod(func(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+		call_context.eigenclass.addMethod("bar", newMethod(func(ctx CC, args ...RubyObject) (RubyObject, error) {
 			return NIL, nil
 		}))
 
@@ -190,7 +199,7 @@ func TestAddMethod(t *testing.T) {
 			},
 		)
 
-		call_context.eigenclass.addMethod("bar", newMethod(func(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+		call_context.eigenclass.addMethod("bar", newMethod(func(ctx CC, args ...RubyObject) (RubyObject, error) {
 			return NIL, nil
 		}))
 

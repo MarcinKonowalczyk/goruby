@@ -70,7 +70,7 @@ func (rang *Range) ToArray() *Array {
 	return result
 }
 
-func rangeFindAll(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func rangeFindAll(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	rng, _ := ctx.Receiver().(*Range)
 	proc, ok := args[0].(*Symbol)
@@ -104,7 +104,7 @@ func rangeFindAll(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return result, nil
 }
 
-func rangeAll(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func rangeAll(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	rng, _ := ctx.Receiver().(*Range)
 	if len(args) == 0 {
@@ -135,7 +135,7 @@ func rangeAll(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return TRUE, nil
 }
 
-func rangeSize(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func rangeSize(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	rng, _ := ctx.Receiver().(*Range)
 	size := rng.Right - rng.Left

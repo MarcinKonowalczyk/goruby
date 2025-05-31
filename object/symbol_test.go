@@ -18,16 +18,10 @@ func TestSymbol_hashKey(t *testing.T) {
 }
 
 func TestSymbolToS(t *testing.T) {
-	ctx := &callContext{
-		receiver: NewSymbol("foo"),
-	}
-
+	ctx := NewCC(NewSymbol("foo"), nil)
 	result, err := symbolToS(ctx)
-
 	assert.NoError(t, err)
-
 	expected := NewString("foo")
-
 	assert.EqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 }
 

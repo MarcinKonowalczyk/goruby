@@ -7,7 +7,7 @@ import (
 )
 
 // Send sends message method with args to context and returns its result
-func Send(ctx CallContext, method string, args ...RubyObject) (RubyObject, error) {
+func Send(ctx CC, method string, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	trace.MessageCtx(ctx, method)
 

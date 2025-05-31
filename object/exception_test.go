@@ -7,10 +7,7 @@ import (
 )
 
 func TestExceptionInitialize(t *testing.T) {
-	ctx := &callContext{
-		receiver: &Exception{},
-		env:      NewMainEnvironment(),
-	}
+	ctx := NewCC(&Exception{}, NewMainEnvironment())
 	t.Run("without args", func(t *testing.T) {
 		result, err := exceptionInitialize(ctx)
 
@@ -38,10 +35,7 @@ func TestExceptionInitialize(t *testing.T) {
 
 func TestExceptionException(t *testing.T) {
 	contextObject := &Exception{message: "x"}
-	ctx := &callContext{
-		receiver: contextObject,
-		env:      NewMainEnvironment(),
-	}
+	ctx := NewCC(contextObject, NewMainEnvironment())
 	t.Run("without args", func(t *testing.T) {
 		result, err := exceptionException(ctx)
 
@@ -67,14 +61,8 @@ func TestExceptionException(t *testing.T) {
 
 func TestExceptionToS(t *testing.T) {
 	contextObject := &Exception{message: "x"}
-	ctx := &callContext{
-		receiver: contextObject,
-		env:      NewMainEnvironment(),
-	}
-
+	ctx := NewCC(contextObject, NewMainEnvironment())
 	result, err := exceptionToS(ctx)
-
 	assert.NoError(t, err)
-
 	assert.EqualCmpAny(t, result, NewString("x"), CompareRubyObjectsForTests)
 }

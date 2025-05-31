@@ -24,7 +24,7 @@ var fileClassMethods = map[string]RubyMethod{
 	"read":        newMethod(fileRead),
 }
 
-func fileExpandPath(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func fileExpandPath(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	switch len(args) {
 	case 1:
@@ -60,7 +60,7 @@ func fileExpandPath(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	}
 }
 
-func fileDirname(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func fileDirname(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	if len(args) != 1 {
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))
@@ -75,7 +75,7 @@ func fileDirname(ctx CallContext, args ...RubyObject) (RubyObject, error) {
 	return NewString(dirname), nil
 }
 
-func fileRead(ctx CallContext, args ...RubyObject) (RubyObject, error) {
+func fileRead(ctx CC, args ...RubyObject) (RubyObject, error) {
 	defer trace.TraceCtx(ctx, trace.HereCtx(ctx))()
 	if len(args) != 1 {
 		return nil, NewWrongNumberOfArgumentsError(1, len(args))

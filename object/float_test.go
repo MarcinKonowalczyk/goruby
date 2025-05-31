@@ -40,12 +40,9 @@ func TestFloatDiv(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := &callContext{receiver: NewFloat(4)}
-
+		ctx := NewCC(NewFloat(4), nil)
 		result, err := floatDiv(ctx, testCase.arguments...)
-
 		assert.Error(t, err, testCase.err)
-
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
@@ -69,12 +66,9 @@ func TestFloatMul(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := &callContext{receiver: NewFloat(4)}
-
+		ctx := NewCC(NewFloat(4), nil)
 		result, err := floatMul(ctx, testCase.arguments...)
-
 		assert.Error(t, err, testCase.err)
-
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
@@ -98,12 +92,9 @@ func TestFloatAdd(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := &callContext{receiver: NewFloat(2)}
-
+		ctx := NewCC(NewFloat(2), nil)
 		result, err := floatAdd(ctx, testCase.arguments...)
-
 		assert.Error(t, err, testCase.err)
-
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
@@ -127,12 +118,9 @@ func TestFloatSub(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := &callContext{receiver: NewFloat(4)}
-
+		ctx := NewCC(NewFloat(4), nil)
 		result, err := floatSub(ctx, testCase.arguments...)
-
 		assert.Error(t, err, testCase.err)
-
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
@@ -156,7 +144,7 @@ func TestFloatSub(t *testing.T) {
 // 	}
 
 // 	for _, testCase := range tests {
-// 		ctx := &callContext{receiver: NewFloat(4)}
+// 		ctx := NewCC(NewFloat(4), nil)
 
 // 		result, err := floatModulo(ctx, testCase.arguments...)
 
@@ -190,12 +178,9 @@ func TestFloatLt(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := &callContext{receiver: NewFloat(4)}
-
+		ctx := NewCC(NewFloat(4), nil)
 		result, _ := floatLt(ctx, testCase.arguments...)
-
 		// assert.AssertError(t, err, testCase.err)
-
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
@@ -224,12 +209,9 @@ func TestFloatGt(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := &callContext{receiver: NewFloat(4)}
-
+		ctx := NewCC(NewFloat(4), nil)
 		result, _ := floatGt(ctx, testCase.arguments...)
-
 		// assert.AssertError(t, err, testCase.err)
-
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
@@ -258,7 +240,7 @@ func TestFloatGt(t *testing.T) {
 // 	}
 
 // 	for _, testCase := range tests {
-// 		ctx := &callContext{receiver: NewFloat(4)}
+// 		ctx := NewCC(NewFloat(4), nil)
 
 // 		result, err := floatEq(ctx, testCase.arguments...)
 
@@ -292,7 +274,7 @@ func TestFloatGt(t *testing.T) {
 // 	}
 
 // 	for _, testCase := range tests {
-// 		ctx := &callContext{receiver: NewFloat(4)}
+// 		ctx := NewCC(NewFloat(4), nil)
 
 // 		result, err := floatNeq(ctx, testCase.arguments...)
 
@@ -331,12 +313,9 @@ func TestFloatGte(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := &callContext{receiver: NewFloat(4)}
-
+		ctx := NewCC(NewFloat(4), nil)
 		result, _ := floatGte(ctx, testCase.arguments...)
-
 		// assert.AssertError(t, err, testCase.err)
-
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
@@ -370,12 +349,9 @@ func TestFloatLte(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := &callContext{receiver: NewFloat(4)}
-
+		ctx := NewCC(NewFloat(4), nil)
 		result, _ := floatLte(ctx, testCase.arguments...)
-
 		// assert.AssertError(t, err, testCase.err)
-
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
@@ -409,12 +385,9 @@ func TestFloatSpaceship(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := &callContext{receiver: NewFloat(4)}
-
+		ctx := NewCC(NewFloat(4), nil)
 		result, _ := floatSpaceship(ctx, testCase.arguments...)
-
 		// assert.AssertError(t, err, testCase.err)
-
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
 	}
 }
