@@ -676,14 +676,14 @@ func (e *evaluator) evalBlockStatement(block *ast.BlockStatement, ev env.Environ
 		if err != nil {
 			return nil, err
 		}
-		if result != nil {
-			switch result := result.(type) {
-			case *object.ReturnValue:
+		switch result.(type) {
+		case nil:
+			// do nothing
+		case *object.ReturnValue:
+			return result, nil
+		case *object.BreakValue:
+			if object.IsTruthy(result.(*object.BreakValue).Value) {
 				return result, nil
-			case *object.BreakValue:
-				if object.IsTruthy(result.Value) {
-					return result, nil
-				}
 			}
 		}
 	}
