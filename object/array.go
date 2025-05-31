@@ -168,7 +168,7 @@ func arrayFirst(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object
 
 func arrayMap(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx)()
-	trace.MessageCtx(ctx, ctx.Receiver().Inspect())
+	trace.MessageCtx(ctx, func() string { return ctx.Receiver().Inspect() })
 
 	array, _ := ctx.Receiver().(*Array)
 	if len(args) == 0 {
