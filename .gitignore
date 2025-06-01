@@ -27,4 +27,10 @@ main
 .DS_Store
 *.trace
 *.prof
+
 goruby
+!/cmd/goruby
+girb
+!/cmd/girb
+grgr
+!/cmd/grgr

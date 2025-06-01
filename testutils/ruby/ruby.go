@@ -8,7 +8,7 @@ import (
 type Ruby interface {
 	Version() string
 	RunCode(code string) (string, error)
-	RunFile(filename string) (string, error)
+	RunFile(filename string, flags ...string) (string, error)
 }
 
 type ruby_interpreter struct {
@@ -37,8 +37,10 @@ func (r *ruby_interpreter) RunCode(code string) (string, error) {
 	return r.RunFile(tmpfile.Name())
 }
 
-func (r *ruby_interpreter) RunFile(filename string) (string, error) {
-	cmd := exec.Command(r.ruby_path, filename)
+func (r *ruby_interpreter) RunFile(filename string, flags ...string) (string, error) {
+	args := flags
+	args = append(args, filename)
+	cmd := exec.Command(r.ruby_path, args...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", err

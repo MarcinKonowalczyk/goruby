@@ -190,3 +190,18 @@ func Type[T any](t *testing.T, obj any, args ...any) T {
 	t.Helper()
 	return assertType[T](t, nestedAssertParent, obj, args...)
 }
+
+// func EqualLineByLine(t *testing.T, a string, b string) {
+// 	t.Helper()
+// 	// EqualCmp(t, a, b, compare.LineByLine)
+// 	// assert(t, nestedAssertParent, comparator(a, b), []any{"expected '%v' (%T) == '%v' (%T)", a, a, b, b})
+// 	a_lines := strings.Split(a, "\n")
+// 	b_lines := strings.Split(b, "\n")
+// 	assert(t, nestedAssertParent, len(a_lines) == len(b_lines), []any{"expected '%d' lines, got '%d'", len(a_lines), len(b_lines)})
+// 	if len(a_lines) != len(b_lines) {
+// 		return // no point in checking the lines if the number of lines is different
+// 	}
+// 	for i := range a_lines {
+// 		assert(t, nestedAssertParent, a_lines[i] == b_lines[i], []any{"expected line %d to be '%s', got '%s'", i + 1, a_lines[i], b_lines[i]})
+// 	}
+// }

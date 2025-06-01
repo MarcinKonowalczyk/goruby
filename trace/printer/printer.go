@@ -2,29 +2,53 @@ package printer
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
-func NewTracePrinter() func(trace.Node) error {
+// helper to write trace output with indentation
+type writer struct {
+	io.Writer
+	// needs_newline bool
+}
+
+func (w *writer) W(symbol rune, indent int, name string) {
+	f := "%s%c %s\n"
+	// if w.needs_newline {
+	// 	// needs newline from previous line
+	// 	f = "\n" + f
+	// }
+	msg := fmt.Sprintf(f, strings.Repeat(".", indent*2), symbol, name)
+	w.Write([]byte(msg))
+	// w.needs_newline = true
+}
+
+func NewTracePrinter(
+	out io.Writer,
+	print_messages bool,
+) func(trace.Node) error {
 	indent := 0
+	w := writer{out}
 	return func(n trace.Node) error {
 		switch n := n.(type) {
 		case *trace.Enter:
 			if n.Name == trace.START_NODE {
 				return nil
 			}
-			fmt.Printf("%s > %s\n", strings.Repeat(".", indent*2), n.Name)
+			w.W('>', indent, n.Name)
 			indent++
 		case *trace.Exit:
 			if n.Name == trace.END_NODE {
 				return nil
 			}
 			indent--
-			fmt.Printf("%s < %s\n", strings.Repeat(".", indent*2), n.Name)
+			w.W('<', indent, n.Name)
 		case *trace.Message:
-			fmt.Printf("%s @ %s\n", strings.Repeat(".", indent*2), n.Message)
+			if print_messages {
+				w.W('@', indent, n.Message)
+			}
 		default:
 			panic(fmt.Sprintf("unknown node type: %T", n))
 		}

@@ -46,7 +46,12 @@ func New(input Input, output io.Writer, prompt Prompt) Repl {
 		output: output,
 		prompt: prompt,
 		interpreter: &bufferedInterpreter{
-			interpreter: interpreter.NewInterpreter(os.Args[1:]),
+			interpreter: interpreter.NewInterpreter(
+				os.Stdin,
+				output,
+				os.Stderr,
+				os.Args[1:],
+			),
 		},
 	}
 }

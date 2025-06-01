@@ -8,6 +8,7 @@ import (
 	"runtime/pprof"
 	"strings"
 
+	"github.com/MarcinKonowalczyk/goruby/cmd/goruby/cli"
 	"github.com/MarcinKonowalczyk/goruby/pipelines/interpreter"
 	"github.com/pkg/errors"
 )
@@ -27,7 +28,6 @@ func (m *multiString) Set(s string) error {
 }
 
 var onelineScripts multiString
-var trace_parse bool
 var trace_eval bool
 var cpuprofile string = ""
 
@@ -37,12 +37,17 @@ func printError(err error) {
 }
 
 func main() {
+	cli.Init()
 	flag.StringVar(&cpuprofile, "cpuprofile", "", "write cpu profile to file")
 	flag.Var(&onelineScripts, "e", "one line of script. Several -e's allowed. Omit [programfile]")
-	flag.BoolVar(&trace_parse, "trace-parse", false, "trace parsing")
 	flag.BoolVar(&trace_eval, "trace-eval", false, "trace parsing")
 	version := flag.Bool("version", false, "print version")
 	flag.Parse()
+	flags, err := cli.Parse()
+	if err != nil {
+		log.Fatal("Error parsing flags: ", err)
+	}
+
 	if *version {
 		fmt.Println("goruby 0.1.0")
 		os.Exit(0)
@@ -67,13 +72,22 @@ func main() {
 		log.Println("No program files specified")
 		os.Exit(1)
 	}
-	interpreter := interpreter.NewInterpreter(args[1:])
-	if trace_parse {
+
+	// set up the interpreter
+	stdin := os.Stdin
+	stdout := os.Stdout
+	stderr := os.Stderr
+
+	interpreter := interpreter.NewInterpreter(stdin, stdout, stderr, args[1:])
+
+	if flags.TraceParse.Enabled() {
 		interpreter.SetTraceParse(true)
 	}
 	if trace_eval {
 		interpreter.SetTraceEval(true)
 	}
+
+	// if we have oneline scripts, interpret them
 	if len(onelineScripts) != 0 {
 		input := strings.Join(onelineScripts, "\n")
 		_, err := interpreter.InterpretCode(input)
@@ -83,6 +97,7 @@ func main() {
 		}
 		return
 	}
+
 	if len(args) == 0 {
 		log.Println("No program files specified")
 		os.Exit(1)
@@ -92,7 +107,14 @@ func main() {
 		log.Printf("Error while opening program file: %T:%v\n", err, err)
 		os.Exit(1)
 	}
-	_, err = interpreter.InterpretCode(string(fileBytes))
+
+	if flags.TraceParse == cli.TraceParse_Only {
+		// we can only parse the code, not interpret it
+		_, err = interpreter.ParseCode(string(fileBytes))
+	} else {
+		_, err = interpreter.InterpretCode(string(fileBytes))
+	}
+
 	if err != nil {
 		printError(err)
 		os.Exit(1)

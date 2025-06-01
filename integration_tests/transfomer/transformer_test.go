@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -20,7 +21,9 @@ const TEST_FILES_FOLDER = "test_files"
 const TRANSFORMED_SUFFIX = "transformed"
 
 func findTestFiles() []string {
-	test_files := utils.FindTestFiles(TEST_FILES_FOLDER, ".rb")
+	this_path := utils.ThisPackagePath()
+	test_files_folder := filepath.Join(this_path, TEST_FILES_FOLDER)
+	test_files := utils.FindTestFiles(test_files_folder, ".rb")
 
 	// Filter _transformed.rb files
 	filtered_test_files := []string{}
@@ -31,24 +34,6 @@ func findTestFiles() []string {
 		filtered_test_files = append(filtered_test_files, file)
 	}
 	return filtered_test_files
-}
-
-func initGoRuby() (ruby.Ruby, error) {
-	path, err := utils.CompileGoRuby(true)
-	if err != nil {
-		return nil, fmt.Errorf("failed to compile GoRuby: %w", err)
-	}
-
-	rb, err := ruby.FindRuby(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find GoRuby binary: %w", err)
-	}
-
-	// make sure we are actually running GoRuby
-	if !strings.Contains(strings.ToLower(rb.Version()), "goruby") {
-		return nil, fmt.Errorf("GoRuby binary does not contain 'goruby' in version string: %s", rb.Version())
-	}
-	return rb, nil
 }
 
 func runTest(
@@ -104,7 +89,7 @@ func TestAll(t *testing.T) {
 	} else {
 		t.Logf("Using Ruby interpreter: %s", rb.Version())
 	}
-	grb, err := initGoRuby()
+	grb, err := utils.InitGoRuby()
 	if err != nil {
 		t.Skipf("GoRuby not compiled, skipping tests: %v", err)
 	} else {

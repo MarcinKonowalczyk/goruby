@@ -211,14 +211,18 @@ func Here() string {
 }
 
 //go:inline
-func whereToString(where ...string) string {
-	var where_str string
-	if len(where) == 0 {
-		where_str = here(callerName(1))
-	} else if len(where) > 1 {
-		where_str = where[0]
+func whereToString(where_args ...string) string {
+	var where string
+	if len(where_args) == 0 {
+		where = here(callerName(1))
+	} else if len(where_args) == 1 {
+		where = where_args[0]
+	} else { // len(where) > 1 {
+		format := where_args[0]
+		rest := []any{where_args[1:]}
+		where = fmt.Sprintf(format, rest...)
 	}
-	return where_str
+	return where
 }
 
 func (t *tracer) Trace(where ...string) *Exit {
