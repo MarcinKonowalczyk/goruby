@@ -15,7 +15,6 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/parser/file"
 	"github.com/MarcinKonowalczyk/goruby/token"
 	"github.com/MarcinKonowalczyk/goruby/trace"
-	"github.com/pkg/errors"
 )
 
 // Possible precedence values
@@ -261,7 +260,7 @@ func (p *parser) noPrefixParseFnError(t token.Type) {
 	if epos.Filename != "" || epos.IsValid() {
 		msg = epos.String() + ": " + msg
 	}
-	p.Error(errors.Errorf("%s", msg))
+	p.Error(fmt.Errorf("%s", msg))
 }
 
 // ParseProgram returns the parsed program AST and all errors which occurred

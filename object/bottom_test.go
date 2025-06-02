@@ -10,7 +10,7 @@ import (
 )
 
 func TestBottomIsNil(t *testing.T) {
-	ctx := call.NewContext[ruby.Object](context.Background(), TRUE, nil)
+	ctx := call.NewContext[ruby.Object](context.Background(), nil).WithReceiver(TRUE)
 	result, err := bottomIsNil(ctx)
 
 	assert.NoError(t, err)
@@ -22,14 +22,14 @@ func TestBottomIsNil(t *testing.T) {
 
 func TestBottomToS(t *testing.T) {
 	t.Run("object as receiver", func(t *testing.T) {
-		ctx := call.NewContext[ruby.Object](context.Background(), &Bottom{}, nil)
+		ctx := call.NewContext[ruby.Object](context.Background(), nil).WithReceiver(&Bottom{})
 		result, err := bottomToS(ctx)
 		assert.NoError(t, err)
 		assert.EqualCmpAny(t, result, NewStringf("#<Bottom:%p>", ctx.Receiver()), CompareRubyObjectsForTests)
 	})
 	t.Run("self object as receiver", func(t *testing.T) {
 		self := &Bottom{}
-		ctx := call.NewContext[ruby.Object](context.Background(), self, nil)
+		ctx := call.NewContext[ruby.Object](context.Background(), nil).WithReceiver(self)
 		result, err := bottomToS(ctx)
 		assert.NoError(t, err)
 		assert.EqualCmpAny(t, result, NewStringf("#<Bottom:%p>", self), CompareRubyObjectsForTests)
@@ -39,7 +39,9 @@ func TestBottomToS(t *testing.T) {
 func TestBottomRaise(t *testing.T) {
 	object := &Bottom{}
 	env := NewMainEnvironment()
-	ctx := call.NewContext[ruby.Object](context.Background(), object, env)
+	ctx := call.NewContext[ruby.Object](context.Background(), nil).
+		WithReceiver(object).
+		WithEnv(env)
 
 	t.Run("without args", func(t *testing.T) {
 		result, err := bottomRaise(ctx)

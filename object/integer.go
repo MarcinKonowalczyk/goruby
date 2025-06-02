@@ -8,7 +8,6 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/object/hash"
 	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/trace"
-	"github.com/pkg/errors"
 )
 
 var integerClass ruby.ClassObject = newClass("Integer", integerMethods, nil)
@@ -124,12 +123,9 @@ func safeObjectToInteger(arg ruby.Object) (int64, bool) {
 func integerCmpHelper(args []ruby.Object) (int64, error) {
 	right, ok := safeObjectToInteger(args[0])
 	if !ok {
-		return 0, errors.WithMessage(
-			NewArgumentError(
-				"comparison of Integer with %s failed",
-				args[0].Class().(ruby.Object).Inspect(),
-			),
-			callersName(),
+		return 0, NewArgumentError(
+			"comparison of Integer with %s failed",
+			args[0].Class().(ruby.Object).Inspect(),
 		)
 	}
 	return right, nil

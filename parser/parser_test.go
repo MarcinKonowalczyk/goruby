@@ -13,7 +13,6 @@ import (
 	p "github.com/MarcinKonowalczyk/goruby/parser"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert/compare"
-	"github.com/pkg/errors"
 )
 
 func TestMain(m *testing.M) {
@@ -2364,14 +2363,10 @@ func parseExpression(src string) (ast.Expression, *p.Errors) {
 	return expr, parserErrors
 }
 
-func checkParserErrors(t *testing.T, err error, withStack ...bool) {
+func checkParserErrors(t *testing.T, err error) {
 	t.Helper()
 	if err == nil {
 		return
-	}
-	printStack := false
-	if len(withStack) != 0 {
-		printStack = withStack[0]
 	}
 	// TODO: this breaks with nil-pointer dereference
 	// parserErrors := assert.AssertType[*p.Errors](t, err, "Unexpected error type: %T:%v\n", err, err)
@@ -2381,17 +2376,9 @@ func checkParserErrors(t *testing.T, err error, withStack ...bool) {
 	}
 	assert.That(t, ok, "Unexpected parser error: %T:%v\n", err, err)
 
-	type stackTracer interface {
-		StackTrace() errors.StackTrace
-	}
-
 	t.Errorf("parser has %d errors", len(parserErrors.Errors))
 	for _, e := range parserErrors.Errors {
 		t.Errorf("%v", e)
-		if stackErr, ok := e.(stackTracer); ok && printStack {
-			st := stackErr.StackTrace()
-			fmt.Printf("Error stack:%+v\n", st[0:2]) // top two frames
-		}
 
 	}
 	t.FailNow()

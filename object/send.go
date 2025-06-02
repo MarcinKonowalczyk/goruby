@@ -29,7 +29,5 @@ func Send(ctx call.Context[ruby.Object], method string, args ...ruby.Object) (ru
 		return fn.Call(ctx, args...)
 	}
 
-	// fmt.Printf("receiver: %v(%T)\n", receiver, receiver)
-	// fmt.Printf("method: %v(%T)\n", method, method)
 	return nil, NewNoMethodError(receiver, method)
 }

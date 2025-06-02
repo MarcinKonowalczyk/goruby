@@ -3,6 +3,8 @@ package call
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/object/env"
@@ -12,15 +14,13 @@ type _R interface{} // for type assertions
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// carries all the information about a call + all the context.Context stuff
-// like loggers, tracers, deadlines, etc.
-// R and E are the types of the receiver and the environment. they needed
-// to be generics to break the import cycle with the object package, but
-// in practise they are always RubyObject and Environment respectively.
-type Context[R any] interface {
-	// embedded context.Context
-	context.Context
-	// Receiver returns the Ruby object the message is sent to
+type Io interface {
+	Stdin() io.Reader
+	Stdout() io.Writer
+	Stderr() io.Writer
+}
+
+type EvalContext[R any] interface {
 	Receiver() R
 	// Env returns the current environment at call time
 	Env() env.Environment[R]
@@ -29,16 +29,23 @@ type Context[R any] interface {
 	Eval(ast.Node, env.Environment[R]) (R, error)
 }
 
+// carries all the information about a call + all the context.Context stuff
+// like loggers, tracers, deadlines, etc.
+type Context[R any] interface {
+	context.Context
+	EvalContext[R]
+	Io
+
+	WithReceiver(receiver R) Context[R]
+	WithEnv(env env.Environment[R]) Context[R]
+	WithEval(eval EvalFunc[R]) Context[R]
+}
+
 type EvalFunc[R any] func(ast.Node, env.Environment[R]) (R, error)
 
 // NewContext returns a new CallContext with a stubbed eval function
-func NewContext[R any](ctx context.Context, receiver R, env env.Environment[R]) Context[R] {
-	return WrappedContext(
-		emptyContext[R]{ctx},
-		&receiver,
-		&env,
-		nil,
-	)
+func NewContext[R any](ctx context.Context, io Io) Context[R] {
+	return emptyContext[R]{ctx, io}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -46,6 +53,7 @@ func NewContext[R any](ctx context.Context, receiver R, env env.Environment[R]) 
 // utility struct to wrap a context and replace the receiver, env or eval
 type wrappedCtx[R any] struct {
 	Context[R]
+	io       Io
 	receiver *R
 	env      *env.Environment[R]
 	eval     *EvalFunc[R]
@@ -72,55 +80,59 @@ func (c *wrappedCtx[R]) Eval(node ast.Node, env env.Environment[R]) (R, error) {
 	return c.Context.Eval(node, env)
 }
 
+func (c *wrappedCtx[R]) Io() Io {
+	if c.io != nil {
+		return c.io
+	}
+	return c.Context.(Io)
+}
+
+//go:inline
+func panicIfNil[T any](name string, value *T) {
+	if value == nil {
+		panic(fmt.Sprintf("%s cannot be nil", name))
+	}
+}
+
+func (c wrappedCtx[R]) WithReceiver(receiver R) Context[R] {
+	panicIfNil("receiver", &receiver)
+	c.receiver = &receiver
+	return &c
+}
+
+func (c wrappedCtx[R]) WithEnv(env env.Environment[R]) Context[R] {
+	panicIfNil("env", &env)
+	c.env = &env
+	return &c
+}
+
+func (c wrappedCtx[R]) WithEval(eval EvalFunc[R]) Context[R] {
+	panicIfNil("eval", &eval)
+	c.eval = &eval
+	return &c
+}
+
 var (
 	_ Context[_R]     = (*wrappedCtx[_R])(nil)
 	_ context.Context = (*wrappedCtx[_R])(nil)
 )
 
-func WithReceiver[R any](parent Context[R], receiver *R) Context[R] {
-	if parent == nil {
-		panic("parent CallContext cannot be nil")
-	}
-	if receiver == nil {
-		panic("receiver cannot be nil")
-	}
-	return &wrappedCtx[R]{
-		Context:  parent,
-		receiver: receiver,
-		env:      nil,
-		eval:     nil,
-	}
-}
+// func WithReceiver[R any](parent Context[R], receiver *R) Context[R] {
+// 	panicIfNil("parent", &parent)
+// 	panicIfNil("parent", &parent)
+// 	return &wrappedCtx[R]{Context: parent, receiver: receiver, env: nil, eval: nil}
+// }
 
-func WithEnv[R any](parent Context[R], env *env.Environment[R]) Context[R] {
-	if parent == nil {
-		panic("parent CallContext cannot be nil")
-	}
-	if env == nil {
-		panic("env cannot be nil")
-	}
-	return &wrappedCtx[R]{
-		Context:  parent,
-		receiver: nil,
-		env:      env,
-		eval:     nil,
-	}
-}
+// func WithEnv[R any](parent Context[R], env *env.Environment[R]) Context[R] {
+// 	panicIfNil("parent", &parent)
+// 	panicIfNil("env", &env)
+// 	return &wrappedCtx[R]{Context: parent, receiver: nil, env: env, eval: nil}
+// }
 
-func WithEval[R any](parent Context[R], eval EvalFunc[R]) Context[R] {
-	if parent == nil {
-		panic("parent CallContext cannot be nil")
-	}
-	if eval == nil {
-		panic("eval function cannot be nil")
-	}
-	return &wrappedCtx[R]{
-		Context:  parent,
-		receiver: nil,
-		env:      nil,
-		eval:     &eval,
-	}
-}
+// func WithEval[R any](parent Context[R], eval EvalFunc[R]) Context[R] {
+// 	panicIfNil("parent", &parent)
+// 	return &wrappedCtx[R]{Context: parent, receiver: nil, env: nil, eval: &eval}
+// }
 
 func WrappedContext[R any](
 	parent Context[R],
@@ -146,23 +158,8 @@ func WrappedContext[R any](
 
 type emptyContext[R any] struct {
 	context.Context // embedded context.Context
+	Io
 }
-
-// func (emptyContext[R]) Deadline() (deadline time.Time, ok bool) {
-// 	return
-// }
-
-// func (emptyContext[R]) Done() <-chan struct{} {
-// 	return nil
-// }
-
-// func (emptyContext[R]) Err() error {
-// 	return nil
-// }
-
-// func (emptyContext[R]) Value(key any) any {
-// 	return nil
-// }
 
 func (c emptyContext[R]) Receiver() R {
 	var zero R
@@ -179,7 +176,35 @@ func (c emptyContext[R]) Eval(node ast.Node, env env.Environment[R]) (R, error) 
 	return zero, fmt.Errorf("no eval present")
 }
 
+func (c emptyContext[R]) Stdin() io.Reader {
+	return os.Stdin
+}
+
+func (c emptyContext[R]) Stdout() io.Writer {
+	return os.Stdout
+}
+
+func (c emptyContext[R]) Stderr() io.Writer {
+	return os.Stderr
+}
+
+func (c emptyContext[R]) WithReceiver(receiver R) Context[R] {
+	panicIfNil("receiver", &receiver)
+	return &wrappedCtx[R]{Context: c, receiver: &receiver, env: nil, eval: nil}
+}
+
+func (c emptyContext[R]) WithEnv(env env.Environment[R]) Context[R] {
+	panicIfNil("env", &env)
+	return &wrappedCtx[R]{Context: c, receiver: nil, env: &env, eval: nil}
+}
+
+func (c emptyContext[R]) WithEval(eval EvalFunc[R]) Context[R] {
+	panicIfNil("eval", &eval)
+	return &wrappedCtx[R]{Context: c, receiver: nil, env: nil, eval: &eval}
+}
+
 var (
 	_ Context[_R]     = (*emptyContext[_R])(nil)
 	_ context.Context = (*emptyContext[_R])(nil)
+	_ Io              = (*emptyContext[_R])(nil)
 )

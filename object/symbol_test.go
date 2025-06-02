@@ -21,7 +21,7 @@ func TestSymbol_hashKey(t *testing.T) {
 }
 
 func TestSymbolToS(t *testing.T) {
-	ctx := call.NewContext[ruby.Object](context.Background(), NewSymbol("foo"), nil)
+	ctx := call.NewContext[ruby.Object](context.Background(), nil).WithReceiver(NewSymbol("foo"))
 	result, err := symbolToS(ctx)
 	assert.NoError(t, err)
 	expected := NewString("foo")

@@ -266,8 +266,7 @@ func arrayInclude(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Obje
 
 		// 	}
 		// }
-		ctx2 := call.WithReceiver(ctx, &elem)
-		ret, err := Send(ctx2, "==", arg)
+		ret, err := Send(ctx.WithReceiver(elem), "==", arg)
 		if err != nil {
 			// fmt.Println("Error in arrayInclude:", err)
 			continue
@@ -372,8 +371,7 @@ func arrayMinus(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object
 	for _, elem := range array.Elements {
 		include := false
 		for _, otherElem := range otherArray.Elements {
-			ctx2 := call.WithReceiver(ctx, &elem)
-			ret, err := Send(ctx2, "==", otherElem)
+			ret, err := Send(ctx.WithReceiver(elem), "==", otherElem)
 			if err != nil {
 				return nil, err
 			}

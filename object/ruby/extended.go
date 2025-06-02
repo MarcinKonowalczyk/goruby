@@ -40,8 +40,10 @@ func (e *extendedObject) Eigenclass() Eigenclass {
 }
 
 var (
-	_ Object         = &extendedObject{}
-	_ ExtendedObject = &extendedObject{}
+	_                Object         = &extendedObject{}
+	_                ExtendedObject = &extendedObject{}
+	_extended_object ExtendedObject = nil
+	_                Object         = _extended_object
 )
 
 type extendable interface {

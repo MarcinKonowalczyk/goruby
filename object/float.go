@@ -3,14 +3,12 @@ package object
 import (
 	"fmt"
 	"math"
-	"runtime"
 	"unsafe"
 
 	"github.com/MarcinKonowalczyk/goruby/object/call"
 	"github.com/MarcinKonowalczyk/goruby/object/hash"
 	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/trace"
-	"github.com/pkg/errors"
 )
 
 var floatClass ruby.ClassObject = newClass(
@@ -137,27 +135,15 @@ func safeObjectToFloat(arg ruby.Object) (float64, bool) {
 	return right, true
 }
 
-func callersName() string {
-	parent, _, _, _ := runtime.Caller(1)
-	fn := runtime.FuncForPC(parent)
-	return fn.Name()
-}
-
 func floatCmpHelper(args []ruby.Object) (float64, error) {
 	if len(args) != 1 {
-		return 0, errors.WithMessage(
-			NewWrongNumberOfArgumentsError(1, len(args)),
-			callersName(),
-		)
+		return 0, NewWrongNumberOfArgumentsError(1, len(args))
 	}
 	right, ok := safeObjectToFloat(args[0])
 	if !ok {
-		return 0, errors.WithMessage(
-			NewArgumentError(
-				"comparison of Float with %s failed",
-				args[0].Class().(ruby.Object).Inspect(),
-			),
-			callersName(),
+		return 0, NewArgumentError(
+			"comparison of Float with %s failed",
+			args[0].Class().(ruby.Object).Inspect(),
 		)
 	}
 	return right, nil

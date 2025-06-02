@@ -10,7 +10,7 @@ import (
 )
 
 func TestExceptionInitialize(t *testing.T) {
-	ctx := call.NewContext[ruby.Object](context.Background(), &Exception{}, NewMainEnvironment())
+	ctx := call.NewContext[ruby.Object](context.Background(), nil).WithReceiver(&Exception{}).WithEnv(NewMainEnvironment())
 	t.Run("without args", func(t *testing.T) {
 		result, err := exceptionInitialize(ctx)
 

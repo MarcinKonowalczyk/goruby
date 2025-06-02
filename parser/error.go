@@ -65,35 +65,6 @@ func IsEOFError(err error) bool {
 	return true
 }
 
-// IsEOFInsteadOfNewlineError returns true if err represents an unexpectedTokenError with its
-// actual token type set to token.EOF and if its expected token types includes
-// token.NEWLINE.
-//
-// It returns false for any other error.
-func IsEOFInsteadOfNewlineError(err error) bool {
-	if !IsEOFError(err) {
-		return false
-	}
-
-	if errors, ok := err.(*Errors); ok {
-		for _, e := range errors.Errors {
-			if IsEOFInsteadOfNewlineError(e) {
-				return true
-			}
-		}
-	}
-
-	tokenErr := errors.Cause(err).(*UnexpectedTokenError)
-
-	for _, expectedToken := range tokenErr.ExpectedTokens {
-		if expectedToken == token.NEWLINE {
-			return true
-		}
-	}
-
-	return false
-}
-
 type tokens []token.Type
 
 func (t tokens) String() string {

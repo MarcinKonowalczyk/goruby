@@ -37,15 +37,13 @@ func TestSend(t *testing.T) {
 		}),
 	}
 	t.Run("normal object as context", func(t *testing.T) {
-		ctx := call.NewContext[ruby.Object](
-			context.Background(),
+		ctx := call.NewContext[ruby.Object](context.Background(), nil).WithReceiver(
 			&testRubyObject{
 				class: &class{
 					name:            "base class",
 					instanceMethods: ruby.NewMethodSet(methods),
 				},
 			},
-			nil,
 		)
 
 		tests := []struct {

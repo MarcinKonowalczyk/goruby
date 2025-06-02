@@ -9,7 +9,6 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/object"
 	"github.com/MarcinKonowalczyk/goruby/parser"
 	"github.com/MarcinKonowalczyk/goruby/pipelines/interpreter"
-	"github.com/pkg/errors"
 )
 
 // Input defines the input interface for the repl
@@ -98,7 +97,7 @@ func (b *bufferedInterpreter) interpretLine(line string, out io.Writer) {
 			b.buffer += "\n"
 			return
 		}
-		fmt.Fprintf(out, "%s\n", errors.Cause(err).Error())
+		fmt.Fprintf(out, "%s\n", err)
 		b.buffer = ""
 		return
 	}

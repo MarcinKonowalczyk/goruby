@@ -52,8 +52,7 @@ func stringify(ctx call.Context[ruby.Object], obj ruby.Object) (string, error) {
 			"can't convert nil into String",
 		)
 	}
-	ctx2 := call.WithReceiver(ctx, &obj)
-	stringObj, err := Send(ctx2, "to_s")
+	stringObj, err := Send(ctx.WithReceiver(obj), "to_s")
 	if err != nil {
 		return "", NewTypeError(
 			fmt.Sprintf(
