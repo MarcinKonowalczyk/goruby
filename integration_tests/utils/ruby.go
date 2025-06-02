@@ -29,12 +29,9 @@ func CompileGoRuby(force bool) (string, error) {
 	}
 
 	cmd := exec.Command("go", "build", "-C", package_root, "-o", GORUBY_BIN, "./cmd/goruby/main.go")
-	// fmt.Println("Running command:", cmd.String())
 	if output, err := cmd.CombinedOutput(); err != nil {
-		// fmt.Println("Error running go build:", err)
 		return "", err
 	} else if len(output) > 0 {
-		// fmt.Println("Output from go build:", string(output))
 	}
 
 	if _, err := os.Stat(goruby_path); err != nil {

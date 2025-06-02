@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/cmd/goruby/cli"
-	"github.com/MarcinKonowalczyk/goruby/pipelines/interpreter"
+	it "github.com/MarcinKonowalczyk/goruby/pipelines/interpreter"
 	"github.com/pkg/errors"
 )
 
@@ -78,14 +78,16 @@ func main() {
 	stdout := os.Stdout
 	stderr := os.Stderr
 
-	interpreter := interpreter.NewInterpreter(stdin, stdout, stderr, args[1:])
+	interpreter := it.NewInterpreter(stdin, stdout, stderr, args[1:])
 
-	if flags.TraceParse.Enabled() {
-		interpreter.SetTraceParse(true)
-	}
-	if trace_eval {
-		interpreter.SetTraceEval(true)
-	}
+	interpreter.SetOptions(func(opts *it.Options) {
+		opts.TraceParse = flags.TraceParse.Enabled()
+		opts.PrintParseMessages = flags.TraceParse.MessagesEnabled()
+
+		if trace_eval {
+			opts.TraceEval = true
+		}
+	})
 
 	// if we have oneline scripts, interpret them
 	if len(onelineScripts) != 0 {
@@ -108,7 +110,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if flags.TraceParse == cli.TraceParse_Only {
+	if flags.TraceParse.Only() {
 		// we can only parse the code, not interpret it
 		_, err = interpreter.ParseCode(string(fileBytes))
 	} else {

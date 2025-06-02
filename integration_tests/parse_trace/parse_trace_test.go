@@ -75,13 +75,13 @@ func TestAll(t *testing.T) {
 		t.Logf("Using GoRuby binary: %s", grb.Version())
 	}
 
-	flags := []string{"--trace-parse=only"}
+	flags := []string{"--trace-parse=only-no-messages"}
 	for _, pair := range test_files {
 		out, err := grb.RunFile(pair.rubyFile, flags...)
 		assert.NoError(t, err)
 		expected, err := readExpectedOutput(pair.traceFile)
 		assert.NoError(t, err)
-		assert.Equal(t, string(expected), out)
+		assert.EqualLineByLine(t, string(expected), out)
 	}
 
 }

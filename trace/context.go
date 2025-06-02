@@ -41,7 +41,8 @@ func TraceCtx(ctx context.Context, where ...string) func() {
 		return func() {}
 	} else {
 		// we have a tracer
-		t := tracer.Trace(where...)
+		where_str := whereToString(where...)
+		t := tracer.Trace(where_str)
 		return func() {
 			tracer.Un(t)
 		}

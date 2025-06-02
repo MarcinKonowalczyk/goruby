@@ -22,10 +22,9 @@ type Interpreter interface {
 	Interpret(filename string) (ruby.Object, error)
 	InterpretCode(code string) (ruby.Object, error)
 	ParseCode(src string) (*ast.Program, error)
-	// SetTraceParse sets the trace_parse flag
-	SetTraceParse(trace_parse bool)
-	// SetTraceEval sets the trace_eval flag
-	SetTraceEval(trace_eval bool)
+	// Used to get and set interpreter options
+	// Options(*Options) Options
+	SetOptions(f func(opts *Options))
 }
 
 func NewInterpreter(
@@ -57,24 +56,37 @@ func NewBasicInterpreter() Interpreter {
 	)
 }
 
+type Options struct {
+	// trace parsing flags
+	TraceParse         bool
+	PrintParseMessages bool
+
+	TraceTransform         bool
+	PrintTransformMessages bool
+
+	TraceEval         bool
+	PrintEvalMessages bool
+}
+
+func (i *interpreter) SetOptions(f func(opts *Options)) {
+	if f == nil {
+		return
+	}
+	f(&i.options)
+}
+
 type interpreter struct {
+	options     Options
 	stdin       io.Reader
 	stdout      io.Writer
 	stderr      io.Writer
 	environment env.Environment[ruby.Object]
-
-	// trace parsing flags
-	trace_parse          bool
-	print_parse_messages bool
-
-	trace_transform bool
-	trace_eval      bool
 }
 
 func (i *interpreter) ParseCode(src string) (*ast.Program, error) {
 	ctx := context.Background()
 	var parse_tracer trace.Tracer
-	if i.trace_parse {
+	if i.options.TraceParse {
 		parse_tracer = trace.NewTracer()
 		ctx = trace.WithTracer(ctx, parse_tracer)
 	}
@@ -88,7 +100,7 @@ func (i *interpreter) ParseCode(src string) (*ast.Program, error) {
 			panic(err)
 		}
 		var out strings.Builder
-		_ = walkable.Walk(printer.NewTracePrinter(&out, i.print_parse_messages))
+		_ = walkable.Walk(printer.NewTracePrinter(&out, i.options.PrintParseMessages))
 		i.stdout.Write([]byte(out.String()))
 	}
 
@@ -105,7 +117,7 @@ func (i *interpreter) InterpretCode(src string) (ruby.Object, error) {
 	// const ENABLE_TRANSFORMS_IN_INTERPRETER = true
 	const ENABLE_TRANSFORMS_IN_INTERPRETER = false
 	if ENABLE_TRANSFORMS_IN_INTERPRETER {
-		program, err = transformer.Transform(program, transformer.ALL_STAGES, i.trace_transform)
+		program, err = transformer.Transform(program, transformer.ALL_STAGES, i.options.TraceTransform)
 		if err != nil {
 			return nil, object.NewRuntimeError("transformer error: %v", err)
 		}
@@ -113,7 +125,7 @@ func (i *interpreter) InterpretCode(src string) (ruby.Object, error) {
 
 	ctx := context.Background()
 	var eval_tracer trace.Tracer
-	if i.trace_eval {
+	if i.options.TraceEval {
 		eval_tracer = trace.NewTracer()
 		ctx = trace.WithTracer(ctx, eval_tracer)
 	}
@@ -146,7 +158,7 @@ func (i *interpreter) Interpret(filename string) (ruby.Object, error) {
 	// const ENABLE_TRANSFORMS_IN_INTERPRETER = true
 	const ENABLE_TRANSFORMS_IN_INTERPRETER = false
 	if ENABLE_TRANSFORMS_IN_INTERPRETER {
-		program, err = transformer.Transform(program, transformer.ALL_STAGES, i.trace_transform)
+		program, err = transformer.Transform(program, transformer.ALL_STAGES, i.options.TraceTransform)
 		if err != nil {
 			return nil, object.NewRuntimeError("transformer error: %v", err)
 		}
@@ -154,7 +166,7 @@ func (i *interpreter) Interpret(filename string) (ruby.Object, error) {
 
 	ctx := context.Background()
 	var eval_tracer trace.Tracer
-	if i.trace_eval {
+	if i.options.TraceEval {
 		eval_tracer = trace.NewTracer()
 		ctx = trace.WithTracer(ctx, eval_tracer)
 	}
@@ -169,13 +181,6 @@ func (i *interpreter) Interpret(filename string) (ruby.Object, error) {
 	}
 
 	return res, err
-}
-
-func (i *interpreter) SetTraceParse(trace_parse bool) {
-	i.trace_parse = trace_parse
-}
-func (i *interpreter) SetTraceEval(trace_eval bool) {
-	i.trace_eval = trace_eval
 }
 
 var _ Interpreter = &interpreter{}
