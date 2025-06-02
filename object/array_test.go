@@ -1,6 +1,7 @@
 package object
 
 import (
+	"context"
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/object/call"
@@ -13,7 +14,7 @@ func TestArrayPush(t *testing.T) {
 	t.Run("one argument", func(t *testing.T) {
 		array := NewArray()
 		env := env.NewEnvironment[ruby.Object]()
-		ctx := call.NewContext[ruby.Object](array, env)
+		ctx := call.NewContext[ruby.Object](context.Background(), array, env)
 
 		result, err := arrayPush(ctx, NewInteger(17))
 
@@ -24,7 +25,7 @@ func TestArrayPush(t *testing.T) {
 	t.Run("more than one argument", func(t *testing.T) {
 		array := NewArray()
 		env := env.NewEnvironment[ruby.Object]()
-		ctx := call.NewContext[ruby.Object](array, env)
+		ctx := call.NewContext[ruby.Object](context.Background(), array, env)
 
 		result, err := arrayPush(ctx, NewInteger(17), NIL, TRUE, FALSE)
 
@@ -37,7 +38,7 @@ func TestArrayUnshift(t *testing.T) {
 	t.Run("one argument", func(t *testing.T) {
 		array := NewArray(NewString("first element"))
 		env := env.NewEnvironment[ruby.Object]()
-		ctx := call.NewContext[ruby.Object](array, env)
+		ctx := call.NewContext[ruby.Object](context.Background(), array, env)
 
 		result, err := arrayUnshift(ctx, NewInteger(17))
 
@@ -47,7 +48,7 @@ func TestArrayUnshift(t *testing.T) {
 	t.Run("more than one argument", func(t *testing.T) {
 		array := NewArray(NewString("first element"))
 		env := env.NewEnvironment[ruby.Object]()
-		ctx := call.NewContext[ruby.Object](array, env)
+		ctx := call.NewContext[ruby.Object](context.Background(), array, env)
 
 		result, err := arrayUnshift(ctx, NewInteger(17), NIL, TRUE, FALSE)
 

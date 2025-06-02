@@ -829,7 +829,7 @@ func testEval(input string, args ...env.Environment[ruby.Object]) (ruby.Object, 
 		return nil, object.NewSyntaxError(err)
 	}
 	ctx := context.Background()
-	return evaluator.Eval(ctx, program, env)
+	return evaluator.Eval(ctx, program, env, false)
 }
 
 func testObject(t *testing.T, exp ruby.Object, expected interface{}) {

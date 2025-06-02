@@ -1,6 +1,7 @@
 package object
 
 import (
+	"context"
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/object/call"
@@ -21,13 +22,13 @@ func TestString_hashKey(t *testing.T) {
 
 func Test_stringify(t *testing.T) {
 	t.Run("object with regular `to_s`", func(t *testing.T) {
-		ctx := call.NewContext[ruby.Object](nil, nil)
+		ctx := call.NewContext[ruby.Object](context.Background(), nil, nil)
 		res, err := stringify(ctx, NewSymbol("sym"))
 		assert.NoError(t, err)
 		assert.Equal(t, res, "sym")
 	})
 	t.Run("object without `to_s`", func(t *testing.T) {
-		ctx := call.NewContext[ruby.Object](nil, nil)
+		ctx := call.NewContext[ruby.Object](context.Background(), nil, nil)
 		_, err := stringify(ctx, nil)
 		assert.Error(t, err, NewTypeError("can't convert nil into String"))
 	})
@@ -52,7 +53,7 @@ func TestStringAdd(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := call.NewContext[ruby.Object](NewString("foo"), nil)
+		ctx := call.NewContext[ruby.Object](context.Background(), NewString("foo"), nil)
 		result, err := stringAdd(ctx, testCase.arguments...)
 		assert.Error(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -73,7 +74,7 @@ func Test_StringGsub(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := call.NewContext[ruby.Object](NewString("foobar"), nil)
+		ctx := call.NewContext[ruby.Object](context.Background(), NewString("foobar"), nil)
 		result, err := stringGsub(ctx, testCase.arguments...)
 		assert.Error(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)

@@ -1,6 +1,7 @@
 package object_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/object"
@@ -42,7 +43,7 @@ func TestWithArity(t *testing.T) {
 
 	for _, testCase := range tests {
 		fn := object.WithArity(testCase.arity, wrappedMethod)
-		ctx := call.NewContext(object.NIL, nil)
+		ctx := call.NewContext(context.Background(), object.NIL, nil)
 		result, err := fn.Call(ctx, testCase.arguments...)
 		assert.EqualCmpAny(t, result, testCase.result, object.CompareRubyObjectsForTests)
 		assert.Error(t, err, testCase.err)

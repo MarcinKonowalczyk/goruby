@@ -3,7 +3,6 @@ package call
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/object/env"
@@ -33,9 +32,9 @@ type Context[R any] interface {
 type EvalFunc[R any] func(ast.Node, env.Environment[R]) (R, error)
 
 // NewContext returns a new CallContext with a stubbed eval function
-func NewContext[R any](receiver R, env env.Environment[R]) Context[R] {
+func NewContext[R any](ctx context.Context, receiver R, env env.Environment[R]) Context[R] {
 	return WrappedContext(
-		emptyContext[R]{},
+		emptyContext[R]{ctx},
 		&receiver,
 		&env,
 		nil,
@@ -145,23 +144,25 @@ func WrappedContext[R any](
 
 ////////////////////////////////////////////////////////////////////////////////
 
-type emptyContext[R any] struct{}
-
-func (emptyContext[R]) Deadline() (deadline time.Time, ok bool) {
-	return
+type emptyContext[R any] struct {
+	context.Context // embedded context.Context
 }
 
-func (emptyContext[R]) Done() <-chan struct{} {
-	return nil
-}
+// func (emptyContext[R]) Deadline() (deadline time.Time, ok bool) {
+// 	return
+// }
 
-func (emptyContext[R]) Err() error {
-	return nil
-}
+// func (emptyContext[R]) Done() <-chan struct{} {
+// 	return nil
+// }
 
-func (emptyContext[R]) Value(key any) any {
-	return nil
-}
+// func (emptyContext[R]) Err() error {
+// 	return nil
+// }
+
+// func (emptyContext[R]) Value(key any) any {
+// 	return nil
+// }
 
 func (c emptyContext[R]) Receiver() R {
 	var zero R

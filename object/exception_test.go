@@ -1,6 +1,7 @@
 package object
 
 import (
+	"context"
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/object/call"
@@ -9,7 +10,7 @@ import (
 )
 
 func TestExceptionInitialize(t *testing.T) {
-	ctx := call.NewContext[ruby.Object](&Exception{}, NewMainEnvironment())
+	ctx := call.NewContext[ruby.Object](context.Background(), &Exception{}, NewMainEnvironment())
 	t.Run("without args", func(t *testing.T) {
 		result, err := exceptionInitialize(ctx)
 

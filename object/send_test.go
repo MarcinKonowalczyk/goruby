@@ -1,6 +1,7 @@
 package object
 
 import (
+	"context"
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/object/call"
@@ -27,7 +28,6 @@ func (t *testRubyObject) HashKey() hash.Key {
 }
 
 func TestSend(t *testing.T) {
-	// }
 	methods := map[string]ruby.Method{
 		"a_method": ruby.NewMethod(func(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 			return TRUE, nil
@@ -37,15 +37,8 @@ func TestSend(t *testing.T) {
 		}),
 	}
 	t.Run("normal object as context", func(t *testing.T) {
-		// ctx := &callContext{
-		// 	receiver: &testRubyObject{
-		// 		class: &class{
-		// 			name:            "base class",
-		// 			instanceMethods: NewMethodSet(methods),
-		// 		},
-		// 	},
-		// }
 		ctx := call.NewContext[ruby.Object](
+			context.Background(),
 			&testRubyObject{
 				class: &class{
 					name:            "base class",

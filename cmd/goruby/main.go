@@ -28,7 +28,6 @@ func (m *multiString) Set(s string) error {
 }
 
 var onelineScripts multiString
-var trace_eval bool
 var cpuprofile string = ""
 
 func printError(err error) {
@@ -40,7 +39,6 @@ func main() {
 	cli.Init()
 	flag.StringVar(&cpuprofile, "cpuprofile", "", "write cpu profile to file")
 	flag.Var(&onelineScripts, "e", "one line of script. Several -e's allowed. Omit [programfile]")
-	flag.BoolVar(&trace_eval, "trace-eval", false, "trace parsing")
 	version := flag.Bool("version", false, "print version")
 	flag.Parse()
 	flags, err := cli.Parse()
@@ -81,12 +79,13 @@ func main() {
 	interpreter := it.NewInterpreter(stdin, stdout, stderr, args[1:])
 
 	interpreter.SetOptions(func(opts *it.Options) {
-		opts.TraceParse = flags.TraceParse.Enabled()
-		opts.PrintParseMessages = flags.TraceParse.MessagesEnabled()
+		opts.TraceParse = flags.TraceParse.On()
+		opts.PrintParseMessages = !flags.TraceParse.NoMessages()
 
-		if trace_eval {
-			opts.TraceEval = true
-		}
+		opts.TraceEval = flags.TraceEval.On()
+		opts.PrintEvalMessages = !flags.TraceEval.NoMessages()
+
+		opts.NoPrint = flags.NoPrint
 	})
 
 	// if we have oneline scripts, interpret them
@@ -101,13 +100,11 @@ func main() {
 	}
 
 	if len(args) == 0 {
-		log.Println("No program files specified")
-		os.Exit(1)
+		log.Fatalf("No program files specified")
 	}
 	fileBytes, err := os.ReadFile(args[0])
 	if err != nil {
-		log.Printf("Error while opening program file: %T:%v\n", err, err)
-		os.Exit(1)
+		log.Fatalf("Error while opening program file: %T:%v\n", err, err)
 	}
 
 	if flags.TraceParse.Only() {

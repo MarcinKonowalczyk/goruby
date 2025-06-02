@@ -1,6 +1,7 @@
 package object
 
 import (
+	"context"
 	"testing"
 
 	"github.com/MarcinKonowalczyk/goruby/object/call"
@@ -43,7 +44,7 @@ func TestIntegerDiv(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := call.NewContext[ruby.Object](NewInteger(4), nil)
+		ctx := call.NewContext[ruby.Object](context.Background(), NewInteger(4), nil)
 		result, err := integerDiv(ctx, testCase.arguments...)
 		assert.Error(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -69,7 +70,7 @@ func TestIntegerMul(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := call.NewContext[ruby.Object](NewInteger(4), nil)
+		ctx := call.NewContext[ruby.Object](context.Background(), NewInteger(4), nil)
 		result, err := integerMul(ctx, testCase.arguments...)
 		assert.Error(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -95,7 +96,7 @@ func TestIntegerAdd(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := call.NewContext[ruby.Object](NewInteger(2), nil)
+		ctx := call.NewContext[ruby.Object](context.Background(), NewInteger(2), nil)
 		result, err := integerAdd(ctx, testCase.arguments...)
 		assert.Error(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -121,7 +122,7 @@ func TestIntegerSub(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := call.NewContext[ruby.Object](NewInteger(4), nil)
+		ctx := call.NewContext[ruby.Object](context.Background(), NewInteger(4), nil)
 		result, err := integerSub(ctx, testCase.arguments...)
 		assert.Error(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -152,7 +153,7 @@ func TestIntegerLt(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := call.NewContext[ruby.Object](NewInteger(4), nil)
+		ctx := call.NewContext[ruby.Object](context.Background(), NewInteger(4), nil)
 		result, _ := integerLt(ctx, testCase.arguments...)
 		// assert.AssertError(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -183,7 +184,7 @@ func TestIntegerGt(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := call.NewContext[ruby.Object](NewInteger(4), nil)
+		ctx := call.NewContext[ruby.Object](context.Background(), NewInteger(4), nil)
 		result, _ := integerGt(ctx, testCase.arguments...)
 		// assert.AssertError(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -219,7 +220,7 @@ func TestIntegerGte(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := call.NewContext[ruby.Object](NewInteger(4), nil)
+		ctx := call.NewContext[ruby.Object](context.Background(), NewInteger(4), nil)
 		result, _ := integerGte(ctx, testCase.arguments...)
 		// assert.AssertError(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -255,7 +256,7 @@ func TestIntegerLte(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := call.NewContext[ruby.Object](NewInteger(4), nil)
+		ctx := call.NewContext[ruby.Object](context.Background(), NewInteger(4), nil)
 		result, _ := integerLte(ctx, testCase.arguments...)
 		// assert.AssertError(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)
@@ -291,7 +292,7 @@ func TestIntegerSpaceship(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		ctx := call.NewContext[ruby.Object](NewInteger(4), nil)
+		ctx := call.NewContext[ruby.Object](context.Background(), NewInteger(4), nil)
 		result, _ := integerSpaceship(ctx, testCase.arguments...)
 		// assert.AssertError(t, err, testCase.err)
 		assert.EqualCmpAny(t, result, testCase.result, CompareRubyObjectsForTests)

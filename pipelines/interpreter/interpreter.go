@@ -24,7 +24,7 @@ type Interpreter interface {
 	ParseCode(src string) (*ast.Program, error)
 	// Used to get and set interpreter options
 	// Options(*Options) Options
-	SetOptions(f func(opts *Options))
+	SetOptions(f func(opts *Options)) Interpreter
 }
 
 func NewInterpreter(
@@ -66,13 +66,15 @@ type Options struct {
 
 	TraceEval         bool
 	PrintEvalMessages bool
+
+	NoPrint bool
 }
 
-func (i *interpreter) SetOptions(f func(opts *Options)) {
-	if f == nil {
-		return
+func (i *interpreter) SetOptions(f func(opts *Options)) Interpreter {
+	if f != nil {
+		f(&i.options)
 	}
-	f(&i.options)
+	return i
 }
 
 type interpreter struct {
@@ -107,6 +109,34 @@ func (i *interpreter) ParseCode(src string) (*ast.Program, error) {
 	return program, err
 }
 
+func (i *interpreter) evalCode(program *ast.Program) (ruby.Object, error) {
+	ctx := context.Background()
+
+	var eval_tracer trace.Tracer
+
+	if i.options.TraceEval {
+		eval_tracer = trace.NewTracer()
+		ctx = trace.WithTracer(ctx, eval_tracer)
+	}
+
+	res, err := evaluator.Eval(ctx, program, i.environment, i.options.NoPrint)
+
+	if eval_tracer != nil {
+		eval_tracer.Done()
+		walkable, err := eval_tracer.ToWalkable()
+		if err != nil {
+			panic(err)
+		}
+		var out strings.Builder
+		_ = walkable.Walk(printer.NewTracePrinter(&out, i.options.PrintEvalMessages))
+		out_str := out.String()
+		// out_str = "\n" + out_str
+		i.stdout.Write([]byte(out_str))
+	}
+
+	return res, err
+}
+
 func (i *interpreter) InterpretCode(src string) (ruby.Object, error) {
 	program, err := i.ParseCode(src)
 
@@ -123,23 +153,7 @@ func (i *interpreter) InterpretCode(src string) (ruby.Object, error) {
 		}
 	}
 
-	ctx := context.Background()
-	var eval_tracer trace.Tracer
-	if i.options.TraceEval {
-		eval_tracer = trace.NewTracer()
-		ctx = trace.WithTracer(ctx, eval_tracer)
-	}
-	res, err := evaluator.Eval(ctx, program, i.environment)
-	if eval_tracer != nil {
-		eval_tracer.Done()
-		walkable, err := eval_tracer.ToWalkable()
-		if err != nil {
-			panic(err)
-		}
-		_ = walkable.Walk(printer.NewTracePrinter(os.Stdout, true))
-	}
-
-	return res, err
+	return i.evalCode(program)
 }
 
 func (i *interpreter) Interpret(filename string) (ruby.Object, error) {
@@ -164,23 +178,7 @@ func (i *interpreter) Interpret(filename string) (ruby.Object, error) {
 		}
 	}
 
-	ctx := context.Background()
-	var eval_tracer trace.Tracer
-	if i.options.TraceEval {
-		eval_tracer = trace.NewTracer()
-		ctx = trace.WithTracer(ctx, eval_tracer)
-	}
-	res, err := evaluator.Eval(ctx, program, i.environment)
-	if eval_tracer != nil {
-		eval_tracer.Done()
-		walkable, err := eval_tracer.ToWalkable()
-		if err != nil {
-			panic(err)
-		}
-		_ = walkable.Walk(printer.NewTracePrinter(os.Stdout, true))
-	}
-
-	return res, err
+	return i.evalCode(program)
 }
 
 var _ Interpreter = &interpreter{}

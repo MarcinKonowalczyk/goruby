@@ -50,7 +50,7 @@ func expandToArrayIfNeeded(obj ruby.Object) ruby.Object {
 	return object.NewArray(arr...)
 }
 
-func Eval(ctx context.Context, node ast.Node, ev env.Environment[ruby.Object]) (ruby.Object, error) {
+func Eval(ctx context.Context, node ast.Node, ev env.Environment[ruby.Object], no_print bool) (ruby.Object, error) {
 	if node == nil {
 		return nil, nil
 	}
@@ -60,21 +60,39 @@ func Eval(ctx context.Context, node ast.Node, ev env.Environment[ruby.Object]) (
 		)
 	}
 
-	e := NewEvaluator()
+	e := NewEvaluator().SetOptions(func(opts *Options) {
+		opts.NoPrint = no_print
+	})
+
 	res, err := e.Eval(ctx, node, ev)
 	return res, err
 }
 
 type Evaluator interface {
 	Eval(ctx context.Context, node ast.Node, ev env.Environment[ruby.Object]) (ruby.Object, error)
+	SetOptions(func(*Options)) Evaluator
+}
+
+type Options struct {
+	NoPrint bool // if true, do not print the result of the evaluation
+}
+
+func (e *evaluator) SetOptions(f func(*Options)) Evaluator {
+	if f != nil {
+		f(&e.options)
+	}
+	return e
 }
 
 func NewEvaluator() Evaluator {
 	return &evaluator{}
 }
 
+var _ Evaluator = &evaluator{}
+
 type evaluator struct {
-	ctx call.Context[ruby.Object]
+	options Options // options for the evaluator
+	ctx     call.Context[ruby.Object]
 }
 
 func (e *evaluator) Eval(ctx context.Context, node ast.Node, ev env.Environment[ruby.Object]) (ruby.Object, error) {
@@ -82,7 +100,7 @@ func (e *evaluator) Eval(ctx context.Context, node ast.Node, ev env.Environment[
 	// 	CallContext: object.NewCallContext(env, object.FUNCS_STORE),
 	// 	evaluator:   e,
 	// }
-	ectx := call.NewContext[ruby.Object](object.FUNCS_STORE, ev)
+	ectx := call.NewContext[ruby.Object](ctx, object.FUNCS_STORE, ev)
 	ectx = call.WithEval(ectx, func(node ast.Node, ev env.Environment[ruby.Object]) (ruby.Object, error) {
 		// return e.eval(node, ev)
 		return e.eval(node, ev)
@@ -93,7 +111,7 @@ func (e *evaluator) Eval(ctx context.Context, node ast.Node, ev env.Environment[
 }
 
 func (e *evaluator) eval(node ast.Node, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	defer trace.TraceCtx(e.ctx)
+	defer trace.TraceCtx(e.ctx, "evaluator.eval")()
 	switch node := node.(type) {
 	// Statements
 	case *ast.Program:

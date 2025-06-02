@@ -8,7 +8,8 @@ import (
 var trace_parse string
 
 func initTraceParse() {
-	flag.StringVar(&trace_parse, "trace-parse", "off", "trace parsing of Ruby code. Options: off, on, only")
+	help := "trace parsing of Ruby code. Options: off, on, only, on-no-messages, only-no-messages"
+	flag.StringVar(&trace_parse, "trace-parse", "off", help)
 }
 
 type TraceParse string
@@ -38,7 +39,7 @@ func parseTraceParse() (TraceParse, error) {
 	}
 }
 
-func (t TraceParse) Enabled() bool {
+func (t TraceParse) On() bool {
 	switch t {
 	case TraceParse_On, TraceParse_Only, TraceParse_On_NoMessages, TraceParse_Only_NoMessages:
 		return true
@@ -47,12 +48,12 @@ func (t TraceParse) Enabled() bool {
 	}
 }
 
-func (t TraceParse) MessagesEnabled() bool {
+func (t TraceParse) NoMessages() bool {
 	switch t {
 	case TraceParse_On_NoMessages, TraceParse_Only_NoMessages:
-		return false
-	default:
 		return true
+	default:
+		return false
 	}
 }
 

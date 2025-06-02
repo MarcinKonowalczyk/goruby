@@ -11,6 +11,10 @@ type walkable interface {
 	Walk(fn func(node Node) error) error
 }
 
+type namer interface {
+	Name() string
+}
+
 type Tracer interface {
 	// add the function to the tracing stack
 	Trace(where ...string) *Exit
@@ -23,12 +27,14 @@ type Tracer interface {
 	Done()
 	// return the tracer as a walkable object
 	ToWalkable() (walkable, error)
+	// length of the trace stack
+	Len() int
 }
 
 func NewTracer() Tracer {
 	chain := make([]Node, 1)
 	chain[0] = &Enter{
-		Name: string(START_NODE),
+		name: string(START_NODE),
 	}
 	return &tracer{
 		stack: chain,
@@ -66,7 +72,7 @@ type Node interface {
 }
 
 type Enter struct {
-	Name string
+	name string
 	// next/prev nodes in the chain
 	next Node
 	prev Node
@@ -77,23 +83,25 @@ type Enter struct {
 func (n Enter) String() string {
 	var out strings.Builder
 	if n.parent != nil {
-		out.WriteString(string(n.parent.Name))
+		out.WriteString(string(n.parent.name))
 		out.WriteString(" -> ")
 	}
-	out.WriteString(string(n.Name))
+	out.WriteString(string(n.name))
 	return out.String()
 }
 
-func (n *Enter) Next() Node { return n.next }
-func (n *Enter) Prev() Node { return n.prev }
+func (n *Enter) Next() Node   { return n.next }
+func (n *Enter) Prev() Node   { return n.prev }
+func (n *Enter) Name() string { return n.name }
 
 var (
 	_ Node   = (*Enter)(nil)
 	_ linked = (*Enter)(nil)
+	_ namer  = (*Enter)(nil)
 )
 
 type Exit struct {
-	Name string
+	name string
 	// next/prev nodes in the chain
 	next Node
 	prev Node
@@ -104,20 +112,23 @@ type Exit struct {
 func (n *Exit) String() string {
 	var out strings.Builder
 	if n.parent != nil && n.parent.parent != nil {
-		out.WriteString(string(n.parent.parent.Name))
+		out.WriteString(string(n.parent.parent.name))
 		out.WriteString(" <- ")
-		out.WriteString(string(n.Name))
+		out.WriteString(string(n.name))
 	} else {
-		out.WriteString(string(n.Name))
+		out.WriteString(string(n.name))
 	}
 	return out.String()
 }
 func (n *Exit) Next() Node { return n.next }
 func (n *Exit) Prev() Node { return n.prev }
 
+func (n *Exit) Name() string { return n.name }
+
 var (
 	_ Node   = (*Exit)(nil)
 	_ linked = (*Exit)(nil)
+	_ namer  = (*Exit)(nil)
 )
 
 type Message struct {
@@ -142,10 +153,10 @@ func (m Message) String() string {
 func (m *Message) Stack() []string {
 	stack := make([]string, 0)
 	for n := m.parent; n != nil; n = n.parent {
-		if n.Name == START_NODE {
+		if n.name == START_NODE {
 			break
 		}
-		stack = append(stack, n.Name)
+		stack = append(stack, n.name)
 	}
 	// reverse the stack
 	// for i, j := 0, len(stack)-1; i < j; i, j = i+1, j-1 {
@@ -228,17 +239,17 @@ func whereToString(where_args ...string) string {
 func (t *tracer) Trace(where ...string) *Exit {
 	where_str := whereToString(where...)
 	debug("> entering", where_str)
-	n := &Enter{Name: where_str}
+	n := &Enter{name: where_str}
 	t.append(n)
 	return &Exit{
-		Name:   where_str,
+		name:   where_str,
 		parent: n,
 	}
 }
 
 // Usage pattern: defer t.Un(t.Trace(p, "..."))
 func (t *tracer) Un(exit *Exit) {
-	debug("< exiting", exit.Name)
+	debug("< exiting", exit.name)
 	t.append(exit)
 }
 
@@ -262,7 +273,7 @@ func argsToMessage(args ...any) string {
 	return msg
 }
 func (t *tracer) Message(args ...any) {
-	debug("  messaging", t.where.Name)
+	debug("  messaging", t.where.name)
 	message := argsToMessage(args...)
 	t.append(&Message{
 		Message: message,
@@ -291,7 +302,7 @@ var (
 
 func (t *tracer) Done() {
 	t.append(&Exit{
-		Name:   END_NODE,
+		name:   END_NODE,
 		parent: t.stack[0].(*Enter), // link to the START_NODE
 	})
 
@@ -312,10 +323,10 @@ func (t *tracer) ToWalkable() (walkable, error) {
 	// check we're done with the tracing
 	switch n := t.stack[len(t.stack)-1].(type) {
 	case *Enter:
-		return nil, fmt.Errorf("not walkable. tracer is not done. last node was an enter node: %s", n.Name)
+		return nil, fmt.Errorf("not walkable. tracer is not done. last node was an enter node: %s", n.name)
 	case *Exit:
-		if n.Name != END_NODE {
-			return nil, fmt.Errorf("not walkable. tracer is not done. last node was not an exit node of the root node: %s", n.Name)
+		if n.name != END_NODE {
+			return nil, fmt.Errorf("not walkable. tracer is not done. last node was not an exit node of the root node: %s", n.name)
 		}
 	}
 	return t, nil
@@ -351,6 +362,13 @@ func (t *tracer) Walk(fn func(node Node) error) error {
 		}
 	}
 	return nil
+}
+
+func (t *tracer) Len() int {
+	if t.stack == nil {
+		return 0
+	}
+	return len(t.stack)
 }
 
 var (
