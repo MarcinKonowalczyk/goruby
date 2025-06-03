@@ -112,15 +112,6 @@ func bottomRaise(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Objec
 			return nil, NewRuntimeError("%s", arg.Value)
 		default:
 			return nil, NewRuntimeError("%s", arg.Inspect())
-			// default:
-			// 	exc, err := Send(NewCallContext(context.Env(), arg), "exception")
-			// 	if err != nil {
-			// 		return nil, NewTypeError("exception class/object expected")
-			// 	}
-			// 	if excAsErr, ok := exc.(error); ok {
-			// 		return nil, excAsErr
-			// 	}
-			// 	return nil, nil
 		}
 	default:
 		return nil, NewRuntimeError("")

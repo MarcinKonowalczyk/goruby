@@ -102,23 +102,6 @@ var (
 	_ context.Context = (*wrappedCtx[_R])(nil)
 )
 
-// func WithReceiver[R any](parent Context[R], receiver *R) Context[R] {
-// 	panicIfNil("parent", &parent)
-// 	panicIfNil("parent", &parent)
-// 	return &wrappedCtx[R]{Context: parent, receiver: receiver, env: nil, eval: nil}
-// }
-
-// func WithEnv[R any](parent Context[R], env *env.Environment[R]) Context[R] {
-// 	panicIfNil("parent", &parent)
-// 	panicIfNil("env", &env)
-// 	return &wrappedCtx[R]{Context: parent, receiver: nil, env: env, eval: nil}
-// }
-
-// func WithEval[R any](parent Context[R], eval EvalFunc[R]) Context[R] {
-// 	panicIfNil("parent", &parent)
-// 	return &wrappedCtx[R]{Context: parent, receiver: nil, env: nil, eval: &eval}
-// }
-
 func WrappedContext[R any](
 	parent Context[R],
 	receiver *R,

@@ -180,7 +180,6 @@ func TestFunctionCall(t *testing.T) {
 		})
 	})
 	t.Run("validates that the arguments match the function parameters", func(t *testing.T) {
-		// ctx := call.NewContext[ruby.Object](context.Background()).WithEval(object.NewMainEnvironment()).
 		ctx := call.NewContext[ruby.Object](context.Background()).
 			WithEnv(object.NewMainEnvironment()).
 			WithEval(func(ast.Node, env.Environment[ruby.Object]) (ruby.Object, error) {

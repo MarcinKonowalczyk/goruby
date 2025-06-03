@@ -108,12 +108,7 @@ func safeObjectToInteger(arg ruby.Object) (int64, bool) {
 	switch arg := arg.(type) {
 	case *Integer:
 		right = int64(arg.Value)
-	// case *Boolean:
-	// 	if arg.Value {
-	// 		right = 1
-	// 	} else {
-	// 		right = 0
-	// 	}
+	// NOTE: No Boolean conversion to Integer
 	default:
 		return 0, false
 	}

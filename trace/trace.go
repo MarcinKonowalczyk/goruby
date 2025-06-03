@@ -158,10 +158,6 @@ func (m *Message) Stack() []string {
 		}
 		stack = append(stack, n.name)
 	}
-	// reverse the stack
-	// for i, j := 0, len(stack)-1; i < j; i, j = i+1, j-1 {
-	// 	stack[i], stack[j] = stack[j], stack[i]
-	// }
 	return stack
 }
 
@@ -305,15 +301,6 @@ func (t *tracer) Done() {
 		name:   END_NODE,
 		parent: t.stack[0].(*Enter), // link to the START_NODE
 	})
-
-	// // link the nodes together
-	// for i := 0; i < len(t.stack)-1; i++ {
-	// 	t.stack[i].(settable_next).SetNext(t.stack[i+1])
-	// }
-
-	// for i := len(t.stack) - 1; i > 0; i-- {
-	// 	t.stack[i].(settable_prev).SetPrev(t.stack[i-1])
-	// }
 }
 
 func (t *tracer) ToWalkable() (walkable, error) {

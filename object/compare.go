@@ -23,13 +23,7 @@ func CompareRubyObjectsForTests(a, b any) bool {
 	}
 	// check types
 	a_obj, a_ok := a.(ruby.Object)
-	// if !ok {
-	// 	panic("a is not ruby.Object")
-	// }
 	b_obj, b_ok := b.(ruby.Object)
-	// if !ok {
-	// 	panic("b is not ruby.Object")
-	// }
 	if !a_ok || !b_ok {
 		// maybe we're both arrays of ruby.Objects?
 		a_arr, a_ok := a.([]ruby.Object)

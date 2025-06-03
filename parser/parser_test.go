@@ -2021,7 +2021,6 @@ func TestParseHash(t *testing.T) {
 
 	for _, tt := range tests {
 		program, err := parseSource(tt.input)
-		// program, err := parseSource(tt.input, p.Trace)
 		checkParserErrors(t, err)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
@@ -2050,7 +2049,6 @@ func TestRangeLiteral(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		// program, err := parseSource(tt.input, p.Trace)
 		program, err := parseSource(tt.input)
 		checkParserErrors(t, err)
 
@@ -2160,7 +2158,6 @@ func TestArraySplat(t *testing.T) {
 }
 
 func TestParsePyraRb(t *testing.T) {
-	// t.Skip("Not implemented yet")
 	filename := "../pyra.rb"
 	file, err := os.ReadFile(filename)
 	if err != nil {
@@ -2337,11 +2334,6 @@ func testHashLiteral(t *testing.T, expr ast.Expression, value map[string]string)
 	for k, v := range hash.Map {
 		hashMap[k.Code()] = v.Code()
 	}
-
-	// if !reflect.DeepEqual(hashMap, value) {
-	// 	t.Logf("Expected hash to equal\n%q\n\tgot\n%q\n", value, hashMap)
-	// 	return false
-	// }
 	assert.EqualCmp(t, hashMap, value, compare.Maps)
 }
 

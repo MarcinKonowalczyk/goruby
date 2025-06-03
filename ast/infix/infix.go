@@ -26,28 +26,6 @@ const (
 	LSHIFT           = Infix(token.LSHIFT)
 )
 
-// var infix_strings = map[Infix]string{
-// 	ILLEGAL:    "ILLEGAL",
-// 	PLUS:       "PLUS",
-// 	MINUS:      "MINUS",
-// 	SLASH:      "SLASH",
-// 	ASTERISK:   "ASTERISK",
-// 	POW:        "POW",
-// 	MODULO:     "MODULO",
-// 	AND:        "AND",
-// 	PIPE:       "PIPE",
-// 	EQ:         "EQ",
-// 	NOTEQ:      "NOTEQ",
-// 	LT:         "LT",
-// 	GT:         "GT",
-// 	LTE:        "LTE",
-// 	GTE:        "GTE",
-// 	LOGICALOR:  "LOGICALOR",
-// 	LOGICALAND: "LOGICALAND",
-// 	SPACESHIP:  "SPACESHIP",
-// 	LSHIFT:     "LSHIFT",
-// }
-
 var infix_repr = map[Infix]string{
 	ILLEGAL:    "ILLEGAL",
 	PLUS:       "+",
@@ -123,12 +101,6 @@ func InfixFromTokenType(t token.Type) Infix {
 func InfixFromToken(t token.Token) Infix {
 	return InfixFromTokenType(t.Type)
 }
-
-// p.registerInfix(token.ADDASSIGN, p.parseAssignmentOperator)
-// p.registerInfix(token.SUBASSIGN, p.parseAssignmentOperator)
-// p.registerInfix(token.MULASSIGN, p.parseAssignmentOperator)
-// p.registerInfix(token.DIVASSIGN, p.parseAssignmentOperator)
-// p.registerInfix(token.MODASSIGN, p.parseAssignmentOperator)
 
 func InfixFromAssignmentOperatorType(t token.Type) Infix {
 	switch t {

@@ -147,35 +147,6 @@ func WalkEmit(root ast.Node) <-chan ast.Node {
 	return out
 }
 
-// type Transformer interface {
-// 	TransformPre(node ast.Node) (ast.Node, Transformer)
-// 	TransformPost(node ast.Node) (ast.Node, Transformer)
-// }
-
-// type TransformerFunc func(ast.Node) (ast.Node, Transformer)
-
-// func (f TransformerFunc) Transform(node ast.Node) (ast.Node, Transformer) {
-// 	return f(node)
-// }
-
-// type transformer struct {
-// 	pre  TransformerFunc
-// 	post TransformerFunc
-// }
-
-// func (f transformer) Transform(node ast.Node) (ast.Node, Transformer) {
-// 	if f(node) {
-// 		return node, f
-// 	}
-// 	return nil, nil
-// }
-
-// var _ Transformer = transformer(nil)
-
-// func WalkTransform(t Transformer, node ast.Node) {
-// 	// ...
-// }
-
 // Pre transformer with context which wraps a PreTransformer without context
 type pre_transformer_ctx struct {
 	transformer PreTransformer
@@ -493,14 +464,6 @@ func WalkCtx(
 	case *ast.ExpressionStatement:
 		if mutating {
 			new_node = WalkCtx(ctx, n.Expression, transformer, v)
-			// if new_expression, ok := new_node.(ast.Expression); ok {
-			// 	if new_expression != n.Expression {
-			// 		fmt.Printf("# WALK *ExpressionStatement::Expression: ast.Walk mutated %T(%v) to %T(%v)\n", n.Expression, n.Expression, new_node, new_node)
-			// 	}
-			// 	n.Expression = new_expression
-			// } else {
-			// 	panic(fmt.Sprintf("ast.Walk mutated an expression statement from %T to %T", n.Expression, new_node))
-			// }
 			switch new_expression := new_node.(type) {
 			case ast.Expression:
 				if new_expression != n.Expression {
@@ -624,12 +587,6 @@ func WalkCtx(
 
 	case *ast.LoopExpression:
 		if mutating {
-			// new_node = WalkCtx(ctx, n.Condition, transformer, v)
-			// if new_condition, ok := new_node.(ast.Expression); ok {
-			// n.Condition = new_condition
-			// } else {
-			// panic(fmt.Sprintf("ast.Walk mutated a loop expression condition to %T", new_condition))
-			// }
 			new_node = WalkCtx(ctx, n.Block, transformer, v)
 			if new_block, ok := new_node.(*ast.BlockStatement); ok {
 				n.Block = new_block
@@ -637,7 +594,6 @@ func WalkCtx(
 				panic(fmt.Sprintf("ast.Walk mutated a loop expression block from %T to %T", n.Block, new_block))
 			}
 		} else {
-			// _ = WalkCtx(ctx, n.Condition, transformer, v)
 			_ = WalkCtx(ctx, n.Block, transformer, v)
 		}
 
@@ -709,9 +665,7 @@ func WalkCtx(
 	// NOTE: we will *not* visit the result of the post-transform
 	//       that's kinda the point
 	if post != nil {
-		// fmt.Println("pre-transform", node)
 		node = post.PostTransform(ctx, node)
-		// fmt.Println("post-transform", node)
 	}
 	// v.Visit(nil)
 

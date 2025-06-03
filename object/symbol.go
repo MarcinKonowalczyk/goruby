@@ -12,9 +12,6 @@ import (
 
 var (
 	symbolClass ruby.ClassObject = nil_class
-	// TRUE  ruby.Object = NewSymbol("true")
-	// FALSE ruby.Object = NewSymbol("false")
-	// NIL   ruby.Object = NewSymbol("nil")
 
 	// unique symbols
 	TRUE  ruby.Object = &Symbol{Value: "true"}

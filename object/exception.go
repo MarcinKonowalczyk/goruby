@@ -218,7 +218,6 @@ var (
 )
 
 func NewNoMethodError(context ruby.Object, method string) *NoMethodError {
-	// panic("stop here")
 	return &NoMethodError{
 		message: fmt.Sprintf(
 			"undefined method `%s' for %s:%s",

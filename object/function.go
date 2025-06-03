@@ -189,14 +189,12 @@ func (f *Function) populateParameters(args []ruby.Object) ([]populatedParameter,
 
 	for paramIdx, param := range parameters {
 		if paramIdx >= len(args) {
-			// params[param.Name] = param.Default
 			params = append(params, populatedParameter{
 				name:  param.Name,
 				value: param.Default,
 			})
 			continue
 		}
-		// params[param.Name] = args[paramIdx]
 		params = append(params, populatedParameter{
 			name:  param.Name,
 			value: args[paramIdx],

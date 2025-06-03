@@ -255,17 +255,6 @@ func arrayInclude(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Obje
 	// compare the first argument with all elements in the array
 	arg := args[0]
 	for _, elem := range array.Elements {
-		// if elem.Class() == arg.Class() {
-		// 	if elem.Inspect() == arg.Inspect() {
-		// 		return TRUE, nil
-		// 	}
-		// 	return FALSE, nil
-		// } else {
-		// 	if _, ok := elem.(*Integer); ok {
-		// 		// also compare as if it was a float
-
-		// 	}
-		// }
 		ret, err := Send(ctx.WithReceiver(elem), "==", arg)
 		if err != nil {
 			// fmt.Println("Error in arrayInclude:", err)

@@ -90,7 +90,6 @@ const (
 	FALSE
 	RETURN
 	NIL
-	// WHILE
 	LOOP
 	BREAK
 	keyword_end
@@ -275,9 +274,8 @@ var type_reprs = [...]string{
 	FALSE:  "false",
 	RETURN: "return",
 	NIL:    "nil",
-	// WHILE:  "while", // to remove?
-	LOOP:  "loop",
-	BREAK: "break",
+	LOOP:   "loop",
+	BREAK:  "break",
 }
 
 // String returns the string corresponding to the token tok.

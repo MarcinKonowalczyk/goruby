@@ -23,7 +23,6 @@ type Interpreter interface {
 	InterpretCode(code string) (ruby.Object, error)
 	ParseCode(src string) (*ast.Program, error)
 	// Used to get and set interpreter options
-	// Options(*Options) Options
 	SetOptions(f func(opts *Options)) Interpreter
 }
 
@@ -132,7 +131,6 @@ func (i *interpreter) evalCode(program *ast.Program) (ruby.Object, error) {
 		var out strings.Builder
 		_ = walkable.Walk(printer.NewTracePrinter(&out, i.options.PrintEvalMessages))
 		out_str := out.String()
-		// out_str = "\n" + out_str
 		// i.stdout.Write([]byte(out_str))
 		os.Stderr.Write([]byte(out_str))
 	}

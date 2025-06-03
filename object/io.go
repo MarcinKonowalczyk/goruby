@@ -129,9 +129,6 @@ func ioPrint(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, e
 		if arr, ok := arg.(*Array); ok {
 			// arg is an array. splat it out
 			// todo: make it a deep splat? check with original ruby implementation
-			// for _, elem := range arr.Elements {
-			// 	lines = append(lines, elem.Inspect())
-			// }
 			lines = append(lines, arr.Inspect())
 		} else {
 			switch arg := arg.(type) {

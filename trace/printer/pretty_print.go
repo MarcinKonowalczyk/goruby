@@ -7,12 +7,6 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
-// for j := len(message.Stack) - 1; j >= 0; j-- {
-// 	// for j := len(message.Stack) - 1; j >= 0; j-- {
-// 	fmt.Printf("%s:", message.Stack[j])
-// }
-// fmt.Printf(" %s\n", message.Message)
-
 type Flavour int
 
 const (

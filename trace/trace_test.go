@@ -89,7 +89,6 @@ func TestTraceWithout(t *testing.T) {
 	messages := tracer.Messages()
 	assert.Equal(t, len(messages), 1)
 	for _, message := range messages {
-		// fmt.Printf("%s\n", message)
 		printer.PrettyPrint(message, printer.MULTILINE)
 	}
 }
@@ -106,7 +105,6 @@ func TestTraceToWalkable(t *testing.T) {
 	assert.NoError(t, err)
 	fmt.Println("Walkable:")
 	_ = walkable.Walk(func(node trace.Node) error {
-		// fmt.Println(node, "prev:", node.Prev(), "next:", node.Next())
 		fmt.Println(node)
 		return nil
 	})

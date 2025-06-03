@@ -75,8 +75,6 @@ func rangeFindAll(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Obje
 	if !ok {
 		return nil, NewArgumentError("(2) range find_all requires a block")
 	}
-	// self, _ := context.Env().Get( "funcs")
-	// self_class := self.Class()
 	fn, ok := FUNCS_STORE.Class().GetMethod(proc.Value)
 	if !ok {
 		return nil, NewNoMethodError(FUNCS_STORE, proc.Value)

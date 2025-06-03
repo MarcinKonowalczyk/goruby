@@ -99,7 +99,6 @@ func TestAll(t *testing.T) {
 	for _, test_file := range test_files {
 		base := path.Base(test_file)
 		t.Run(base, func(t *testing.T) {
-			// t.Parallel() // Run each test in parallel
 			runTest(t, rb, grb, test_file, "", transformer.ALL_STAGES)
 		})
 	}

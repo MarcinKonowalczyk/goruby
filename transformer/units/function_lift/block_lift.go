@@ -81,7 +81,7 @@ func (f *LiftBlocks) transformFunctionLiteralPass0(ctx context.Context, node *as
 		// And add all the parameters from the parent
 		extra_parameters := make([]*ast.FunctionParameter, 0)
 
-		// TODO!
+		// TODO:
 		// NOTE: This won't really work that well. What if we define a local variable
 		// and need to capture that?
 

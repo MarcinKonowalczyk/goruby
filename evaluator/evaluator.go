@@ -16,19 +16,6 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
-// type callContext struct {
-// 	object.CallContext
-// 	evaluator Evaluator
-// }
-
-// func (c *callContext) Eval(node ast.Node, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-// 	return c.evaluator.Eval(c, node, ev)
-// }
-
-// var (
-// 	_ object.CallContext = &callContext{}
-// )
-
 type rubyObjects []ruby.Object
 
 func (r rubyObjects) Inspect() string {
@@ -90,18 +77,12 @@ type evaluator struct {
 }
 
 func (e *evaluator) Eval(ctx context.Context, node ast.Node, ev env.Environment[ruby.Object]) (ruby.Object, error) {
-	// e.ctx = &callContext{
-	// 	CallContext: object.NewCallContext(env, object.FUNCS_STORE),
-	// 	evaluator:   e,
-	// }
-	ectx := call.NewContext[ruby.Object](ctx).
+	e.ctx = call.NewContext[ruby.Object](ctx).
 		WithReceiver(object.FUNCS_STORE).
 		WithEnv(ev).
 		WithEval(func(node ast.Node, ev env.Environment[ruby.Object]) (ruby.Object, error) {
 			return e.eval(node, ev)
 		})
-	e.ctx = ectx
-	// ctx := object.NewCallContext(env, object.FUNCS_STORE)
 	return e.eval(node, ev)
 }
 
@@ -645,7 +626,6 @@ func (e *evaluator) evalStringIndexExpression(stringObject *object.String, index
 		return e.evalStringIndexExpression(stringObject, index_array)
 
 	default:
-		// fmt.Printf("index: %s(%T)\n", index.Inspect(), index)
 		err := object.NewImplicitConversionTypeErrorMany(index, object.NewInteger(0), object.NewFloat(0.0))
 		return nil, err
 	}
@@ -661,13 +641,13 @@ func (e *evaluator) evalBlockStatement(block *ast.BlockStatement, ev env.Environ
 		if err != nil {
 			return nil, err
 		}
-		switch result.(type) {
+		switch result := result.(type) {
 		case nil:
 			// do nothing
 		case *object.ReturnValue:
 			return result, nil
 		case *object.BreakValue:
-			if object.IsTruthy(result.(*object.BreakValue).Value) {
+			if object.IsTruthy(result.Value) {
 				return result, nil
 			}
 		}
@@ -696,7 +676,6 @@ func (e *evaluator) evalIdentifier(node *ast.Identifier, ev env.Environment[ruby
 	}
 
 	// maybe a function
-	// fmt.Println("ident", node)
 	val, err := object.Send(e.ctx, node.Value)
 	if err != nil {
 		return nil, object.NewNoMethodError(object.FUNCS_STORE, node.Value)
@@ -747,7 +726,6 @@ func (e *evaluator) evalStringLiteral(node *ast.StringLiteral, ev env.Environmen
 
 func (e *evaluator) evalFunctionLiteral(node *ast.FunctionLiteral, ev env.Environment[ruby.Object]) (ruby.Object, error) {
 	defer trace.TraceCtx(e.ctx)()
-	// context, _ := env.Get("bottom")
 	// construct a function object and stick it onto self
 	params := make([]*object.FunctionParameter, len(node.Parameters))
 	for i, param := range node.Parameters {

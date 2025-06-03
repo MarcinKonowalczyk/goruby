@@ -464,17 +464,9 @@ func (p *parser) parseSplat() ast.Expression {
 	defer trace.TraceCtx(p.ctx)()
 
 	splat := &ast.Splat{}
-	// p.nextToken()
-	// if p.curToken.Type != token.IDENT {
-	// 	p.Error(p.curToken.Type, "", token.IDENT)
-	// 	return nil
-	// }
 	p.nextToken()
-	// TODO: what's supposed t be the prec here?
 	// precLowest breaks for `x = [*y, 1]`
 	expr := p.parseExpression(precSplat)
-	// fmt.Println("Splat expression:", expr)
-	// panic("TODO: splat expression")
 	if expr == nil {
 		return nil
 	}
@@ -561,7 +553,6 @@ func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
 			return nil
 		}
 	} else {
-		// alt = &ast.SymbolLiteral{Value: "nil"}
 		alt = &ast.ExpressionStatement{
 			Expression: &ast.SymbolLiteral{Value: "nil"},
 		}
@@ -816,18 +807,9 @@ func (p *parser) parseIndexExpression(left ast.Expression) ast.Expression {
 	content := p.parseExpression(precLowest)
 	exp.Index = content
 
-	// if elist, ok := exp.Index.(ast.ExpressionList); ok {
-	// 	// fmt.Println("Got an ExpressionList for the IndexExpression:", elist)
-	// 	exp.Index = elist
-	// } else if splat, ok := exp.Index.(*ast.Splat); ok {
-	// 	// Indexing with a splat, e.g. array[*a]
-	// 	exp.Index = splat
-	// }
-
 	if !p.accept(token.RBRACKET) {
 		return nil
 	}
-	// fmt.Println("IndexExpression:", exp)
 	return exp
 }
 
@@ -998,10 +980,6 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 
 	// Check for dynamic constant assignment
 	inspect := func(n ast.Node) {
-		// if _, ok := n.(*ast.Splat); ok {
-		// 	// skip walking the splat since we don't want to evaluate it
-		// 	return false
-		// }
 		x, ok := n.(*ast.Assignment)
 		if ok {
 			switch left := x.Left.(type) {
@@ -1019,7 +997,6 @@ func (p *parser) parseFunctionLiteral() ast.Expression {
 				}
 			}
 		}
-		// return true
 	}
 	walk.Inspect(fl.Body, inspect)
 
@@ -1190,7 +1167,6 @@ func (p *parser) parseContextCallExpression(context ast.Expression) ast.Expressi
 		return nil
 	}
 
-	// ident := p.parseIdentifier().(*ast.Identifier)
 	contextCallExpression.Function = p.curToken.Literal
 
 	if p.peekIs(token.SEMICOLON, token.NEWLINE, token.DOT) {
@@ -1264,8 +1240,6 @@ func (p *parser) parseCallBlock(function ast.Expression) ast.Expression {
 	p.Error(fmt.Errorf("could not parse call expression: expected identifier, got token '%T'", function))
 	return nil
 }
-
-// func (p *parser) parseCallExpression(function ast.Expression) ast.Expression {
 
 func (p *parser) parseCallExpressionWithParens(function ast.Expression) ast.Expression {
 	defer trace.TraceCtx(p.ctx)()

@@ -31,13 +31,6 @@ func (i *transformer) Transform(src string, stages []t.Stage) (string, error) {
 
 func (i *transformer) TransformCtx(ctx context.Context, src string, stages []t.Stage) (string, error) {
 	program, err := parser.ParseCtx(ctx, src)
-	// if tracer != nil {
-	// 	walkable, err := tracer.ToWalkable()
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	walkable.Walk(trace_printer.NewTracePrinter())
-	// }
 	if err != nil {
 		return "", err
 	}
@@ -65,15 +58,8 @@ func Transform(src string) (string, error) {
 	return transformer.Transform(src, t.ALL_STAGES)
 }
 
-// func TransformWithComments(filename string, input interface{}) (string, error) {
-// }
-
 func TransformStages(src string, input interface{}, stages []t.Stage) (string, error) {
 	transformer := NewTransformer()
 	ctx := context.Background()
-	// logger := log.New(os.Stdout, "# TRANSFORMER ", 0)
-	// ctx = logging.WithLogger(ctx, logger)
 	return transformer.TransformCtx(ctx, src, t.ALL_STAGES)
-	// transformer := NewTransformer()
-	// return transformer.Transform(filename, input, stages)
 }
