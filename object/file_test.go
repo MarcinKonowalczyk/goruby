@@ -13,7 +13,7 @@ import (
 
 func TestFileExpandPath(t *testing.T) {
 	t.Run("one arg flavour", func(t *testing.T) {
-		ctx := call.NewContext[ruby.Object](context.Background(), nil).
+		ctx := call.NewContext[ruby.Object](context.Background()).
 			WithReceiver(fileClass).
 			WithEnv(env.NewEnvironment[ruby.Object]())
 		filename := NewString("./fixtures/testfile.rb")
@@ -31,7 +31,7 @@ func TestFileExpandPath(t *testing.T) {
 		assert.EqualCmpAny(t, result, expected, CompareRubyObjectsForTests)
 	})
 	t.Run("two arg flavour", func(t *testing.T) {
-		ctx := call.NewContext[ruby.Object](context.Background(), nil).
+		ctx := call.NewContext[ruby.Object](context.Background()).
 			WithReceiver(fileClass).
 			WithEnv(env.NewEnvironment[ruby.Object]())
 		filename := NewString("../../main.go")
@@ -50,7 +50,7 @@ func TestFileExpandPath(t *testing.T) {
 }
 
 func TestFileDirname(t *testing.T) {
-	ctx := call.NewContext[ruby.Object](context.Background(), nil).
+	ctx := call.NewContext[ruby.Object](context.Background()).
 		WithReceiver(fileClass).
 		WithEnv(NewMainEnvironment())
 	filename := NewString("/var/log/foo.log")

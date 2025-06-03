@@ -36,7 +36,7 @@ func TestSend(t *testing.T) {
 		}),
 	}
 	t.Run("normal object as context", func(t *testing.T) {
-		ctx := call.NewContext[ruby.Object](context.Background(), nil).WithReceiver(
+		ctx := call.NewContext[ruby.Object](context.Background()).WithReceiver(
 			&testRubyObject{
 				class: &class{
 					name:            "base class",

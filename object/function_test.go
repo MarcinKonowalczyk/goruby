@@ -29,7 +29,7 @@ func TestFunctionCall(t *testing.T) {
 		}
 
 		var actualEvalNode ast.Node
-		ctx := call.NewContext[ruby.Object](context.Background(), nil).
+		ctx := call.NewContext[ruby.Object](context.Background()).
 			WithEnv(object.NewMainEnvironment()).
 			WithEval(func(node ast.Node, env env.Environment[ruby.Object]) (ruby.Object, error) {
 				actualEvalNode = node
@@ -44,7 +44,7 @@ func TestFunctionCall(t *testing.T) {
 	})
 	t.Run("returns any error returned by CallContext#Eval", func(t *testing.T) {
 		evalErr := fmt.Errorf("An error")
-		ctx := call.NewContext[ruby.Object](context.Background(), nil).
+		ctx := call.NewContext[ruby.Object](context.Background()).
 			WithEnv(object.NewMainEnvironment()).
 			WithEval(func(ast.Node, env.Environment[ruby.Object]) (ruby.Object, error) {
 				return nil, evalErr
@@ -61,7 +61,7 @@ func TestFunctionCall(t *testing.T) {
 		contextEnv := env.NewEnvironment[ruby.Object]()
 		contextEnv.Set("bar", object.NewString("not reachable in Eval"))
 		var evalEnv env.Environment[ruby.Object]
-		ctx := call.NewContext[ruby.Object](context.Background(), nil).
+		ctx := call.NewContext[ruby.Object](context.Background()).
 			WithEnv(contextEnv).
 			WithEval(func(node ast.Node, env env.Environment[ruby.Object]) (ruby.Object, error) {
 				evalEnv = env
@@ -92,7 +92,7 @@ func TestFunctionCall(t *testing.T) {
 	t.Run("puts the Call args into the env for CallContext#Eval", func(t *testing.T) {
 		contextEnv := env.NewEnvironment[ruby.Object]()
 		var evalEnv env.Environment[ruby.Object]
-		ctx := call.NewContext[ruby.Object](context.Background(), nil).
+		ctx := call.NewContext[ruby.Object](context.Background()).
 			WithEnv(contextEnv).
 			WithEval(func(node ast.Node, env env.Environment[ruby.Object]) (ruby.Object, error) {
 				evalEnv = env
@@ -155,7 +155,7 @@ func TestFunctionCall(t *testing.T) {
 	})
 	t.Run("returns the object returned by CallContext#Eval", func(t *testing.T) {
 		t.Run("vanilla object", func(t *testing.T) {
-			ctx := call.NewContext[ruby.Object](context.Background(), nil).
+			ctx := call.NewContext[ruby.Object](context.Background()).
 				WithEnv(object.NewMainEnvironment()).
 				WithEval(func(ast.Node, env.Environment[ruby.Object]) (ruby.Object, error) {
 					return object.NewInteger(8), nil
@@ -167,7 +167,7 @@ func TestFunctionCall(t *testing.T) {
 			assert.EqualCmpAny(t, object.NewInteger(8), result, object.CompareRubyObjectsForTests)
 		})
 		t.Run("wrapped into a return value", func(t *testing.T) {
-			ctx := call.NewContext[ruby.Object](context.Background(), nil).
+			ctx := call.NewContext[ruby.Object](context.Background()).
 				WithEnv(object.NewMainEnvironment()).
 				WithEval(func(ast.Node, env.Environment[ruby.Object]) (ruby.Object, error) {
 					return &object.ReturnValue{Value: object.NewInteger(8)}, nil
@@ -180,8 +180,8 @@ func TestFunctionCall(t *testing.T) {
 		})
 	})
 	t.Run("validates that the arguments match the function parameters", func(t *testing.T) {
-		// ctx := call.NewContext[ruby.Object](context.Background(), nil).WithEval(object.NewMainEnvironment()).
-		ctx := call.NewContext[ruby.Object](context.Background(), nil).
+		// ctx := call.NewContext[ruby.Object](context.Background()).WithEval(object.NewMainEnvironment()).
+		ctx := call.NewContext[ruby.Object](context.Background()).
 			WithEnv(object.NewMainEnvironment()).
 			WithEval(func(ast.Node, env.Environment[ruby.Object]) (ruby.Object, error) {
 				return nil, nil

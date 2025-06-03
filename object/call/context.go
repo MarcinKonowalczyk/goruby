@@ -14,12 +14,6 @@ type _R interface{} // for type assertions
 
 ////////////////////////////////////////////////////////////////////////////////
 
-type Io interface {
-	Stdin() io.Reader
-	Stdout() io.Writer
-	Stderr() io.Writer
-}
-
 type EvalContext[R any] interface {
 	Receiver() R
 	// Env returns the current environment at call time
@@ -34,7 +28,6 @@ type EvalContext[R any] interface {
 type Context[R any] interface {
 	context.Context
 	EvalContext[R]
-	Io
 
 	WithReceiver(receiver R) Context[R]
 	WithEnv(env env.Environment[R]) Context[R]
@@ -44,8 +37,8 @@ type Context[R any] interface {
 type EvalFunc[R any] func(ast.Node, env.Environment[R]) (R, error)
 
 // NewContext returns a new CallContext with a stubbed eval function
-func NewContext[R any](ctx context.Context, io Io) Context[R] {
-	return emptyContext[R]{ctx, io}
+func NewContext[R any](ctx context.Context) Context[R] {
+	return emptyContext[R]{ctx}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -53,7 +46,6 @@ func NewContext[R any](ctx context.Context, io Io) Context[R] {
 // utility struct to wrap a context and replace the receiver, env or eval
 type wrappedCtx[R any] struct {
 	Context[R]
-	io       Io
 	receiver *R
 	env      *env.Environment[R]
 	eval     *EvalFunc[R]
@@ -78,13 +70,6 @@ func (c *wrappedCtx[R]) Eval(node ast.Node, env env.Environment[R]) (R, error) {
 		return (*c.eval)(node, env)
 	}
 	return c.Context.Eval(node, env)
-}
-
-func (c *wrappedCtx[R]) Io() Io {
-	if c.io != nil {
-		return c.io
-	}
-	return c.Context.(Io)
 }
 
 //go:inline
@@ -158,7 +143,6 @@ func WrappedContext[R any](
 
 type emptyContext[R any] struct {
 	context.Context // embedded context.Context
-	Io
 }
 
 func (c emptyContext[R]) Receiver() R {
@@ -206,5 +190,4 @@ func (c emptyContext[R]) WithEval(eval EvalFunc[R]) Context[R] {
 var (
 	_ Context[_R]     = (*emptyContext[_R])(nil)
 	_ context.Context = (*emptyContext[_R])(nil)
-	_ Io              = (*emptyContext[_R])(nil)
 )

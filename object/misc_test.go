@@ -43,7 +43,7 @@ func TestWithArity(t *testing.T) {
 
 	for _, testCase := range tests {
 		fn := object.WithArity(testCase.arity, wrappedMethod)
-		ctx := call.NewContext[ruby.Object](context.Background(), nil).WithReceiver(object.NIL)
+		ctx := call.NewContext[ruby.Object](context.Background()).WithReceiver(object.NIL)
 		result, err := fn.Call(ctx, testCase.arguments...)
 		assert.EqualCmpAny(t, result, testCase.result, object.CompareRubyObjectsForTests)
 		assert.Error(t, err, testCase.err)

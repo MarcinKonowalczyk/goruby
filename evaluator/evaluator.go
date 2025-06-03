@@ -94,7 +94,7 @@ func (e *evaluator) Eval(ctx context.Context, node ast.Node, ev env.Environment[
 	// 	CallContext: object.NewCallContext(env, object.FUNCS_STORE),
 	// 	evaluator:   e,
 	// }
-	ectx := call.NewContext[ruby.Object](ctx, nil).
+	ectx := call.NewContext[ruby.Object](ctx).
 		WithReceiver(object.FUNCS_STORE).
 		WithEnv(ev).
 		WithEval(func(node ast.Node, ev env.Environment[ruby.Object]) (ruby.Object, error) {
