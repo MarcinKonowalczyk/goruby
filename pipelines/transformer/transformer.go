@@ -3,11 +3,13 @@ package transformer
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/parser"
 	"github.com/MarcinKonowalczyk/goruby/printer"
 	t "github.com/MarcinKonowalczyk/goruby/transformer"
+	"github.com/MarcinKonowalczyk/goruby/transformer/logging"
 )
 
 type Transformer interface {
@@ -35,6 +37,10 @@ func (i *transformer) TransformCtx(ctx context.Context, src string, stages []t.S
 		return "", err
 	}
 
+	printer := printer.NewPrinter("TRANSFORMER_PIPELINE")
+	logger := log.New(printer, "# TRANSFORMER_PIPELINE ", 0)
+	ctx = logging.WithLogger(ctx, logger)
+
 	transformer := t.NewTransformer()
 	transformed_program, err := transformer.TransformCtx(ctx, program, stages)
 	if transformed_program, ok := transformed_program.(*ast.Program); !ok {
@@ -45,7 +51,7 @@ func (i *transformer) TransformCtx(ctx context.Context, src string, stages []t.S
 		return "", fmt.Errorf("transformer error: %v", err)
 	}
 
-	printer := printer.NewPrinter("TRANSFORM_PIPELINE")
+	printer.Logf("Transformed program:")
 	printer.PrintNode(transformed_program)
 
 	return printer.String(), nil
@@ -61,5 +67,5 @@ func Transform(src string) (string, error) {
 func TransformStages(src string, input interface{}, stages []t.Stage) (string, error) {
 	transformer := NewTransformer()
 	ctx := context.Background()
-	return transformer.TransformCtx(ctx, src, t.ALL_STAGES)
+	return transformer.TransformCtx(ctx, src, stages)
 }

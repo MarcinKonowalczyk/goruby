@@ -52,6 +52,7 @@ func runTest(
 	// Transform
 	src, err := os.ReadFile(test_file)
 	assert.NoError(t, err)
+
 	transformed, err := transformer_pipeline.TransformStages(string(src), nil, stages)
 	assert.NoError(t, err)
 

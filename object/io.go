@@ -58,7 +58,7 @@ func ioClassGets(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Objec
 	return str, nil
 }
 
-func isNil(thing any) bool {
+func IsNil(thing any) bool {
 	if thing == nil {
 		return true
 	}
@@ -72,7 +72,7 @@ func isNil(thing any) bool {
 }
 
 func print(stdout io.Writer, lines []string, delimiter string) error {
-	if isNil(stdout) {
+	if IsNil(stdout) {
 		return nil
 	}
 	var out strings.Builder

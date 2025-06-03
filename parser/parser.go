@@ -229,6 +229,7 @@ func (p *parser) nextToken() {
 
 func (p *parser) parseIdentifier() ast.Expression {
 	defer trace.TraceCtx(p.ctx)()
+	trace.MessageCtx(p.ctx, p.curToken.Literal)
 
 	return &ast.Identifier{Value: p.curToken.Literal}
 }
@@ -240,6 +241,10 @@ func (p *parser) Errors() []error {
 
 func (p *parser) Error(err error) {
 	defer trace.TraceCtx(p.ctx)()
+	if err == nil {
+		return
+	}
+	trace.MessageCtx(p.ctx, fmt.Sprintf("Error: %s", err.Error()))
 
 	p.errors = append(p.errors, err)
 }
@@ -347,21 +352,20 @@ func (p *parser) parseReturnStatement() *ast.ReturnStatement {
 		return stmt
 	}
 
-	if !p.peekIs(token.COMMA) {
-		p.unexpectedTokenError(p.peekToken.Type, "", token.COMMA)
-		return nil
+	if p.peekIs(token.COMMA) {
+		// return value is a list
+		arr := &ast.ArrayLiteral{Elements: []ast.Expression{stmt.ReturnValue}}
+		for p.peekIs(token.COMMA) {
+			p.consume(token.COMMA)
+			arr.Elements = append(arr.Elements, p.parseExpression(precLowest))
+		}
+		stmt.ReturnValue = arr
+
+		if !p.accept(token.NEWLINE, token.SEMICOLON) {
+			return nil
+		}
 	}
 
-	arr := &ast.ArrayLiteral{Elements: []ast.Expression{stmt.ReturnValue}}
-	for p.peekIs(token.COMMA) {
-		p.consume(token.COMMA)
-		arr.Elements = append(arr.Elements, p.parseExpression(precLowest))
-	}
-	stmt.ReturnValue = arr
-
-	if !p.accept(token.NEWLINE, token.SEMICOLON) {
-		return nil
-	}
 	return stmt
 }
 
@@ -804,6 +808,10 @@ func (p *parser) parseIndexExpression(left ast.Expression) ast.Expression {
 	exp := &ast.IndexExpression{Left: left}
 
 	p.nextToken()
+	if p.currentIs(token.RBRACKET) {
+		// empty index expression, e.g. `array[]`
+		return exp
+	}
 	content := p.parseExpression(precLowest)
 	exp.Index = content
 

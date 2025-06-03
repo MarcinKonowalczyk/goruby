@@ -461,16 +461,16 @@ func (e *evaluator) evalSymbolIndexExpression(ev env.Environment[ruby.Object], t
 			return nil, err
 		}
 
-		if evaluated == nil {
-			return nil, object.NewException("symbol index is nil")
-		}
+		// if evaluated == nil {
+		// 	return nil, object.NewException("symbol index is nil")
+		// }
 
 		// call the proc with the arguments
-		args := make([]ruby.Object, 1)
-		if evaluated == nil {
-			args[0] = object.NIL
+		var args []ruby.Object
+		if evaluated != nil {
+			args = []ruby.Object{evaluated}
 		} else {
-			args[0] = evaluated
+			args = []ruby.Object{}
 		}
 
 		value, err := object.Send(e.ctx, target.Value, args...)

@@ -73,11 +73,16 @@ func NotEqual[T comparable](t *testing.T, a T, b T) {
 // Assert that error is nil.
 func NoError(t *testing.T, err error) {
 	t.Helper()
-	Error(t, err, nil)
+	assert_error(t, nestedAssertParent, err, nil)
 }
 
 // Assert that an error is not nil.
 func Error(t *testing.T, err error, expected any) {
+	t.Helper()
+	assert_error(t, nestedAssertParent, err, expected)
+}
+
+func assert_error(t *testing.T, N int, err error, expected any) {
 	t.Helper()
 	var msg = ""
 	switch expected := expected.(type) {
@@ -126,7 +131,7 @@ func Error(t *testing.T, err error, expected any) {
 	}
 
 	if msg != "" {
-		file, line := getParentInfo(thisFunctionsParent)
+		file, line := getParentInfo(N)
 		t.Errorf(msg+" in %s:%d", file, line)
 	}
 }

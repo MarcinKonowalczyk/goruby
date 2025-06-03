@@ -19,11 +19,15 @@ func (f *LiftBuiltins) PostTransform(ctx context.Context, node ast.Node) ast.Nod
 	case *ast.Comment:
 		//
 	case *ast.ContextCallExpression:
-		logging.Logf(ctx, "found context call expression \"%s\" with context %s and block %s\n",
-			node.Function, node.Context, node.Block)
+		logging.Logf(ctx, "found context call expression \"%s\" with context %v and block %v\n",
+			node.Function,
+			node.Context,
+			node.Block,
+		)
 		var replacement replacement_spec
 		replacement, ok := context_call_expr_replacements[context_spec(node.Function)]
 		if ok {
+			logging.Logf(ctx, "replacing context call expression %s with %s\n", node.Function, replacement.name)
 			// found a replacement !!
 			f.Statements = append(f.Statements, replacement.statement)
 			return &ast.IndexExpression{
@@ -35,7 +39,7 @@ func (f *LiftBuiltins) PostTransform(ctx context.Context, node ast.Node) ast.Nod
 			}
 		}
 	default:
-		logging.Logf(ctx, "walking %T\n", node)
+		// logging.Logf(ctx, "walking %T\n", node)
 	}
 	return node
 }

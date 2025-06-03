@@ -16,11 +16,11 @@ func Transform(node *ast.Program, stages []Stage, trace_transform bool) (*ast.Pr
 	logger := log.New(os.Stdout, "# TRANSFORMER ", 0)
 	ctx := logging.WithLogger(context.Background(), logger)
 
-	t := &transformer{}
+	tr := &transformer{}
 	if trace_transform {
-		t.tracer = trace.NewTracer()
+		tr.tracer = trace.NewTracer()
 	}
-	transformed_node, err := t.TransformCtx(ctx, node, stages)
+	transformed_node, err := tr.TransformCtx(ctx, node, stages)
 	if err != nil {
 		return nil, err
 	}

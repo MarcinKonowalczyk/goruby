@@ -43,7 +43,7 @@ func (f *LiftBlocks) PreTransform(ctx context.Context, node ast.Node) ast.Node {
 		f.call_stack = append(f.call_stack, &call{name: node.Name, parameters: parameter_names})
 		return node
 	default:
-		logging.Logf(ctx, "walking %T\n", node)
+		// logging.Logf(ctx, "walking %T\n", node)
 	}
 	return node
 }
@@ -68,14 +68,15 @@ func (f *LiftBlocks) PostTransform(ctx context.Context, node ast.Node) ast.Node 
 			return f.transformContextCallExpressionPass1(ctx, node)
 		}
 	default:
-		logging.Logf(ctx, "walking %T\n", node)
+		// logging.Logf(ctx, "walking %T\n", node)
 	}
 	return node
 }
 
 func (f *LiftBlocks) transformFunctionLiteralPass0(ctx context.Context, node *ast.FunctionLiteral) ast.Node {
+	logging.Logf(ctx, "lifting function %s with parameters %v\n", node.Name, node.Parameters)
+	logging.Logf(ctx, "call stack: %v\n", f.call_stack)
 	if len(f.call_stack) > 0 {
-		logging.Logf(ctx, "lifting function %s with parameters %v\n", node.Name, node.Parameters)
 		parent := f.call_stack[len(f.call_stack)-1]
 
 		// And add all the parameters from the parent
@@ -141,6 +142,7 @@ func (f *LiftBlocks) transformFunctionLiteralPass0(ctx context.Context, node *as
 		}
 		f.NameChanges[old_name] = node.Name
 		f.LiftedFunctions = append(f.LiftedFunctions, node)
+		logging.Logf(ctx, "lifting top-level function %s to %s\n", old_name, node.Name)
 		return nil
 	}
 }

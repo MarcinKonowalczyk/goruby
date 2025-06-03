@@ -21,7 +21,7 @@ func GetLogger(ctx context.Context) *log.Logger {
 	return logger
 }
 
-func Logf(ctx context.Context, format string, args ...interface{}) {
+func Logf(ctx context.Context, format string, args ...any) {
 	logger := GetLogger(ctx)
 	if logger == nil {
 		return // or handle the case where no logger is set

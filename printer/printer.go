@@ -2,13 +2,16 @@ package printer
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
 )
 
 type Printer interface {
+	io.Writer
 	PrintNode(ast.Node)
+	Logf(...string)
 	String() string
 }
 
@@ -18,6 +21,12 @@ func NewPrinter(prefix string) Printer {
 		comment_prefix: prefix,
 	}
 }
+
+func (g *printer) Write(p []byte) (n int, err error) {
+	return g.out.Write(p)
+}
+
+var _ io.Writer = &printer{}
 
 type printer struct {
 	out            *strings.Builder
@@ -46,28 +55,28 @@ func (p *printer) PrintNode(node ast.Node) {
 	case *ast.ExpressionStatement:
 		p.PrintNode(node.Expression)
 	case *ast.FunctionLiteral:
-		p.PrintFakeComment(fmt.Sprintf(" %T", node))
+		p.Logf(fmt.Sprintf(" %T", node))
 		p.Println(node.Code())
 		p.Println()
 	case *ast.Assignment:
-		p.PrintFakeComment(fmt.Sprintf(" %T", node))
+		p.Logf(fmt.Sprintf(" %T", node))
 		p.Println(node.Code())
 		p.Println()
 
 	case *ast.IndexExpression:
-		p.PrintFakeComment(fmt.Sprintf(" %T", node))
+		p.Logf(fmt.Sprintf(" %T", node))
 		p.Println(node.Code())
 
 	case *ast.ContextCallExpression:
-		p.PrintFakeComment(fmt.Sprintf(" %T", node))
+		p.Logf(fmt.Sprintf(" %T", node))
 		p.Println(node.Code())
 		p.Println()
 	case *ast.IntegerLiteral:
-		p.PrintFakeComment(fmt.Sprintf(" %T", node))
+		p.Logf(fmt.Sprintf(" %T", node))
 		p.Println(node.Code())
 		p.Println()
 	case *ast.ConditionalExpression:
-		p.PrintFakeComment(fmt.Sprintf(" %T", node))
+		p.Logf(fmt.Sprintf("%T", node))
 		p.Println(node.Code())
 		p.Println()
 
@@ -78,14 +87,26 @@ func (p *printer) PrintNode(node ast.Node) {
 
 var _ Printer = &printer{}
 
-func (p *printer) PrintFakeComment(content ...string) {
+func (p *printer) Logf(content ...string) {
 	if len(content) == 0 {
 		return
 	}
-	for _, line := range content {
-		comment_line := &ast.Comment{Value: p.comment_prefix + line}
-		p.Println(comment_line.Code())
+
+	var rest []any
+	if len(content) > 1 {
+		for i := 1; i < len(content); i++ {
+			rest = append(rest, content[i])
+		}
+	} else {
+		rest = []any{}
 	}
+
+	msg := fmt.Sprintf(content[0], rest...)
+	msg = strings.TrimPrefix(msg, " ")
+	msg = strings.TrimSuffix(msg, "\n")
+	msg = " " + msg
+	comment_line := &ast.Comment{Value: p.comment_prefix + msg}
+	p.Println(comment_line.Code())
 }
 
 func (p *printer) String() string {

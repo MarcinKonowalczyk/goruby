@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
+	"github.com/MarcinKonowalczyk/goruby/object"
 )
 
 // A Visitor's Visit method is invoked for each node encountered by Walk. If
@@ -225,31 +226,39 @@ func WalkCtx(
 		v.Visit(node)
 	}
 
+	if object.IsNil(node) {
+		// remove any nil type
+		node = nil // ensure we return nil, not a pointer to nil
+	}
+
 	// walk children
-	var new_node ast.Node
+	var walked_node ast.Node // result of the walk
 	switch n := node.(type) {
+
 	// Expressions
 	case *ast.Identifier,
+		*ast.FloatLiteral,
 		*ast.IntegerLiteral,
 		*ast.StringLiteral,
 		*ast.SymbolLiteral,
-		*ast.Comment:
+		*ast.Comment,
+		nil:
 		// nothing to do
 
 	case *ast.FunctionLiteral:
 		if mutating {
 			new_params := make([]*ast.FunctionParameter, len(n.Parameters))
 			for i, x := range n.Parameters {
-				new_node = WalkCtx(ctx, x, transformer, v)
-				if new_param, ok := new_node.(*ast.FunctionParameter); ok {
+				walked_node = WalkCtx(ctx, x, transformer, v)
+				if new_param, ok := walked_node.(*ast.FunctionParameter); ok {
 					new_params[i] = new_param
 				} else {
 					panic(fmt.Sprintf("ast.Walk mutated a function parameter to %T", new_param))
 				}
 			}
 			n.Parameters = new_params
-			new_node = WalkCtx(ctx, n.Body, transformer, v)
-			if new_body, ok := new_node.(*ast.BlockStatement); ok {
+			walked_node = WalkCtx(ctx, n.Body, transformer, v)
+			if new_body, ok := walked_node.(*ast.BlockStatement); ok {
 				n.Body = new_body
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated a function body to %T", new_body))
@@ -263,8 +272,8 @@ func WalkCtx(
 
 	case *ast.FunctionParameter:
 		if mutating {
-			new_node = WalkCtx(ctx, n.Default, transformer, v)
-			if new_default, ok := new_node.(ast.Expression); ok {
+			walked_node = WalkCtx(ctx, n.Default, transformer, v)
+			if new_default, ok := walked_node.(ast.Expression); ok {
 				n.Default = new_default
 			} else {
 				if new_default == nil {
@@ -279,14 +288,14 @@ func WalkCtx(
 
 	case *ast.IndexExpression:
 		if mutating {
-			new_node = WalkCtx(ctx, n.Left, transformer, v)
-			if new_left, ok := new_node.(ast.Expression); ok {
+			walked_node = WalkCtx(ctx, n.Left, transformer, v)
+			if new_left, ok := walked_node.(ast.Expression); ok {
 				n.Left = new_left
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated an index expression left to %T", new_left))
 			}
-			new_node = WalkCtx(ctx, n.Index, transformer, v)
-			if new_index, ok := new_node.(ast.Expression); ok {
+			walked_node = WalkCtx(ctx, n.Index, transformer, v)
+			if new_index, ok := walked_node.(ast.Expression); ok {
 				n.Index = new_index
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated an index expression index to %T", new_index))
@@ -298,21 +307,21 @@ func WalkCtx(
 
 	case *ast.ContextCallExpression:
 		if mutating {
-			new_node = WalkCtx(ctx, n.Context, transformer, v)
-			if new_node == nil {
+			walked_node = WalkCtx(ctx, n.Context, transformer, v)
+			if walked_node == nil {
 				n.Context = nil
 			} else {
-				if new_context, ok := new_node.(ast.Expression); ok {
+				if new_context, ok := walked_node.(ast.Expression); ok {
 					n.Context = new_context
 				} else {
-					panic(fmt.Sprintf("ast.Walk mutated a context call expression context from %T to %T", n.Context, new_node))
+					panic(fmt.Sprintf("ast.Walk mutated a context call expression context from %T to %T", n.Context, walked_node))
 				}
 
 			}
 			new_arguments := make([]ast.Expression, len(n.Arguments))
 			for i, x := range n.Arguments {
-				new_node = WalkCtx(ctx, x, transformer, v)
-				if new_argument, ok := new_node.(ast.Expression); ok {
+				walked_node = WalkCtx(ctx, x, transformer, v)
+				if new_argument, ok := walked_node.(ast.Expression); ok {
 					new_arguments[i] = new_argument
 				} else {
 					panic(fmt.Sprintf("ast.Walk mutated a context call expression argument to %T", new_argument))
@@ -320,11 +329,11 @@ func WalkCtx(
 			}
 			n.Arguments = new_arguments
 			if n.Block != nil {
-				new_node = WalkCtx(ctx, n.Block, transformer, v)
-				if new_block, ok := new_node.(ast.Expression); ok {
+				walked_node = WalkCtx(ctx, n.Block, transformer, v)
+				if new_block, ok := walked_node.(ast.Expression); ok {
 					n.Block = new_block
 				} else {
-					panic(fmt.Sprintf("ast.Walk mutated a context call expression block from %T to %T", n.Block, new_node))
+					panic(fmt.Sprintf("ast.Walk mutated a context call expression block from %T to %T", n.Block, walked_node))
 				}
 			}
 		} else {
@@ -339,8 +348,8 @@ func WalkCtx(
 
 	case *ast.PrefixExpression:
 		if mutating {
-			new_node = WalkCtx(ctx, n.Right, transformer, v)
-			if new_right, ok := new_node.(ast.Expression); ok {
+			walked_node = WalkCtx(ctx, n.Right, transformer, v)
+			if new_right, ok := walked_node.(ast.Expression); ok {
 				n.Right = new_right
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated a prefix expression right to %T", new_right))
@@ -352,14 +361,14 @@ func WalkCtx(
 
 	case *ast.InfixExpression:
 		if mutating {
-			new_node = WalkCtx(ctx, n.Left, transformer, v)
-			if new_left, ok := new_node.(ast.Expression); ok {
+			walked_node = WalkCtx(ctx, n.Left, transformer, v)
+			if new_left, ok := walked_node.(ast.Expression); ok {
 				n.Left = new_left
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated an infix expression left to %T", new_left))
 			}
-			new_node = WalkCtx(ctx, n.Right, transformer, v)
-			if new_right, ok := new_node.(ast.Expression); ok {
+			walked_node = WalkCtx(ctx, n.Right, transformer, v)
+			if new_right, ok := walked_node.(ast.Expression); ok {
 				n.Right = new_right
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated an infix expression right to %T", new_right))
@@ -373,8 +382,8 @@ func WalkCtx(
 		if mutating {
 			new_variables := make([]*ast.Identifier, len(n.Variables))
 			for i, x := range n.Variables {
-				new_node = WalkCtx(ctx, x, transformer, v)
-				if new_variable, ok := new_node.(*ast.Identifier); ok {
+				walked_node = WalkCtx(ctx, x, transformer, v)
+				if new_variable, ok := walked_node.(*ast.Identifier); ok {
 					new_variables[i] = new_variable
 				} else {
 					panic(fmt.Sprintf("ast.Walk mutated a multi-assignment variable to %T", new_variable))
@@ -383,8 +392,8 @@ func WalkCtx(
 			n.Variables = new_variables
 			new_values := make([]ast.Expression, len(n.Values))
 			for i, x := range n.Values {
-				new_node = WalkCtx(ctx, x, transformer, v)
-				if new_value, ok := new_node.(ast.Expression); ok {
+				walked_node = WalkCtx(ctx, x, transformer, v)
+				if new_value, ok := walked_node.(ast.Expression); ok {
 					new_values[i] = new_value
 				} else {
 					panic(fmt.Sprintf("ast.Walk mutated a multi-assignment value to %T", new_value))
@@ -404,8 +413,8 @@ func WalkCtx(
 		if mutating {
 			new_elements := make([]ast.Expression, len(n))
 			for i, x := range n {
-				new_node = WalkCtx(ctx, x, transformer, v)
-				if new_element, ok := new_node.(ast.Expression); ok {
+				walked_node = WalkCtx(ctx, x, transformer, v)
+				if new_element, ok := walked_node.(ast.Expression); ok {
 					new_elements[i] = new_element
 				} else {
 					panic(fmt.Sprintf("ast.Walk mutated an expression list element to %T", new_element))
@@ -423,8 +432,8 @@ func WalkCtx(
 		if mutating {
 			new_elements := make([]ast.Expression, len(n.Elements))
 			for i, x := range n.Elements {
-				new_node = WalkCtx(ctx, x, transformer, v)
-				if new_element, ok := new_node.(ast.Expression); ok {
+				walked_node = WalkCtx(ctx, x, transformer, v)
+				if new_element, ok := walked_node.(ast.Expression); ok {
 					new_elements[i] = new_element
 				} else {
 					panic(fmt.Sprintf("ast.Walk mutated an array literal element to %T", new_element))
@@ -441,10 +450,10 @@ func WalkCtx(
 		if mutating {
 			new_map := make(map[ast.Expression]ast.Expression, len(n.Map))
 			for k, val := range n.Map {
-				new_node = WalkCtx(ctx, k, transformer, v)
-				if new_key, ok := new_node.(ast.Expression); ok {
-					new_node = WalkCtx(ctx, val, transformer, v)
-					if new_value, ok := new_node.(ast.Expression); ok {
+				walked_node = WalkCtx(ctx, k, transformer, v)
+				if new_key, ok := walked_node.(ast.Expression); ok {
+					walked_node = WalkCtx(ctx, val, transformer, v)
+					if new_value, ok := walked_node.(ast.Expression); ok {
 						new_map[new_key] = new_value
 					} else {
 						panic(fmt.Sprintf("ast.Walk mutated a hash literal value to %T", new_value))
@@ -463,18 +472,18 @@ func WalkCtx(
 
 	case *ast.ExpressionStatement:
 		if mutating {
-			new_node = WalkCtx(ctx, n.Expression, transformer, v)
-			switch new_expression := new_node.(type) {
+			walked_node = WalkCtx(ctx, n.Expression, transformer, v)
+			switch new_expression := walked_node.(type) {
 			case ast.Expression:
 				if new_expression != n.Expression {
-					fmt.Printf("# WALK *ExpressionStatement::Expression: ast.Walk mutated %T(%v) to %T(%v)\n", n.Expression, n.Expression, new_node, new_node)
+					fmt.Printf("# WALK *ExpressionStatement::Expression: ast.Walk mutated %T(%v) to %T(%v)\n", n.Expression, n.Expression, walked_node, walked_node)
 				}
 				n.Expression = new_expression
 			case nil:
 				// we got nil. remove the expression statement
 				n = nil
 			default:
-				panic(fmt.Sprintf("ast.Walk mutated an expression statement from %T to %T", n.Expression, new_node))
+				panic(fmt.Sprintf("ast.Walk mutated an expression statement from %T to %T", n.Expression, walked_node))
 			}
 		} else {
 			_ = WalkCtx(ctx, n.Expression, transformer, v)
@@ -482,19 +491,19 @@ func WalkCtx(
 
 	case *ast.Assignment:
 		if mutating {
-			new_node = WalkCtx(ctx, n.Left, transformer, v)
-			if new_left, ok := new_node.(ast.Expression); ok {
+			walked_node = WalkCtx(ctx, n.Left, transformer, v)
+			if new_left, ok := walked_node.(ast.Expression); ok {
 				if new_left != n.Left {
-					fmt.Printf("*Assignment::Left: ast.Walk mutated %T to %T\n", n.Left, new_node)
+					fmt.Printf("*Assignment::Left: ast.Walk mutated %T to %T\n", n.Left, walked_node)
 				}
 				n.Left = new_left
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated an assignment left to %T", new_left))
 			}
-			new_node = WalkCtx(ctx, n.Right, transformer, v)
-			if new_right, ok := new_node.(ast.Expression); ok {
+			walked_node = WalkCtx(ctx, n.Right, transformer, v)
+			if new_right, ok := walked_node.(ast.Expression); ok {
 				if new_right != n.Right {
-					fmt.Printf("*Assignment::Right: ast.Walk mutated %T to %T\n", n.Right, new_node)
+					fmt.Printf("*Assignment::Right: ast.Walk mutated %T to %T\n", n.Right, walked_node)
 				}
 				n.Right = new_right
 			} else {
@@ -507,10 +516,10 @@ func WalkCtx(
 
 	case *ast.ReturnStatement:
 		if mutating {
-			new_node = WalkCtx(ctx, n.ReturnValue, transformer, v)
-			if new_return_value, ok := new_node.(ast.Expression); ok {
+			walked_node = WalkCtx(ctx, n.ReturnValue, transformer, v)
+			if new_return_value, ok := walked_node.(ast.Expression); ok {
 				if new_return_value != n.ReturnValue {
-					fmt.Printf("*ReturnStatement::ReturnValue: ast.Walk mutated %T to %T\n", n.ReturnValue, new_node)
+					fmt.Printf("*ReturnStatement::ReturnValue: ast.Walk mutated %T to %T\n", n.ReturnValue, walked_node)
 				}
 				n.ReturnValue = new_return_value
 			} else {
@@ -523,11 +532,11 @@ func WalkCtx(
 
 	case *ast.BreakStatement:
 		if mutating {
-			new_node = WalkCtx(ctx, n.Condition, transformer, v)
-			if new_node == nil {
+			walked_node = WalkCtx(ctx, n.Condition, transformer, v)
+			if walked_node == nil {
 				n.Condition = nil
 			} else {
-				if new_condition, ok := new_node.(ast.Expression); ok {
+				if new_condition, ok := walked_node.(ast.Expression); ok {
 					n.Condition = new_condition
 				} else {
 					panic(fmt.Sprintf("ast.Walk mutated a break statement condition from %T to %T", n.Condition, new_condition))
@@ -541,8 +550,8 @@ func WalkCtx(
 		if mutating {
 			new_statements := make([]ast.Statement, len(n.Statements))
 			for i, x := range n.Statements {
-				new_node = WalkCtx(ctx, x, transformer, v)
-				if new_statement, ok := new_node.(ast.Statement); ok {
+				walked_node = WalkCtx(ctx, x, transformer, v)
+				if new_statement, ok := walked_node.(ast.Statement); ok {
 					new_statements[i] = new_statement
 				} else {
 					panic(fmt.Sprintf("ast.Walk mutated a block statement to %T", new_statement))
@@ -557,21 +566,21 @@ func WalkCtx(
 
 	case *ast.ConditionalExpression:
 		if mutating {
-			new_node = WalkCtx(ctx, n.Condition, transformer, v)
-			if new_condition, ok := new_node.(ast.Expression); ok {
+			walked_node = WalkCtx(ctx, n.Condition, transformer, v)
+			if new_condition, ok := walked_node.(ast.Expression); ok {
 				n.Condition = new_condition
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated a conditional expression condition to %T", new_condition))
 			}
-			new_node = WalkCtx(ctx, n.Consequence, transformer, v)
-			if new_consequence, ok := new_node.(*ast.BlockStatement); ok {
+			walked_node = WalkCtx(ctx, n.Consequence, transformer, v)
+			if new_consequence, ok := walked_node.(*ast.BlockStatement); ok {
 				n.Consequence = new_consequence
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated a conditional expression consequence to %T", new_consequence))
 			}
 			if n.Alternative != nil {
-				new_node = WalkCtx(ctx, n.Alternative, transformer, v)
-				if new_alternative, ok := new_node.(*ast.BlockStatement); ok {
+				walked_node = WalkCtx(ctx, n.Alternative, transformer, v)
+				if new_alternative, ok := walked_node.(*ast.BlockStatement); ok {
 					n.Alternative = new_alternative
 				} else {
 					panic(fmt.Sprintf("ast.Walk mutated a conditional expression alternative to %T", new_alternative))
@@ -587,8 +596,8 @@ func WalkCtx(
 
 	case *ast.LoopExpression:
 		if mutating {
-			new_node = WalkCtx(ctx, n.Block, transformer, v)
-			if new_block, ok := new_node.(*ast.BlockStatement); ok {
+			walked_node = WalkCtx(ctx, n.Block, transformer, v)
+			if new_block, ok := walked_node.(*ast.BlockStatement); ok {
 				n.Block = new_block
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated a loop expression block from %T to %T", n.Block, new_block))
@@ -602,17 +611,27 @@ func WalkCtx(
 		if mutating {
 			new_statements := make([]ast.Statement, len(n.Statements))
 			for i, statement := range n.Statements {
-				new_node = WalkCtx(ctx, statement, transformer, v)
-				if new_node == nil {
+				walked_node = WalkCtx(ctx, statement, transformer, v)
+				if walked_node == nil {
 					new_statements[i] = nil
 				} else {
-					if new_statement, ok := new_node.(ast.Statement); ok {
+					if new_statement, ok := walked_node.(ast.Statement); ok {
 						new_statements[i] = new_statement
 					} else {
 						panic(fmt.Sprintf("ast.Walk mutated a program statement from %T to %T", statement, new_statement))
 					}
 				}
 			}
+
+			// remove nil statements
+			new_statements_2 := make([]ast.Statement, 0, len(new_statements))
+			for _, statement := range new_statements {
+				if statement != nil {
+					new_statements_2 = append(new_statements_2, statement)
+				}
+			}
+			new_statements = new_statements_2
+
 			n.Statements = new_statements
 		} else {
 			for _, x := range n.Statements {
@@ -622,14 +641,14 @@ func WalkCtx(
 
 	case *ast.RangeLiteral:
 		if mutating {
-			new_node = WalkCtx(ctx, n.Left, transformer, v)
-			if new_left, ok := new_node.(ast.Expression); ok {
+			walked_node = WalkCtx(ctx, n.Left, transformer, v)
+			if new_left, ok := walked_node.(ast.Expression); ok {
 				n.Left = new_left
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated a range literal left from %T to %T", n.Left, new_left))
 			}
-			new_node = WalkCtx(ctx, n.Right, transformer, v)
-			if new_right, ok := new_node.(ast.Expression); ok {
+			walked_node = WalkCtx(ctx, n.Right, transformer, v)
+			if new_right, ok := walked_node.(ast.Expression); ok {
 				n.Right = new_right
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated a range literal right from %T to %T", n.Right, new_right))
@@ -639,13 +658,10 @@ func WalkCtx(
 			_ = WalkCtx(ctx, n.Right, transformer, v)
 		}
 
-	case nil:
-		// nothing to do
-
 	case *ast.Splat:
 		if mutating {
-			new_node = WalkCtx(ctx, n.Value, transformer, v)
-			if new_value, ok := new_node.(ast.Expression); ok {
+			walked_node = WalkCtx(ctx, n.Value, transformer, v)
+			if new_value, ok := walked_node.(ast.Expression); ok {
 				n.Value = new_value
 			} else {
 				panic(fmt.Sprintf("ast.Walk mutated a splat value from %T to %T", n.Value, new_value))
@@ -653,9 +669,6 @@ func WalkCtx(
 		} else {
 			_ = WalkCtx(ctx, n.Value, transformer, v)
 		}
-
-	case *ast.FloatLiteral:
-		// nothing to do
 
 	default:
 		panic(fmt.Sprintf("ast.Walk: unexpected node type %T", n))
