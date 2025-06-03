@@ -4,3 +4,4 @@ def function_with_a_comment_in_it()
 end
 
 puts function_with_a_comment_in_it() # => "This function has a comment in it."
+puts function_with_a_comment_in_it() # => "This function has a comment in it."

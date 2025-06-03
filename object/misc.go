@@ -1,7 +1,7 @@
 package object
 
 import (
-	"os"
+	"io"
 
 	"github.com/MarcinKonowalczyk/goruby/object/call"
 	"github.com/MarcinKonowalczyk/goruby/object/env"
@@ -21,10 +21,19 @@ func NewMainEnvironment() env.Environment[ruby.Object] {
 	env := CLASSES.Clone()
 	env.SetGlobal("$bottom", BOTTOM)
 	env.SetGlobal("$funcs", FUNCS_STORE)
-	env.SetGlobal("$stdin", NewIoClass(os.Stdin, nil, nil))
-	env.SetGlobal("$stdout", NewIoClass(nil, os.Stdout, nil))
-	env.SetGlobal("$stderr", NewIoClass(nil, nil, os.Stderr))
 	return env
+}
+
+func SetMainEnvironmentIo(env env.Environment[ruby.Object], stdin io.Reader, stdout, stderr io.Writer) {
+	if env == nil {
+		panic("env cannot be nil")
+	}
+	stdin_cls := NewIoClass(stdin, nil, nil)
+	stdout_cls := NewIoClass(nil, stdout, nil)
+	stderr_cls := NewIoClass(nil, nil, stderr)
+	env.SetGlobal("$stdin", stdin_cls)
+	env.SetGlobal("$stdout", stdout_cls)
+	env.SetGlobal("$stderr", stderr_cls)
 }
 
 func WithArity(arity int, fn ruby.Method) ruby.Method {

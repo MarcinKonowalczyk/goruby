@@ -2,8 +2,8 @@ package object
 
 import (
 	"bufio"
-	"fmt"
 	"io"
+	"reflect"
 	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/object/call"
@@ -58,7 +58,23 @@ func ioClassGets(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Objec
 	return str, nil
 }
 
-func print(lines []string, delimiter string) {
+func isNil(thing any) bool {
+	if thing == nil {
+		return true
+	}
+	typeof := reflect.TypeOf(thing)
+	if typeof.Kind() == reflect.Ptr {
+		if thing == reflect.Zero(typeof).Interface() {
+			return true
+		}
+	}
+	return false
+}
+
+func print(stdout io.Writer, lines []string, delimiter string) error {
+	if isNil(stdout) {
+		return nil
+	}
 	var out strings.Builder
 	for i, line := range lines {
 		out.WriteString(line)
@@ -67,11 +83,16 @@ func print(lines []string, delimiter string) {
 		}
 	}
 	out.WriteString(delimiter)
-	fmt.Print(out.String())
+	_, err := stdout.Write([]byte(out.String()))
+	return err
 }
 
 func ioPuts(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx)()
+	self, ok := ctx.Receiver().(*ioClass)
+	if !ok {
+		return nil, NewTypeError("expected io class receiver")
+	}
 	var lines []string
 	for _, arg := range args {
 		if arr, ok := arg.(*Array); ok {
@@ -93,12 +114,16 @@ func ioPuts(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, er
 			}
 		}
 	}
-	print(lines, "\n")
-	return NIL, nil
+	err := print(self.stdout, lines, "\n")
+	return NIL, err
 }
 
 func ioPrint(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx)()
+	self, ok := ctx.Receiver().(*ioClass)
+	if !ok {
+		return nil, NewTypeError("expected io class receiver")
+	}
 	var lines []string
 	for _, arg := range args {
 		if arr, ok := arg.(*Array); ok {
@@ -121,6 +146,6 @@ func ioPrint(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, e
 			}
 		}
 	}
-	print(lines, "")
-	return NIL, nil
+	err := print(self.stdout, lines, "")
+	return NIL, err
 }

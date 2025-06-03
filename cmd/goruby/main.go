@@ -70,6 +70,10 @@ func main() {
 	stdout := os.Stdout
 	stderr := os.Stderr
 
+	if flags.NoPrint {
+		stdout = nil
+	}
+
 	interpreter := it.NewInterpreter(stdin, stdout, stderr, args[1:])
 
 	interpreter.SetOptions(func(opts *it.Options) {
@@ -78,8 +82,6 @@ func main() {
 
 		opts.TraceEval = flags.TraceEval.On()
 		opts.PrintEvalMessages = !flags.TraceEval.NoMessages()
-
-		opts.NoPrint = flags.NoPrint
 	})
 
 	// if we have oneline scripts, interpret them

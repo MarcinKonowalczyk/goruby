@@ -31,14 +31,17 @@ func NewInterpreter(
 	stdin io.Reader,
 	stdout io.Writer,
 	stderr io.Writer,
-	argv []string) Interpreter {
+	argv []string,
+) Interpreter {
 	env := object.NewMainEnvironment()
+	object.SetMainEnvironmentIo(env, stdin, stdout, stderr)
 
 	argvArr := object.NewArray()
 	for _, arg := range argv {
 		argvArr.Elements = append(argvArr.Elements, object.NewString(arg))
 	}
 	env.SetGlobal("ARGV", argvArr)
+
 	return &interpreter{
 		stdin:       stdin,
 		stdout:      stdout,
@@ -66,8 +69,6 @@ type Options struct {
 
 	TraceEval         bool
 	PrintEvalMessages bool
-
-	NoPrint bool
 }
 
 func (i *interpreter) SetOptions(f func(opts *Options)) Interpreter {
@@ -103,7 +104,8 @@ func (i *interpreter) ParseCode(src string) (*ast.Program, error) {
 		}
 		var out strings.Builder
 		_ = walkable.Walk(printer.NewTracePrinter(&out, i.options.PrintParseMessages))
-		i.stdout.Write([]byte(out.String()))
+		// i.stdout.Write([]byte(out.String()))
+		os.Stderr.Write([]byte(out.String()))
 	}
 
 	return program, err
@@ -119,7 +121,7 @@ func (i *interpreter) evalCode(program *ast.Program) (ruby.Object, error) {
 		ctx = trace.WithTracer(ctx, eval_tracer)
 	}
 
-	res, err := evaluator.Eval(ctx, program, i.environment, i.options.NoPrint)
+	res, err := evaluator.Eval(ctx, program, i.environment)
 
 	if eval_tracer != nil {
 		eval_tracer.Done()
@@ -131,7 +133,8 @@ func (i *interpreter) evalCode(program *ast.Program) (ruby.Object, error) {
 		_ = walkable.Walk(printer.NewTracePrinter(&out, i.options.PrintEvalMessages))
 		out_str := out.String()
 		// out_str = "\n" + out_str
-		i.stdout.Write([]byte(out_str))
+		// i.stdout.Write([]byte(out_str))
+		os.Stderr.Write([]byte(out_str))
 	}
 
 	return res, err

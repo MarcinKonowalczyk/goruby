@@ -49,7 +49,7 @@ func expandToArrayIfNeeded(obj ruby.Object) ruby.Object {
 	return object.NewArray(arr...)
 }
 
-func Eval(ctx context.Context, node ast.Node, ev env.Environment[ruby.Object], no_print bool) (ruby.Object, error) {
+func Eval(ctx context.Context, node ast.Node, ev env.Environment[ruby.Object]) (ruby.Object, error) {
 	if node == nil {
 		return nil, nil
 	}
@@ -58,7 +58,6 @@ func Eval(ctx context.Context, node ast.Node, ev env.Environment[ruby.Object], n
 	}
 
 	e := NewEvaluator().SetOptions(func(opts *Options) {
-		opts.NoPrint = no_print
 	})
 
 	res, err := e.Eval(ctx, node, ev)
@@ -70,9 +69,7 @@ type Evaluator interface {
 	SetOptions(func(*Options)) Evaluator
 }
 
-type Options struct {
-	NoPrint bool // if true, do not print the result of the evaluation
-}
+type Options struct{}
 
 func (e *evaluator) SetOptions(f func(*Options)) Evaluator {
 	if f != nil {

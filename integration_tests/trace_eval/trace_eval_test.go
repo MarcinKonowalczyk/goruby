@@ -75,7 +75,7 @@ func TestAll(t *testing.T) {
 		t.Logf("Using GoRuby binary: %s", grb.Version())
 	}
 
-	flags := []string{"--trace-eval=on-no-messages"}
+	flags := []string{"--trace-eval=on-no-messages", "--no-print"}
 	for _, pair := range test_files {
 		out, err := grb.RunFile(pair.rubyFile, flags...)
 		assert.NoError(t, err)

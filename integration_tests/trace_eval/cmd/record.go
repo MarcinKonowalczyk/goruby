@@ -34,7 +34,7 @@ func main() {
 	}
 
 	test_files := utils.FindTestFiles(test_files_folder, ".rb")
-	flags := []string{"--trace-eval=on-no-messages"}
+	flags := []string{"--trace-eval=on-no-messages", "--no-print"}
 	for _, test_file := range test_files {
 		out, err := grb.RunFile(test_file, flags...)
 		if err != nil {
