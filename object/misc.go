@@ -1,6 +1,8 @@
 package object
 
 import (
+	"os"
+
 	"github.com/MarcinKonowalczyk/goruby/object/call"
 	"github.com/MarcinKonowalczyk/goruby/object/env"
 	"github.com/MarcinKonowalczyk/goruby/object/ruby"
@@ -17,9 +19,11 @@ var (
 // and the Kernel functions
 func NewMainEnvironment() env.Environment[ruby.Object] {
 	env := CLASSES.Clone()
-	env.Set("bottom", BOTTOM)
-	env.Set("funcs", FUNCS_STORE)
-	env.SetGlobal("$stdin", IoClass)
+	env.SetGlobal("$bottom", BOTTOM)
+	env.SetGlobal("$funcs", FUNCS_STORE)
+	env.SetGlobal("$stdin", NewIoClass(os.Stdin, nil, nil))
+	env.SetGlobal("$stdout", NewIoClass(nil, os.Stdout, nil))
+	env.SetGlobal("$stderr", NewIoClass(nil, nil, os.Stderr))
 	return env
 }
 

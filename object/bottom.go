@@ -2,7 +2,6 @@ package object
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/object/call"
 	"github.com/MarcinKonowalczyk/goruby/object/hash"
@@ -68,71 +67,22 @@ func bottomIsA(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object,
 	}
 }
 
-func print(lines []string, delimiter string) {
-	var out strings.Builder
-	for i, line := range lines {
-		out.WriteString(line)
-		if i != len(lines)-1 {
-			out.WriteString(delimiter)
-		}
-	}
-	out.WriteString(delimiter)
-	fmt.Print(out.String())
-}
-
 func bottomPuts(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx)()
-	var lines []string
-	for _, arg := range args {
-		if arr, ok := arg.(*Array); ok {
-			// arg is an array. splat it out
-			// todo: make it a deep splat? check with original ruby implementation
-			for _, elem := range arr.Elements {
-				lines = append(lines, elem.Inspect())
-			}
-		} else {
-			switch arg := arg.(type) {
-			case *Symbol:
-				if arg == NIL.(*Symbol) {
-					//
-				} else {
-					lines = append(lines, arg.Inspect())
-				}
-			default:
-				lines = append(lines, arg.Inspect())
-			}
-		}
+	stdout, ok := ctx.Env().Get("$stdout")
+	if !ok {
+		return nil, NewRuntimeError("no $stdout defined in the environment")
 	}
-	print(lines, "\n")
-	return NIL, nil
+	return Send(ctx.WithReceiver(stdout), "puts", args...)
 }
 
 func bottomPrint(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx)()
-	var lines []string
-	for _, arg := range args {
-		if arr, ok := arg.(*Array); ok {
-			// arg is an array. splat it out
-			// todo: make it a deep splat? check with original ruby implementation
-			// for _, elem := range arr.Elements {
-			// 	lines = append(lines, elem.Inspect())
-			// }
-			lines = append(lines, arr.Inspect())
-		} else {
-			switch arg := arg.(type) {
-			case *Symbol:
-				if arg == NIL.(*Symbol) {
-					//
-				} else {
-					lines = append(lines, arg.Inspect())
-				}
-			default:
-				lines = append(lines, arg.Inspect())
-			}
-		}
+	stdout, ok := ctx.Env().Get("$stdout")
+	if !ok {
+		return nil, NewRuntimeError("no $stdout defined in the environment")
 	}
-	print(lines, "")
-	return NIL, nil
+	return Send(ctx.WithReceiver(stdout), "print", args...)
 }
 
 func bottomIsNil(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {

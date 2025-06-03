@@ -2,27 +2,51 @@ package object
 
 import (
 	"bufio"
-	"os"
+	"fmt"
+	"io"
+	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/object/call"
 	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/trace"
 )
 
-var IoClass ruby.ClassObject = newClass("IO", nil, ioClassMethods)
-
-func init() {
-	CLASSES.Set("Io", IoClass)
+type ioClass struct {
+	class
+	stdin  io.Reader
+	stdout io.Writer
+	stderr io.Writer
 }
 
+func NewIoClass(
+	stdin io.Reader,
+	stdout io.Writer,
+	stderr io.Writer,
+) ruby.ClassObject {
+	ioClass := &ioClass{*ioClassBase, stdin, stdout, stderr}
+	CLASSES.Set("Io", ioClass)
+	return ioClass
+}
+
+var ioClassBase = newClass("Io", nil, ioClassMethods)
+
 var ioClassMethods = map[string]ruby.Method{
-	"gets": WithArity(0, ruby.NewMethod(ioClassGets)),
+	"gets":  WithArity(0, ruby.NewMethod(ioClassGets)),
+	"puts":  WithArity(1, ruby.NewMethod(ioPuts)),
+	"print": WithArity(1, ruby.NewMethod(ioPrint)),
 }
 
 func ioClassGets(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
 	defer trace.TraceCtx(ctx)()
+	self, ok := ctx.Receiver().(*ioClass)
+	if !ok {
+		return nil, NewTypeError("expected io class receiver")
+	}
+	if self.stdin == nil {
+		return nil, NewRuntimeError("no stdin available")
+	}
 	// read a string from stdin
-	reader := bufio.NewReader(os.Stdin)
+	reader := bufio.NewReader(self.stdin)
 	text, err := reader.ReadString('\n')
 	if err != nil {
 		return nil, err
@@ -32,4 +56,71 @@ func ioClassGets(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Objec
 	// create a new string object
 	str := NewString(text)
 	return str, nil
+}
+
+func print(lines []string, delimiter string) {
+	var out strings.Builder
+	for i, line := range lines {
+		out.WriteString(line)
+		if i != len(lines)-1 {
+			out.WriteString(delimiter)
+		}
+	}
+	out.WriteString(delimiter)
+	fmt.Print(out.String())
+}
+
+func ioPuts(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
+	defer trace.TraceCtx(ctx)()
+	var lines []string
+	for _, arg := range args {
+		if arr, ok := arg.(*Array); ok {
+			// arg is an array. splat it out
+			// todo: make it a deep splat? check with original ruby implementation
+			for _, elem := range arr.Elements {
+				lines = append(lines, elem.Inspect())
+			}
+		} else {
+			switch arg := arg.(type) {
+			case *Symbol:
+				if arg == NIL.(*Symbol) {
+					//
+				} else {
+					lines = append(lines, arg.Inspect())
+				}
+			default:
+				lines = append(lines, arg.Inspect())
+			}
+		}
+	}
+	print(lines, "\n")
+	return NIL, nil
+}
+
+func ioPrint(ctx call.Context[ruby.Object], args ...ruby.Object) (ruby.Object, error) {
+	defer trace.TraceCtx(ctx)()
+	var lines []string
+	for _, arg := range args {
+		if arr, ok := arg.(*Array); ok {
+			// arg is an array. splat it out
+			// todo: make it a deep splat? check with original ruby implementation
+			// for _, elem := range arr.Elements {
+			// 	lines = append(lines, elem.Inspect())
+			// }
+			lines = append(lines, arr.Inspect())
+		} else {
+			switch arg := arg.(type) {
+			case *Symbol:
+				if arg == NIL.(*Symbol) {
+					//
+				} else {
+					lines = append(lines, arg.Inspect())
+				}
+			default:
+				lines = append(lines, arg.Inspect())
+			}
+		}
+	}
+	print(lines, "")
+	return NIL, nil
 }
