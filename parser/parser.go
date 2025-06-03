@@ -281,18 +281,15 @@ func (p *parser) parse(ctx context.Context, src string) (*ast.Program, error) {
 			p.nextToken()
 			continue
 		}
-		// fmt.Println(p.curToken, p.errors)
 		stmt := p.parseStatement()
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
 		}
 		p.nextToken()
 	}
-	// fmt.Println("Last token:", p.curToken)
 	if len(p.errors) != 0 {
 		return program, NewErrors("Parsing errors", p.errors...)
 	}
-	// fmt.Println("Program:", program)
 	return program, nil
 }
 

@@ -8,7 +8,6 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/object/hash"
 	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
-	"github.com/pkg/errors"
 )
 
 type testRubyObject struct {
@@ -71,7 +70,7 @@ func TestSend(t *testing.T) {
 		for _, testCase := range tests {
 			result, err := Send(ctx, testCase.method)
 
-			assert.Error(t, errors.Cause(err), testCase.expectedError)
+			assert.Error(t, err, testCase.expectedError)
 			assert.EqualCmpAny(t, result, testCase.expectedResult, CompareRubyObjectsForTests)
 		}
 	})

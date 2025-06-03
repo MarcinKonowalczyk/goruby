@@ -10,7 +10,6 @@ import (
 
 	"github.com/MarcinKonowalczyk/goruby/cmd/goruby/cli"
 	it "github.com/MarcinKonowalczyk/goruby/pipelines/interpreter"
-	"github.com/pkg/errors"
 )
 
 type multiString []string
@@ -29,11 +28,6 @@ func (m *multiString) Set(s string) error {
 
 var onelineScripts multiString
 var cpuprofile string = ""
-
-func printError(err error) {
-	// fmt.Printf("%v\n", errors.Cause(err))
-	fmt.Printf("%T : %v\n", errors.Cause(err), err)
-}
 
 func main() {
 	cli.Init()
@@ -93,7 +87,7 @@ func main() {
 		input := strings.Join(onelineScripts, "\n")
 		_, err := interpreter.InterpretCode(input)
 		if err != nil {
-			fmt.Printf("%v\n", errors.Cause(err))
+			fmt.Printf("%T:%v\n", err, err)
 			os.Exit(1)
 		}
 		return
@@ -115,7 +109,7 @@ func main() {
 	}
 
 	if err != nil {
-		printError(err)
+		fmt.Printf("%T : %v\n", err, err)
 		os.Exit(1)
 	}
 }

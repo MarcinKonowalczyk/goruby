@@ -6,7 +6,6 @@ import (
 
 	"github.com/MarcinKonowalczyk/goruby/parser/file"
 	"github.com/MarcinKonowalczyk/goruby/token"
-	"github.com/pkg/errors"
 )
 
 // Make sure unexpectedTokenError implements error interface
@@ -53,16 +52,11 @@ func IsEOFError(err error) bool {
 		}
 	}
 
-	cause := errors.Cause(err)
-	tokenErr, ok := cause.(*UnexpectedTokenError)
-	if !ok {
-		return false
-	}
-	if tokenErr.ActualToken != token.EOF {
-		return false
+	if token_err, ok := err.(*UnexpectedTokenError); ok {
+		return token_err.ActualToken == token.EOF
 	}
 
-	return true
+	return false
 }
 
 type tokens []token.Type

@@ -12,8 +12,6 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/parser"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 	"github.com/MarcinKonowalczyk/goruby/testutils/assert/compare"
-
-	"github.com/pkg/errors"
 )
 
 func TestEvalComment(t *testing.T) {
@@ -246,7 +244,7 @@ end
 		_, err := testEval(tt.input, env)
 		assert.NotEqual(t, err, nil)
 
-		actual, ok := errors.Cause(err).(ruby.Object)
+		actual, ok := err.(ruby.Object)
 		assert.That(t, ok, "Error is not a RubyObject. got=%T (%+v)", err, err)
 		assert.That(t, object.IsError(actual), "Expected error or exception, got %T", actual)
 		assert.Equal(t, actual.Inspect(), tt.expectedMessage)
