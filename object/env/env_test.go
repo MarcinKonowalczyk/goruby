@@ -3,10 +3,10 @@ package env_test
 import (
 	"testing"
 
+	"github.com/MarcinKonowalczyk/assert"
 	"github.com/MarcinKonowalczyk/goruby/object"
 	"github.com/MarcinKonowalczyk/goruby/object/env"
 	"github.com/MarcinKonowalczyk/goruby/object/ruby"
-	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
 // TODO: we don't actually need object/ruby.Object here. we can test with whatever.

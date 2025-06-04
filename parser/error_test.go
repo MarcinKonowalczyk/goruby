@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
+	"github.com/MarcinKonowalczyk/assert"
 	"github.com/MarcinKonowalczyk/goruby/token"
 )
 

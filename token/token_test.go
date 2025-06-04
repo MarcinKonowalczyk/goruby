@@ -3,7 +3,7 @@ package token
 import (
 	"testing"
 
-	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
+	"github.com/MarcinKonowalczyk/assert"
 )
 
 func filterEmpty(arr []string) []string {

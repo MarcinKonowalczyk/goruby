@@ -3,7 +3,7 @@ package object
 import (
 	"testing"
 
-	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
+	"github.com/MarcinKonowalczyk/assert"
 )
 
 func TestRangeEvalToArray(t *testing.T) {

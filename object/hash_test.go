@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/MarcinKonowalczyk/assert"
 	"github.com/MarcinKonowalczyk/goruby/object/hash"
 	"github.com/MarcinKonowalczyk/goruby/object/ruby"
-	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
 func TestHashSet(t *testing.T) {

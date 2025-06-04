@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/MarcinKonowalczyk/goruby/testutils/assert/compare"
+	"github.com/MarcinKonowalczyk/assert/compare"
 )
 
 func getParentInfo(N int) (string, int) {

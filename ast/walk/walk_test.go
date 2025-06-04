@@ -5,9 +5,9 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/MarcinKonowalczyk/assert"
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/ast/walk"
-	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
 func Test_Parent(t *testing.T) {

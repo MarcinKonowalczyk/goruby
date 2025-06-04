@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/MarcinKonowalczyk/assert"
 	"github.com/MarcinKonowalczyk/goruby/integration_tests/utils"
-	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
 const TEST_FILES_FOLDER = "test_files"

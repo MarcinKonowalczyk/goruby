@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/MarcinKonowalczyk/assert"
 	"github.com/MarcinKonowalczyk/goruby/integration_tests/utils"
 	transformer_pipeline "github.com/MarcinKonowalczyk/goruby/pipelines/transformer"
-	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 	"github.com/MarcinKonowalczyk/goruby/testutils/combinatorics"
 	"github.com/MarcinKonowalczyk/goruby/testutils/ruby"
 	"github.com/MarcinKonowalczyk/goruby/transformer"

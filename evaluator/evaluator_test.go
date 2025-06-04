@@ -5,13 +5,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/MarcinKonowalczyk/assert"
+	"github.com/MarcinKonowalczyk/assert/compare"
 	"github.com/MarcinKonowalczyk/goruby/evaluator"
 	"github.com/MarcinKonowalczyk/goruby/object"
 	"github.com/MarcinKonowalczyk/goruby/object/env"
 	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/parser"
-	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
-	"github.com/MarcinKonowalczyk/goruby/testutils/assert/compare"
 )
 
 func TestEvalComment(t *testing.T) {

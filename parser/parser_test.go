@@ -8,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/MarcinKonowalczyk/assert"
+	"github.com/MarcinKonowalczyk/assert/compare"
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/ast/infix"
 	p "github.com/MarcinKonowalczyk/goruby/parser"
-	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
-	"github.com/MarcinKonowalczyk/goruby/testutils/assert/compare"
 )
 
 func TestMain(m *testing.M) {

@@ -6,12 +6,12 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/MarcinKonowalczyk/assert"
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/object"
 	"github.com/MarcinKonowalczyk/goruby/object/call"
 	"github.com/MarcinKonowalczyk/goruby/object/env"
 	"github.com/MarcinKonowalczyk/goruby/object/ruby"
-	"github.com/MarcinKonowalczyk/goruby/testutils/assert"
 )
 
 func TestFunctionCall(t *testing.T) {
