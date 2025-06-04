@@ -2,7 +2,7 @@ package ruby
 
 import (
 	"github.com/MarcinKonowalczyk/goruby/object/call"
-	"github.com/MarcinKonowalczyk/goruby/trace"
+	"github.com/MarcinKonowalczyk/trace"
 )
 
 func NewMethod(fn func(ctx call.Context[Object], args ...Object) (Object, error)) Method {

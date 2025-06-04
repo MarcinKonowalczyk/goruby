@@ -10,7 +10,7 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/object/call"
 	"github.com/MarcinKonowalczyk/goruby/object/hash"
 	"github.com/MarcinKonowalczyk/goruby/object/ruby"
-	"github.com/MarcinKonowalczyk/goruby/trace"
+	"github.com/MarcinKonowalczyk/trace"
 )
 
 var stringClass ruby.ClassObject = newClass("String", stringMethods, stringClassMethods)

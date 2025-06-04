@@ -5,9 +5,9 @@ import (
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/ast/walk"
-	"github.com/MarcinKonowalczyk/goruby/trace"
 	"github.com/MarcinKonowalczyk/goruby/transformer/logging"
 	"github.com/MarcinKonowalczyk/goruby/transformer/units/function_lift"
+	"github.com/MarcinKonowalczyk/trace"
 )
 
 type transformer struct {

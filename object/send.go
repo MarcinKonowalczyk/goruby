@@ -3,7 +3,7 @@ package object
 import (
 	"github.com/MarcinKonowalczyk/goruby/object/call"
 	"github.com/MarcinKonowalczyk/goruby/object/ruby"
-	"github.com/MarcinKonowalczyk/goruby/trace"
+	"github.com/MarcinKonowalczyk/trace"
 )
 
 // Send sends message method with args to context and returns its result

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/MarcinKonowalczyk/goruby/trace"
+	"github.com/MarcinKonowalczyk/trace"
 )
 
 type Flavour int

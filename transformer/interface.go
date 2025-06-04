@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
-	"github.com/MarcinKonowalczyk/goruby/trace"
 	"github.com/MarcinKonowalczyk/goruby/transformer/logging"
+	"github.com/MarcinKonowalczyk/trace"
 )
 
 func Transform(node *ast.Program, stages []Stage, trace_transform bool) (*ast.Program, error) {

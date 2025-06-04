@@ -8,7 +8,7 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/object/env"
 	"github.com/MarcinKonowalczyk/goruby/object/hash"
 	"github.com/MarcinKonowalczyk/goruby/object/ruby"
-	"github.com/MarcinKonowalczyk/goruby/trace"
+	"github.com/MarcinKonowalczyk/trace"
 )
 
 // ReturnValue represents a wrapper object for a return statement. It is no

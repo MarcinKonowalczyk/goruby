@@ -12,9 +12,9 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/object/env"
 	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/parser"
-	"github.com/MarcinKonowalczyk/goruby/trace"
-	"github.com/MarcinKonowalczyk/goruby/trace/printer"
 	"github.com/MarcinKonowalczyk/goruby/transformer"
+	"github.com/MarcinKonowalczyk/trace"
+	"github.com/MarcinKonowalczyk/trace/printer"
 )
 
 // // Interpreter defines the methods of an interpreter

@@ -1,5 +1,7 @@
-github.com/MarcinKonowalczyk/assert v0.1.0 h1:z9AfnPg1dJhf96VS3/0bCQSqor/UdOEg2R+BcprViDA=
-github.com/MarcinKonowalczyk/assert v0.1.0/go.mod h1:Qw1B/ut8i8WgNIndiWWvUox8ijYDGOAaG94H75rJQGQ=
+github.com/MarcinKonowalczyk/assert v0.2.0 h1:sWVsI1hXo73iGWC190aFMR7S76XI47jPOpopWLTOt4I=
+github.com/MarcinKonowalczyk/assert v0.2.0/go.mod h1:Qw1B/ut8i8WgNIndiWWvUox8ijYDGOAaG94H75rJQGQ=
+github.com/MarcinKonowalczyk/trace v0.1.1 h1:ieoiWhpwG0RsQjLQsWo6aK6+AzENSDp1RMWaFQRY/8k=
+github.com/MarcinKonowalczyk/trace v0.1.1/go.mod h1:nN0+ru6kYhalahPASZY3bwmthphtqmKbNLqLEigwsuE=
 github.com/chzyer/logex v1.2.1 h1:XHDu3E6q+gdHgsdTPH6ImJMIp436vR6MPtH8gP05QzM=
 github.com/chzyer/logex v1.2.1/go.mod h1:JLbx6lG2kDbNRFnfkgvh4eRJRPX1QCoOIWomwysCBrQ=
 github.com/chzyer/test v1.0.0 h1:p3BQDXSxOhOG0P9z6/hGnII4LGiEPOYBhs8asl/fC04=

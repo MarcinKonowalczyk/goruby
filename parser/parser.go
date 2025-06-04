@@ -14,7 +14,7 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/lexer"
 	"github.com/MarcinKonowalczyk/goruby/parser/file"
 	"github.com/MarcinKonowalczyk/goruby/token"
-	"github.com/MarcinKonowalczyk/goruby/trace"
+	"github.com/MarcinKonowalczyk/trace"
 )
 
 // Possible precedence values
