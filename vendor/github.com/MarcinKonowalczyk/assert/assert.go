@@ -11,9 +11,7 @@ import (
 
 func getParentInfo(N int) (string, int) {
 	parent, _, _, _ := runtime.Caller(1 + N)
-	info := runtime.FuncForPC(parent)
-	file, line := info.FileLine(parent)
-	return file, line
+	return runtime.FuncForPC(parent).FileLine(parent)
 }
 
 // convert 'args ...any' to the assertion message
