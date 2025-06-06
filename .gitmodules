@@ -1,3 +1,7 @@
 [submodule "assert"]
-path = vendor/github.com/MarcinKonowalczyk/assert
+path = vendor/github.com/MarcinKonowalczyk/assert/
 url = https://github.com/MarcinKonowalczyk/assert.git
+
+[submodule "trace"]
+path = vendor/github.com/MarcinKonowalczyk/trace/
+url = https://github.com/MarcinKonowalczyk/trace.git
