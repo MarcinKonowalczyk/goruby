@@ -5,10 +5,7 @@ go 1.24.3
 require (
 	github.com/MarcinKonowalczyk/assert v0.2.2
 	github.com/MarcinKonowalczyk/trace v0.1.3
-	github.com/goruby/readline v0.0.0-20171103131923-a4d5111b6178
+	github.com/chzyer/readline v1.5.1
 )
 
-require (
-	github.com/chzyer/test v1.0.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-)
+require golang.org/x/sys v0.33.0 // indirect

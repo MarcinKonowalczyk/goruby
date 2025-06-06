@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/MarcinKonowalczyk/goruby/repl"
-	"github.com/goruby/readline"
+	"github.com/chzyer/readline"
 )
 
 var (
