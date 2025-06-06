@@ -6,11 +6,9 @@ github.com/MarcinKonowalczyk/assert/compare
 ## explicit; go 1.24.3
 github.com/MarcinKonowalczyk/trace
 github.com/MarcinKonowalczyk/trace/printer
-# github.com/chzyer/test v1.0.0
+# github.com/chzyer/readline v1.5.1
 ## explicit; go 1.15
-# github.com/goruby/readline v0.0.0-20171103131923-a4d5111b6178
-## explicit
-github.com/goruby/readline
+github.com/chzyer/readline
 # golang.org/x/sys v0.33.0
 ## explicit; go 1.23.0
 golang.org/x/sys/unix

@@ -17,7 +17,9 @@
 //
 package readline
 
-import "io"
+import (
+	"io"
+)
 
 type Instance struct {
 	Config    *Config
@@ -54,7 +56,7 @@ type Config struct {
 
 	FuncGetWidth func() int
 
-	Stdin       io.Reader
+	Stdin       io.ReadCloser
 	StdinWriter io.Writer
 	Stdout      io.Writer
 	Stderr      io.Writer
@@ -270,13 +272,24 @@ func (i *Instance) ReadSlice() ([]byte, error) {
 }
 
 // we must make sure that call Close() before process exit.
+// if there has a pending reading operation, that reading will be interrupted.
+// so you can capture the signal and call Instance.Close(), it's thread-safe.
 func (i *Instance) Close() error {
+	i.Config.Stdin.Close()
+	i.Operation.Close()
 	if err := i.Terminal.Close(); err != nil {
 		return err
 	}
-	i.Operation.Close()
 	return nil
 }
+
+// call CaptureExitSignal when you want readline exit gracefully.
+func (i *Instance) CaptureExitSignal() {
+	CaptureExitSignal(func() {
+		i.Close()
+	})
+}
+
 func (i *Instance) Clean() {
 	i.Operation.Clean()
 }
