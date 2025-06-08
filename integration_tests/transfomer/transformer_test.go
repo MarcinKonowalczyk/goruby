@@ -70,6 +70,10 @@ func runTest(
 	// Make sure the output is the same
 	assert.Equal(t, before, after)
 
+	if t.Failed() {
+		t.FailNow()
+	}
+
 	if grb != nil {
 		// we have goruby! check that it produces the same output for both original and transformed code
 		before_grb, err := grb.RunFile(test_file)

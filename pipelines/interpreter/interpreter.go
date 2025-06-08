@@ -12,7 +12,6 @@ import (
 	"github.com/MarcinKonowalczyk/goruby/object/env"
 	"github.com/MarcinKonowalczyk/goruby/object/ruby"
 	"github.com/MarcinKonowalczyk/goruby/parser"
-	"github.com/MarcinKonowalczyk/goruby/transformer"
 	"github.com/MarcinKonowalczyk/trace"
 	"github.com/MarcinKonowalczyk/trace/printer"
 )
@@ -146,13 +145,13 @@ func (i *interpreter) InterpretCode(src string) (ruby.Object, error) {
 	}
 
 	// const ENABLE_TRANSFORMS_IN_INTERPRETER = true
-	const ENABLE_TRANSFORMS_IN_INTERPRETER = false
-	if ENABLE_TRANSFORMS_IN_INTERPRETER {
-		program, err = transformer.Transform(program, transformer.ALL_STAGES, i.options.TraceTransform)
-		if err != nil {
-			return nil, object.NewRuntimeError("transformer error: %v", err)
-		}
-	}
+	// const ENABLE_TRANSFORMS_IN_INTERPRETER = false
+	// if ENABLE_TRANSFORMS_IN_INTERPRETER {
+	// 	program, err = transformer.Transform(program, transformer.ALL_STAGES, i.options.TraceTransform)
+	// 	if err != nil {
+	// 		return nil, object.NewRuntimeError("transformer error: %v", err)
+	// 	}
+	// }
 
 	return i.evalCode(program)
 }
@@ -171,13 +170,13 @@ func (i *interpreter) Interpret(filename string) (ruby.Object, error) {
 	}
 
 	// const ENABLE_TRANSFORMS_IN_INTERPRETER = true
-	const ENABLE_TRANSFORMS_IN_INTERPRETER = false
-	if ENABLE_TRANSFORMS_IN_INTERPRETER {
-		program, err = transformer.Transform(program, transformer.ALL_STAGES, i.options.TraceTransform)
-		if err != nil {
-			return nil, object.NewRuntimeError("transformer error: %v", err)
-		}
-	}
+	// const ENABLE_TRANSFORMS_IN_INTERPRETER = false
+	// if ENABLE_TRANSFORMS_IN_INTERPRETER {
+	// 	program, err = transformer.Transform(program, transformer.ALL_STAGES, i.options.TraceTransform)
+	// 	if err != nil {
+	// 		return nil, object.NewRuntimeError("transformer error: %v", err)
+	// 	}
+	// }
 
 	return i.evalCode(program)
 }
