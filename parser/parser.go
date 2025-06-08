@@ -482,14 +482,26 @@ func (p *parser) parseExpressions(left ast.Expression) ast.Expression {
 	defer trace.TraceCtx(p.ctx)()
 
 	p.nextToken()
+	p.consumeNewlineOrComment()
+
 	elements := []ast.Expression{left}
 	next := p.parseExpression(precAssignment)
 	elements = append(elements, next)
+
 	for p.peekIs(token.COMMA) {
 		p.consume(token.COMMA)
+		p.consumeNewlineOrComment()
+
+		if p.currentIs(token.RBRACKET, token.RBRACE) {
+			// we are at the end of an array or hash literal
+			// so we should stop parsing expressions
+			break
+		}
+
 		next = p.parseExpression(precAssignment)
 		elements = append(elements, next)
 	}
+
 	return ast.ExpressionList(elements)
 }
 
@@ -669,9 +681,9 @@ func (p *parser) consumeNewlineOrComment() {
 		} else if p.currentIs(token.COMMENT) {
 			// consume the comment
 			p.nextToken()
-			if p.currentIs(token.STRING) {
-				p.nextToken()
-			}
+			// if p.currentIs(token.STRING) {
+			// 	p.nextToken()
+			// }
 		} else {
 			break
 		}
@@ -857,7 +869,10 @@ func (p *parser) parseIfExpression() ast.Expression {
 	parsed_elsif := false
 	if p.peekIs(token.ELSE) {
 		p.accept(token.ELSE)
-		p.accept(token.NEWLINE)
+		// we might have a newline after the ELSE
+		if p.peekIs(token.NEWLINE) {
+			p.accept(token.NEWLINE)
+		}
 		expression.Alternative = p.parseBlockStatement() // parse until the END
 	} else if p.peekIs(token.ELSIF) {
 		// start parsing a new if expression from here
@@ -1157,9 +1172,18 @@ func (p *parser) parseMethodCall(context ast.Expression) ast.Expression {
 	return contextCallExpression
 }
 
-func (p *parser) debugMessageState() {
-	trace.MessageCtx(p.ctx, fmt.Sprintf("Current token: %v", p.curToken))
-	trace.MessageCtx(p.ctx, fmt.Sprintf("Peek token: %v", p.peekToken))
+func (p *parser) debugMessageState(print ...bool) {
+	ct := fmt.Sprintf("%v", p.curToken)
+	pt := fmt.Sprintf("%v", p.peekToken)
+	ct = strings.Replace(ct, "\n", "\\n", -1)
+	pt = strings.Replace(pt, "\n", "\\n", -1)
+
+	trace.MessageCtx(p.ctx, fmt.Sprintf("Current token: %s", ct))
+	trace.MessageCtx(p.ctx, fmt.Sprintf("Peek token: %s", pt))
+	if len(print) > 0 && print[0] {
+		fmt.Printf("Current token: %s\n", ct)
+		fmt.Printf("Peek token: %s\n", pt)
+	}
 }
 
 func (p *parser) parseContextCallExpression(context ast.Expression) ast.Expression {
@@ -1297,6 +1321,8 @@ func (p *parser) parseExpressionList(end ...token.Type) []ast.Expression {
 		return list
 	}
 
+	p.consumeNewlineOrComment()
+
 	next := p.parseExpression(precIfUnless)
 	if elist, ok := next.(ast.ExpressionList); ok {
 		if p.peekIs(end...) {
@@ -1309,6 +1335,12 @@ func (p *parser) parseExpressionList(end ...token.Type) []ast.Expression {
 	if p.peekIs(end...) {
 		p.accept(end...)
 	}
+
+	// p.debugMessageState(true)
+	// fmt.Println("Parsing expressions with end tokens:", end)
+	// p.parseExpressionsEx(nil, end...) // parse the first expression
+	// // fmt.Println("Parsed expressions:", elist)
+	// // panic("stop here")
 
 	return list
 }
