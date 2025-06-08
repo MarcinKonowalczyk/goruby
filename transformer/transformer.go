@@ -72,7 +72,7 @@ func (t *transformer) transformProgram(
 		logging.Logf(ctx, "=== applying %T pass 1 ===", transformer)
 		walk.WalkCtx(ctx, program, transformer)
 		if len(transformer.LiftedFunctions) > 0 {
-			var lifted []ast.Statement = make([]ast.Statement, len(transformer.LiftedFunctions))
+			var lifted []ast.Statement = make([]ast.Statement, 0)
 			for _, function := range transformer.LiftedFunctions {
 				lifted = append(lifted, &ast.ExpressionStatement{
 					Expression: &ast.Assignment{
@@ -81,7 +81,17 @@ func (t *transformer) transformProgram(
 					},
 				})
 			}
-			program.Statements = append(lifted, program.Statements...)
+
+			// we now need to walk the lifted functions since they might contain references to other lifted functions
+			logging.Logf(ctx, "=== walking lifted functions ===")
+			lifted_program := &ast.Program{Statements: lifted}
+			// tracer := trace.NewTracer()
+			// ctx = trace.WithTracer(ctx, tracer)
+			walk.WalkCtx(ctx, lifted_program, transformer)
+			// printer.PrintTrace(tracer, true, os.Stderr)
+			logging.Logf(ctx, "=== done walking lifted functions ===")
+
+			program.Statements = append(lifted_program.Statements, program.Statements...)
 		}
 
 		logging.Logf(ctx, "=== done with %T ===", transformer)
