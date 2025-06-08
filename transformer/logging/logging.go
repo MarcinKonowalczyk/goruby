@@ -14,9 +14,13 @@ func WithLogger(ctx context.Context, logger *log.Logger) context.Context {
 }
 
 func GetLogger(ctx context.Context) *log.Logger {
+	if ctx == nil {
+		// no context, no logger
+		return nil
+	}
 	logger, ok := ctx.Value(loggerKey{}).(*log.Logger)
 	if !ok {
-		return nil // or return a default logger
+		return nil
 	}
 	return logger
 }
@@ -24,7 +28,8 @@ func GetLogger(ctx context.Context) *log.Logger {
 func Logf(ctx context.Context, format string, args ...any) {
 	logger := GetLogger(ctx)
 	if logger == nil {
-		return // or handle the case where no logger is set
+		// no logger
+		return
 	}
 	logger.Printf(format, args...)
 }

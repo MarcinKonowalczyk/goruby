@@ -98,7 +98,7 @@ func (e *evaluator) eval(node ast.Node, ev env.Environment[ruby.Object]) (ruby.O
 		return e.evalReturnStatement(node, ev)
 	case *ast.BreakStatement:
 		return e.evalBreakStatement(node, ev)
-	case *ast.BlockStatement:
+	case *ast.Statements:
 		return e.evalBlockStatement(node, ev)
 	// Literals
 	case *ast.IntegerLiteral:
@@ -632,7 +632,7 @@ func (e *evaluator) evalStringIndexExpression(stringObject *object.String, index
 
 }
 
-func (e *evaluator) evalBlockStatement(block *ast.BlockStatement, ev env.Environment[ruby.Object]) (ruby.Object, error) {
+func (e *evaluator) evalBlockStatement(block *ast.Statements, ev env.Environment[ruby.Object]) (ruby.Object, error) {
 	defer trace.TraceCtx(e.ctx)()
 	var result ruby.Object
 	var err error

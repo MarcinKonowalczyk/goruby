@@ -22,7 +22,7 @@ func main() {
 		log.Printf("Error reading program file %s: %v\n", args[0], err)
 		os.Exit(1)
 	}
-	transformed_string, err := transformer_pipeline.Transform(string(src))
+	transformed_string, err := transformer_pipeline.Transform(string(src), false)
 	if err != nil {
 		log.Printf("Error while transforming program file with pipeline: %T:%v\n", err, err)
 		os.Exit(1)

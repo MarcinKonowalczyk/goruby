@@ -565,7 +565,7 @@ func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
 	cond := &ast.ConditionalExpression{
 		Unless:    right.Unless,
 		Condition: right.Condition,
-		Consequence: &ast.BlockStatement{
+		Consequence: &ast.Statements{
 			Statements: []ast.Statement{
 				&ast.ExpressionStatement{
 					Expression: &ast.Assignment{
@@ -575,7 +575,7 @@ func (p *parser) parseAssignment(left ast.Expression) ast.Expression {
 				},
 			},
 		},
-		Alternative: &ast.BlockStatement{
+		Alternative: &ast.Statements{
 			Statements: []ast.Statement{
 				&ast.ExpressionStatement{
 					Expression: &ast.Assignment{
@@ -862,7 +862,7 @@ func (p *parser) parseIfExpression() ast.Expression {
 	} else if p.peekIs(token.ELSIF) {
 		// start parsing a new if expression from here
 		p.accept(token.ELSIF)
-		expression.Alternative = &ast.BlockStatement{
+		expression.Alternative = &ast.Statements{
 			Statements: []ast.Statement{
 				&ast.ExpressionStatement{
 					Expression: p.parseIfExpression().(*ast.ConditionalExpression),
@@ -890,7 +890,7 @@ func (p *parser) parseTernaryIfExpression(condition ast.Expression) ast.Expressi
 	expression := &ast.ConditionalExpression{Unless: p.currentIs(token.UNLESS)}
 	p.nextToken()
 	expression.Condition = condition
-	expression.Consequence = &ast.BlockStatement{
+	expression.Consequence = &ast.Statements{
 		Statements: []ast.Statement{
 			&ast.ExpressionStatement{
 				Expression: p.parseExpression(precTernary),
@@ -898,7 +898,7 @@ func (p *parser) parseTernaryIfExpression(condition ast.Expression) ast.Expressi
 		},
 	}
 	p.consume(token.COLON)
-	expression.Alternative = &ast.BlockStatement{
+	expression.Alternative = &ast.Statements{
 		Statements: []ast.Statement{
 			&ast.ExpressionStatement{
 				Expression: p.parseExpression(precTernary),
@@ -915,7 +915,7 @@ func (p *parser) parseModifierConditionalExpression(left ast.Expression) ast.Exp
 	p.nextToken()
 	expression.Condition = p.parseExpression(precLowest)
 
-	expression.Consequence = &ast.BlockStatement{
+	expression.Consequence = &ast.Statements{
 		Statements: []ast.Statement{
 			&ast.ExpressionStatement{Expression: left},
 		},
@@ -1085,7 +1085,7 @@ func (p *parser) parseFunctionParameters(startToken, endToken token.Type) []*ast
 	return identifiers
 }
 
-func (p *parser) parseBlockStatement(t ...token.Type) *ast.BlockStatement {
+func (p *parser) parseBlockStatement(t ...token.Type) *ast.Statements {
 	defer trace.TraceCtx(p.ctx)()
 
 	terminatorTokens := append(
@@ -1094,7 +1094,7 @@ func (p *parser) parseBlockStatement(t ...token.Type) *ast.BlockStatement {
 		},
 		t...,
 	)
-	block := &ast.BlockStatement{}
+	block := &ast.Statements{}
 	block.Statements = []ast.Statement{}
 
 	for !p.peekIs(terminatorTokens...) {

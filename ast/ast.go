@@ -98,17 +98,16 @@ var (
 	_ Statement = &ExpressionStatement{}
 )
 
-// BlockStatement represents a list of statements
-type BlockStatement struct {
+type Statements struct {
 	Statements []Statement
 }
 
-func (bs *BlockStatement) node()          {}
-func (bs *BlockStatement) statementNode() {}
-func (bs *BlockStatement) String() string { return "<<<BlockStatement>>>" }
+func (bs *Statements) node()          {}
+func (bs *Statements) statementNode() {}
+func (bs *Statements) String() string { return "<<<Statements>>>" }
 
 // Code returns the code representation of the block
-func (bs *BlockStatement) Code() string {
+func (bs *Statements) Code() string {
 	var out strings.Builder
 	statement_strings := make([]string, 0)
 	for _, s := range bs.Statements {
@@ -132,8 +131,8 @@ func (bs *BlockStatement) Code() string {
 }
 
 var (
-	_ Node      = &BlockStatement{}
-	_ Statement = &BlockStatement{}
+	_ Node      = &Statements{}
+	_ Statement = &Statements{}
 )
 
 // A BreakStatement represents a break statement
@@ -225,7 +224,7 @@ type Identifier struct {
 
 func (i *Identifier) node()           {}
 func (i *Identifier) expressionNode() {}
-func (i *Identifier) String() string  { return "<<<Identifier>>>: " }
+func (i *Identifier) String() string  { return "<<<Identifier>>>" }
 func (i *Identifier) Code() string    { return i.Value }
 
 var (
@@ -341,8 +340,8 @@ var (
 type ConditionalExpression struct {
 	Unless      bool // true = unless, false = if
 	Condition   Expression
-	Consequence *BlockStatement
-	Alternative *BlockStatement
+	Consequence *Statements
+	Alternative *Statements
 }
 
 func (ce *ConditionalExpression) node()           {}
@@ -374,7 +373,7 @@ var (
 
 // A LoopExpression represents an infinite loop (with breaks)
 type LoopExpression struct {
-	Block *BlockStatement
+	Block *Statements
 }
 
 func (ce *LoopExpression) node()           {}
@@ -511,7 +510,7 @@ var (
 type FunctionLiteral struct {
 	Name       string
 	Parameters []*FunctionParameter
-	Body       *BlockStatement
+	Body       *Statements
 }
 
 func (fl *FunctionLiteral) node()           {}
@@ -520,29 +519,7 @@ func (fl *FunctionLiteral) expressionNode() {}
 const BODY_STRING_LIMIT = 30
 
 func (fl *FunctionLiteral) String() string {
-	var out strings.Builder
-	out.WriteString("<<<FunctionLiteral, name=\"")
-	out.WriteString(fl.Name)
-	args := []string{}
-	for _, a := range fl.Parameters {
-		args = append(args, a.Code())
-	}
-	out.WriteString("\", parameters=[")
-	if len(args) == 0 {
-		out.WriteString("]")
-	} else {
-		out.WriteString("\"")
-		out.WriteString(strings.Join(args, "\", \""))
-		out.WriteString("\"]")
-	}
-	out.WriteString(", body=\"")
-	body_string := fl.Body.Code()
-	if len(body_string) > BODY_STRING_LIMIT {
-		body_string = body_string[:BODY_STRING_LIMIT] + "..."
-	}
-	out.WriteString(body_string)
-	out.WriteString("\">>>")
-	return out.String()
+	return "<<<FunctionLiteral>>>"
 }
 
 func (fl *FunctionLiteral) Code() string {
@@ -759,6 +736,25 @@ var (
 	_ Node       = &InfixExpression{}
 	_ Expression = &InfixExpression{}
 )
+
+////////////////////////////////////////////////////////////////////////////////
+
+// SpecialNode node type for AST transformations. It does not represent real code,
+type SpecialNode struct {
+	Value string
+}
+
+func (s *SpecialNode) node()          {}
+func (s *SpecialNode) String() string { return "<<<Special>>>" }
+func (s *SpecialNode) Code() string {
+	panic("Code() call on special node")
+}
+
+var (
+	_ Node = &SpecialNode{}
+)
+
+////////////////////////////////////////////////////////////////////////////////
 
 func needsParens(e Expression) bool {
 	// This function checks if the expression needs parentheses

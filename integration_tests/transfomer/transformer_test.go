@@ -53,7 +53,7 @@ func runTest(
 	src, err := os.ReadFile(test_file)
 	assert.NoError(t, err)
 
-	transformed, err := transformer_pipeline.TransformStages(string(src), nil, stages)
+	transformed, err := transformer_pipeline.TransformStages(string(src), nil, stages, false)
 	assert.NoError(t, err)
 
 	if intermediate_suffix != "" {
@@ -74,11 +74,11 @@ func runTest(
 		// we have goruby! check that it produces the same output for both original and transformed code
 		before_grb, err := grb.RunFile(test_file)
 		assert.NoError(t, err)
-		assert.Equal(t, before, before_grb)
+		assert.That(t, before == before_grb, "GoRuby output should match Ruby output for original code")
 
 		after_grb, err := grb.RunCode(transformed)
 		assert.NoError(t, err)
-		assert.Equal(t, after, after_grb)
+		assert.That(t, after == after_grb, "GoRuby output should match Ruby output for transformed code")
 	}
 }
 
@@ -100,7 +100,8 @@ func TestAll(t *testing.T) {
 	for _, test_file := range test_files {
 		base := path.Base(test_file)
 		t.Run(base, func(t *testing.T) {
-			runTest(t, rb, grb, test_file, "", transformer.ALL_STAGES)
+			// runTest(t, rb, grb, test_file, "", transformer.ALL_STAGES)
+			runTest(t, rb, grb, test_file, "_"+TRANSFORMED_SUFFIX, transformer.ALL_STAGES)
 		})
 	}
 }

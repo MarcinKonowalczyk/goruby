@@ -88,7 +88,7 @@ func (f *FunctionParameter) String() string {
 type Function struct {
 	Name       string
 	Parameters []*FunctionParameter
-	Body       *ast.BlockStatement
+	Body       *ast.Statements
 	Env        env.Environment[ruby.Object]
 }
 

@@ -67,10 +67,10 @@ func (t *transformer) transformProgram(
 	if _, ok := stages_map[Sfunction_lift]; ok {
 		transformer := &function_lift.LiftBlocks{}
 		logging.Logf(ctx, "=== applying %T pass 0 ===", transformer)
-		walk.WalkCtx(ctx, program, transformer, nil)
+		walk.WalkCtx(ctx, program, transformer)
 		(*transformer).Pass = 1
 		logging.Logf(ctx, "=== applying %T pass 1 ===", transformer)
-		walk.WalkCtx(ctx, program, transformer, nil)
+		walk.WalkCtx(ctx, program, transformer)
 		if len(transformer.LiftedFunctions) > 0 {
 			var lifted []ast.Statement = make([]ast.Statement, len(transformer.LiftedFunctions))
 			for _, function := range transformer.LiftedFunctions {
@@ -90,7 +90,7 @@ func (t *transformer) transformProgram(
 	if _, ok := stages_map[Sfunction_lift]; ok {
 		var transformer = &function_lift.LiftBuiltins{}
 		logging.Logf(ctx, "=== applying %T ===", transformer)
-		_ = walk.WalkCtx(ctx, program, transformer, nil)
+		_ = walk.WalkCtx(ctx, program, transformer)
 		if len(transformer.Statements) > 0 {
 			program.Statements = append(transformer.Statements, program.Statements...)
 		}

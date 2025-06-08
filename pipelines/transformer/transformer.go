@@ -4,12 +4,17 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"strings"
 
 	"github.com/MarcinKonowalczyk/goruby/ast"
 	"github.com/MarcinKonowalczyk/goruby/parser"
-	"github.com/MarcinKonowalczyk/goruby/printer"
+
+	node_printer "github.com/MarcinKonowalczyk/goruby/printer"
 	t "github.com/MarcinKonowalczyk/goruby/transformer"
 	"github.com/MarcinKonowalczyk/goruby/transformer/logging"
+	"github.com/MarcinKonowalczyk/trace"
+	"github.com/MarcinKonowalczyk/trace/printer"
 )
 
 type Transformer interface {
@@ -32,12 +37,14 @@ func (i *transformer) Transform(src string, stages []t.Stage) (string, error) {
 }
 
 func (i *transformer) TransformCtx(ctx context.Context, src string, stages []t.Stage) (string, error) {
+	// TEMP: unhook ctx from parser
+	// _temp_parser_ctx := context.Background()
 	program, err := parser.ParseCtx(ctx, src)
 	if err != nil {
 		return "", err
 	}
 
-	printer := printer.NewPrinter("TRANSFORMER_PIPELINE")
+	printer := node_printer.NewPrinter("TRANSFORMER_PIPELINE")
 	logger := log.New(printer, "# TRANSFORMER_PIPELINE ", 0)
 	ctx = logging.WithLogger(ctx, logger)
 
@@ -59,13 +66,34 @@ func (i *transformer) TransformCtx(ctx context.Context, src string, stages []t.S
 
 var _ Transformer = &transformer{}
 
-func Transform(src string) (string, error) {
+func Transform(src string, trace_transform bool) (string, error) {
 	transformer := NewTransformer()
 	return transformer.Transform(src, t.ALL_STAGES)
 }
 
-func TransformStages(src string, input interface{}, stages []t.Stage) (string, error) {
+func TransformStages(src string, input interface{}, stages []t.Stage, trace_transform bool) (string, error) {
 	transformer := NewTransformer()
+
 	ctx := context.Background()
-	return transformer.TransformCtx(ctx, src, stages)
+	var trace_tracer trace.Tracer
+	if trace_transform {
+		trace_tracer = trace.NewTracer()
+		ctx = trace.WithTracer(ctx, trace_tracer)
+	}
+
+	out, err := transformer.TransformCtx(ctx, src, stages)
+
+	if trace_tracer != nil {
+		trace_tracer.Done()
+		walkable, err := trace_tracer.ToWalkable()
+		if err != nil {
+			panic(err)
+		}
+		var out strings.Builder
+		_ = walkable.Walk(printer.NewTracePrinter(&out, true))
+		// i.stdout.Write([]byte(out.String()))
+		os.Stderr.Write([]byte(out.String()))
+	}
+
+	return out, err
 }

@@ -12,13 +12,10 @@ type LiftBuiltins struct {
 	Statements []ast.Statement // to be lifted
 }
 
-func (f *LiftBuiltins) PostTransform(ctx context.Context, node ast.Node) ast.Node {
+func (f *LiftBuiltins) Visit(ctx context.Context, node ast.Node) (ast.Node, walk.Flag) {
 	switch node := node.(type) {
-	case nil:
-		//
-	case *ast.Comment:
-		//
 	case *ast.ContextCallExpression:
+		walk.WalkChildrenCtx(ctx, node, f)
 		logging.Logf(ctx, "found context call expression \"%s\" with context %v and block %v\n",
 			node.Function,
 			node.Context,
@@ -36,17 +33,17 @@ func (f *LiftBuiltins) PostTransform(ctx context.Context, node ast.Node) ast.Nod
 					node.Context,
 					node.Block,
 				},
-			}
+			}, walk.SKIP
 		}
+		return walk.NOOP, walk.SKIP
 	default:
-		// logging.Logf(ctx, "walking %T\n", node)
+		// continue walking
+		return walk.NOOP, walk.WALK
 	}
-	return node
 }
 
 func (f *LiftBuiltins) TransformerMarker() {}
 
 var (
-	_ walk.PostTransformerCtx = &LiftBuiltins{}
-	_ walk.Transformer        = &LiftBuiltins{}
+	_ walk.Visitor = &LiftBuiltins{}
 )

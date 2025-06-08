@@ -16,7 +16,7 @@ import (
 
 func TestFunctionCall(t *testing.T) {
 	t.Run("calls CallContext#Eval with its Body", func(t *testing.T) {
-		functionBody := &ast.BlockStatement{
+		functionBody := &ast.Statements{
 			Statements: []ast.Statement{
 				&ast.ExpressionStatement{
 					Expression: &ast.IntegerLiteral{Value: 13},
