@@ -217,6 +217,7 @@ func WalkCtx(
 	var any_new_children bool = false
 
 	if new_node != nil {
+		trace.MessageCtx(ctx, "visitor returned a new node")
 		any_new_children = true
 		node = new_node
 	}
@@ -266,7 +267,6 @@ func WalkChildrenCtx(
 		WalkCtx(ctx, n.Index, v)
 
 	case *ast.ContextCallExpression:
-
 		// walk context
 		nn := WalkCtx(ctx, n.Context, v)
 		switch nn := nn.(type) {
@@ -349,8 +349,41 @@ func WalkChildrenCtx(
 		WalkCtx(ctx, n.Right, v)
 
 	case *ast.InfixExpression:
-		WalkCtx(ctx, n.Left, v)
-		WalkCtx(ctx, n.Right, v)
+		nn := WalkCtx(ctx, n.Left, v)
+		switch nn := nn.(type) {
+		case nil:
+			// no changes, continue
+		case ast.Expression:
+			// if we have a new expression, we replace the old one
+			any_children_changed = true
+			n.Left = nn
+		case *ast.SpecialNode:
+			if nn.Value == "delete" {
+				panic("cannot delete left side of infix expression")
+			} else {
+				panic(fmt.Sprintf("ast.Walk: unexpected special node %s", nn.Value))
+			}
+		default:
+			panic(fmt.Sprintf("ast.Walk: expected ast.Expression, got %T", nn))
+		}
+
+		nn = WalkCtx(ctx, n.Right, v)
+		switch nn := nn.(type) {
+		case nil:
+			// no changes, continue
+		case ast.Expression:
+			// if we have a new expression, we replace the old one
+			any_children_changed = true
+			n.Right = nn
+		case *ast.SpecialNode:
+			if nn.Value == "delete" {
+				panic("cannot delete right side of infix expression")
+			} else {
+				panic(fmt.Sprintf("ast.Walk: unexpected special node %s", nn.Value))
+			}
+		default:
+			panic(fmt.Sprintf("ast.Walk: expected ast.Expression, got %T", nn))
+		}
 
 	case *ast.MultiAssignment:
 		for _, x := range n.Variables {
@@ -419,8 +452,43 @@ func WalkChildrenCtx(
 		WalkCtx(ctx, n.Condition, v)
 
 	case *ast.Statements:
+		replacements := make([]nodeReplacement, 0)
+		deletions := make([]int, 0)
 		for _, x := range n.Statements {
-			WalkCtx(ctx, x, v)
+			nn := WalkCtx(ctx, x, v)
+			switch nn := nn.(type) {
+			case nil:
+				// no changes, continue
+			case *ast.SpecialNode:
+				if nn.Value == "delete" {
+					trace.MessageCtx(ctx, "deleting statement")
+					deletions = append(deletions, len(n.Statements)-1) // delete the last statement
+				} else {
+					panic(fmt.Sprintf("ast.Walk: unexpected special node %s", nn.Value))
+				}
+			case ast.Statement:
+				// if we have a new statement, we replace the old one
+				replacements = append(replacements, nodeReplacement{
+					index: len(n.Statements) - 1, // replace the last statement
+					node:  nn,
+				})
+				any_children_changed = true
+			default:
+				panic(fmt.Sprintf("ast.Walk: expected ast.Statement, got %T", nn))
+			}
+
+		}
+
+		// NOTE: we do replacements first since they don't clobber the indices
+		if len(replacements) > 0 {
+			any_children_changed = true
+			for _, r := range replacements {
+				n.Statements[r.index] = r.node.(ast.Statement)
+			}
+		}
+		if len(deletions) > 0 {
+			any_children_changed = true
+			n.Statements = deleteIndices(n.Statements, deletions)
 		}
 
 	case *ast.ConditionalExpression:
@@ -452,7 +520,6 @@ func WalkChildrenCtx(
 				}
 			case ast.Statement:
 				// if we have a new statement, we replace the old one
-				any_children_changed = true
 				replacements = append(replacements, nodeReplacement{
 					index: i,
 					node:  nn,
@@ -464,11 +531,13 @@ func WalkChildrenCtx(
 
 		// NOTE: we do replacements fist since they don't clobber the indices
 		if len(replacements) > 0 {
+			any_children_changed = true
 			for _, r := range replacements {
 				n.Statements[r.index] = r.node.(ast.Statement)
 			}
 		}
 		if len(deletions) > 0 {
+			any_children_changed = true
 			n.Statements = deleteIndices(n.Statements, deletions)
 		}
 
