@@ -359,7 +359,7 @@ func (ce *ConditionalExpression) Code() string {
 	out.WriteString("; ")
 	out.WriteString(ce.Consequence.Code())
 	if ce.Alternative != nil {
-		out.WriteString("else ")
+		out.WriteString(" else ")
 		out.WriteString(ce.Alternative.Code())
 	}
 	out.WriteString(" end")
