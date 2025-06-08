@@ -6,6 +6,9 @@ github.com/MarcinKonowalczyk/assert/compare
 ## explicit; go 1.24.3
 github.com/MarcinKonowalczyk/trace
 github.com/MarcinKonowalczyk/trace/printer
+# github.com/brunoga/deep v1.2.6-0.20250523130454-fd732f6edadc
+## explicit; go 1.20.0
+github.com/brunoga/deep
 # github.com/chzyer/readline v1.5.1
 ## explicit; go 1.15
 github.com/chzyer/readline

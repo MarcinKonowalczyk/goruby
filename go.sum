@@ -2,6 +2,8 @@ github.com/MarcinKonowalczyk/assert v0.2.2 h1:/Z00QIu8xZbKO1UdD8AI7+sdlvgktuscZq
 github.com/MarcinKonowalczyk/assert v0.2.2/go.mod h1:Qw1B/ut8i8WgNIndiWWvUox8ijYDGOAaG94H75rJQGQ=
 github.com/MarcinKonowalczyk/trace v0.1.3 h1:3IedSVjOZ8QJfIMAf3ZgUsQm6qkwrNvuwrKG5iHK/9o=
 github.com/MarcinKonowalczyk/trace v0.1.3/go.mod h1:nN0+ru6kYhalahPASZY3bwmthphtqmKbNLqLEigwsuE=
+github.com/brunoga/deep v1.2.6-0.20250523130454-fd732f6edadc h1:y3pZDXGN5r8rz63uyGvVF4qTjXwp/zhou3MCUt3/T0U=
+github.com/brunoga/deep v1.2.6-0.20250523130454-fd732f6edadc/go.mod h1:GDV6dnXqn80ezsLSZ5Wlv1PdKAWAO4L5PnKYtv2dgaI=
 github.com/chzyer/logex v1.2.1 h1:XHDu3E6q+gdHgsdTPH6ImJMIp436vR6MPtH8gP05QzM=
 github.com/chzyer/logex v1.2.1/go.mod h1:JLbx6lG2kDbNRFnfkgvh4eRJRPX1QCoOIWomwysCBrQ=
 github.com/chzyer/readline v1.5.1 h1:upd/6fQk4src78LMRzh5vItIt361/o4uq553V8B5sGI=
